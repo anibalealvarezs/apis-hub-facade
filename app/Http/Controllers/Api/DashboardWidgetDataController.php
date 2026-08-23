@@ -2155,8 +2155,8 @@ class DashboardWidgetDataController extends Controller
     protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
     {
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
-        $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
-        $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
+        $dateStart = ! empty($controls['date_start']) ? $controls['date_start'] : now()->subDays(30)->format('Y-m-d');
+        $dateEnd = ! empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
         $granularity = $controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily';
         $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
         $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
@@ -2311,6 +2311,12 @@ class DashboardWidgetDataController extends Controller
 
                 $assetFilter = $this->resolveChanneledAccountId($project, $ssChannel, $assetFilter);
 
+                $ssDependency = $ss['dependency']
+                    ?? ($matchingItem ? ($matchingItem['series']['dependency'] ?? null) : null)
+                    ?? ($matchingItem && isset($matchingItem['series_index']) ? ($controls['series_dependencies'][$matchingItem['series_index']] ?? null) : null)
+                    ?? $controls['dependency']
+                    ?? null;
+
                 $payload = [
                     'tenant' => $project->id,
                     'account' => $assetFilter,
@@ -2319,6 +2325,18 @@ class DashboardWidgetDataController extends Controller
                     'granularity' => 'daily',
                     'metrics' => [$ssMetric],
                 ];
+
+                if (! empty($ssDependency)) {
+                    $payload['dependency'] = $ssDependency;
+                }
+
+                if ($ssChannel === 'facebook_organic') {
+                    if (($ssDependency ?? '') === 'instagram_account') {
+                        $payload['activeTab'] = 'instagram';
+                    } else {
+                        $payload['activeTab'] = 'facebook';
+                    }
+                }
 
                 $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
                 $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
