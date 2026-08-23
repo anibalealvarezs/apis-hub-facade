@@ -452,19 +452,21 @@ export function dashboardView(config = {}) {
             const widgetId = this.settingsWidgetId;
             const controls = this.settingsControls;
 
-            // Sync flat metrics list and raw_series from series_metrics if present
-            if (controls.series_metrics && typeof controls.series_metrics === 'object') {
-                const flat = [];
-                for (const sKey in controls.series_metrics) {
-                    const sm = controls.series_metrics[sKey];
-                    if (Array.isArray(sm)) {
-                        flat.push(...sm);
-                        if (controls.raw_series && controls.raw_series[parseInt(sKey)]) {
-                            controls.raw_series[parseInt(sKey)].metrics = [...sm];
+            // Sync flat metrics list and raw_series from series_metrics if present (for metric widgets)
+            if (this.settingsSourceType !== 'kpi' && this.settingsSourceType !== 'derived_metric') {
+                if (controls.series_metrics && typeof controls.series_metrics === 'object') {
+                    const flat = [];
+                    for (const sKey in controls.series_metrics) {
+                        const sm = controls.series_metrics[sKey];
+                        if (Array.isArray(sm)) {
+                            flat.push(...sm);
+                            if (controls.raw_series && controls.raw_series[parseInt(sKey)]) {
+                                controls.raw_series[parseInt(sKey)].metrics = [...sm];
+                            }
                         }
                     }
+                    controls.metrics = Array.from(new Set(flat));
                 }
-                controls.metrics = Array.from(new Set(flat));
             }
 
             let dateAdjusted = false;
