@@ -428,7 +428,8 @@ export function dashboardView(config = {}) {
                 granularity: '',
                 metrics: [],
                 series_metrics: {},
-                series_assets: {}
+                series_assets: {},
+                series_dependencies: {}
             };
             this.settingsControls = {
                 titles: { en: '', es: '' },
@@ -438,7 +439,8 @@ export function dashboardView(config = {}) {
                 granularity: '',
                 metrics: [],
                 series_metrics: {},
-                series_assets: {}
+                series_assets: {},
+                series_dependencies: {}
             };
             this.settingsVariables = {};
             this.settingsSeriesOptions = {};

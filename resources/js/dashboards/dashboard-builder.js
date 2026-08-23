@@ -2218,6 +2218,7 @@ export function dashboardBuilder(config = {}) {
                 payload.metrics = c.metrics;
                 payload.series_assets = c.series_assets;
                 payload.series_asset_groups = c.series_asset_groups;
+                payload.series_dependencies = c.series_dependencies || {};
             }
 
             const titles = c.titles || {};

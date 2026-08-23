@@ -543,7 +543,12 @@ trait LoadsDashboardViewData
 
             if ($widgetArray['source_type'] === 'kpi') {
                 $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
-                $depDependency = $uiState['dependent_dependency'] ?? $uiState['dependency'] ?? $resolved['dependency'] ?? null;
+                $depDependency = $resolved['series_dependencies']['dependent']
+                    ?? $resolved['series_dependencies']['0']
+                    ?? $uiState['dependent_dependency']
+                    ?? $uiState['dependency']
+                    ?? $resolved['dependency']
+                    ?? null;
                 $depDependencies = ! empty($depChannel)
                     ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($depChannel)
                     : [];
@@ -563,7 +568,13 @@ trait LoadsDashboardViewData
                 if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                     foreach ($uiState['independent_variables'] as $key => $var) {
                         $indChannel = $var['independent_channel'] ?? '';
-                        $indDependency = $var['independent_dependency'] ?? $var['dependency'] ?? $uiState['dependency'] ?? $resolved['dependency'] ?? null;
+                        $indDependency = $resolved['series_dependencies']['independent_' . $key]
+                            ?? $resolved['series_dependencies'][(string)($key + 1)]
+                            ?? $var['independent_dependency']
+                            ?? $var['dependency']
+                            ?? $uiState['dependency']
+                            ?? $resolved['dependency']
+                            ?? null;
                         $indDependencies = ! empty($indChannel)
                             ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($indChannel)
                             : [];
