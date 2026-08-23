@@ -1080,6 +1080,9 @@ class DashboardWidgetDataController extends Controller
 
                             $color = $palette[$idx % count($palette)];
 
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $isCurrency = in_array($cleanKey, $currencyMetrics);
+
                             $dataset = [
                                 'label' => $isRatio ? $label . ' (%)' : $label,
                                 'key' => $key,
@@ -1090,6 +1093,8 @@ class DashboardWidgetDataController extends Controller
                                 'pointRadius' => 2,
                                 'yAxisID' => 'y-' . $cleanKey,
                                 'fill' => false,
+                                'currency' => $isCurrency,
+                                'percentage' => $isRatio,
                             ];
 
                             if ($effectiveWidgetType === 'bar_chart') {
@@ -2118,11 +2123,16 @@ class DashboardWidgetDataController extends Controller
                         $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
                     }
 
+                    $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                    $isCurrency = in_array($cleanMetric, $currencyMetrics);
+
                     $seriesCurves[] = [
                         'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
                         'key' => 'series_' . $sIdx . '_' . $metric,
                         'axis_key' => $cleanMetric,
                         'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
+                        'currency' => $isCurrency,
+                        'percentage' => $isRatio,
                         'data' => $timeSeries,
                     ];
                 }
@@ -2260,6 +2270,8 @@ class DashboardWidgetDataController extends Controller
                 'key' => 'dm_' . $dmId,
                 'axis_key' => 'dm_' . $dmId,
                 'axis_title' => $dmLabel,
+                'currency' => $derivedMetric->format === 'currency',
+                'percentage' => $derivedMetric->format === 'percentage',
                 'data' => $dmTimeSeries,
             ];
         }
@@ -2289,6 +2301,8 @@ class DashboardWidgetDataController extends Controller
                 'pointRadius' => 2,
                 'yAxisID' => 'y-' . $curve['axis_key'],
                 'fill' => false,
+                'currency' => ! empty($curve['currency']),
+                'percentage' => ! empty($curve['percentage']),
             ];
 
             if ($widget->widget_type === 'bar_chart') {
