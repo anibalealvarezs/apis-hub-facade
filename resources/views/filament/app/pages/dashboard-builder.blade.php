@@ -971,9 +971,12 @@
                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
                                                                     <x-ui.select-input x-model="series.dependency"
                                                                                        x-on:change="onWidgetRawSeriesDependencyChange(index)"
+                                                                                       x-init="$nextTick(() => { if (series.dependency) $el.value = series.dependency })"
                                                                                        class="w-full">
                                                                         <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
-                                                                            <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
+                                                                            <x-ui.select-option x-bind:value="key"
+                                                                                                x-bind:selected="series.dependency === key"
+                                                                                                x-text="label"></x-ui.select-option>
                                                                         </template>
                                                                     </x-ui.select-input>
                                                                 </div>

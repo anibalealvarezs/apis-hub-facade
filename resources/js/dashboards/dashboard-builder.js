@@ -1431,9 +1431,10 @@ export function dashboardBuilder(config = {}) {
 
             if (widget.source_type !== 'kpi') {
                 if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
-                    this.widgetControlsForm.raw_series = wc.raw_series.map(s => {
+                    this.widgetControlsForm.raw_series = wc.raw_series.map((s, sIdx) => {
                         const rawAllowed = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : (Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []));
                         const rawSelected = Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []);
+                        const rawDep = s.dependency || (wc.series_dependencies && (wc.series_dependencies[sIdx] || wc.series_dependencies[String(sIdx)])) || wc.dependency || '';
                         return {
                             type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
                             dm_id: s.dm_id ? String(s.dm_id) : undefined,
@@ -1441,7 +1442,7 @@ export function dashboardBuilder(config = {}) {
                             dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
                             label: s.label || '',
                             channel: s.channel || '',
-                            dependency: s.dependency || wc.dependency || '',
+                            dependency: rawDep,
                             allowed_metrics: rawAllowed,
                             metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
                             assets: Array.isArray(s.assets) ? [...s.assets] : []
@@ -1450,7 +1451,7 @@ export function dashboardBuilder(config = {}) {
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
                     const seriesKeys = Object.keys(wc.series_channels);
                     const groupedSeries = [];
-                    seriesKeys.forEach((key) => {
+                    seriesKeys.forEach((key, sIdx) => {
                         const channel = wc.series_channels[key] || wc.channel || '';
                         const assets = (wc.series_assets && wc.series_assets[key]) ? [...wc.series_assets[key]] : (wc.assets ? [...wc.assets] : []);
                         let metrics = [];
@@ -1468,9 +1469,10 @@ export function dashboardBuilder(config = {}) {
                             metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
                         }
                         const allowed = (wc.series_allowed_metrics && wc.series_allowed_metrics[key]) ? [...wc.series_allowed_metrics[key]] : [...metrics];
+                        const rawDep = (wc.series_dependencies && (wc.series_dependencies[key] || wc.series_dependencies[sIdx])) || wc.dependency || '';
                         groupedSeries.push({
                             channel,
-                            dependency: wc.dependency || '',
+                            dependency: rawDep,
                             allowed_metrics: allowed,
                             metrics,
                             assets
@@ -1480,7 +1482,7 @@ export function dashboardBuilder(config = {}) {
                 } else if (wc.metrics && Array.isArray(wc.metrics) && wc.metrics.length > 0) {
                     this.widgetControlsForm.raw_series = [{
                         channel: wc.channel || '',
-                        dependency: wc.dependency || '',
+                        dependency: (wc.series_dependencies && (wc.series_dependencies[0] || wc.series_dependencies['0'])) || wc.dependency || '',
                         allowed_metrics: [...wc.metrics],
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : []
