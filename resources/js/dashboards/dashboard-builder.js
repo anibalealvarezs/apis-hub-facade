@@ -272,7 +272,7 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -299,7 +299,7 @@ export function dashboardBuilder(config = {}) {
             } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
-                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
+                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -331,7 +331,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -347,7 +347,7 @@ export function dashboardBuilder(config = {}) {
                     typeMap = allTypes;
                 }
             } else if (target.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || [];
+                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }

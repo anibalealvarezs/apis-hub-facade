@@ -27,8 +27,8 @@ it('exposes all nine widget types for the kpi source', function () {
         ->toBe(['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table']);
 });
 
-it('exposes the six shared widget types for metric and derived_metric sources', function () {
-    $shared = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
+it('exposes the seven shared widget types for metric and derived_metric sources', function () {
+    $shared = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
     expect(WidgetTypeRegistry::getWidgetTypesForSource('metric'))->toBe($shared);
     expect(WidgetTypeRegistry::getWidgetTypesForSource('derived_metric'))->toBe($shared);
 });
@@ -40,18 +40,16 @@ it('flags every compatible widget type for its source', function ($source, $widg
     ['kpi', 'sparkline'], ['kpi', 'anomaly_chart'], ['kpi', 'scatter_plot'],
     ['kpi', 'combo_chart'], ['kpi', 'table'],
     ['metric', 'tile'], ['metric', 'line_chart'], ['metric', 'bar_chart'],
-    ['metric', 'gauge'], ['metric', 'sparkline'], ['metric', 'table'],
+    ['metric', 'gauge'], ['metric', 'sparkline'], ['metric', 'combo_chart'], ['metric', 'table'],
     ['derived_metric', 'tile'], ['derived_metric', 'line_chart'], ['derived_metric', 'bar_chart'],
-    ['derived_metric', 'gauge'], ['derived_metric', 'sparkline'], ['derived_metric', 'table'],
+    ['derived_metric', 'gauge'], ['derived_metric', 'sparkline'], ['derived_metric', 'combo_chart'], ['derived_metric', 'table'],
 ]);
 
 it('rejects widget types outside the source compatibility set', function () {
     expect(WidgetTypeRegistry::isWidgetTypeCompatible('metric', 'scatter_plot'))->toBeFalse();
     expect(WidgetTypeRegistry::isWidgetTypeCompatible('metric', 'anomaly_chart'))->toBeFalse();
-    expect(WidgetTypeRegistry::isWidgetTypeCompatible('metric', 'combo_chart'))->toBeFalse();
     expect(WidgetTypeRegistry::isWidgetTypeCompatible('derived_metric', 'scatter_plot'))->toBeFalse();
     expect(WidgetTypeRegistry::isWidgetTypeCompatible('derived_metric', 'anomaly_chart'))->toBeFalse();
-    expect(WidgetTypeRegistry::isWidgetTypeCompatible('derived_metric', 'combo_chart'))->toBeFalse();
     expect(WidgetTypeRegistry::isWidgetTypeCompatible('unknown_source', 'tile'))->toBeFalse();
 });
 

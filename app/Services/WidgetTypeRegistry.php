@@ -6,8 +6,8 @@ class WidgetTypeRegistry
 {
     protected static array $compatibility = [
         'kpi' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'],
-        'metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'],
-        'derived_metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'],
+        'metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'],
+        'derived_metric' => ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'],
     ];
 
     protected static array $sourceLabels = [
