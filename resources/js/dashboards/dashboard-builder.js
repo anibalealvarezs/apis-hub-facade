@@ -280,12 +280,15 @@ export function dashboardBuilder(config = {}) {
             this.canScrollSandboxSeriesRight = Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 5;
         },
 
-        scrollSandboxSeriesByStep(dir) {
+        scrollSandboxSeriesByStep(direction = 1) {
             const el = this.$refs.sandboxSeriesScrollContainer;
             if (!el) return;
-            const step = 320;
-            el.scrollBy({ left: dir * step, behavior: 'smooth' });
-            setTimeout(() => this.updateSandboxSeriesScrollState(), 350);
+            const firstCard = el.querySelector('.snap-start');
+            const step = firstCard ? (firstCard.offsetWidth + 24) : ((el.clientWidth / 2) + 12);
+            el.scrollBy({ left: direction * step, behavior: 'smooth' });
+            setTimeout(() => {
+                this.updateSandboxSeriesScrollState();
+            }, 350);
         },
 
         applySandboxControls() {
