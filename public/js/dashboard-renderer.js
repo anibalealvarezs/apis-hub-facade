@@ -1597,7 +1597,10 @@ window.dashboardRenderer = {
                             pointStyleWidth: 18,
                             font: { size: 11 },
                             padding: 12,
+                            color: document.documentElement.classList.contains('dark') ? '#E4E4E7' : '#374151',
                             generateLabels: (chart) => {
+                                const isDark = document.documentElement.classList.contains('dark');
+                                const labelColor = chart.options?.plugins?.legend?.labels?.color || (isDark ? '#E4E4E7' : '#374151');
                                 return (chart.data.datasets || []).map((ds, i) => {
                                     const isHidden = !chart.isDatasetVisible(i);
                                     const isLine = ds.type === 'line';
@@ -1606,6 +1609,8 @@ window.dashboardRenderer = {
                                         fillStyle: isLine ? ds.borderColor : (ds.backgroundColor || ds.borderColor),
                                         strokeStyle: ds.borderColor,
                                         lineWidth: isLine ? 2.5 : 1,
+                                        fontColor: labelColor,
+                                        color: labelColor,
                                         hidden: isHidden,
                                         datasetIndex: i,
                                         pointStyle: isLine ? 'line' : 'rectRounded',
