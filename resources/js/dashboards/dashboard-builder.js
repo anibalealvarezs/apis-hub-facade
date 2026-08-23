@@ -23,8 +23,23 @@ export function dashboardBuilder(config = {}) {
             date_end: '',
             granularity: '',
             zero_handling: '',
-            edge_case_grouping: ''
+            edge_case_weighted: true,
+            edge_case_grouping: '',
+            max_ratio: null,
+            remove_unknown: true,
+            block_first_col: true,
+            channel: '',
+            metrics: [],
+            series_assets: {},
+            series_asset_groups: {},
+            series_dependencies: {},
+            combo_chart_config: {}
         },
+        sandboxVariables: {},
+        sandboxSearchQueries: {},
+        activeSandboxMobileTab: 'controls',
+        canScrollSandboxSeriesLeft: false,
+        canScrollSandboxSeriesRight: false,
         ephemeralOverrides: {},
 
         openSandboxModal(widget) {
@@ -38,15 +53,245 @@ export function dashboardBuilder(config = {}) {
                 date_end: current.date_end || '',
                 granularity: current.granularity || 'daily',
                 zero_handling: current.zero_handling || 'keep',
+                edge_case_weighted: current.edge_case_weighted !== undefined ? current.edge_case_weighted : true,
                 edge_case_grouping: current.edge_case_grouping || 'none',
+                max_ratio: current.max_ratio ?? null,
+                remove_unknown: current.remove_unknown !== undefined ? current.remove_unknown : true,
+                block_first_col: current.block_first_col !== undefined ? current.block_first_col : true,
+                channel: current.channel || '',
+                metrics: Array.isArray(current.metrics) ? [...current.metrics] : (current.metrics ? Object.values(current.metrics) : []),
+                series_assets: current.series_assets ? JSON.parse(JSON.stringify(current.series_assets)) : {},
+                series_asset_groups: current.series_asset_groups ? JSON.parse(JSON.stringify(current.series_asset_groups)) : {},
+                series_dependencies: current.series_dependencies ? JSON.parse(JSON.stringify(current.series_dependencies)) : {},
+                combo_chart_config: current.combo_chart_config ? JSON.parse(JSON.stringify(current.combo_chart_config)) : {},
             };
+
+            this.sandboxVariables = {};
+            this.sandboxSearchQueries = {};
+
+            const ensureChannelLoaded = (ch) => {
+                if (!ch || !this.$wire) return;
+                if (!this.allChannelAssets[ch]) {
+                    this.$wire.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
+                }
+                if (!this.allChannelAssetGroups[ch]) {
+                    this.$wire.getAssetGroupsForChannel(ch).then(groups => { this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups }; });
+                }
+                if (!this.allChannelDependencies[ch]) {
+                    this.$wire.getDependenciesForChannel(ch).then(deps => { this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps }; });
+                }
+                if (!this.allChannelMetrics[ch]) {
+                    this.$wire.getMetricsForChannel(ch).then(metrics => { this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics }; });
+                }
+            };
+
+            if (widget.source_type === 'kpi') {
+                const kpiId = widget.source_config?.custom_kpi_id;
+                const setupKpiVariables = (config) => {
+                    const uiState = config?.filters?._ui_state || config || {};
+                    const vars = {};
+                    if (uiState.dependent_channel) {
+                        ensureChannelLoaded(uiState.dependent_channel);
+                        vars['dependent'] = {
+                            index: 0,
+                            channel: uiState.dependent_channel,
+                            channel_name: uiState.dependent_channel,
+                            selected_metric: uiState.dependent_metric || '',
+                            dm_id: uiState.dependent_dm_id || null,
+                            dm_name: uiState.dependent_dm_id && this.derivedMetrics?.[uiState.dependent_dm_id] ? this.derivedMetrics[uiState.dependent_dm_id].name : null,
+                        };
+                        this.sandboxSearchQueries['dependent'] = '';
+                    }
+                    if (uiState.independent_variables) {
+                        for (let k in uiState.independent_variables) {
+                            const iv = uiState.independent_variables[k];
+                            const varKey = 'independent_' + k;
+                            if (iv.independent_channel) {
+                                ensureChannelLoaded(iv.independent_channel);
+                            }
+                            vars[varKey] = {
+                                index: parseInt(k) + 1,
+                                channel: iv.independent_channel || '',
+                                channel_name: iv.independent_channel || '',
+                                selected_metric: iv.independent_metric || '',
+                                dm_id: iv.independent_dm_id || null,
+                                dm_name: iv.independent_dm_id && this.derivedMetrics?.[iv.independent_dm_id] ? this.derivedMetrics[iv.independent_dm_id].name : null,
+                            };
+                            this.sandboxSearchQueries[varKey] = '';
+                        }
+                    }
+                    this.sandboxVariables = vars;
+                };
+
+                if (kpiId && this.$wire) {
+                    this.$wire.getKpiConfiguration(kpiId).then(cfg => {
+                        setupKpiVariables(cfg);
+                    }).catch(() => {
+                        setupKpiVariables(this.widgetKpiConfig || {});
+                    });
+                } else {
+                    setupKpiVariables(this.widgetKpiConfig || {});
+                }
+            } else if (widget.source_type === 'derived_metric') {
+                const dmId = widget.source_config?.derived_metric_id;
+                const dm = dmId ? (this.derivedMetrics?.[dmId] || this.derivedMetrics?.[String(dmId)]) : null;
+                const sourceSeries = dm?.source_series || [];
+                const vars = {};
+                sourceSeries.forEach((s, idx) => {
+                    const key = 'dm_' + idx;
+                    ensureChannelLoaded(s.channel);
+                    vars[key] = {
+                        index: idx,
+                        channel: s.channel || '',
+                        channel_name: s.channel || '',
+                        selected_metric: s.metric || '',
+                        dm_name: dm?.name || '',
+                        dm_source_label: s.label || ('Series ' + (idx + 1)),
+                    };
+                    this.sandboxSearchQueries[key] = '';
+                });
+                this.sandboxVariables = vars;
+            } else {
+                const rawSeries = current.raw_series || widget.controls?.raw_series || [];
+                const vars = {};
+                if (rawSeries.length > 0) {
+                    rawSeries.forEach((s, idx) => {
+                        const key = String(idx);
+                        ensureChannelLoaded(s.channel);
+                        vars[key] = {
+                            index: idx,
+                            type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                            dm_id: s.dm_id || null,
+                            dm_name: s.dm_name || null,
+                            channel: s.channel || '',
+                            channel_name: s.channel || '',
+                            allowed_metrics: Array.isArray(s.allowed_metrics) ? s.allowed_metrics : (Array.isArray(s.metrics) ? s.metrics : []),
+                            selected_metric: '',
+                        };
+                        this.sandboxSearchQueries[key] = '';
+                    });
+                } else {
+                    const ch = current.channel || this.dashboardControls.channel || '';
+                    ensureChannelLoaded(ch);
+                    vars['0'] = {
+                        index: 0,
+                        type: 'metric',
+                        channel: ch,
+                        channel_name: ch,
+                        allowed_metrics: Array.isArray(current.metrics) ? current.metrics : [],
+                        selected_metric: '',
+                    };
+                    this.sandboxSearchQueries['0'] = '';
+                }
+                this.sandboxVariables = vars;
+            }
+
             this.showSandboxModal = true;
+            this.$nextTick(() => {
+                this.updateSandboxSeriesScrollState();
+            });
+        },
+
+        sandboxToggleMetric(vKey, metricKey) {
+            if (this.sandboxTargetWidget?.source_type === 'kpi') {
+                const idx = this.sandboxVariables[vKey]?.index ?? 0;
+                this.sandboxForm.metrics[idx] = metricKey;
+            } else {
+                if (!Array.isArray(this.sandboxForm.metrics)) {
+                    this.sandboxForm.metrics = [];
+                }
+                if (this.sandboxForm.metrics.includes(metricKey)) {
+                    this.sandboxForm.metrics = this.sandboxForm.metrics.filter(m => m !== metricKey);
+                } else {
+                    this.sandboxForm.metrics = [...this.sandboxForm.metrics, metricKey];
+                }
+            }
+        },
+
+        sandboxIsMetricSelected(vKey, metricKey) {
+            if (this.sandboxTargetWidget?.source_type === 'kpi') {
+                const idx = this.sandboxVariables[vKey]?.index ?? 0;
+                return this.sandboxForm.metrics[idx] === metricKey;
+            }
+            return (this.sandboxForm.metrics || []).includes(metricKey);
+        },
+
+        sandboxSelectAllMetrics(vKey) {
+            const vConfig = this.sandboxVariables[vKey];
+            const ch = vConfig?.channel;
+            const available = vConfig?.allowed_metrics && vConfig.allowed_metrics.length > 0
+                ? vConfig.allowed_metrics
+                : Object.keys(this.allChannelMetrics[ch] || {});
+            this.sandboxForm.metrics = [...new Set([...(this.sandboxForm.metrics || []), ...available])];
+        },
+
+        sandboxToggleAsset(vKey, assetId) {
+            const strId = String(assetId);
+            const current = this.sandboxForm.series_assets[vKey] || [];
+            if (current.includes(strId)) {
+                this.sandboxForm.series_assets[vKey] = current.filter(a => a !== strId);
+            } else {
+                this.sandboxForm.series_assets[vKey] = [...current, strId];
+            }
+        },
+
+        sandboxIsAssetSelected(vKey, assetId) {
+            return ((this.sandboxForm.series_assets || {})[vKey] || []).includes(String(assetId));
+        },
+
+        sandboxSelectAllAssets(vKey) {
+            const vConfig = this.sandboxVariables[vKey];
+            const ch = vConfig?.channel;
+            const assets = this.allChannelAssets[ch] || {};
+            let validIds = Object.keys(assets).map(String);
+            const globalGroup = this.dashboardControls?.asset_group;
+            if (globalGroup && this.allChannelAssetGroups[ch]?.[globalGroup]) {
+                const groupAssets = this.allChannelAssetGroups[ch][globalGroup].assets.map(String);
+                validIds = validIds.filter(id => groupAssets.includes(id));
+            }
+            this.sandboxForm.series_assets[vKey] = validIds;
+        },
+
+        sandboxToggleComboType(index, metricKey) {
+            if (!this.sandboxForm.combo_chart_config) {
+                this.sandboxForm.combo_chart_config = {};
+            }
+            const cfgKey = index + '_' + metricKey;
+            const current = this.sandboxForm.combo_chart_config[cfgKey]?.type || (index === 0 ? 'bar' : 'line');
+            const nextType = current === 'bar' ? 'line' : 'bar';
+            this.sandboxForm.combo_chart_config = {
+                ...this.sandboxForm.combo_chart_config,
+                [cfgKey]: {
+                    ...(this.sandboxForm.combo_chart_config[cfgKey] || {}),
+                    type: nextType
+                }
+            };
+        },
+
+        sandboxGetComboType(index, metricKey) {
+            const cfgKey = index + '_' + metricKey;
+            return this.sandboxForm?.combo_chart_config?.[cfgKey]?.type || (index === 0 ? 'bar' : 'line');
+        },
+
+        updateSandboxSeriesScrollState() {
+            const el = this.$refs.sandboxSeriesScrollContainer;
+            if (!el) return;
+            this.canScrollSandboxSeriesLeft = el.scrollLeft > 5;
+            this.canScrollSandboxSeriesRight = Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 5;
+        },
+
+        scrollSandboxSeriesByStep(dir) {
+            const el = this.$refs.sandboxSeriesScrollContainer;
+            if (!el) return;
+            const step = 320;
+            el.scrollBy({ left: dir * step, behavior: 'smooth' });
+            setTimeout(() => this.updateSandboxSeriesScrollState(), 350);
         },
 
         applySandboxControls() {
             if (!this.sandboxTargetWidget) return;
             const id = this.sandboxTargetWidget.id;
-            this.ephemeralOverrides[id] = { ...this.sandboxForm };
+            this.ephemeralOverrides[id] = JSON.parse(JSON.stringify(this.sandboxForm));
             this.showSandboxModal = false;
             this.$nextTick(() => {
                 this.renderWidget(id);
