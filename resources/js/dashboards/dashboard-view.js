@@ -434,10 +434,6 @@ export function dashboardView(config = {}) {
                 alert("Warning: The customized date range exceeded the allowed limits and was adjusted to comply.");
             }
 
-            if (this.$wire && typeof this.$wire.saveWidgetControls === 'function') {
-                this.$wire.saveWidgetControls(widgetId, controls, null, null, controls.titles || {}, controls.descriptions || {});
-            }
-
             window.dispatchEvent(new CustomEvent('reload-widget', {
                 detail: {
                     id: widgetId,
