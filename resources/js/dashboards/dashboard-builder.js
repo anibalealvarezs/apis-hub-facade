@@ -133,8 +133,13 @@ export function dashboardBuilder(config = {}) {
                                 const defaultAssets = iv.independent_asset_filter || [];
                                 this.sandboxForm.series_assets[varKey] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
                             }
-                            if (iv.independent_metric && !this.sandboxForm.metrics[indIndex]) {
-                                this.sandboxForm.metrics[indIndex] = iv.independent_metric;
+                            if (!this.sandboxForm.metrics[indIndex]) {
+                                if (iv.independent_metric) {
+                                    this.sandboxForm.metrics[indIndex] = iv.independent_metric;
+                                } else if (this.allChannelMetrics[iv.independent_channel]) {
+                                    const mKeys = Object.keys(this.allChannelMetrics[iv.independent_channel]);
+                                    if (mKeys.length > 0) this.sandboxForm.metrics[indIndex] = mKeys[0];
+                                }
                             }
                             if (iv.independent_dependency && !this.sandboxForm.series_dependencies[varKey]) {
                                 this.sandboxForm.series_dependencies[varKey] = iv.independent_dependency;

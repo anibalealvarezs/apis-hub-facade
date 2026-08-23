@@ -185,12 +185,18 @@ class KpiPayloadBuilder
             'independent_vars_count' => count($independents),
             'independent_vars_raw' => $independents,
         ]);
-        if (empty($independents)) {
-            return $dependentNode; // Fallback
-        }
 
         // Build right node (might be nested if multiple variables, usually added together)
         $rightNode = self::buildIndependentNodes($independents, $granularity);
+        if (empty($rightNode)) {
+            $fallbackCh = $state['dependent_channel'] ?? 'facebook_marketing';
+            $rightNode = self::buildSingleIndependentNode([
+                'independent_source_type' => 'channel',
+                'independent_channel' => $fallbackCh,
+                'independent_metric' => 'spend',
+                'independent_asset_filter' => $state['dependent_asset_filter'] ?? [],
+            ], $granularity);
+        }
 
         \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Full AST tree', [
             'operator' => '/',
@@ -198,7 +204,7 @@ class KpiPayloadBuilder
             'right' => $rightNode,
         ]);
 
-        // Operator is usually division for regression/elasticity (dependent / independent)
+        // Operator is division for regression/elasticity/granger (dependent / independent)
         return [
             'type' => 'operator',
             'operator' => '/',

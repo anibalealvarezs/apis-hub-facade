@@ -1782,6 +1782,25 @@ class DashboardWidgetDataController extends Controller
             }
             $mergedState['independent_variables'] = $cleanedIndependents;
         }
+        $bivariateStats = ['calculate_regression', 'calculate_elasticity', 'calculate_granger'];
+        if (in_array($kpi->calculation_type, $bivariateStats, true) && empty($mergedState['independent_variables'])) {
+            $depCh = $mergedState['dependent_channel'] ?? 'facebook_marketing';
+            $chMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depCh);
+            $fallbackMetric = 'spend';
+            if (! empty($chMetrics)) {
+                $keys = array_keys($chMetrics);
+                $diff = array_diff($keys, [$mergedState['dependent_metric'] ?? '']);
+                $fallbackMetric = ! empty($diff) ? array_values($diff)[0] : $keys[0];
+            }
+            $mergedState['independent_variables'] = [
+                '0' => [
+                    'independent_source_type' => 'channel',
+                    'independent_channel' => $depCh,
+                    'independent_metric' => $fallbackMetric,
+                    'independent_asset_filter' => $mergedState['dependent_asset_filter'] ?? $controls['assets'] ?? [],
+                ],
+            ];
+        }
 
         $payload = KpiPayloadBuilder::build(
             $kpi->calculation_type,
