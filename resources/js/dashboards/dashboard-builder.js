@@ -100,9 +100,51 @@ export function dashboardBuilder(config = {}) {
             this.renderWidget(widgetId, el);
         },
 
+        getWidgetControlsSignature() {
+            if (!this.widgetControlsForm) return '';
+            const f = this.widgetControlsForm;
+            return JSON.stringify({
+                titles: f.titles || {},
+                descriptions: f.descriptions || {},
+                widget_type: f.widget_type || '',
+                date_inherit: !!f.date_inherit,
+                date_start: f.date_inherit ? '' : (f.date_start || ''),
+                date_end: f.date_inherit ? '' : (f.date_end || ''),
+                zero_inherit: !!f.zero_inherit,
+                zero_handling: f.zero_inherit ? '' : (f.zero_handling || ''),
+                granularity_inherit: !!f.granularity_inherit,
+                granularity: f.granularity_inherit ? '' : (f.granularity || ''),
+                edge_case_inherit: !!f.edge_case_inherit,
+                edge_case_weighted: f.edge_case_inherit ? null : f.edge_case_weighted,
+                edge_case_grouping: f.edge_case_inherit ? '' : (f.edge_case_grouping || ''),
+                max_ratio_inherit: !!f.max_ratio_inherit,
+                max_ratio: f.max_ratio_inherit ? null : f.max_ratio,
+                combo_chart_config: f.combo_chart_config || {},
+                series_assets: f.series_assets || {},
+                series_asset_groups: f.series_asset_groups || {},
+                series_dependencies: f.series_dependencies || {},
+                channel: f.channel || '',
+                assets: Array.isArray(f.assets) ? [...f.assets].sort() : [],
+                metrics: Array.isArray(f.metrics) ? [...f.metrics].sort() : [],
+                dependency: f.dependency || '',
+                raw_series: (f.raw_series || []).map(s => ({
+                    type: s.type || '',
+                    dm_id: s.dm_id ? String(s.dm_id) : '',
+                    channel: s.channel || '',
+                    dependency: s.dependency || '',
+                    metrics: Array.isArray(s.metrics) ? [...s.metrics].sort() : [],
+                    assets: Array.isArray(s.assets) ? [...s.assets].sort() : []
+                }))
+            });
+        },
+
+        captureWidgetControlsSnapshot() {
+            this.widgetControlsSnapshot = this.getWidgetControlsSignature();
+        },
+
         isWidgetControlsDirty() {
             if (!this.widgetControlsSnapshot || !this.widgetControlsForm) return false;
-            return JSON.stringify(this.widgetControlsForm) !== this.widgetControlsSnapshot;
+            return this.getWidgetControlsSignature() !== this.widgetControlsSnapshot;
         },
 
         attemptCloseWidgetControls() {
@@ -1883,8 +1925,9 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
-                    this.widgetControlsSnapshot = JSON.stringify(this.widgetControlsForm);
+                    this.captureWidgetControlsSnapshot();
                     this.$nextTick(() => {
+                        this.captureWidgetControlsSnapshot();
                         const el = this.$refs.seriesScrollContainer;
                         if (el) el.scrollLeft = 0;
                         this.updateSeriesScrollState();
@@ -1894,8 +1937,9 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
-                    this.widgetControlsSnapshot = JSON.stringify(this.widgetControlsForm);
+                    this.captureWidgetControlsSnapshot();
                     this.$nextTick(() => {
+                        this.captureWidgetControlsSnapshot();
                         const el = this.$refs.seriesScrollContainer;
                         if (el) el.scrollLeft = 0;
                         this.updateSeriesScrollState();
@@ -1905,8 +1949,9 @@ export function dashboardBuilder(config = {}) {
                 this.loadWidgetMetrics(savedMetrics);
                 this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                 this.showWidgetControls = true;
-                this.widgetControlsSnapshot = JSON.stringify(this.widgetControlsForm);
+                this.captureWidgetControlsSnapshot();
                 this.$nextTick(() => {
+                    this.captureWidgetControlsSnapshot();
                     const el = this.$refs.seriesScrollContainer;
                     if (el) el.scrollLeft = 0;
                     this.updateSeriesScrollState();
