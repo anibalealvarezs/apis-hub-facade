@@ -1504,7 +1504,7 @@
                                                                 <div class="flex items-center gap-2">
                                                                     <span
                                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
-                                                                        x-text="'{{ __('Independent') }} ' + idx"></span>
+                                                                        x-text="varCfg.label || '{{ __('Independent Series') }}'"></span>
                                                                     <span
                                                                         class="text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
                                                                 </div>
