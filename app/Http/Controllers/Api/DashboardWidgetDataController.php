@@ -1287,11 +1287,38 @@ class DashboardWidgetDataController extends Controller
             ]);
             report($e);
 
+            $sanitizedMessage = $this->sanitizeErrorMessage($e, $widget);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
-            ], 500, [], JSON_UNESCAPED_UNICODE);
+                'error' => $sanitizedMessage,
+            ], 200, [], JSON_UNESCAPED_UNICODE);
         }
+    }
+
+    protected function sanitizeErrorMessage(\Throwable $e, DashboardWidget $widget): string
+    {
+        $msg = $e->getMessage();
+
+        if ($msg === 'access_restricted') {
+            return 'access_restricted';
+        }
+
+        if (str_contains($msg, '___EMPTY_GROUP___') || str_contains($msg, 'no assets') || str_contains($msg, 'No assets found') || str_contains($msg, 'no available assets')) {
+            return 'No assets are selected or available for this widget.';
+        }
+
+        if ($widget->source_type === 'kpi') {
+            if (str_contains($msg, 'SQLSTATE') || str_contains($msg, 'syntax error') || str_contains($msg, 'compute-kpi') || str_contains($msg, 'KPI computation failed') || str_contains($msg, 'Server error:')) {
+                return 'Unable to compute KPI data. Please verify the widget and KPI metrics/asset configuration.';
+            }
+        }
+
+        if (str_contains($msg, 'SQLSTATE') || str_contains($msg, 'Server error:') || str_contains($msg, 'cURL error') || str_contains($msg, 'Connection refused')) {
+            return 'Unable to load widget data at this time. Please check your data source configuration.';
+        }
+
+        return $msg;
     }
 
     /**
@@ -1733,6 +1760,24 @@ class DashboardWidgetDataController extends Controller
             }
         } elseif (! empty($mergedState['dependent_dm_id'])) {
             $mergedState['dependent_source_type'] = 'derived_metric';
+        }
+        if (! empty($mergedState['independent_variables']) && is_array($mergedState['independent_variables'])) {
+            $cleanedIndependents = [];
+            foreach ($mergedState['independent_variables'] as $key => $var) {
+                if (! empty($var['independent_dm_id'])) {
+                    $cleanedIndependents[$key] = $var;
+                } elseif (! empty($var['independent_metric'])) {
+                    $cleanedIndependents[$key] = $var;
+                } else {
+                    $ch = $var['independent_channel'] ?? null;
+                    $chMetrics = $ch ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($ch) : [];
+                    if (! empty($chMetrics)) {
+                        $var['independent_metric'] = array_key_first($chMetrics);
+                        $cleanedIndependents[$key] = $var;
+                    }
+                }
+            }
+            $mergedState['independent_variables'] = $cleanedIndependents;
         }
 
         $payload = KpiPayloadBuilder::build(
