@@ -612,14 +612,23 @@ trait LoadsDashboardViewData
                         if (!empty($sChannel)) {
                             $granularity = $resolved['granularity'] ?? null;
                             $dependency  = $s['dependency'] ?? $resolved['series_dependencies'][$sIdx] ?? $resolved['dependency'] ?? null;
-                            $allChannelMetrics = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
-                            
-                            // Whitelist to allowed_metrics if defined
-                            $allowed = $s['allowed_metrics'] ?? $resolved['series_allowed_metrics'][$sIdx] ?? [];
-                            if (!empty($allowed) && is_array($allowed)) {
-                                $metrics = array_intersect_key($allChannelMetrics, array_flip($allowed));
+                            $isDmType    = ($s['type'] ?? 'metric') === 'derived_metric';
+
+                            if ($isDmType && !empty($s['metrics'])) {
+                                $dmMetricKey = is_array($s['metrics']) ? reset($s['metrics']) : $s['metrics'];
+                                $metricOptions = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                                $metricLabel = $metricOptions[$dmMetricKey] ?? ucfirst($dmMetricKey);
+                                $metrics = [$dmMetricKey => $metricLabel];
                             } else {
-                                $metrics = $allChannelMetrics;
+                                $allChannelMetrics = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                                
+                                // Whitelist to allowed_metrics if defined
+                                $allowed = $s['allowed_metrics'] ?? $resolved['series_allowed_metrics'][$sIdx] ?? [];
+                                if (!empty($allowed) && is_array($allowed)) {
+                                    $metrics = array_intersect_key($allChannelMetrics, array_flip($allowed));
+                                } else {
+                                    $metrics = $allChannelMetrics;
+                                }
                             }
 
                             $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
@@ -630,6 +639,7 @@ trait LoadsDashboardViewData
                                 'metrics' => $metrics,
                                 'type' => $s['type'] ?? 'metric',
                                 'dm_name' => $s['dm_name'] ?? null,
+                                'selected_metric' => $isDmType && !empty($s['metrics']) ? (is_array($s['metrics']) ? reset($s['metrics']) : $s['metrics']) : null,
                             ];
                         }
                     }
