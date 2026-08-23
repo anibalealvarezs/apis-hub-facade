@@ -299,6 +299,26 @@ export function dashboardView(config = {}) {
         settingsSourceType: '',
         openSettings: false,
         settingsSearchQueries: {},
+        canSettingsScrollSeriesLeft: false,
+        canSettingsScrollSeriesRight: false,
+
+        updateSettingsSeriesScrollState() {
+            const el = this.$refs.settingsSeriesScrollContainer;
+            if (!el) return;
+            this.canSettingsScrollSeriesLeft = el.scrollLeft > 5;
+            this.canSettingsScrollSeriesRight = Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 5;
+        },
+
+        scrollSettingsSeriesByStep(direction = 1) {
+            const el = this.$refs.settingsSeriesScrollContainer;
+            if (!el) return;
+            const firstCard = el.querySelector('.snap-start');
+            const step = firstCard ? (firstCard.offsetWidth + 24) : ((el.clientWidth / 2) + 12);
+            el.scrollBy({ left: direction * step, behavior: 'smooth' });
+            setTimeout(() => {
+                this.updateSettingsSeriesScrollState();
+            }, 350);
+        },
 
         openWidgetSettings(widgetId, controls, builderControls, seriesOptions, variables, granularityOnTheGo, sourceType) {
             this.settingsWidgetId = widgetId;
@@ -371,6 +391,9 @@ export function dashboardView(config = {}) {
             }
 
             this.openSettings = true;
+            this.$nextTick(() => {
+                this.updateSettingsSeriesScrollState();
+            });
         },
 
         closeSettings() {

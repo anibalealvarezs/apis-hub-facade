@@ -318,20 +318,55 @@
              x-trap.noscroll="openSettings">
             <div @click="closeSettings()"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
-
-            <div
+<div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
                 @click.away="closeSettings()">
-                <div
-                    class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
                     <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ __('Widget Settings') }}</h3>
-                    <button @click="closeSettings()"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                             stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        {{-- Series Stepped Navigation Arrows (Visible when > 2 series) --}}
+                        <div
+                            x-show="Object.keys(settingsVariables || {}).filter(k => shouldShowSeries(k)).length > 2"
+                            class="hidden md:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
+                                <span x-text="Object.keys(settingsVariables || {}).filter(k => shouldShowSeries(k)).length"></span> {{ __('Series') }}
+                            </span>
+                            <button
+                                type="button"
+                                @click="scrollSettingsSeriesByStep(-1)"
+                                :disabled="!canSettingsScrollSeriesLeft"
+                                :title="'{{ __('Scroll left') }}'"
+                                class="p-1 rounded-md transition-all"
+                                :class="canSettingsScrollSeriesLeft
+                                    ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-xs cursor-pointer'
+                                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-40'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                @click="scrollSettingsSeriesByStep(1)"
+                                :disabled="!canSettingsScrollSeriesRight"
+                                :title="'{{ __('Scroll right') }}'"
+                                class="p-1 rounded-md transition-all"
+                                :class="canSettingsScrollSeriesRight
+                                    ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-xs cursor-pointer'
+                                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-40'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <button @click="closeSettings()"
+                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                 stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative flex flex-col">
@@ -518,17 +553,15 @@
 
                         {{-- Right Column: Variables Configuration --}}
                         <div
+                            x-ref="settingsSeriesScrollContainer"
+                            @scroll.passive="updateSettingsSeriesScrollState()"
                             class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                             :class="{ 'hidden md:flex': activeSettingsMobileTab !== 'series' }">
                             
                             <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig && shouldShowSeries(vKey)">
                                     <div
-                                        class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
-                                        :class="{
-                                            'md:w-full': Object.keys(settingsVariables || {}).length === 1,
-                                            'sm:w-[calc(50%-0.75rem)]': Object.keys(settingsVariables || {}).length >= 2
-                                        }">
+                                        class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start bd-series-card">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
