@@ -943,7 +943,7 @@
                                                                         <button type="button"
                                                                                 @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
                                                                                 :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                class="text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all border shadow-xs"
+                                                                                class="w-[68px] justify-center text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all border shadow-xs"
                                                                                 :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
                                                                                     ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                     : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
@@ -1046,7 +1046,7 @@
                                                                                              <button type="button"
                                                                                                      @click.stop="toggleRawMetricComboType(index, key)"
                                                                                                      :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                                     class="text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all border shadow-xs"
+                                                                                                     class="w-[68px] justify-center text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all border shadow-xs"
                                                                                                      :class="getRawMetricComboType(index, key) === 'bar'
                                                                                                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
@@ -1056,12 +1056,12 @@
 
                                                                                          <button type="button"
                                                                                                 @click.stop="toggleRawMetricDefaultActive(index, key)"
-                                                                                                title="{{ __('Toggle default rendering on widget load') }}"
-                                                                                                class="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all"
+                                                                                                :title="(series.metrics || []).includes(key) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                                class="w-[76px] justify-center text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all text-center"
                                                                                                 :class="(series.metrics || []).includes(key)
                                                                                                     ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
-                                                                                            <span x-text="(series.metrics || []).includes(key) ? '★ {{ __('Default Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                                            <span x-text="(series.metrics || []).includes(key) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
                                                                                         </button>
                                                                                     </div>
                                                                                 </template>
