@@ -601,7 +601,7 @@
                                                         <select x-model="settingsControls.series_dependencies[vKey]"
                                                                 class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
                                                             <template x-for="(label, key) in vConfig.dependencies" :key="key">
-                                                                <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                                                <option :value="key" x-text="label" :selected="settingsControls.series_dependencies[vKey] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                             </template>
                                                         </select>
                                                     </div>
@@ -614,7 +614,7 @@
                                                         <select x-model="settingsControls.metrics[vConfig.index]"
                                                                 class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
                                                             <template x-for="(label, key) in (vConfig.metrics || {})" :key="key">
-                                                                <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                                                <option :value="key" x-text="label" :selected="settingsControls.metrics[vConfig.index] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                             </template>
                                                         </select>
                                                     </div>
