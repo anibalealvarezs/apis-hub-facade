@@ -113,7 +113,8 @@ window.dashboardRenderer = {
         containerEl.innerHTML = this.loadingSkeleton();
 
         try {
-            const body = {tenant};
+            const effectiveTenant = tenant || window.tenant || window.Filament?.getTenant?.() || document.querySelector('meta[name="tenant"]')?.content || (window.location.pathname.match(/\/app\/([^\/]+)/)?.[1]) || '';
+            const body = {tenant: effectiveTenant};
             if (controls) {
                 const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'asset_group', 'series_assets', 'series_metrics', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio', 'remove_unknown', 'combo_chart_config', 'combo_series_config'];
                 const overrides = {};
@@ -127,6 +128,7 @@ window.dashboardRenderer = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
                 },
                 body: JSON.stringify(body),

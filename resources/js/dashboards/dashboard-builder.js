@@ -1,6 +1,8 @@
 export function dashboardBuilder(config = {}) {
     const dashboardControls = config.dashboardControls || {};
     return {
+        tenant: config.tenant || (window.location.pathname.match(/\/app\/([^\/]+)/)?.[1]) || '',
+
         // ─── Unsaved Layout State ───
         isDirty: false,
         _isInitializingGrid: true,

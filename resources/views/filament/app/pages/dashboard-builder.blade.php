@@ -15,7 +15,8 @@
         kpis: @js($this->getKpisForWidgetPicker()),
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
-        availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog())
+        availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog()),
+        tenant: @js(\Filament\Facades\Filament::getTenant()?->subdomain ?? \Filament\Facades\Filament::getTenant()?->id ?? '')
     })" wire:ignore.self class="space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
