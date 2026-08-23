@@ -1733,7 +1733,50 @@ window.dashboardRenderer = {
         });
     },
 
+    _themeObserverInitialized: false,
+    _initThemeObserver() {
+        if (this._themeObserverInitialized || typeof window === 'undefined') return;
+        this._themeObserverInitialized = true;
+
+        const observer = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.type === 'attributes' && m.attributeName === 'class') {
+                    this.updateTheme();
+                    break;
+                }
+            }
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        window.addEventListener('theme-changed', () => this.updateTheme());
+    },
+
+    updateTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const legendColor = isDark ? '#E4E4E7' : '#374151';
+        const tickColor = isDark ? '#A1A1AA' : '#71717A';
+        const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+
+        this._chartInstances.forEach((chart) => {
+            if (!chart || !chart.options) return;
+            if (chart.options.scales) {
+                for (const axis of Object.values(chart.options.scales)) {
+                    if (axis.ticks) axis.ticks.color = tickColor;
+                    if (axis.grid) axis.grid.color = gridColor;
+                }
+            }
+            if (chart.options.plugins?.legend?.labels) {
+                chart.options.plugins.legend.labels.color = legendColor;
+            }
+            try {
+                chart.update('none');
+            } catch (e) {
+                // Ignore transient update errors during navigation
+            }
+        });
+    },
+
     renderChart(containerEl, config) {
+        this._initThemeObserver();
         this._pinnedTooltips.delete(containerEl);
         const isDark = document.documentElement.classList.contains('dark');
         if (config.options && config.options.scales) {
@@ -1747,7 +1790,7 @@ window.dashboardRenderer = {
             }
         }
         if (config.options?.plugins?.legend?.labels) {
-            config.options.plugins.legend.labels.color = isDark ? '#D4D4D8' : '#52525B';
+            config.options.plugins.legend.labels.color = isDark ? '#E4E4E7' : '#374151';
         }
 
         config.options = config.options || {};
