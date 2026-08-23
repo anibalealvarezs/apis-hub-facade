@@ -1768,12 +1768,13 @@ class DashboardWidgetDataController extends Controller
             foreach ($mergedState['independent_variables'] as $key => $var) {
                 if (! empty($var['independent_dm_id'])) {
                     $cleanedIndependents[$key] = $var;
-                } elseif (! empty($var['independent_metric'])) {
+                } elseif (! empty($var['independent_metric']) && ! empty($var['independent_channel'])) {
                     $cleanedIndependents[$key] = $var;
                 } else {
-                    $ch = $var['independent_channel'] ?? null;
+                    $ch = $var['independent_channel'] ?? $mergedState['dependent_channel'] ?? null;
                     $chMetrics = $ch ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($ch) : [];
                     if (! empty($chMetrics)) {
+                        $var['independent_channel'] = $ch;
                         $var['independent_metric'] = array_key_first($chMetrics);
                         $cleanedIndependents[$key] = $var;
                     }

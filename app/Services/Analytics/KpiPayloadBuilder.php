@@ -241,137 +241,94 @@ class KpiPayloadBuilder
 
     private static function buildIndependentNodes(array $variables, string $granularity = 'daily'): array
     {
-        if (count($variables) === 1) {
-            $var = $variables[0];
-            $indSourceType = $var['independent_source_type'] ?? 'channel';
+        // Filter out empty/unconfigured variables that have neither a valid metric nor dm_id
+        $validVariables = array_values(array_filter($variables, function ($var) {
+            $sourceType = $var['independent_source_type'] ?? 'channel';
+            if ($sourceType === 'derived_metric') {
+                return ! empty($var['independent_dm_id']);
+            }
+            return ! empty($var['independent_metric']) && ! empty($var['independent_channel']);
+        }));
 
-            if ($indSourceType === 'derived_metric') {
-                $indDmId = $var['independent_dm_id'] ?? null;
-                $indFullMetric = $indDmId ? 'dm_' . $indDmId : '';
-                $node = [
-                    'type' => 'metric',
-                    'metric' => $indFullMetric,
-                ];
-                \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Building independent node (single derived metric)', [
-                    'dm_id' => $indDmId,
-                    'full_metric' => $indFullMetric,
-                ]);
-                return $node;
-            }
+        if (empty($validVariables)) {
+            return [];
+        }
 
-            $indChannel = $var['independent_channel'] ?? '';
-            $indMetric = $var['independent_metric'] ?? '';
-            $indFullMetric = $indChannel . '.' . $indMetric;
-            $node = [
-                'type' => 'metric',
-                'metric' => $indFullMetric,
-            ];
-            \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Building independent node (single)', [
-                'channel' => $indChannel,
-                'metric' => $indMetric,
-                'full_metric' => $indFullMetric,
-                'has_asset_group' => !empty($var['independent_asset_group']),
-                'has_asset_filter' => !empty($var['independent_asset_filter']),
-                'asset_group' => $var['independent_asset_group'] ?? null,
-                'asset_filter' => $var['independent_asset_filter'] ?? null,
-            ]);
-            
-            if (!empty($var['independent_asset_group'])) {
-                $group = \App\Models\AssetGroup::find($var['independent_asset_group']);
-                $assets = $group ? $group->active_items->where('channel', $var['independent_channel'])->pluck('asset_id')->toArray() : [];
-                
-                if (!empty($assets)) {
-                    $node['filters'] = ['asset_platform_id' => array_values($assets)];
-                    \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Independent asset group resolved', [
-                        'group_id' => $var['independent_asset_group'],
-                        'resolved_assets' => array_values($assets),
-                    ]);
-                } else {
-                    $node['filters'] = ['asset_platform_id' => ['__empty_group__']];
-                }
-            } elseif (!empty($var['independent_asset_filter'])) {
-                $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
-                \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Independent asset filter applied', [
-                    'asset_filter' => $var['independent_asset_filter'],
-                ]);
-            }
-
-            if (!empty($var['filters']) && is_array($var['filters'])) {
-                $node['filters'] = array_merge($node['filters'] ?? [], $var['filters']);
-            }
-            if (!empty($var['account_type'])) {
-                $node['filters']['account_type'] = $var['account_type'];
-            }
-
-            if (($var['independent_channel'] ?? '') === 'facebook_organic' && empty($node['filters']['account_type'])) {
-                $igMetrics = ['likes', 'comments', 'views', 'profile_views', 'website_clicks', 'profile_links_taps', 'saves', 'shares', 'replies', 'accounts_engaged', 'content_views'];
-                $indMetric = $var['independent_metric'] ?? '';
-                $indDep = $var['independent_dependency'] ?? $var['dependency'] ?? '';
-                $isIgScope = $indDep === 'instagram_account' || in_array($indMetric, $igMetrics, true);
-                if ($isIgScope) {
-                    $node['filters']['account_type'] = 'instagram_account';
-                }
-            }
-
-            if (($var['independent_channel'] ?? '') === 'google_search_console'
-                && $granularity !== 'search_appearance'
-                && $granularity !== 'dimensions.searchAppearance'
-                && !isset($node['filters']['dimensions.searchAppearance'])
-            ) {
-                $node['filters']['dimensions.searchAppearance'] = 'standard';
-                \Illuminate\Support\Facades\Log::info('[STEP KpiPayloadBuilder] Added GSC searchAppearance=standard filter', [
-                    'node_metric' => $indFullMetric,
-                ]);
-            }
-            
-            return $node;
+        if (count($validVariables) === 1) {
+            return self::buildSingleIndependentNode($validVariables[0], $granularity);
         }
 
         // If multiple, chain them with '+'
-        $first = array_shift($variables);
-        $firstSourceType = $first['independent_source_type'] ?? 'channel';
-
-        if ($firstSourceType === 'derived_metric') {
-            $firstDmId = $first['independent_dm_id'] ?? null;
-            $left = [
-                'type' => 'metric',
-                'metric' => $firstDmId ? 'dm_' . $firstDmId : '',
-            ];
-        } else {
-            $left = [
-                'type' => 'metric',
-                'metric' => ($first['independent_channel'] ?? '') . '.' . ($first['independent_metric'] ?? ''),
-            ];
-        }
-
-        if ($firstSourceType !== 'derived_metric' && !empty($first['independent_asset_group'])) {
-            $group = \App\Models\AssetGroup::find($first['independent_asset_group']);
-            $assets = $group ? $group->active_items->where('channel', $first['independent_channel'])->pluck('asset_id')->toArray() : [];
-            
-            if (!empty($assets)) {
-                $left['filters'] = ['asset_platform_id' => array_values($assets)];
-            } else {
-                $left['filters'] = ['asset_platform_id' => ['__empty_group__']];
-            }
-        } elseif ($firstSourceType !== 'derived_metric' && !empty($first['independent_asset_filter'])) {
-            $left['filters'] = ['asset_platform_id' => $first['independent_asset_filter']];
-        }
-
-        if ($firstSourceType !== 'derived_metric'
-            && ($first['independent_channel'] ?? '') === 'google_search_console'
-            && $granularity !== 'search_appearance'
-            && $granularity !== 'dimensions.searchAppearance'
-            && !isset($left['filters']['dimensions.searchAppearance'])
-        ) {
-            $left['filters']['dimensions.searchAppearance'] = 'standard';
-        }
+        $first = array_shift($validVariables);
+        $left = self::buildSingleIndependentNode($first, $granularity);
 
         return [
             'type' => 'operator',
             'operator' => '+',
             'left' => $left,
-            'right' => self::buildIndependentNodes($variables, $granularity),
+            'right' => self::buildIndependentNodes($validVariables, $granularity),
         ];
+    }
+
+    private static function buildSingleIndependentNode(array $var, string $granularity = 'daily'): array
+    {
+        $indSourceType = $var['independent_source_type'] ?? 'channel';
+
+        if ($indSourceType === 'derived_metric') {
+            $indDmId = $var['independent_dm_id'] ?? null;
+            $indFullMetric = $indDmId ? 'dm_' . $indDmId : '';
+            return [
+                'type' => 'metric',
+                'metric' => $indFullMetric,
+            ];
+        }
+
+        $indChannel = $var['independent_channel'] ?? '';
+        $indMetric = $var['independent_metric'] ?? '';
+        $indFullMetric = $indChannel . '.' . $indMetric;
+        $node = [
+            'type' => 'metric',
+            'metric' => $indFullMetric,
+        ];
+        
+        if (!empty($var['independent_asset_group'])) {
+            $group = \App\Models\AssetGroup::find($var['independent_asset_group']);
+            $assets = $group ? $group->active_items->where('channel', $var['independent_channel'])->pluck('asset_id')->toArray() : [];
+            
+            if (!empty($assets)) {
+                $node['filters'] = ['asset_platform_id' => array_values($assets)];
+            } else {
+                $node['filters'] = ['asset_platform_id' => ['__empty_group__']];
+            }
+        } elseif (!empty($var['independent_asset_filter'])) {
+            $node['filters'] = ['asset_platform_id' => $var['independent_asset_filter']];
+        }
+
+        if (!empty($var['filters']) && is_array($var['filters'])) {
+            $node['filters'] = array_merge($node['filters'] ?? [], $var['filters']);
+        }
+        if (!empty($var['account_type'])) {
+            $node['filters']['account_type'] = $var['account_type'];
+        }
+
+        if (($var['independent_channel'] ?? '') === 'facebook_organic' && empty($node['filters']['account_type'])) {
+            $igMetrics = ['likes', 'comments', 'views', 'profile_views', 'website_clicks', 'profile_links_taps', 'saves', 'shares', 'replies', 'accounts_engaged', 'content_views'];
+            $indDep = $var['independent_dependency'] ?? $var['dependency'] ?? '';
+            $isIgScope = $indDep === 'instagram_account' || in_array($indMetric, $igMetrics, true);
+            if ($isIgScope) {
+                $node['filters']['account_type'] = 'instagram_account';
+            }
+        }
+
+        if (($var['independent_channel'] ?? '') === 'google_search_console'
+            && $granularity !== 'search_appearance'
+            && $granularity !== 'dimensions.searchAppearance'
+            && !isset($node['filters']['dimensions.searchAppearance'])
+        ) {
+            $node['filters']['dimensions.searchAppearance'] = 'standard';
+        }
+        
+        return $node;
     }
 
     /**
