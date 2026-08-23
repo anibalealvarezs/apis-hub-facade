@@ -592,23 +592,23 @@
                                             x-text="widgetControlsForm.date_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                     </label>
                                 </div>
-                                <div class="p-6 flex flex-row items-center gap-3">
+                                <div class="p-4 flex flex-row items-center gap-2">
                                     <template x-if="widgetControlsForm.date_inherit">
                                         <div
-                                            class="w-full text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700"
+                                            class="w-full text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 truncate"
                                             x-text="'{{ __('Inherited:') }} ' + ((((widgetKpiConfig && widgetKpiConfig.start_date) || dashboardControls.date_start) || '—')) + ' → ' + ((((widgetKpiConfig && widgetKpiConfig.end_date) || dashboardControls.date_end) || '—'))"></div>
                                     </template>
                                     <template x-if="!widgetControlsForm.date_inherit">
-                                        <div class="w-full flex flex-row items-center gap-3">
+                                        <div class="w-full flex flex-row items-center gap-2">
                                             <input type="date" x-model="widgetControlsForm.date_start"
                                                    :min="dashboardControls.date_start || ''"
                                                    :max="widgetControlsForm.date_end || dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                                   class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                                            <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
+                                                   class="w-1/2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block px-2.5 py-2">
+                                            <span class="text-gray-400 dark:text-gray-500 text-xs shrink-0">→</span>
                                             <input type="date" x-model="widgetControlsForm.date_end"
                                                    :min="widgetControlsForm.date_start || dashboardControls.date_start || ''"
                                                    :max="dashboardControls.date_end || '{{ date('Y-m-d', strtotime('-1 day')) }}'"
-                                                   class="w-full bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
+                                                   class="w-1/2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block px-2.5 py-2">
                                         </div>
                                     </template>
                                 </div>
@@ -943,7 +943,7 @@
                                                                         <button type="button"
                                                                                 @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
                                                                                 :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                class="w-[68px] justify-center text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all border shadow-xs"
+                                                                                class="bd-badge-combo text-[10px] font-bold py-0.5 rounded-md transition-all border shadow-xs"
                                                                                 :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
                                                                                     ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                     : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
@@ -1046,7 +1046,7 @@
                                                                                              <button type="button"
                                                                                                      @click.stop="toggleRawMetricComboType(index, key)"
                                                                                                      :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                                     class="w-[68px] justify-center text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-all border shadow-xs"
+                                                                                                     class="bd-badge-combo text-[10px] font-bold py-0.5 rounded-md transition-all border shadow-xs"
                                                                                                      :class="getRawMetricComboType(index, key) === 'bar'
                                                                                                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
@@ -1057,7 +1057,7 @@
                                                                                          <button type="button"
                                                                                                 @click.stop="toggleRawMetricDefaultActive(index, key)"
                                                                                                 :title="(series.metrics || []).includes(key) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                                class="w-[76px] justify-center text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 transition-all text-center"
+                                                                                                class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
                                                                                                 :class="(series.metrics || []).includes(key)
                                                                                                     ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
