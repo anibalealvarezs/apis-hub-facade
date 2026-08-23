@@ -160,6 +160,20 @@
                                                 </div>
                                             </template>
                                             <button
+                                                type="button"
+                                                class="p-1 rounded transition-colors"
+                                                :class="previewWidgets[widget.id] ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+                                                x-on:click.stop="toggleWidgetPreview(widget.id)"
+                                                :title="previewWidgets[widget.id] ? '{{ __('Switch to builder mode') }}' : '{{ __('Preview chart') }}'">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                     stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </button>
+                                            <button
                                                 class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                                                 x-on:click.stop="openWidgetControls(widget)"
                                                 :title="'{{ __('Configure') }}'">
@@ -193,8 +207,14 @@
                                             </button>
                                         </div>
                                     </div>
-                                    {{-- Widget Content (placeholder) --}}
-                                    <div
+                                    {{-- Widget Content (Live Preview vs Builder Placeholder) --}}
+                                    <div x-show="previewWidgets[widget.id]"
+                                         class="flex-1 w-full h-full min-h-0 overflow-hidden relative flex flex-col p-2">
+                                        <div :id="'builder-widget-preview-' + widget.id"
+                                             class="widget-content flex-1 w-full h-full min-h-0 overflow-hidden relative"></div>
+                                    </div>
+
+                                    <div x-show="!previewWidgets[widget.id]"
                                         class="widget-body-drag cursor-grab active:cursor-grabbing select-none flex-1 p-4 flex flex-col items-center justify-center min-h-0 overflow-y-auto">
                                         <div
                                             class="widget-drag-handle group/grab cursor-grab active:cursor-grabbing w-16 h-12 mb-4 bg-gray-50 dark:bg-gray-900/50 hover:bg-primary-50 dark:hover:bg-primary-950/40 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-primary-300 dark:hover:border-primary-700/60 flex flex-col items-center justify-center opacity-80 hover:opacity-100 transition-all shadow-sm relative"
@@ -370,8 +390,9 @@
         {{-- ============================================================ --}}
         <div x-show="showWidgetControls"
              class="bd-modal-root fixed inset-0 z-[100] flex items-start justify-center pt-10 sm:pt-16"
-             x-trap.noscroll="showWidgetControls">
-            <div @click="showWidgetControls = false"
+             x-trap.noscroll="showWidgetControls"
+             @keydown.escape.window="if (showWidgetControls && !showUnsavedWidgetControlsModal) { attemptCloseWidgetControls(); }">
+            <div @click="attemptCloseWidgetControls()"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel">
@@ -456,7 +477,7 @@
                         <button
                             type="button"
                             class="bd-modal-header-btn-cancel"
-                            x-on:click="showWidgetControls = false">{{ __('Cancel') }}
+                            x-on:click="attemptCloseWidgetControls()">{{ __('Cancel') }}
                         </button>
                         <button
                             type="button"
@@ -466,7 +487,7 @@
 
                         <button
                             type="button"
-                            @click="showWidgetControls = false"
+                            @click="attemptCloseWidgetControls()"
                             class="bd-modal-header-close"
                             :title="'{{ __('Close') }}'">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
@@ -2175,6 +2196,31 @@
         >
             <p class="text-sm text-gray-500 dark:text-gray-400">
                 {{ __('You have made changes to the layout of this dashboard. Would you like to save them before leaving?') }}
+            </p>
+        </x-confirm-modal>
+
+        {{-- ============================================================ --}}
+        {{-- UNSAVED WIDGET CONTROLS CONFIRMATION MODAL                   --}}
+        {{-- ============================================================ --}}
+        <x-confirm-modal
+            open="showUnsavedWidgetControlsModal"
+            title="{{ __('Unsaved Widget Changes') }}"
+            icon="heroicon-o-exclamation-triangle"
+            color="warning"
+            confirm-label="{{ __('Save and Close') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-check"
+            on-confirm="confirmSaveAndCloseWidgetControls()"
+            :close-on-confirm="false"
+            secondary-label="{{ __('Discard and Close') }}"
+            secondary-color="danger"
+            on-secondary="confirmDiscardAndCloseWidgetControls()"
+            :close-on-secondary="false"
+            cancel-label="{{ __('Keep Editing') }}"
+            on-cancel="cancelUnsavedWidgetControlsModal()"
+        >
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ __('You have unsaved changes to this widget\'s configuration. Would you like to save them before closing?') }}
             </p>
         </x-confirm-modal>
 

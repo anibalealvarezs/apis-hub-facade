@@ -8,6 +8,89 @@ export function dashboardBuilder(config = {}) {
         pendingNavUrl: null,
         pendingNavReload: false,
 
+        // ─── Unsaved Widget Controls State ───
+        showUnsavedWidgetControlsModal: false,
+        widgetControlsSnapshot: null,
+
+        // ─── Widget Preview Mode State ───
+        previewWidgets: {},
+
+        isWidgetControlsDirty() {
+            if (!this.widgetControlsSnapshot || !this.widgetControlsForm) return false;
+            return JSON.stringify(this.widgetControlsForm) !== this.widgetControlsSnapshot;
+        },
+
+        attemptCloseWidgetControls() {
+            if (this.isWidgetControlsDirty()) {
+                this.showUnsavedWidgetControlsModal = true;
+            } else {
+                this.showWidgetControls = false;
+                this.widgetControlsSnapshot = null;
+            }
+        },
+
+        confirmSaveAndCloseWidgetControls() {
+            this.confirmWidgetControls();
+            this.showUnsavedWidgetControlsModal = false;
+        },
+
+        confirmDiscardAndCloseWidgetControls() {
+            this.showUnsavedWidgetControlsModal = false;
+            this.showWidgetControls = false;
+            this.widgetControlsSnapshot = null;
+        },
+
+        cancelUnsavedWidgetControlsModal() {
+            this.showUnsavedWidgetControlsModal = false;
+        },
+
+        toggleWidgetPreview(widgetId) {
+            const id = typeof widgetId === 'object' ? widgetId.id : widgetId;
+            const nextState = !this.previewWidgets[id];
+            this.previewWidgets = {
+                ...this.previewWidgets,
+                [id]: nextState
+            };
+            if (nextState) {
+                this.$nextTick(() => {
+                    const el = document.getElementById('builder-widget-preview-' + id);
+                    if (el) {
+                        this.renderWidgetPreview(id, el);
+                    }
+                });
+            }
+        },
+
+        renderWidgetPreview(widgetId, el) {
+            const widget = (this.widgets || []).find(w => String(w.id) === String(widgetId));
+            if (!widget) return;
+            const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
+            if (!targetEl) return;
+            targetEl.innerHTML = '';
+            const effectiveControls = this.resolveWidgetControls(widget);
+            if (window.dashboardRenderer) {
+                window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
+            }
+        },
+
+        resolveWidgetControls(widget) {
+            const wc = widget.controls || {};
+            const dc = this.dashboardControls || {};
+            const resolved = { ...wc };
+
+            if (!resolved.date_start && dc.date_start) resolved.date_start = dc.date_start;
+            if (!resolved.date_end && dc.date_end) resolved.date_end = dc.date_end;
+            if (!resolved.zero_handling && dc.zero_handling) resolved.zero_handling = dc.zero_handling;
+            if (!resolved.granularity && dc.granularity) resolved.granularity = dc.granularity;
+            if (resolved.edge_case_weighted === undefined && dc.edge_case_weighted !== undefined) {
+                resolved.edge_case_weighted = dc.edge_case_weighted;
+            }
+            if (!resolved.edge_case_grouping && dc.edge_case_grouping) {
+                resolved.edge_case_grouping = dc.edge_case_grouping;
+            }
+            return resolved;
+        },
+
         // ─── Delete Confirmation Modal State ───
         deleteConfirmOpen: false,
         deleteConfirmTargets: [],
@@ -1071,6 +1154,21 @@ export function dashboardBuilder(config = {}) {
                 this.isDirty = (currentSignature !== this._initialLayoutSignature);
             });
 
+            this.grid.on('resizestop', (event, el) => {
+                if (!el) return;
+                const widgetId = el.getAttribute('gs-id') || el.getAttribute('data-id');
+                if (widgetId && this.previewWidgets[widgetId]) {
+                    const contentEl = el.querySelector('.widget-content');
+                    if (contentEl && window.dashboardRenderer?._chartInstances?.has(contentEl)) {
+                        const chart = window.dashboardRenderer._chartInstances.get(contentEl);
+                        if (chart && typeof chart.resize === 'function') {
+                            chart.resize();
+                        }
+                    }
+                }
+                window.dispatchEvent(new Event('resize'));
+            });
+
             this.registerGridItemsObserver();
             this.syncExistingGridItems();
 
@@ -1727,6 +1825,7 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.widgetControlsSnapshot = JSON.stringify(this.widgetControlsForm);
                     this.$nextTick(() => {
                         const el = this.$refs.seriesScrollContainer;
                         if (el) el.scrollLeft = 0;
@@ -1737,6 +1836,7 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.widgetControlsSnapshot = JSON.stringify(this.widgetControlsForm);
                     this.$nextTick(() => {
                         const el = this.$refs.seriesScrollContainer;
                         if (el) el.scrollLeft = 0;
@@ -1747,6 +1847,7 @@ export function dashboardBuilder(config = {}) {
                 this.loadWidgetMetrics(savedMetrics);
                 this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                 this.showWidgetControls = true;
+                this.widgetControlsSnapshot = JSON.stringify(this.widgetControlsForm);
                 this.$nextTick(() => {
                     const el = this.$refs.seriesScrollContainer;
                     if (el) el.scrollLeft = 0;
@@ -2278,6 +2379,7 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.showWidgetControls = false;
+            this.widgetControlsSnapshot = null;
             this.reloadGrid();
 
             const idx = this.widgets.findIndex(w => w.id === this.widgetControlsTarget.id);
@@ -2288,6 +2390,12 @@ export function dashboardBuilder(config = {}) {
                 this.widgets[idx].title = fallbackTitle;
                 this.widgets[idx].description = fallbackDesc;
                 this.widgets[idx].widget_type = c.widget_type;
+            }
+
+            if (this.previewWidgets[this.widgetControlsTarget.id]) {
+                this.$nextTick(() => {
+                    this.renderWidgetPreview(this.widgetControlsTarget.id);
+                });
             }
         },
 
