@@ -1554,7 +1554,10 @@ class DashboardWidgetDataController extends Controller
             ])->values()->toArray(),
         ]);
 
-        if (empty($uiState['dependent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
+        // Only allow runtime override for variables that were NOT hardcoded/predefined in the original KPI configuration
+        $kpiOriginalUiState = $kpi->filters['_ui_state'] ?? [];
+
+        if (empty($kpiOriginalUiState['dependent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
             $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
         }
         $metricIndex++;
@@ -1562,7 +1565,8 @@ class DashboardWidgetDataController extends Controller
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
                 $indSourceType = $var['independent_source_type'] ?? 'channel';
-                if ($indSourceType === 'channel' && empty($uiState['independent_variables'][$key]['independent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
+                $origIndMetric = $kpiOriginalUiState['independent_variables'][$key]['independent_metric'] ?? null;
+                if ($indSourceType === 'channel' && empty($origIndMetric) && ! empty($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                 }
                 $metricIndex++;

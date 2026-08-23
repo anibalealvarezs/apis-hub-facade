@@ -598,11 +598,12 @@
                                                 <template x-if="settingsSourceType === 'kpi' && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                                        <x-ui.select-input x-model="settingsControls.metrics[vConfig.index]" class="w-full">
-                                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                                <x-ui.select-option x-bind:value="key" x-text="label" x-bind:selected="settingsControls.metrics[vConfig.index] == key"></x-ui.select-option>
+                                                        <select x-model="settingsControls.metrics[vConfig.index]"
+                                                                class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
+                                                            <template x-for="(label, key) in (vConfig.metrics || {})" :key="key">
+                                                                <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                             </template>
-                                                        </x-ui.select-input>
+                                                        </select>
                                                     </div>
                                                 </template>
 
