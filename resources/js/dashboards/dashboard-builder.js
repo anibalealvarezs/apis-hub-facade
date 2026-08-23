@@ -13,6 +13,7 @@ export function dashboardBuilder(config = {}) {
         // ─── Unsaved Widget Controls State ───
         showUnsavedWidgetControlsModal: false,
         widgetControlsSnapshot: null,
+        hasUserInteractedWithWidgetControls: false,
 
         // ─── Ephemeral Sandbox Testing State ───
         showSandboxModal: false,
@@ -142,7 +143,12 @@ export function dashboardBuilder(config = {}) {
             this.widgetControlsSnapshot = this.getWidgetControlsSignature();
         },
 
+        markWidgetControlsDirty() {
+            this.hasUserInteractedWithWidgetControls = true;
+        },
+
         isWidgetControlsDirty() {
+            if (!this.hasUserInteractedWithWidgetControls) return false;
             if (!this.widgetControlsSnapshot || !this.widgetControlsForm) return false;
             return this.getWidgetControlsSignature() !== this.widgetControlsSnapshot;
         },
@@ -152,6 +158,7 @@ export function dashboardBuilder(config = {}) {
                 this.showUnsavedWidgetControlsModal = true;
             } else {
                 this.showWidgetControls = false;
+                this.hasUserInteractedWithWidgetControls = false;
                 this.widgetControlsSnapshot = null;
             }
         },
@@ -164,6 +171,7 @@ export function dashboardBuilder(config = {}) {
         confirmDiscardAndCloseWidgetControls() {
             this.showUnsavedWidgetControlsModal = false;
             this.showWidgetControls = false;
+            this.hasUserInteractedWithWidgetControls = false;
             this.widgetControlsSnapshot = null;
         },
 
@@ -1026,6 +1034,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         addSeriesCard() {
+            this.markWidgetControlsDirty();
             const list = [...(this.widgetControlsForm.raw_series || [])];
             list.push({
                 type: 'metric',
@@ -1054,6 +1063,7 @@ export function dashboardBuilder(config = {}) {
                 return;
             }
 
+            this.markWidgetControlsDirty();
             const list = [...this.widgetControlsForm.raw_series];
             list.splice(index, 1);
             this.widgetControlsForm.raw_series = list;
@@ -1068,6 +1078,7 @@ export function dashboardBuilder(config = {}) {
                 return;
             }
 
+            this.markWidgetControlsDirty();
             const targetDmId = String(this.pendingRemoveDmId);
             const currentList = this.widgetControlsForm.raw_series || [];
             const filteredList = currentList.filter(s => !(s.type === 'derived_metric' && String(s.dm_id) === targetDmId));
@@ -1539,6 +1550,7 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.widgetControlsTarget = widget;
+            this.hasUserInteractedWithWidgetControls = false;
 
             const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
             const hasZero = wc.zero_handling !== undefined;
@@ -2089,6 +2101,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         toggleRawMetricIncluded(index, metricKey) {
+            this.markWidgetControlsDirty();
             const series = this.widgetControlsForm.raw_series[index];
             if (!series) return;
             if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
@@ -2108,6 +2121,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         toggleRawMetricDefaultActive(index, metricKey) {
+            this.markWidgetControlsDirty();
             const series = this.widgetControlsForm.raw_series[index];
             if (!series) return;
             if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
@@ -2129,6 +2143,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         selectAllRawMetrics(index) {
+            this.markWidgetControlsDirty();
             const series = this.widgetControlsForm.raw_series[index];
             if (!series || !series.channel) return;
             const availableKeys = Object.keys(this.allChannelMetrics[series.channel] || {});
@@ -2137,6 +2152,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         toggleRawMetricComboType(index, metricKey) {
+            this.markWidgetControlsDirty();
             if (!this.widgetControlsForm.combo_chart_config) {
                 this.widgetControlsForm.combo_chart_config = {};
             }
@@ -2167,6 +2183,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         clearAllRawMetrics(index) {
+            this.markWidgetControlsDirty();
             const series = this.widgetControlsForm.raw_series[index];
             if (!series) return;
             series.allowed_metrics = [];
@@ -2174,6 +2191,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         toggleRawAsset(index, id) {
+            this.markWidgetControlsDirty();
             const current = this.widgetControlsForm.raw_series[index].assets || [];
             const strId = String(id);
             if (current.includes(strId)) {
@@ -2185,6 +2203,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         selectAllRawAssets(index) {
+            this.markWidgetControlsDirty();
             const ch = this.widgetControlsForm.raw_series[index].channel;
             const assets = this.allChannelAssets[ch] || {};
             let validIds = Object.keys(assets).map(String);
@@ -2197,6 +2216,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
+            this.markWidgetControlsDirty();
             const assets = this.allChannelAssets[channel] || {};
             let validIds = Object.keys(assets).map(String);
             if (kpiGroup && this.allChannelAssetGroups[channel] && this.allChannelAssetGroups[channel][kpiGroup]) {
@@ -2215,6 +2235,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         toggleKpiAsset(seriesKey, id) {
+            this.markWidgetControlsDirty();
             const current = this.widgetControlsForm.series_assets[seriesKey] || [];
             const strId = String(id);
 
@@ -2232,6 +2253,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         toggleDmAsset(index, id) {
+            this.markWidgetControlsDirty();
             const current = this.widgetControlsForm.dm_assets[index] || [];
             const strId = String(id);
             if (current.includes(strId)) {
@@ -2242,6 +2264,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         selectAllDmAssets(index) {
+            this.markWidgetControlsDirty();
             const series = this.widgetControlsTarget.dmSourceSeries[index];
             const ch = series.channel;
             const assets = this.allChannelAssets[ch] || {};
@@ -2255,14 +2278,17 @@ export function dashboardBuilder(config = {}) {
         },
 
         clearAllRawAssets(index) {
+            this.markWidgetControlsDirty();
             this.widgetControlsForm.raw_series[index].assets = [];
         },
 
         clearAllDmAssets(index) {
+            this.markWidgetControlsDirty();
             this.widgetControlsForm.dm_assets[index] = [];
         },
 
         clearAllKpiAssets(seriesKey) {
+            this.markWidgetControlsDirty();
             this.widgetControlsForm.series_assets[seriesKey] = [];
         },
 
@@ -2314,6 +2340,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         resetWidgetControls() {
+            this.markWidgetControlsDirty();
             this.widgetControlsForm = {
                 date_inherit: true,
                 date_start: '',
