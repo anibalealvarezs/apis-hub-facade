@@ -1389,7 +1389,7 @@ window.dashboardRenderer = {
         }
     },
 
-    // ─── Combo Chart (MACD) ───
+    // ─── Combo Chart (Multi-Metric / Multi-Series & MACD) ───
 
     renderComboChart(containerEl, data, controls) {
         if (!data || !data.datasets || !data.datasets.length) {
@@ -1398,38 +1398,169 @@ window.dashboardRenderer = {
         }
 
         const resultFormat = this.getKpiResultFormat(controls);
+        const comboConfig = controls?.combo_chart_config || controls?.combo_series_config || {};
 
-        const mappedDatasets = data.datasets.map(ds => ({
-            ...ds,
-            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-        }));
+        // Rate, ratio, and percentage metric keys that default to Line on secondary axis (y1)
+        const rateMetricKeywords = ['roas', 'cpc', 'cpm', 'ctr', 'rate', 'aov', 'frequency', 'cost_per', 'percentage', 'ratio', 'bounce'];
+
+        let hasLeftAxis = false;
+        let hasRightAxis = false;
+        let leftAxisUnit = '';
+        let rightAxisUnit = '';
+
+        const mappedDatasets = data.datasets.map((ds, idx) => {
+            const labelLower = (ds.label || '').toLowerCase();
+            const metricKey = ds.metric || ds.metric_key || '';
+            const keyLower = metricKey.toLowerCase();
+
+            // 1. Determine if this dataset is a rate / ratio or volume metric
+            const isRateOrPercentage = ds.percentage ||
+                (resultFormat?.format === 'percentage') ||
+                rateMetricKeywords.some(kw => labelLower.includes(kw) || keyLower.includes(kw));
+
+            const isCurrency = ds.currency ?? (
+                (resultFormat?.format === 'currency') ||
+                ['spend', 'cost', 'revenue', 'cpc', 'cpm', 'aov'].some(kw => labelLower.includes(kw) || keyLower.includes(kw))
+            );
+
+            // 2. Determine Chart Type (User override > Dataset default > Heuristic)
+            let chartType = ds.type;
+            if (comboConfig[idx]?.type) {
+                chartType = comboConfig[idx].type;
+            } else if (comboConfig[ds.label]?.type) {
+                chartType = comboConfig[ds.label].type;
+            } else if (!chartType) {
+                // Heuristic: If multiple datasets and this is a rate/percentage/ratio -> 'line'; otherwise if first or volume -> 'bar'
+                if (data.datasets.length > 1 && isRateOrPercentage && !data.datasets.every(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
+                    chartType = 'line';
+                } else if (data.datasets.length > 1 && idx > 0 && !data.datasets.some(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
+                    // All volumes or neutral: alternate primary bar with lines
+                    chartType = idx === 0 ? 'bar' : 'line';
+                } else {
+                    chartType = 'bar';
+                }
+            }
+
+            // 3. Determine Axis Assignment (User override > Default)
+            let yAxisID = ds.yAxisID;
+            if (comboConfig[idx]?.axis) {
+                yAxisID = comboConfig[idx].axis;
+            } else if (comboConfig[ds.label]?.axis) {
+                yAxisID = comboConfig[ds.label].axis;
+            } else if (!yAxisID) {
+                // If this dataset is a line or rate/percentage while other datasets are bars/volumes, put on 'y1'
+                if (chartType === 'line' && data.datasets.length > 1 && !data.datasets.every(d => d.type === 'line' || isRateOrPercentage)) {
+                    yAxisID = 'y1';
+                } else {
+                    yAxisID = 'y';
+                }
+            }
+
+            if (yAxisID === 'y1') {
+                hasRightAxis = true;
+                if (!rightAxisUnit) {
+                    if (isRateOrPercentage) rightAxisUnit = '%';
+                    else if (isCurrency) rightAxisUnit = '$';
+                }
+            } else {
+                hasLeftAxis = true;
+                if (!leftAxisUnit) {
+                    if (isCurrency) leftAxisUnit = '$';
+                    else if (isRateOrPercentage) leftAxisUnit = '%';
+                }
+            }
+
+            return {
+                ...ds,
+                type: chartType,
+                yAxisID: yAxisID,
+                currency: isCurrency,
+                percentage: isRateOrPercentage,
+                borderWidth: chartType === 'line' ? (ds.borderWidth || 2.5) : (ds.borderWidth || 1),
+                pointRadius: chartType === 'line' ? (ds.pointRadius ?? 4) : undefined,
+                pointHoverRadius: chartType === 'line' ? (ds.pointHoverRadius ?? 6) : undefined,
+                fill: ds.fill !== undefined ? ds.fill : false,
+            };
+        });
+
+        const scalesConfig = {
+            x: {
+                grid: { display: false },
+                ticks: { maxTicksLimit: 12, font: { size: 10 } }
+            },
+            y: {
+                type: 'linear',
+                display: hasLeftAxis || !hasRightAxis,
+                position: 'left',
+                beginAtZero: true,
+                grid: { color: 'rgba(156, 163, 175, 0.15)' },
+                ticks: {
+                    font: { size: 10 },
+                    callback: (val) => {
+                        if (leftAxisUnit === '$') return this.formatCurrency(val);
+                        if (leftAxisUnit === '%') return val.toFixed(1) + '%';
+                        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                        if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+                        return this.formatNumber(val);
+                    }
+                }
+            }
+        };
+
+        if (hasRightAxis) {
+            scalesConfig.y1 = {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                beginAtZero: true,
+                grid: { drawOnChartArea: false }, // Avoid duplicate gridlines
+                ticks: {
+                    font: { size: 10 },
+                    callback: (val) => {
+                        if (rightAxisUnit === '$') return this.formatCurrency(val);
+                        if (rightAxisUnit === '%') return val.toFixed(1) + '%';
+                        if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
+                        if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+                        return this.formatNumber(val);
+                    }
+                }
+            };
+        }
 
         const config = {
             type: 'bar',
-            data: {...data, datasets: mappedDatasets},
+            data: { ...data, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    x: {grid: {display: false}},
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
                 },
+                scales: scalesConfig,
                 plugins: {
-                    legend: {display: true, position: 'bottom'},
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 }, padding: 12 }
+                    },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
+                                const ds = ctx.dataset || {};
+                                const label = ds.label || 'Value';
                                 let val = ctx.parsed.y;
                                 if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val);
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
-                                return this.formatNumber(val);
+                                if (ds.currency) return `${label}: ${this.formatCurrency(val)}`;
+                                if (ds.percentage) return `${label}: ${val.toFixed(1)}%`;
+                                return `${label}: ${this.formatNumber(val)}`;
                             },
                         },
                     },
                 },
             },
         };
+
         this._setAnimation(config, false);
         this.renderChart(containerEl, config);
     },

@@ -1429,6 +1429,7 @@ export function dashboardBuilder(config = {}) {
                 block_first_col: wc.block_first_col !== undefined ? !!wc.block_first_col : true,
                 raw_series: [],
                 dm_assets: wc.dm_assets || {},
+                combo_chart_config: wc.combo_chart_config ? JSON.parse(JSON.stringify(wc.combo_chart_config)) : {},
             };
 
             if (widget.source_type !== 'kpi') {
@@ -2216,9 +2217,11 @@ export function dashboardBuilder(config = {}) {
                 payload.channel = c.channel;
                 payload.assets = c.assets;
                 payload.metrics = c.metrics;
-                payload.series_assets = c.series_assets;
-                payload.series_asset_groups = c.series_asset_groups;
                 payload.series_dependencies = c.series_dependencies || {};
+            }
+
+            if (c.combo_chart_config && Object.keys(c.combo_chart_config).length > 0) {
+                payload.combo_chart_config = c.combo_chart_config;
             }
 
             const titles = c.titles || {};
