@@ -2433,7 +2433,7 @@
 
                                             {{-- Metric selector for Metric Widgets --}}
                                             <template x-if="sandboxTargetWidget?.source_type !== 'kpi' && sandboxTargetWidget?.source_type !== 'derived_metric' && vConfig.type !== 'derived_metric'">
-                                                <div class="my-2 flex flex-col shrink-0">
+                                                <div class="my-2 flex-1 flex flex-col min-h-0">
                                                     <div class="flex items-center justify-between mb-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
                                                         <button type="button"
@@ -2442,7 +2442,7 @@
                                                             {{ __('Select All') }}
                                                         </button>
                                                     </div>
-                                                    <div class="relative h-44 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                    <div class="flex-1 relative min-h-0 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
                                                             <template x-for="(label, key) in (vConfig.allowed_metrics && vConfig.allowed_metrics.length > 0 ? Object.fromEntries(Object.entries(getSandboxMetricsForSeries(vKey, vConfig)).filter(([k]) => vConfig.allowed_metrics.includes(k))) : getSandboxMetricsForSeries(vKey, vConfig))" :key="key">
                                                                 <div class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
@@ -2465,6 +2465,9 @@
                                                                         </button>
                                                                     </template>
                                                                 </div>
+                                                            </template>
+                                                            <template x-if="!getSandboxMetricsForSeries(vKey, vConfig) || Object.keys(getSandboxMetricsForSeries(vKey, vConfig)).length === 0">
+                                                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('No metrics available.') }}</p>
                                                             </template>
                                                         </div>
                                                     </div>
