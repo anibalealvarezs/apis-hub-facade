@@ -455,17 +455,20 @@
 
                         <button
                             type="button"
-                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent"
+                            class="bd-modal-header-btn-cancel"
                             x-on:click="showWidgetControls = false">{{ __('Cancel') }}
                         </button>
                         <button
                             type="button"
-                            class="text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 px-5 py-2 rounded-lg shadow-sm transition-colors border border-transparent"
+                            class="bd-modal-header-btn-save"
                             x-on:click="confirmWidgetControls()">{{ __('Save Controls') }}
                         </button>
 
-                        <button @click="showWidgetControls = false"
-                                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <button
+                            type="button"
+                            @click="showWidgetControls = false"
+                            class="bd-modal-header-close"
+                            :title="'{{ __('Close') }}'">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
                                  stroke="currentColor" class="w-5 h-5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
