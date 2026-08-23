@@ -2156,89 +2156,113 @@
              @keydown.escape.window="showSandboxModal = false">
             <div @click="showSandboxModal = false"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
-            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 w-full max-w-lg">
-                <div class="flex items-center justify-between p-5 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
-                    <div class="flex flex-col gap-0.5">
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-primary-500">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                            </svg>
-                            {{ __('Test Filters (Sandbox)') }}
-                        </h3>
+            <div class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel max-w-2xl">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 rounded-t-xl">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5 text-primary-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                                </svg>
+                                <span x-text="'{{ __('Test Filters:') }} ' + (sandboxTargetWidget?.title || sandboxTargetWidget?.name || '')"></span>
+                            </h3>
+                            <span class="inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-700/10 dark:ring-amber-400/20">
+                                {{ __('Sandbox (Ephemeral)') }}
+                            </span>
+                        </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ __('Simulate viewer controls in memory. These changes do NOT modify the saved dashboard.') }}
+                            {{ __('Simulate viewer controls in memory. These changes do NOT modify the saved dashboard configuration.') }}
                         </p>
                     </div>
-                    <button type="button" @click="showSandboxModal = false" class="bd-modal-header-close">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="p-5 space-y-4 text-sm">
-                    {{-- Date Range --}}
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Start Date') }}</label>
-                            <input type="date" x-model="sandboxForm.date_start" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('End Date') }}</label>
-                            <input type="date" x-model="sandboxForm.date_end" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
-                        </div>
-                    </div>
-
-                    {{-- Granularity --}}
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Granularity') }}</label>
-                        <select x-model="sandboxForm.granularity" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
-                            <option value="daily">{{ __('Daily') }}</option>
-                            <option value="weekly">{{ __('Weekly') }}</option>
-                            <option value="monthly">{{ __('Monthly') }}</option>
-                            <option value="quarterly">{{ __('Quarterly') }}</option>
-                            <option value="annually">{{ __('Annually') }}</option>
-                        </select>
-                    </div>
-
-                    {{-- Zero Handling & Edge Case Grouping --}}
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Zero Handling') }}</label>
-                            <select x-model="sandboxForm.zero_handling" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
-                                <option value="keep">{{ __('Keep Zeros') }}</option>
-                                <option value="remove">{{ __('Remove Zeros') }}</option>
-                                <option value="trim">{{ __('Trim Zeros') }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Grouping') }}</label>
-                            <select x-model="sandboxForm.edge_case_grouping" class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white shadow-xs focus:ring-primary-500 focus:border-primary-500">
-                                <option value="none">{{ __('None') }}</option>
-                                <option value="histogram">{{ __('Histogram') }}</option>
-                                <option value="iqr">{{ __('IQR') }}</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 rounded-b-xl">
-                    <button type="button"
-                            x-on:click="resetSandboxControls()"
-                            class="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-                        {{ __('Reset to Default') }}
-                    </button>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-3">
                         <button type="button"
-                                x-on:click="showSandboxModal = false"
-                                class="bd-modal-header-btn-cancel text-xs py-1.5 px-3">
-                            {{ __('Cancel') }}
+                                class="bd-modal-header-btn-cancel"
+                                x-on:click="resetSandboxControls()">
+                            {{ __('Reset to Default') }}
                         </button>
                         <button type="button"
-                                x-on:click="applySandboxControls()"
-                                class="bd-modal-header-btn-save text-xs py-1.5 px-3">
+                                class="bd-modal-header-btn-save"
+                                x-on:click="applySandboxControls()">
                             {{ __('Apply Test') }}
                         </button>
+                        <button type="button"
+                                @click="showSandboxModal = false"
+                                class="bd-modal-header-close"
+                                :title="'{{ __('Close') }}'">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0 bg-gray-50 dark:bg-gray-900 flex flex-col gap-6">
+                    {{-- Card: Date Range --}}
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                        <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+                            </svg>
+                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Date Range') }}</span>
+                        </div>
+                        <div class="p-6 flex flex-row items-center gap-3">
+                            <x-ui.date-input x-model="sandboxForm.date_start" class="w-full" />
+                            <span class="text-gray-400 dark:text-gray-500 text-sm">→</span>
+                            <x-ui.date-input x-model="sandboxForm.date_end" class="w-full" />
+                        </div>
+                    </div>
+
+                    {{-- Card: Granularity --}}
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                        <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Granularity') }}</span>
+                        </div>
+                        <div class="p-6">
+                            <x-ui.select-input x-model="sandboxForm.granularity" class="w-full">
+                                <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
+                                <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
+                                <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
+                                <x-ui.select-option value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
+                                <x-ui.select-option value="annually">{{ __('Annually') }}</x-ui.select-option>
+                            </x-ui.select-input>
+                        </div>
+                    </div>
+
+                    {{-- Card: Zero / Missing Data --}}
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                        <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Zero / Missing Data') }}</span>
+                        </div>
+                        <div class="p-6">
+                            <x-ui.select-input x-model="sandboxForm.zero_handling" class="w-full">
+                                <x-ui.select-option value="remove">{{ __('Remove zeros from results') }}</x-ui.select-option>
+                                <x-ui.select-option value="keep">{{ __('Keep zeros in results') }}</x-ui.select-option>
+                                <x-ui.select-option value="trim">{{ __('Trim leading/trailing zeros') }}</x-ui.select-option>
+                            </x-ui.select-input>
+                        </div>
+                    </div>
+
+                    {{-- Card: Edge Case Grouping --}}
+                    <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                        <div class="flex items-center gap-2 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/>
+                            </svg>
+                            <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Edge Cases') }}</span>
+                        </div>
+                        <div class="p-6">
+                            <x-ui.select-input x-model="sandboxForm.edge_case_grouping" class="w-full">
+                                <x-ui.select-option value="none">{{ __('No grouping') }}</x-ui.select-option>
+                                <x-ui.select-option value="histogram">{{ __('Auto histogram-elbow') }}</x-ui.select-option>
+                                <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
+                            </x-ui.select-input>
+                        </div>
                     </div>
                 </div>
             </div>
