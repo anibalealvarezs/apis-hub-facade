@@ -2412,5 +2412,6 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
+        <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ file_exists(public_path('js/dashboard-renderer.js')) ? filemtime(public_path('js/dashboard-renderer.js')) : time() }}"></script>
     @endpush
 </x-filament-panels::page>

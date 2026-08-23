@@ -71,14 +71,29 @@ export function dashboardBuilder(config = {}) {
             if (!widget) return;
             const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
             if (!targetEl) return;
+            if (!window.dashboardRenderer) {
+                const checkReady = (retries = 0) => {
+                    if (window.dashboardRenderer) {
+                        this.renderWidget(widgetId, el);
+                    } else if (retries < 50) {
+                        setTimeout(() => checkReady(retries + 1), 100);
+                    }
+                };
+                checkReady();
+                return;
+            }
             targetEl.innerHTML = '';
             const effectiveControls = {
                 ...this.resolveWidgetControls(widget),
                 ...(this.ephemeralOverrides[widget.id] || {})
             };
-            if (window.dashboardRenderer) {
-                window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
-            }
+            window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
+        },
+
+        renderAllWidgets() {
+            (this.widgets || []).forEach(w => {
+                this.renderWidget(w.id);
+            });
         },
 
         renderWidgetPreview(widgetId, el) {
@@ -584,6 +599,7 @@ export function dashboardBuilder(config = {}) {
                     this.initGrid();
                 }
                 this.initAllAssets();
+                this.renderAllWidgets();
             });
 
             window.addEventListener('beforeunload', (e) => {
