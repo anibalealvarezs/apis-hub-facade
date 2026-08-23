@@ -1932,6 +1932,36 @@ export function dashboardBuilder(config = {}) {
             series.metrics = [...availableKeys];
         },
 
+        toggleRawMetricComboType(index, metricKey) {
+            if (!this.widgetControlsForm.combo_chart_config) {
+                this.widgetControlsForm.combo_chart_config = {};
+            }
+            const cfgKey = index + '_' + metricKey;
+            const current = this.widgetControlsForm.combo_chart_config[cfgKey]?.type || this.getRawMetricDefaultComboType(index, metricKey);
+            const nextType = current === 'bar' ? 'line' : 'bar';
+            
+            this.widgetControlsForm.combo_chart_config = {
+                ...this.widgetControlsForm.combo_chart_config,
+                [cfgKey]: {
+                    ...(this.widgetControlsForm.combo_chart_config[cfgKey] || {}),
+                    type: nextType
+                }
+            };
+        },
+
+        getRawMetricComboType(index, metricKey) {
+            const cfgKey = index + '_' + metricKey;
+            return this.widgetControlsForm?.combo_chart_config?.[cfgKey]?.type || this.getRawMetricDefaultComboType(index, metricKey);
+        },
+
+        getRawMetricDefaultComboType(index, metricKey) {
+            const m = String(metricKey || '').toLowerCase();
+            const rateKeywords = ['roas', 'cpc', 'cpm', 'ctr', 'rate', 'aov', 'frequency', 'cost_per', 'percentage', 'ratio', 'bounce'];
+            if (rateKeywords.some(kw => m.includes(kw))) return 'line';
+            if (['spend', 'cost', 'revenue'].some(kw => m.includes(kw))) return 'bar';
+            return index === 0 ? 'bar' : 'line';
+        },
+
         clearAllRawMetrics(index) {
             const series = this.widgetControlsForm.raw_series[index];
             if (!series) return;

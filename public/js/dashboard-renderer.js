@@ -1425,10 +1425,15 @@ window.dashboardRenderer = {
 
             // 2. Determine Chart Type (User override > Dataset default > Heuristic)
             let chartType = ds.type;
-            if (comboConfig[idx]?.type) {
-                chartType = comboConfig[idx].type;
-            } else if (comboConfig[ds.label]?.type) {
-                chartType = comboConfig[ds.label].type;
+            const seriesIdx = ds.series_index !== undefined ? ds.series_index : idx;
+            const comboEntry = comboConfig[seriesIdx + '_' + metricKey] ||
+                comboConfig[idx + '_' + metricKey] ||
+                comboConfig[metricKey] ||
+                comboConfig[idx] ||
+                comboConfig[ds.label];
+
+            if (comboEntry?.type) {
+                chartType = comboEntry.type;
             } else if (!chartType) {
                 const hasSpendOrCurrency = data.datasets.some(d => {
                     const l = (d.label || '').toLowerCase();
