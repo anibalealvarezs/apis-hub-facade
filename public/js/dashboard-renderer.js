@@ -1430,12 +1430,22 @@ window.dashboardRenderer = {
             } else if (comboConfig[ds.label]?.type) {
                 chartType = comboConfig[ds.label].type;
             } else if (!chartType) {
-                // Heuristic: If multiple datasets and this is a rate/percentage/ratio -> 'line'; otherwise if first or volume -> 'bar'
-                if (data.datasets.length > 1 && isRateOrPercentage && !data.datasets.every(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
+                const hasSpendOrCurrency = data.datasets.some(d => {
+                    const l = (d.label || '').toLowerCase();
+                    const m = (d.metric || d.metric_key || '').toLowerCase();
+                    return d.currency || ['spend', 'cost', 'revenue'].some(kw => l.includes(kw) || m.includes(kw));
+                });
+
+                if (hasSpendOrCurrency) {
+                    // When Spend/Cost/Revenue is present, make Spend the Bar, and non-currency counts/rates the Lines
+                    const isThisCurrency = isCurrency || ['spend', 'cost', 'revenue'].some(kw => labelLower.includes(kw) || keyLower.includes(kw));
+                    chartType = isThisCurrency ? 'bar' : 'line';
+                } else if (isRateOrPercentage && !data.datasets.every(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
+                    // If mixed volumes and rates, rates are lines
                     chartType = 'line';
-                } else if (data.datasets.length > 1 && idx > 0 && !data.datasets.some(d => rateMetricKeywords.some(kw => (d.label || '').toLowerCase().includes(kw)))) {
-                    // All volumes or neutral: alternate primary bar with lines
-                    chartType = idx === 0 ? 'bar' : 'line';
+                } else if (data.datasets.length > 1 && idx > 0) {
+                    // Fallback when no spend/currency: primary series is bar, others are lines
+                    chartType = 'line';
                 } else {
                     chartType = 'bar';
                 }
@@ -1448,8 +1458,17 @@ window.dashboardRenderer = {
             } else if (comboConfig[ds.label]?.axis) {
                 yAxisID = comboConfig[ds.label].axis;
             } else if (!yAxisID) {
-                // If this dataset is a line or rate/percentage while other datasets are bars/volumes, put on 'y1'
-                if (chartType === 'line' && data.datasets.length > 1 && !data.datasets.every(d => d.type === 'line' || isRateOrPercentage)) {
+                const hasCurrencyInAny = data.datasets.some(d => {
+                    const l = (d.label || '').toLowerCase();
+                    const m = (d.metric || d.metric_key || '').toLowerCase();
+                    return d.currency || ['spend', 'cost', 'revenue'].some(kw => l.includes(kw) || m.includes(kw));
+                });
+
+                if (hasCurrencyInAny) {
+                    // Currency on left ('y'), count/rate lines on right ('y1')
+                    const isThisCurrency = isCurrency || ['spend', 'cost', 'revenue'].some(kw => labelLower.includes(kw) || keyLower.includes(kw));
+                    yAxisID = isThisCurrency ? 'y' : 'y1';
+                } else if (chartType === 'line' && isRateOrPercentage) {
                     yAxisID = 'y1';
                 } else {
                     yAxisID = 'y';
