@@ -2116,7 +2116,7 @@ class DashboardWidgetDataController extends Controller
                     $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
                     $isRatio = in_array($cleanMetric, $ratioMetrics);
                     $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
-                    $cLabel = \Illuminate\Support\Str::headline($channel);
+                    $cLabel = $this->getSimplifiedChannelName($channel, $seriesDependency ?? null);
                     $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
 
                     if ($isRatio) {
@@ -2520,6 +2520,35 @@ class DashboardWidgetDataController extends Controller
         }
 
         return null;
+    }
+
+    public function getSimplifiedChannelName(string $channel, ?string $dependency = null): string
+    {
+        if ($channel === 'facebook_organic') {
+            return $dependency === 'instagram_account' ? 'IG' : 'FB';
+        }
+
+        $shortNames = [
+            'facebook_marketing' => 'FB Ads',
+            'facebook_organic' => 'FB',
+            'google_analytics_4' => 'GA4',
+            'google_ads' => 'GAds',
+            'google_search_console' => 'GSC',
+            'google_business_profile' => 'GBP',
+            'shopify' => 'Shopify',
+            'klaviyo' => 'Klaviyo',
+            'mailchimp' => 'Mailchimp',
+            'tiktok' => 'TikTok',
+            'pinterest' => 'Pinterest',
+            'linkedin' => 'LinkedIn',
+            'netsuite' => 'NetSuite',
+            'amazon' => 'Amazon',
+            'triple_whale' => 'TripleWhale',
+            'bigcommerce' => 'BigCommerce',
+            'x' => 'X',
+        ];
+
+        return $shortNames[$channel] ?? \Illuminate\Support\Str::headline($channel);
     }
 
     public function getValidAssetsForChannel(Project $project, string $channel): array
