@@ -952,7 +952,7 @@
                                                                 <label
                                                                     class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
                                                                 <x-ui.select-input x-model="series.channel"
-                                                                                   x-on:change="onWidgetRawChannelChange(index); updateSeriesMetrics();"
+                                                                                   x-on:change="onWidgetRawChannelChange(index)"
                                                                                    x-init="$nextTick(() => { $el.value = series.channel })"
                                                                                    class="w-full">
                                                                     <x-ui.select-option
@@ -972,7 +972,6 @@
                                                                     <x-ui.select-input x-model="series.dependency"
                                                                                        x-on:change="onWidgetRawSeriesDependencyChange(index)"
                                                                                        class="w-full">
-                                                                        <x-ui.select-option value="">{{ __('Default / All') }}</x-ui.select-option>
                                                                         <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
                                                                             <x-ui.select-option x-bind:value="key" x-text="label"></x-ui.select-option>
                                                                         </template>
@@ -999,7 +998,7 @@
                                                                     <div
                                                                         class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
                                                                         <template
-                                                                            x-for="(label, key) in allChannelMetrics[series.channel] || {}"
+                                                                            x-for="(label, key) in ((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})"
                                                                             :key="key">
                                                                             <div
                                                                                 class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
@@ -1038,7 +1037,7 @@
                                                                             </div>
                                                                         </template>
                                                                         <template
-                                                                            x-if="!series.channel || Object.keys(allChannelMetrics[series.channel] || {}).length === 0">
+                                                                            x-if="!series.channel || Object.keys(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})).length === 0">
                                                                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('Select a channel first.') }}</p>
                                                                         </template>
                                                                     </div>
