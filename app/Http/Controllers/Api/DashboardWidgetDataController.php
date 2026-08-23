@@ -83,6 +83,15 @@ class DashboardWidgetDataController extends Controller
             if (array_key_exists('granularity', $validated['controls']) && empty($validated['controls']['granularity'])) {
                 unset($validated['controls']['granularity']);
             }
+            if (array_key_exists('date_start', $validated['controls']) && empty($validated['controls']['date_start'])) {
+                unset($validated['controls']['date_start']);
+            }
+            if (array_key_exists('date_end', $validated['controls']) && empty($validated['controls']['date_end'])) {
+                unset($validated['controls']['date_end']);
+            }
+            if (array_key_exists('channel', $validated['controls']) && empty($validated['controls']['channel'])) {
+                unset($validated['controls']['channel']);
+            }
             foreach ($validated['controls'] as $k => $v) {
                 $resolvedControls[$k] = $v;
             }

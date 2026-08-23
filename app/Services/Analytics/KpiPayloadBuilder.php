@@ -25,9 +25,9 @@ class KpiPayloadBuilder
         return [
             'ast' => $ast,
             'filters' => [
-                'startDate' => $runtimeOverrides['start_date'] ?? $state['start_date'] ?? '',
-                'endDate' => $runtimeOverrides['end_date'] ?? $state['end_date'] ?? '',
-                'groupBy' => [$runtimeOverrides['granularity'] ?? $state['granularity'] ?? 'daily'],
+                'startDate' => !empty($runtimeOverrides['start_date']) ? $runtimeOverrides['start_date'] : (!empty($state['start_date']) ? $state['start_date'] : null),
+                'endDate' => !empty($runtimeOverrides['end_date']) ? $runtimeOverrides['end_date'] : (!empty($state['end_date']) ? $state['end_date'] : null),
+                'groupBy' => [!empty($runtimeOverrides['granularity']) ? $runtimeOverrides['granularity'] : (!empty($state['granularity']) ? $state['granularity'] : 'daily')],
             ],
             'zero_handling' => $runtimeOverrides['zero_handling'] ?? $state['zero_handling'] ?? 'remove',
             'edge_case_handling' => [
