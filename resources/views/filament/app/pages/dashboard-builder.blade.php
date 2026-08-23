@@ -2377,35 +2377,39 @@
                                 <div class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start bd-series-card">
                                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                         {{-- Card Header --}}
-                                        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex-shrink-0">
-                                            <div class="flex items-center gap-2 min-w-0">
+                                        <div class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                            <div class="flex items-center gap-2">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                      viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                     class="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                                     class="w-4 h-4 text-gray-500 dark:text-gray-400">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
                                                           d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/>
                                                 </svg>
-                                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider truncate"
-                                                      x-text="vConfig.dm_name ? (sandboxTargetWidget?.source_type === 'kpi' ? vConfig.dm_name + ' ' + (vConfig.dm_source_label || '') : vConfig.dm_name) : (vKey === 'dependent' ? '{{ __('Dependent Series') }}' : (sandboxTargetWidget?.source_type === 'kpi' ? '{{ __('Independent Variable') }} ' + vConfig.index : '{{ __('Series') }} ' + (vConfig.index + 1)))"></span>
+                                                <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
+                                                      x-text="vConfig.dm_name ? (sandboxTargetWidget?.source_type === 'kpi' ? vConfig.dm_name + ' ' + (vConfig.dm_source_label || '') : vConfig.dm_name) : (vKey === 'dependent' ? '{{ __('Dependent Series') }}' : (sandboxTargetWidget?.source_type === 'kpi' ? '{{ __('Independent Variable') }} ' + (vConfig.index) : '{{ __('Series') }} ' + (vConfig.index + 1)))"></span>
                                                 <template x-if="vConfig.dm_name">
-                                                    <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full flex-shrink-0">DM</span>
+                                                    <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
                                                 </template>
                                             </div>
-                                            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                                            <div class="flex flex-col items-end gap-1">
                                                 <template x-if="vConfig.channel">
-                                                    <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full uppercase"
+                                                    <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full uppercase"
                                                           x-text="vConfig.channel_name || vConfig.channel"></span>
+                                                </template>
+                                                <template x-if="vConfig.selected_metric">
+                                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                          x-text="(allChannelMetrics[vConfig.channel] || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
                                                 </template>
                                             </div>
                                         </div>
 
-                                        <div class="p-5 flex-1 flex flex-col gap-5 min-h-0 overflow-y-auto custom-scrollbar">
-                                            {{-- Data Scope / Dependency selector (when channel has multiple dependencies) --}}
+                                        <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
+                                            {{-- Data Scope / Dependency selector --}}
                                             <template x-if="allChannelDependencies[vConfig.channel] && Object.keys(allChannelDependencies[vConfig.channel]).length > 0">
-                                                <div class="flex flex-col gap-1.5">
-                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Data Scope / Dependency') }}</label>
+                                                <div class="my-2">
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
                                                     <select x-model="sandboxForm.series_dependencies[vKey]"
-                                                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
+                                                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
                                                         <template x-for="(label, key) in (allChannelDependencies[vConfig.channel] || {})" :key="key">
                                                             <option :value="key" x-text="label" :selected="sandboxForm.series_dependencies[vKey] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                         </template>
@@ -2413,12 +2417,12 @@
                                                 </div>
                                             </template>
 
-                                            {{-- Metrics Selector for KPI Widgets (Single metric per series) --}}
+                                            {{-- Metric selector for KPI Widgets --}}
                                             <template x-if="sandboxTargetWidget?.source_type === 'kpi' && !vConfig.selected_metric && allChannelMetrics[vConfig.channel] && Object.keys(allChannelMetrics[vConfig.channel]).length > 0">
-                                                <div class="flex flex-col gap-1.5">
-                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metric') }}</label>
+                                                <div class="my-2">
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metric') }}</label>
                                                     <select x-model="sandboxForm.metrics[vConfig.index]"
-                                                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
+                                                            class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
                                                         <template x-for="(label, key) in (allChannelMetrics[vConfig.channel] || {})" :key="key">
                                                             <option :value="key" x-text="label" :selected="sandboxForm.metrics[vConfig.index] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                         </template>
@@ -2426,83 +2430,96 @@
                                                 </div>
                                             </template>
 
-                                            {{-- Metrics Selector for Metric Widgets (Multi-select / toggles + Combo chart type) --}}
+                                            {{-- Metric selector for Metric Widgets --}}
                                             <template x-if="sandboxTargetWidget?.source_type !== 'kpi' && sandboxTargetWidget?.source_type !== 'derived_metric' && vConfig.type !== 'derived_metric'">
-                                                <div class="flex flex-col gap-1.5 min-h-0 flex-shrink-0">
-                                                    <div class="flex items-center justify-between">
-                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics') }}</label>
+                                                <div class="my-2 flex flex-col min-h-0">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
                                                         <button type="button"
                                                                 @click="sandboxSelectAllMetrics(vKey)"
                                                                 class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
                                                             {{ __('Select All') }}
                                                         </button>
                                                     </div>
-                                                    <div class="h-36 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-y-auto p-1 custom-scrollbar flex flex-col gap-1">
-                                                        <template x-for="(label, key) in (vConfig.allowed_metrics && vConfig.allowed_metrics.length > 0 ? Object.fromEntries(Object.entries(allChannelMetrics[vConfig.channel] || {}).filter(([k]) => vConfig.allowed_metrics.includes(k))) : (allChannelMetrics[vConfig.channel] || {}))" :key="key">
-                                                            <div class="flex items-center justify-between px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
-                                                                 :class="sandboxIsMetricSelected(vKey, key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                <div @click="sandboxToggleMetric(vKey, key)" class="flex items-center gap-2 min-w-0 flex-1">
-                                                                    <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                         :class="sandboxIsMetricSelected(vKey, key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                        <svg x-show="sandboxIsMetricSelected(vKey, key)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-                                                                        </svg>
+                                                    <div class="flex-1 relative min-h-0 h-36 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                        <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
+                                                            <template x-for="(label, key) in (vConfig.allowed_metrics && vConfig.allowed_metrics.length > 0 ? Object.fromEntries(Object.entries(allChannelMetrics[vConfig.channel] || {}).filter(([k]) => vConfig.allowed_metrics.includes(k))) : (allChannelMetrics[vConfig.channel] || {}))" :key="key">
+                                                                <div class="flex items-center justify-between px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
+                                                                     :class="sandboxIsMetricSelected(vKey, key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                    <div @click="sandboxToggleMetric(vKey, key)" class="flex gap-x-3 items-center min-w-0 flex-1">
+                                                                        <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                             :class="sandboxIsMetricSelected(vKey, key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg x-show="sandboxIsMetricSelected(vKey, key)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span class="truncate font-medium" :class="sandboxIsMetricSelected(vKey, key) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="label"></span>
                                                                     </div>
-                                                                    <span class="truncate font-medium" :class="sandboxIsMetricSelected(vKey, key) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="label"></span>
+                                                                    <template x-if="sandboxTargetWidget?.widget_type === 'combo'">
+                                                                        <button type="button"
+                                                                                @click.stop="sandboxToggleComboType(vConfig.index, key)"
+                                                                                class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors flex-shrink-0 ml-2"
+                                                                                :class="sandboxGetComboType(vConfig.index, key) === 'bar' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700' : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'">
+                                                                            <span x-text="sandboxGetComboType(vConfig.index, key)"></span>
+                                                                        </button>
+                                                                    </template>
                                                                 </div>
-                                                                {{-- Combo chart toggle (Bar/Line) if widget is combo chart --}}
-                                                                <template x-if="sandboxTargetWidget?.widget_type === 'combo'">
-                                                                    <button type="button"
-                                                                            @click.stop="sandboxToggleComboType(vConfig.index, key)"
-                                                                            class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors flex-shrink-0 ml-1"
-                                                                            :class="sandboxGetComboType(vConfig.index, key) === 'bar' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700' : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'">
-                                                                        <span x-text="sandboxGetComboType(vConfig.index, key)"></span>
-                                                                    </button>
-                                                                </template>
-                                                            </div>
-                                                        </template>
+                                                            </template>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </template>
 
-                                            {{-- Assets Selector --}}
+                                            {{-- Asset filter --}}
                                             <template x-if="allChannelAssets[vConfig.channel] && Object.keys(allChannelAssets[vConfig.channel]).length > 0">
-                                                <div class="flex flex-col gap-2 min-h-0 flex-1">
+                                                <div class="gap-3 flex-1 flex flex-col min-h-0 mt-2">
                                                     <div class="flex items-center justify-between">
-                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets') }}</label>
-                                                        <button type="button"
-                                                                @click="sandboxSelectAllAssets(vKey)"
-                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
-                                                            {{ __('Select All') }}
-                                                        </button>
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Assets') }}</label>
+                                                        <div class="flex gap-3">
+                                                            <button @click="sandboxSelectAllAssets(vKey)"
+                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                                                                {{ __('Select All') }}
+                                                            </button>
+                                                        </div>
                                                     </div>
-                                                    {{-- Search box --}}
                                                     <div class="relative">
-                                                        <div class="absolute inset-y-0 left-0 w-8 flex items-center justify-center pointer-events-none">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-gray-400">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                        <div class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                 viewBox="0 0 24 24" stroke-width="2"
+                                                                 stroke="currentColor"
+                                                                 class="w-4 h-4 text-gray-400">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                      d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
                                                             </svg>
                                                         </div>
                                                         <input type="text" x-model="sandboxSearchQueries[vKey]"
                                                                placeholder="{{ __('Search assets...') }}"
-                                                               class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-xs rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 pr-2 py-1.5 bd-search-input">
+                                                               class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
                                                     </div>
-                                                    {{-- Asset List --}}
-                                                    <div class="h-44 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 overflow-y-auto p-1 custom-scrollbar flex flex-col gap-1">
-                                                        <template x-for="[assetId, assetName] in Object.entries(allChannelAssets[vConfig.channel] || {})" :key="assetId">
-                                                            <div x-show="isAssetAllowedByGroups(vKey, vConfig.channel, assetId) && (!sandboxSearchQueries[vKey] || assetName.toLowerCase().includes(sandboxSearchQueries[vKey].toLowerCase()))"
-                                                                 @click="sandboxToggleAsset(vKey, assetId)"
-                                                                 class="flex items-center gap-2 px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
-                                                                 :class="sandboxIsAssetSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                     :class="sandboxIsAssetSelected(vKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                    <svg x-show="sandboxIsAssetSelected(vKey, assetId)" class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-                                                                    </svg>
+                                                    <div class="flex-1 relative min-h-0">
+                                                        <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                            <template x-for="[assetId, assetName] in Object.entries(allChannelAssets[vConfig.channel] || {})" :key="assetId">
+                                                                <div x-show="isAssetAllowedByGroups(vKey, vConfig.channel, assetId) && (!sandboxSearchQueries[vKey] || assetName.toLowerCase().includes(sandboxSearchQueries[vKey].toLowerCase()))"
+                                                                     @click="sandboxToggleAsset(vKey, assetId)"
+                                                                     class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
+                                                                     :class="sandboxIsAssetSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                    <div class="w-4 h-4 shrink-0 flex items-center justify-center border transition-colors rounded"
+                                                                         :class="sandboxIsAssetSelected(vKey, assetId) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                        <svg x-show="sandboxIsAssetSelected(vKey, assetId)"
+                                                                             class="w-3 h-3 text-white" fill="none"
+                                                                             viewBox="0 0 24 24" stroke-width="3"
+                                                                             stroke="currentColor">
+                                                                            <path stroke-linecap="round"
+                                                                                  stroke-linejoin="round"
+                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span class="truncate font-medium text-sm"
+                                                                          :class="sandboxIsAssetSelected(vKey, assetId) ? 'text-primary-800 dark:text-primary-200' : 'text-gray-700 dark:text-gray-200'"
+                                                                          x-text="assetName"></span>
                                                                 </div>
-                                                                <span class="truncate font-medium" :class="sandboxIsAssetSelected(vKey, assetId) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetName"></span>
-                                                            </div>
-                                                        </template>
+                                                            </template>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </template>
