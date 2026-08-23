@@ -2509,8 +2509,8 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.showWidgetControls = false;
+            this.hasUserInteractedWithWidgetControls = false;
             this.widgetControlsSnapshot = null;
-            this.reloadGrid();
 
             const idx = this.widgets.findIndex(w => w.id === this.widgetControlsTarget.id);
             if (idx !== -1) {
