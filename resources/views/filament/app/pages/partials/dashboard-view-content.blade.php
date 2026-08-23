@@ -594,6 +594,19 @@
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
+                                                {{-- Data Scope / Dependency selector (KPI Widgets) --}}
+                                                <template x-if="settingsSourceType === 'kpi' && vConfig.dependencies && Object.keys(vConfig.dependencies).length > 0">
+                                                    <div class="my-2">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
+                                                        <select x-model="settingsControls.series_dependencies[vKey]"
+                                                                class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
+                                                            <template x-for="(label, key) in vConfig.dependencies" :key="key">
+                                                                <option :value="key" x-text="label" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+
                                                 {{-- Metric selector (KPI Widgets) --}}
                                                 <template x-if="settingsSourceType === 'kpi' && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                                     <div class="my-2">

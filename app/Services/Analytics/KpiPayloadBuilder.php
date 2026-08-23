@@ -306,7 +306,8 @@ class KpiPayloadBuilder
             if (($var['independent_channel'] ?? '') === 'facebook_organic' && empty($node['filters']['account_type'])) {
                 $igMetrics = ['likes', 'comments', 'views', 'profile_views', 'website_clicks', 'profile_links_taps', 'saves', 'shares', 'replies', 'accounts_engaged', 'content_views'];
                 $indMetric = $var['independent_metric'] ?? '';
-                $isIgScope = ($var['dependency'] ?? '') === 'instagram_account' || in_array($indMetric, $igMetrics, true);
+                $indDep = $var['independent_dependency'] ?? $var['dependency'] ?? '';
+                $isIgScope = $indDep === 'instagram_account' || in_array($indMetric, $igMetrics, true);
                 if ($isIgScope) {
                     $node['filters']['account_type'] = 'instagram_account';
                 }

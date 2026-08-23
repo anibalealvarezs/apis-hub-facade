@@ -366,13 +366,20 @@ export function dashboardView(config = {}) {
                 });
             }
 
+            if (!this.settingsControls.series_dependencies) {
+                this.settingsControls.series_dependencies = {};
+            }
+
             if (sourceType === 'kpi') {
                 for (const vKey in this.settingsVariables) {
                     const vConfig = this.settingsVariables[vKey];
-                    if (vConfig && vConfig.index !== undefined && !vConfig.selected_metric) {
+                    if (vConfig && vConfig.index !== undefined) {
                         const idx = vConfig.index;
-                        if (!this.settingsControls.metrics[idx] && vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
+                        if (!this.settingsControls.metrics[idx] && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
                             this.settingsControls.metrics[idx] = Object.keys(vConfig.metrics)[0];
+                        }
+                        if (vConfig.dependency && !this.settingsControls.series_dependencies[vKey] && !this.settingsControls.series_dependencies[String(idx)]) {
+                            this.settingsControls.series_dependencies[vKey] = vConfig.dependency;
                         }
                     }
                 }

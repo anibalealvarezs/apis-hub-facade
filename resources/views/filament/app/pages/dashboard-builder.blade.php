@@ -1152,6 +1152,19 @@
                                         </div>
                                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
 
+                                            {{-- Data Scope / Matrix (Per-Series for KPI Dependent) --}}
+                                            <template x-if="widgetKpiConfig.dependent_channel && allChannelDependencies[widgetKpiConfig.dependent_channel] && Object.keys(allChannelDependencies[widgetKpiConfig.dependent_channel]).length > 0">
+                                                <div>
+                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Data Scope / Matrix') }}</label>
+                                                    <select x-model="widgetControlsForm.series_dependencies.dependent"
+                                                            class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                                        <template x-for="(label, key) in allChannelDependencies[widgetKpiConfig.dependent_channel]" :key="key">
+                                                            <option :value="key" x-text="label" :selected="widgetControlsForm.series_dependencies.dependent === key"></option>
+                                                        </template>
+                                                    </select>
+                                                </div>
+                                            </template>
+
                                             <template x-if="!widgetKpiConfig.dependent_metric">
                                                 <div>
                                                     <label
@@ -1524,6 +1537,19 @@
                                                                 </div>
                                                             </div>
                                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
+
+                                                                {{-- Data Scope / Matrix (Per-Series for KPI Independent) --}}
+                                                                <template x-if="varCfg.independent_channel && allChannelDependencies[varCfg.independent_channel] && Object.keys(allChannelDependencies[varCfg.independent_channel]).length > 0">
+                                                                    <div>
+                                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Data Scope / Matrix') }}</label>
+                                                                        <select x-model="widgetControlsForm.series_dependencies['independent_' + idx]"
+                                                                                class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                                                            <template x-for="(label, key) in allChannelDependencies[varCfg.independent_channel]" :key="key">
+                                                                                <option :value="key" x-text="label" :selected="widgetControlsForm.series_dependencies['independent_' + idx] === key"></option>
+                                                                            </template>
+                                                                        </select>
+                                                                    </div>
+                                                                </template>
 
                                                                 <template x-if="!varCfg.independent_metric">
                                                                     <div>

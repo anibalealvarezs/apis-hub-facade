@@ -1674,6 +1674,11 @@ export function dashboardBuilder(config = {}) {
                                 this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                             });
                         }
+                        if (!this.allChannelDependencies[ch]) {
+                            this.$wire.getDependenciesForChannel(ch).then(deps => {
+                                this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
+                            });
+                        }
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };

@@ -544,6 +544,9 @@ trait LoadsDashboardViewData
             if ($widgetArray['source_type'] === 'kpi') {
                 $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
                 $depDependency = $uiState['dependent_dependency'] ?? $uiState['dependency'] ?? $resolved['dependency'] ?? null;
+                $depDependencies = ! empty($depChannel)
+                    ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($depChannel)
+                    : [];
                 $depMetrics = ! empty($depChannel)
                     ? KpiFormBuilder::getMetricOptionsForChannel($depChannel, null, $depDependency)
                     : [];
@@ -551,6 +554,8 @@ trait LoadsDashboardViewData
                     'index' => $varIndex++,
                     'channel' => $depChannel,
                     'channel_name' => !empty($depChannel) ? KpiFormBuilder::getChannelDisplayName($depChannel) : '',
+                    'dependency' => $depDependency,
+                    'dependencies' => $depDependencies,
                     'metrics' => $depMetrics,
                     'selected_metric' => $uiState['dependent_metric'] ?? '',
                 ];
@@ -559,6 +564,9 @@ trait LoadsDashboardViewData
                     foreach ($uiState['independent_variables'] as $key => $var) {
                         $indChannel = $var['independent_channel'] ?? '';
                         $indDependency = $var['independent_dependency'] ?? $var['dependency'] ?? $uiState['dependency'] ?? $resolved['dependency'] ?? null;
+                        $indDependencies = ! empty($indChannel)
+                            ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($indChannel)
+                            : [];
                         $indMetrics = ! empty($indChannel)
                             ? KpiFormBuilder::getMetricOptionsForChannel($indChannel, null, $indDependency)
                             : [];
@@ -566,6 +574,8 @@ trait LoadsDashboardViewData
                             'index' => $varIndex++,
                             'channel' => $indChannel,
                             'channel_name' => !empty($indChannel) ? KpiFormBuilder::getChannelDisplayName($indChannel) : '',
+                            'dependency' => $indDependency,
+                            'dependencies' => $indDependencies,
                             'metrics' => $indMetrics,
                             'selected_metric' => $var['independent_metric'] ?? '',
                         ];

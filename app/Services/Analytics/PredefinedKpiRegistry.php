@@ -105,6 +105,7 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__ORGANIC_SOCIAL_CHANNEL_1__',
+                        'dependency' => 'facebook_page',
                         'metric' => 'reach',
                     ],
                 ],
@@ -189,6 +190,7 @@ class PredefinedKpiRegistry
                     'ast' => [
                         'type' => 'metric',
                         'channel' => '__SEO_CHANNEL_1__',
+                        'dependency' => 'non-searchAppearance',
                         'metric' => 'clicks',
                     ],
                 ],

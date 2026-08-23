@@ -593,12 +593,21 @@ class KpiFormBuilder
                                 ? ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-amber-500 [&_.fi-input-wrapper]:!bg-amber-50 dark:[&_.fi-input-wrapper]:!bg-amber-900/20 [&_.fi-input-wrapper_*]:!text-amber-900 dark:[&_.fi-input-wrapper_*]:!text-amber-100']
                                 : ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-green-500 [&_.fi-input-wrapper]:!bg-green-50 dark:[&_.fi-input-wrapper]:!bg-green-900/20 [&_.fi-input-wrapper_*]:!text-green-900 dark:[&_.fi-input-wrapper_*]:!text-green-100'];
                         }),
+                    Select::make($name . '_dependency')
+                        ->label(__('Data Scope / Matrix'))
+                        ->options(fn (Get $get) => filled($get($name . '_channel'))
+                            ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($get($name . '_channel'))
+                            : []
+                        )
+                        ->placeholder(__('Default Scope'))
+                        ->live()
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel' && filled($get($name . '_channel')) && ! empty(\App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($get($name . '_channel')))),
                     Select::make($name . '_metric')
                         ->label(__('Metric'))
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel(
                             $get($name . '_channel'),
                             $get('granularity'),
-                            $get($name . '_dependency') ?? $get('channel_dependency') ?? $get('account_type')
+                            $get($name . '_dependency') ?? $get('channel_dependency')
                         ))
                         ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel'),
                     Select::make($name . '_dm_id')
@@ -891,6 +900,7 @@ class KpiFormBuilder
                                                 if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly']) || $isUnivariateAst) {
                                                     if (isset($ast['channel'])) {
                                                         $set('dependent_channel', $resolveChannel($ast['channel']));
+                                                        $set('dependent_dependency', $ast['dependency'] ?? null);
                                                         $set('dependent_metric', $ast['metric'] ?? '');
                                                         $set('_required_tag', $extractTag($ast['channel']));
                                                         if ($globalGroup) {
@@ -905,6 +915,7 @@ class KpiFormBuilder
 
                                                 if (isset($ast['left']['channel'])) {
                                                     $set('dependent_channel', $resolveChannel($ast['left']['channel']));
+                                                    $set('dependent_dependency', $ast['left']['dependency'] ?? null);
                                                     $set('dependent_metric', $ast['left']['metric'] ?? '');
                                                     $set('_required_tag', $extractTag($ast['left']['channel']));
                                                     if ($globalGroup) {
@@ -920,6 +931,7 @@ class KpiFormBuilder
                                                             if ($channel) {
                                                                 $numeratorVars[] = [
                                                                     'dependent_channel' => $channel,
+                                                                    'dependent_dependency' => $node['dependency'] ?? null,
                                                                     'dependent_metric' => $node['metric'] ?? '',
                                                                 ];
                                                             }
@@ -932,6 +944,7 @@ class KpiFormBuilder
                                                     if (!empty($numeratorVars)) {
                                                         $first = array_shift($numeratorVars);
                                                         $set('dependent_channel', $first['dependent_channel']);
+                                                        $set('dependent_dependency', $first['dependent_dependency'] ?? null);
                                                         $set('dependent_metric', $first['dependent_metric']);
                                                         $findFirstChannel = function ($node) use (&$findFirstChannel) {
                                                             if (isset($node['channel'])) {
@@ -958,6 +971,7 @@ class KpiFormBuilder
                                                         if (($node['type'] ?? '') === 'metric') {
                                                             $independents[] = [
                                                                 'independent_channel' => $resolveChannel($node['channel']),
+                                                                'independent_dependency' => $node['dependency'] ?? null,
                                                                 'independent_metric' => $node['metric'] ?? '',
                                                                 '_required_tag' => $extractTag($node['channel']),
                                                                 'independent_asset_group' => $globalGroup,
@@ -1159,15 +1173,6 @@ class KpiFormBuilder
                     // Step 2.3: Scope / Filters
                     Section::make(__('2.3. Scope & Filters'))
                         ->schema([
-                            Select::make('account_type')
-                                ->label(__('Social / Asset Scope (Account Type)'))
-                                ->options(function (Get $get) {
-                                    $ch = $get('dependent_channel');
-                                    return $ch ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($ch) : [];
-                                })
-                                ->visible(fn (Get $get) => ($get('dependent_channel') ?? '') === 'facebook_organic')
-                                ->placeholder(__('Auto-detect from metric or dashboard tab'))
-                                ->helperText(__('Explicitly target Instagram Account or Facebook Page.')),
                             DatePicker::make('start_date')->label(__('Start Date')),
                             DatePicker::make('end_date')->label(__('End Date')),
                             Select::make('granularity')
@@ -1378,12 +1383,6 @@ class KpiFormBuilder
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Calculation</dt><dd class=\"text-gray-950 dark:text-white font-medium\">{$calc}</dd>";
         if ($templateKey) {
             $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Template</dt><dd class=\"text-gray-950 dark:text-white\">{$templateName}</dd>";
-        }
-        if (($get('dependent_channel') ?? '') === 'facebook_organic') {
-            $accountTypeVal = $get('account_type');
-            $accountTypeLabels = ['instagram_account' => __('Instagram Account'), 'facebook_page' => __('Facebook Page')];
-            $accountTypeText = e($accountTypeLabels[$accountTypeVal] ?? ($accountTypeVal ? ucfirst($accountTypeVal) : __('Auto-detect')));
-            $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Account Scope</dt><dd class=\"text-gray-950 dark:text-white\">{$accountTypeText}</dd>";
         }
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Granularity</dt><dd class=\"text-gray-950 dark:text-white\">{$granularity}</dd>";
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Zero handling</dt><dd class=\"text-gray-950 dark:text-white\">{$zero}</dd>";

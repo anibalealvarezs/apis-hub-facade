@@ -1537,7 +1537,18 @@ class DashboardWidgetDataController extends Controller
                     $uiState['independent_variables'][$key]['independent_asset_group'] = $controls['series_asset_groups']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = null;
                 }
+                if (! empty($controls['series_dependencies']["independent_{$key}"])) {
+                    $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies']["independent_{$key}"];
+                } elseif (! empty($controls['series_dependencies'][(string)($key + 1)])) {
+                    $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies'][(string)($key + 1)];
+                }
             }
+        }
+
+        if (! empty($controls['series_dependencies']['dependent'])) {
+            $uiState['dependent_dependency'] = $controls['series_dependencies']['dependent'];
+        } elseif (! empty($controls['series_dependencies']['0'])) {
+            $uiState['dependent_dependency'] = $controls['series_dependencies']['0'];
         }
 
         // Hydrate metrics from runtime controls ONLY if not already defined in KPI _ui_state
