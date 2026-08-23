@@ -980,7 +980,7 @@
                                                                 </div>
                                                             </template>
 
-                                                            <div class="my-1 flex flex-col">
+                                                            <div class="my-1 flex flex-col shrink-0">
                                                                 <div class="flex items-center justify-between mb-2">
                                                                     <label
                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Leave empty for All Metrics)') }}</label>
@@ -994,7 +994,8 @@
                                                                     </template>
                                                                 </div>
                                                                 <div
-                                                                    class="relative h-36 shrink-0 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+                                                                    class="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shrink-0"
+                                                                    style="height: 140px; min-height: 140px;">
                                                                     <div
                                                                         class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
                                                                         <template
@@ -1046,7 +1047,7 @@
                                                         </div>
                                                     </template>
 
-                                                    <div class="gap-3 flex-1 flex flex-col min-h-0 mt-6">
+                                                    <div class="gap-3 flex-1 flex flex-col min-h-0 mt-3">
                                                         <div class="flex items-center justify-between">
                                                             <label
                                                                 class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
