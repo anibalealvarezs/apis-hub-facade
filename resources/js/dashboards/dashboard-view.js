@@ -375,11 +375,13 @@ export function dashboardView(config = {}) {
                     const vConfig = this.settingsVariables[vKey];
                     if (vConfig && vConfig.index !== undefined) {
                         const idx = vConfig.index;
-                        if (!this.settingsControls.metrics[idx] && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
-                            this.settingsControls.metrics[idx] = Object.keys(vConfig.metrics)[0];
+                        if (!this.settingsControls.metrics[idx] && vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
+                            this.settingsControls.metrics[idx] = vConfig.selected_metric || Object.keys(vConfig.metrics)[0];
                         }
-                        if (vConfig.dependency && !this.settingsControls.series_dependencies[vKey] && !this.settingsControls.series_dependencies[String(idx)]) {
-                            this.settingsControls.series_dependencies[vKey] = vConfig.dependency;
+                        if (!this.settingsControls.series_dependencies[vKey]) {
+                            this.settingsControls.series_dependencies[vKey] = this.settingsControls.series_dependencies[String(idx)]
+                                || vConfig.dependency
+                                || '';
                         }
                     }
                 }
@@ -803,10 +805,11 @@ export function widgetHeader() {
                 }
                 for (const vKey in this.variables) {
                     const vConfig = this.variables[vKey];
-                    if (vConfig && vConfig.dependency) {
-                        if (!this.controls.series_dependencies[vKey]) {
-                            this.controls.series_dependencies[vKey] = vConfig.dependency;
-                        }
+                    const idx = vConfig?.index;
+                    if (!this.controls.series_dependencies[vKey]) {
+                        this.controls.series_dependencies[vKey] = this.controls.series_dependencies[String(idx)]
+                            || vConfig?.dependency
+                            || '';
                     }
                 }
             }
