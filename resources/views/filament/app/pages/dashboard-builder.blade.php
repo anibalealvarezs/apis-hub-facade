@@ -1247,25 +1247,41 @@
                                                             :key="id">
                                                             <div
                                                                 x-show="isAssetAllowedByGroups('dependent', widgetKpiConfig.dependent_channel, id) && ((searchQueries['dependent'] || '') === '' || name.toLowerCase().includes((searchQueries['dependent'] || '').toLowerCase()))"
-                                                                @click="toggleKpiAsset('dependent', id)"
-                                                                class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                <div
-                                                                    class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                    :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                    <svg
-                                                                        x-show="(widgetControlsForm.series_assets.dependent || []).includes(String(id))"
-                                                                        class="w-3 h-3 text-white" fill="none"
-                                                                        viewBox="0 0 24 24" stroke-width="3"
-                                                                        stroke="currentColor">
-                                                                        <path stroke-linecap="round"
-                                                                              stroke-linejoin="round"
-                                                                              d="m4.5 12.75 6 6 9-13.5"/>
-                                                                    </svg>
+                                                                class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets.dependent) ? widgetControlsForm.series_allowed_assets.dependent.includes(String(id)) : (widgetControlsForm.series_assets.dependent || []).includes(String(id))) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                <div @click="toggleKpiAssetIncluded('dependent', id)"
+                                                                     class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                    <div
+                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                        :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets.dependent) ? widgetControlsForm.series_allowed_assets.dependent.includes(String(id)) : (widgetControlsForm.series_assets.dependent || []).includes(String(id))) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                        <svg
+                                                                            x-show="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets.dependent) ? widgetControlsForm.series_allowed_assets.dependent.includes(String(id)) : (widgetControlsForm.series_assets.dependent || []).includes(String(id)))"
+                                                                            class="w-3 h-3 text-white" fill="none"
+                                                                            viewBox="0 0 24 24" stroke-width="3"
+                                                                            stroke="currentColor">
+                                                                            <path stroke-linecap="round"
+                                                                                  stroke-linejoin="round"
+                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                          :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets.dependent) ? widgetControlsForm.series_allowed_assets.dependent.includes(String(id)) : (widgetControlsForm.series_assets.dependent || []).includes(String(id))) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                          x-text="name"></span>
                                                                 </div>
-                                                                <span class="truncate font-medium"
-                                                                      :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                      x-text="name"></span>
+                                                                {{-- Badge for Default Active on Load --}}
+                                                                <template x-if="widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets.dependent && widgetControlsForm.series_allowed_assets.dependent.includes(String(id))">
+                                                                    <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                                                        <button type="button"
+                                                                                @click.stop="toggleKpiAssetDefaultActive('dependent', id)"
+                                                                                :title="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id))
+                                                                                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                            <span x-text="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         </template>
                                                         <template
@@ -1353,25 +1369,41 @@
                                                                 :key="id">
                                                                 <div
                                                                     x-show="(searchQueries['dep_dm_' + sIdx] || '') === '' || name.toLowerCase().includes((searchQueries['dep_dm_' + sIdx] || '').toLowerCase())"
-                                                                    @click="toggleKpiAsset('dep_dm_' + sIdx, id)"
-                                                                    class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                    :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                    <div
-                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                        :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                        <svg
-                                                                            x-show="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))"
-                                                                            class="w-3 h-3 text-white" fill="none"
-                                                                            viewBox="0 0 24 24" stroke-width="3"
-                                                                            stroke="currentColor">
-                                                                            <path stroke-linecap="round"
-                                                                                  stroke-linejoin="round"
-                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
-                                                                        </svg>
+                                                                    class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                    :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                    <div @click="toggleKpiAssetIncluded('dep_dm_' + sIdx, id)"
+                                                                         class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                        <div
+                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                            :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            <svg
+                                                                                x-show="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)))"
+                                                                                class="w-3 h-3 text-white" fill="none"
+                                                                                viewBox="0 0 24 24" stroke-width="3"
+                                                                                stroke="currentColor">
+                                                                                <path stroke-linecap="round"
+                                                                                      stroke-linejoin="round"
+                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
+                                                                            </svg>
+                                                                        </div>
+                                                                        <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                              :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                              x-text="name"></span>
                                                                     </div>
-                                                                    <span class="truncate font-medium"
-                                                                          :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                          x-text="name"></span>
+                                                                    {{-- Badge for Default Active on Load --}}
+                                                                    <template x-if="widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx] && widgetControlsForm.series_allowed_assets['dep_dm_' + sIdx].includes(String(id))">
+                                                                        <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                                                            <button type="button"
+                                                                                    @click.stop="toggleKpiAssetDefaultActive('dep_dm_' + sIdx, id)"
+                                                                                    :title="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                    class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                    :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))
+                                                                                        ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                                <span x-text="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                            </button>
+                                                                        </div>
+                                                                    </template>
                                                                 </div>
                                                             </template>
                                                             <template
@@ -1471,27 +1503,43 @@
                                                                                     :key="id">
                                                                                     <div
                                                                                         x-show="(searchQueries['ind_' + idx + '_dm_' + sIdx] || '') === '' || name.toLowerCase().includes((searchQueries['ind_' + idx + '_dm_' + sIdx] || '').toLowerCase())"
-                                                                                        @click="toggleKpiAsset('ind_' + idx + '_dm_' + sIdx, id)"
-                                                                                        class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                                        :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                                        <div
-                                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                            :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                            <svg
-                                                                                                x-show="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))"
-                                                                                                class="w-3 h-3 text-white"
-                                                                                                fill="none"
-                                                                                                viewBox="0 0 24 24"
-                                                                                                stroke-width="3"
-                                                                                                stroke="currentColor">
-                                                                                                <path stroke-linecap="round"
-                                                                                                      stroke-linejoin="round"
-                                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                            </svg>
+                                                                                        class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                                        :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                        <div @click="toggleKpiAssetIncluded('ind_' + idx + '_dm_' + sIdx, id)"
+                                                                                             class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                                            <div
+                                                                                                class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                                                :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                                <svg
+                                                                                                    x-show="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)))"
+                                                                                                    class="w-3 h-3 text-white"
+                                                                                                    fill="none"
+                                                                                                    viewBox="0 0 24 24"
+                                                                                                    stroke-width="3"
+                                                                                                    stroke="currentColor">
+                                                                                                    <path stroke-linecap="round"
+                                                                                                          stroke-linejoin="round"
+                                                                                                          d="m4.5 12.75 6 6 9-13.5"/>
+                                                                                                </svg>
+                                                                                            </div>
+                                                                                            <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                                                  :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx]) ? widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx].includes(String(id)) : (widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                                                  x-text="name"></span>
                                                                                         </div>
-                                                                                        <span class="truncate font-medium"
-                                                                                              :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                                              x-text="name"></span>
+                                                                                        {{-- Badge for Default Active on Load --}}
+                                                                                        <template x-if="widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx] && widgetControlsForm.series_allowed_assets['ind_' + idx + '_dm_' + sIdx].includes(String(id))">
+                                                                                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                                                                                <button type="button"
+                                                                                                        @click.stop="toggleKpiAssetDefaultActive('ind_' + idx + '_dm_' + sIdx, id)"
+                                                                                                        :title="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                                        class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                                        :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))
+                                                                                                            ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                                                    <span x-text="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                                                </button>
+                                                             </div>
+                                                                                        </template>
                                                                                     </div>
                                                                                 </template>
                                                                                 <template
@@ -1616,29 +1664,45 @@
                                                                                     :key="id">
                                                                                     <div
                                                                                         x-show="isAssetAllowedByGroups('independent_' + idx, varCfg.independent_channel, id) && ((searchQueries['independent_' + idx] || '') === '' || name.toLowerCase().includes((searchQueries['independent_' + idx] || '').toLowerCase()))"
-                                                                                        @click="toggleKpiAsset('independent_' + idx, id)"
-                                                                                        class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                                        :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                                        <div
-                                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                            :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                            <svg
-                                                                                                x-show="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))"
-                                                                                                class="w-3 h-3 text-white"
-                                                                                                fill="none"
-                                                                                                viewBox="0 0 24 24"
-                                                                                                stroke-width="3"
-                                                                                                stroke="currentColor">
-                                                                                                <path
-                                                                                                    stroke-linecap="round"
-                                                                                                    stroke-linejoin="round"
-                                                                                                    d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                            </svg>
+                                                                                        class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                                        :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['independent_' + idx]) ? widgetControlsForm.series_allowed_assets['independent_' + idx].includes(String(id)) : (widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                        <div @click="toggleKpiAssetIncluded('independent_' + idx, id)"
+                                                                                             class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                                            <div
+                                                                                                class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                                                :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['independent_' + idx]) ? widgetControlsForm.series_allowed_assets['independent_' + idx].includes(String(id)) : (widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                                <svg
+                                                                                                    x-show="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['independent_' + idx]) ? widgetControlsForm.series_allowed_assets['independent_' + idx].includes(String(id)) : (widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)))"
+                                                                                                    class="w-3 h-3 text-white"
+                                                                                                    fill="none"
+                                                                                                    viewBox="0 0 24 24"
+                                                                                                    stroke-width="3"
+                                                                                                    stroke="currentColor">
+                                                                                                    <path
+                                                                                                        stroke-linecap="round"
+                                                                                                        stroke-linejoin="round"
+                                                                                                        d="m4.5 12.75 6 6 9-13.5"/>
+                                                                                                </svg>
+                                                                                            </div>
+                                                                                            <span
+                                                                                                class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                                                :class="((widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['independent_' + idx]) ? widgetControlsForm.series_allowed_assets['independent_' + idx].includes(String(id)) : (widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                                                x-text="name"></span>
                                                                                         </div>
-                                                                                        <span
-                                                                                            class="truncate font-medium"
-                                                                                            :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                                            x-text="name"></span>
+                                                                                        {{-- Badge for Default Active on Load --}}
+                                                                                        <template x-if="widgetControlsForm.series_allowed_assets && widgetControlsForm.series_allowed_assets['independent_' + idx] && widgetControlsForm.series_allowed_assets['independent_' + idx].includes(String(id))">
+                                                                                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                                                                                <button type="button"
+                                                                                                        @click.stop="toggleKpiAssetDefaultActive('independent_' + idx, id)"
+                                                                                                        :title="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                                        class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                                        :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))
+                                                                                                            ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                                                    <span x-text="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </template>
                                                                                     </div>
                                                                                 </template>
                                                                                 <template

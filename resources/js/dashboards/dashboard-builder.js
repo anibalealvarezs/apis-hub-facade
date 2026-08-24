@@ -2276,10 +2276,16 @@ export function dashboardBuilder(config = {}) {
                         this.widgetControlsForm.max_ratio = config?.max_ratio !== undefined ? config.max_ratio : null;
                     }
 
+                    if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
                     if (!this.widgetControlsForm.series_assets.dependent) {
                         this.widgetControlsForm.series_assets.dependent = (wc.series_assets && wc.series_assets.dependent)
                             ? [...wc.series_assets.dependent]
                             : (uiState.dependent_asset_filter ? (Array.isArray(uiState.dependent_asset_filter) ? [...uiState.dependent_asset_filter] : [uiState.dependent_asset_filter]) : []);
+                    }
+                    if (!this.widgetControlsForm.series_allowed_assets.dependent) {
+                        this.widgetControlsForm.series_allowed_assets.dependent = (wc.series_allowed_assets && wc.series_allowed_assets.dependent)
+                            ? [...wc.series_allowed_assets.dependent]
+                            : [...(this.widgetControlsForm.series_assets.dependent || [])];
                     }
                     if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = (wc.series_asset_groups && wc.series_asset_groups.dependent) || uiState.dependent_asset_group || '';
                     if (!this.widgetControlsForm.series_dependencies) this.widgetControlsForm.series_dependencies = {};
@@ -2288,17 +2294,23 @@ export function dashboardBuilder(config = {}) {
                     }
                     if (this.widgetKpiConfig.independent_variables) {
                         for (let key in this.widgetKpiConfig.independent_variables) {
-                            if (!this.widgetControlsForm.series_assets['independent_' + key]) {
+                            const indKey = 'independent_' + key;
+                            if (!this.widgetControlsForm.series_assets[indKey]) {
                                 const ivFilter = this.widgetKpiConfig.independent_variables[key]?.independent_asset_filter;
-                                this.widgetControlsForm.series_assets['independent_' + key] = (wc.series_assets && wc.series_assets['independent_' + key])
-                                    ? [...wc.series_assets['independent_' + key]]
+                                this.widgetControlsForm.series_assets[indKey] = (wc.series_assets && wc.series_assets[indKey])
+                                    ? [...wc.series_assets[indKey]]
                                     : (ivFilter ? (Array.isArray(ivFilter) ? [...ivFilter] : [ivFilter]) : []);
                             }
-                            if (!this.widgetControlsForm.series_asset_groups['independent_' + key]) {
-                                this.widgetControlsForm.series_asset_groups['independent_' + key] = (wc.series_asset_groups && wc.series_asset_groups['independent_' + key]) || this.widgetKpiConfig.independent_variables[key]?.independent_asset_group || '';
+                            if (!this.widgetControlsForm.series_allowed_assets[indKey]) {
+                                this.widgetControlsForm.series_allowed_assets[indKey] = (wc.series_allowed_assets && wc.series_allowed_assets[indKey])
+                                    ? [...wc.series_allowed_assets[indKey]]
+                                    : [...(this.widgetControlsForm.series_assets[indKey] || [])];
                             }
-                            if (!this.widgetControlsForm.series_dependencies['independent_' + key] && this.widgetKpiConfig.independent_variables[key]?.independent_dependency) {
-                                this.widgetControlsForm.series_dependencies['independent_' + key] = this.widgetKpiConfig.independent_variables[key].independent_dependency;
+                            if (!this.widgetControlsForm.series_asset_groups[indKey]) {
+                                this.widgetControlsForm.series_asset_groups[indKey] = (wc.series_asset_groups && wc.series_asset_groups[indKey]) || this.widgetKpiConfig.independent_variables[key]?.independent_asset_group || '';
+                            }
+                            if (!this.widgetControlsForm.series_dependencies[indKey] && this.widgetKpiConfig.independent_variables[key]?.independent_dependency) {
+                                this.widgetControlsForm.series_dependencies[indKey] = this.widgetKpiConfig.independent_variables[key].independent_dependency;
                             }
                         }
                     }
@@ -2309,7 +2321,14 @@ export function dashboardBuilder(config = {}) {
                             dm.source_series.forEach((_, sIdx) => {
                                 const k = prefix + '_dm_' + sIdx;
                                 if (!this.widgetControlsForm.series_assets[k]) {
-                                    this.widgetControlsForm.series_assets[k] = [];
+                                    this.widgetControlsForm.series_assets[k] = (wc.series_assets && wc.series_assets[k])
+                                        ? [...wc.series_assets[k]]
+                                        : [];
+                                }
+                                if (!this.widgetControlsForm.series_allowed_assets[k]) {
+                                    this.widgetControlsForm.series_allowed_assets[k] = (wc.series_allowed_assets && wc.series_allowed_assets[k])
+                                        ? [...wc.series_allowed_assets[k]]
+                                        : [...(this.widgetControlsForm.series_assets[k] || [])];
                                 }
                             });
                         }
@@ -2743,25 +2762,64 @@ export function dashboardBuilder(config = {}) {
                 const groupAssets = this.allChannelAssetGroups[channel][globalGroup].assets.map(String);
                 validIds = validIds.filter(id => groupAssets.includes(id));
             }
-            this.widgetControlsForm.series_assets[seriesKey] = validIds;
+            if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+            if (!this.widgetControlsForm.series_assets) this.widgetControlsForm.series_assets = {};
+            this.widgetControlsForm.series_allowed_assets[seriesKey] = [...validIds];
+            this.widgetControlsForm.series_assets[seriesKey] = [...validIds];
         },
 
-        toggleKpiAsset(seriesKey, id) {
+        toggleKpiAssetIncluded(seriesKey, id) {
             this.markWidgetControlsDirty();
-            const current = this.widgetControlsForm.series_assets[seriesKey] || [];
+            if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+            if (!this.widgetControlsForm.series_assets) this.widgetControlsForm.series_assets = {};
+
+            const allowed = Array.isArray(this.widgetControlsForm.series_allowed_assets[seriesKey])
+                ? this.widgetControlsForm.series_allowed_assets[seriesKey]
+                : (Array.isArray(this.widgetControlsForm.series_assets[seriesKey]) ? [...this.widgetControlsForm.series_assets[seriesKey]] : []);
+            const active = Array.isArray(this.widgetControlsForm.series_assets[seriesKey])
+                ? this.widgetControlsForm.series_assets[seriesKey]
+                : [];
             const strId = String(id);
 
-            if (this.kpiSeriesAssetMode === 'single') {
-                this.widgetControlsForm.series_assets[seriesKey] = [strId];
+            if (allowed.includes(strId)) {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = allowed.filter(a => a !== strId);
+                this.widgetControlsForm.series_assets[seriesKey] = active.filter(a => a !== strId);
+            } else {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = [...allowed, strId];
+                if (!active.includes(strId)) {
+                    this.widgetControlsForm.series_assets[seriesKey] = [...active, strId];
+                }
+            }
+        },
+
+        toggleKpiAssetDefaultActive(seriesKey, id) {
+            this.markWidgetControlsDirty();
+            if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+            if (!this.widgetControlsForm.series_assets) this.widgetControlsForm.series_assets = {};
+
+            const allowed = Array.isArray(this.widgetControlsForm.series_allowed_assets[seriesKey])
+                ? this.widgetControlsForm.series_allowed_assets[seriesKey]
+                : (Array.isArray(this.widgetControlsForm.series_assets[seriesKey]) ? [...this.widgetControlsForm.series_assets[seriesKey]] : []);
+            const active = Array.isArray(this.widgetControlsForm.series_assets[seriesKey])
+                ? this.widgetControlsForm.series_assets[seriesKey]
+                : [];
+            const strId = String(id);
+
+            if (!allowed.includes(strId)) {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = [...allowed, strId];
+                this.widgetControlsForm.series_assets[seriesKey] = [...active, strId];
                 return;
             }
 
-            if (current.includes(strId)) {
-                if (current.length <= 1) return;
-                this.widgetControlsForm.series_assets[seriesKey] = current.filter(a => a !== strId);
+            if (active.includes(strId)) {
+                this.widgetControlsForm.series_assets[seriesKey] = active.filter(a => a !== strId);
             } else {
-                this.widgetControlsForm.series_assets[seriesKey] = [...current, strId];
+                this.widgetControlsForm.series_assets[seriesKey] = [...active, strId];
             }
+        },
+
+        toggleKpiAsset(seriesKey, id) {
+            this.toggleKpiAssetIncluded(seriesKey, id);
         },
 
         toggleDmAsset(index, id) {
@@ -2804,6 +2862,9 @@ export function dashboardBuilder(config = {}) {
 
         clearAllKpiAssets(seriesKey) {
             this.markWidgetControlsDirty();
+            if (this.widgetControlsForm.series_allowed_assets) {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = [];
+            }
             this.widgetControlsForm.series_assets[seriesKey] = [];
         },
 
@@ -2987,6 +3048,7 @@ export function dashboardBuilder(config = {}) {
                 payload.assets = c.assets;
                 payload.metrics = c.metrics;
                 payload.series_assets = c.series_assets || {};
+                payload.series_allowed_assets = c.series_allowed_assets || {};
                 payload.series_asset_groups = c.series_asset_groups || {};
                 payload.series_dependencies = c.series_dependencies || {};
             }

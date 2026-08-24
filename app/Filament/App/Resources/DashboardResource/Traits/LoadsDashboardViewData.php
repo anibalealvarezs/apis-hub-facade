@@ -206,7 +206,8 @@ trait LoadsDashboardViewData
                         $depAssetIds = array_intersect($depAssetIds, $resolved['series_assets']['dependent']);
                     }
                 }
-                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . Str::headline($uiState['dependent_channel']) . ')', $depAssetIds, $depAssetIds);
+                $depAllowedAssetIds = $resolved['series_allowed_assets']['dependent'] ?? $depAssetIds;
+                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . Str::headline($uiState['dependent_channel']) . ')', $depAssetIds, $depAllowedAssetIds);
             }
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
@@ -235,7 +236,8 @@ trait LoadsDashboardViewData
                                 $indAssetIds = array_intersect($indAssetIds, $resolved['series_assets'][$idxKey]);
                             }
                         }
-                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . Str::headline($var['independent_channel']) . ')', $indAssetIds, $indAssetIds);
+                        $indAllowedAssetIds = $resolved['series_allowed_assets'][$idxKey] ?? $indAssetIds;
+                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . Str::headline($var['independent_channel']) . ')', $indAssetIds, $indAllowedAssetIds);
                     }
                 }
             }
@@ -259,13 +261,18 @@ trait LoadsDashboardViewData
                                 $key = 'dep_dm_' . $sIdx;
                                 $alreadySaved = isset($resolved['series_assets'][$key]);
                                 $allAssets = $getAssetsForChannel($channel);
+                                $allowedAssetsList = $allAssets ?: [];
+                                if (! empty($resolved['series_allowed_assets'][$key]) && is_array($resolved['series_allowed_assets'][$key])) {
+                                    $allowedKeys = array_flip(array_map('strval', $resolved['series_allowed_assets'][$key]));
+                                    $allowedAssetsList = array_intersect_key($allowedAssetsList, $allowedKeys);
+                                }
                                 $computedMode = $kpiAssetMode;
                                 if (! \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
                                     $computedMode = 'single';
                                 }
                                 $widgetArray['series_assets_options'][$key] = [
                                     'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
-                                    'options' => (object) ($allAssets ?: []),
+                                    'options' => (object) $allowedAssetsList,
                                     'mode' => $computedMode,
                                 ];
                                 if (! $alreadySaved) {
@@ -307,13 +314,18 @@ trait LoadsDashboardViewData
                                         $assetKey = 'ind_' . $key . '_dm_' . $sIdx;
                                         $alreadySaved = isset($resolved['series_assets'][$assetKey]);
                                         $allAssets = $getAssetsForChannel($channel);
+                                        $allowedAssetsList = $allAssets ?: [];
+                                        if (! empty($resolved['series_allowed_assets'][$assetKey]) && is_array($resolved['series_allowed_assets'][$assetKey])) {
+                                            $allowedKeys = array_flip(array_map('strval', $resolved['series_allowed_assets'][$assetKey]));
+                                            $allowedAssetsList = array_intersect_key($allowedAssetsList, $allowedKeys);
+                                        }
                                         $computedMode = $kpiAssetMode;
                                         if (! \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
                                             $computedMode = 'single';
                                         }
                                         $widgetArray['series_assets_options'][$assetKey] = [
                                             'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
-                                            'options' => (object) ($allAssets ?: []),
+                                            'options' => (object) $allowedAssetsList,
                                             'mode' => $computedMode,
                                         ];
                                         if (! $alreadySaved) {
