@@ -19,30 +19,25 @@ export function dashboardView(config = {}) {
             this.$nextTick(() => {
                 const tryInit = () => {
                     if (typeof GridStack !== 'undefined') {
-                        const gridEls = document.querySelectorAll('.grid-stack.dashboard-print-section');
-                        if (gridEls.length > 0) {
-                            gridEls.forEach(el => {
-                                const grid = GridStack.init({
-                                    staticGrid: true,
-                                    float: true,
-                                    column: 12,
-                                    cellHeight: 100,
-                                    margin: 12,
-                                    minRow: 1,
-                                    columnOpts: {
-                                        columnMax: 12,
-                                        breakpointForWindow: true,
-                                        layout: 'moveScale',
-                                        breakpoints: [
-                                            { w: 1024, c: 12 },
-                                            { w: 1023, c: 1 }
-                                        ]
-                                    }
-                                }, el);
-                                if (grid && window.innerWidth < 1024) {
-                                    grid.column(1, 'moveScale');
-                                }
-                            });
+                        const grid = GridStack.init({
+                            staticGrid: true,
+                            float: true,
+                            column: 12,
+                            cellHeight: 100,
+                            margin: 12,
+                            minRow: 6,
+                            columnOpts: {
+                                columnMax: 12,
+                                breakpointForWindow: true,
+                                layout: 'moveScale',
+                                breakpoints: [
+                                    { w: 1024, c: 12 },
+                                    { w: 1023, c: 1 }
+                                ]
+                            }
+                        }, '#view-grid-stack');
+                        if (grid && window.innerWidth < 1024) {
+                            grid.column(1, 'moveScale');
                         }
                     } else {
                         setTimeout(tryInit, 50);
@@ -67,19 +62,13 @@ export function dashboardView(config = {}) {
         },
 
         _triggerPdfPrint() {
-            const gridEls = document.querySelectorAll('.grid-stack.dashboard-print-section');
-            const originalColumns = new Map();
+            const gridEl = document.querySelector('#view-grid-stack');
+            const grid = gridEl && gridEl.gridstack;
+            const originalColumn = grid ? grid.getColumn() : 12;
 
-            gridEls.forEach(el => {
-                const grid = el.gridstack;
-                if (grid) {
-                    const col = grid.getColumn();
-                    originalColumns.set(el, col);
-                    if (col !== 12) {
-                        grid.column(12, 'none');
-                    }
-                }
-            });
+            if (grid && originalColumn !== 12) {
+                grid.column(12, 'none');
+            }
 
             // Trigger window resize and force charts to render without animations
             if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
@@ -94,17 +83,83 @@ export function dashboardView(config = {}) {
                 });
             }
 
+            // ── Section-Based Pagination with Universal Cut-Lines ──
+            const items = Array.from(gridEl ? gridEl.querySelectorAll('.grid-stack-item') : []);
+            const savedPositions = [];
+
+            if (grid && items.length > 0) {
+                const PAGE_CAPACITY_ROWS = 6; // Grid row capacity per printable landscape page
+
+                const widgetBoxes = items.map(el => {
+                    const node = el.gridstackNode || {
+                        x: parseInt(el.getAttribute('gs-x') || '0'),
+                        y: parseInt(el.getAttribute('gs-y') || '0'),
+                        w: parseInt(el.getAttribute('gs-w') || '12'),
+                        h: parseInt(el.getAttribute('gs-h') || '4'),
+                    };
+                    savedPositions.push({ el, node, originalY: node.y, originalH: node.h });
+                    return { el, node, y: node.y, h: node.h, x: node.x, w: node.w, yEnd: node.y + node.h };
+                });
+
+                // Find all valid cut-lines (Y boundaries where no widget spans across)
+                const cutCandidates = [...new Set(widgetBoxes.map(b => b.yEnd))].sort((a, b) => a - b);
+                const validCuts = [0];
+
+                cutCandidates.forEach(cutY => {
+                    const crosses = widgetBoxes.some(b => b.y < cutY && b.yEnd > cutY);
+                    if (!crosses && !validCuts.includes(cutY)) {
+                        validCuts.push(cutY);
+                    }
+                });
+                validCuts.sort((a, b) => a - b);
+
+                // Build clean contiguous sections
+                const sections = [];
+                for (let i = 0; i < validCuts.length - 1; i++) {
+                    const secStart = validCuts[i];
+                    const secEnd = validCuts[i + 1];
+                    const secWidgets = widgetBoxes.filter(b => b.y >= secStart && b.y < secEnd);
+                    if (secWidgets.length > 0) {
+                        sections.push({
+                            startY: secStart,
+                            endY: secEnd,
+                            height: secEnd - secStart,
+                            widgets: secWidgets
+                        });
+                    }
+                }
+
+                // Pack sections into pages without slicing any section
+                let currentVirtualY = 0;
+                sections.forEach(section => {
+                    const pageOffset = currentVirtualY % PAGE_CAPACITY_ROWS;
+                    if (pageOffset > 0 && (pageOffset + section.height > PAGE_CAPACITY_ROWS)) {
+                        currentVirtualY += (PAGE_CAPACITY_ROWS - pageOffset);
+                    }
+
+                    const sectionShift = currentVirtualY - section.startY;
+                    section.widgets.forEach(w => {
+                        const newY = w.y + sectionShift;
+                        if (newY !== w.y) {
+                            grid.update(w.el, { y: newY });
+                        }
+                    });
+
+                    currentVirtualY += section.height;
+                });
+            }
+
             window.dispatchEvent(new Event('resize'));
 
             const restoreAfterPrint = () => {
-                gridEls.forEach(el => {
-                    const grid = el.gridstack;
-                    const col = originalColumns.get(el);
-                    if (grid && col !== undefined && col !== 12) {
-                        grid.column(col, 'none');
+                if (grid) {
+                    if (originalColumn !== 12) {
+                        grid.column(originalColumn, 'none');
                     }
-                });
-
+                    savedPositions.forEach(item => {
+                        grid.update(item.el, { y: item.originalY });
+                    });
+                }
                 if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
                     window.dashboardRenderer._chartInstances.forEach(chart => {
                         try {
