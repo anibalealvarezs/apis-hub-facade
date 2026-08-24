@@ -854,21 +854,13 @@ body.pv-page .dvc-controls-bar {
         height: auto !important;
     }
 
-    .dashboard-print-section {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        width: 100% !important;
-        position: relative !important;
-    }
-
-    .dashboard-print-page-break {
+    .dashboard-empty-line {
         display: block !important;
+        position: relative !important;
+        width: 100% !important;
+        height: 1px !important;
         page-break-after: always !important;
         break-after: page !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: none !important;
         clear: both !important;
     }
 
