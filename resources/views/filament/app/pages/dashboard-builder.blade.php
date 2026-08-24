@@ -310,29 +310,30 @@
                     </div>
 
                     {{-- Right Column: Asset Groups & Export Permissions --}}
-                    <div class="space-y-5">
-                        {{-- Asset Group Container (Encircled with subtle background & borderless) --}}
-                        <div class="rounded-xl p-5 bg-gray-50 dark:bg-gray-800 space-y-3">
+                    <div class="space-y-6">
+                        {{-- Asset Group Container --}}
+                        <div class="rounded-xl p-5 bg-gray-100/80 dark:bg-gray-800/80 space-y-3">
                             <label class="block text-sm font-semibold text-gray-900 dark:text-white">{{ __('Asset Group') }}</label>
                             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ __('Filters available assets for widgets that don’t have their own asset group selected.') }}</p>
-                            <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent=""
-                                                 size="sm"/>
-                            <label class="flex items-center gap-2 mt-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                            
+                            <div class="w-full">
+                                <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent="" size="sm"/>
+                            </div>
+
+                            <label class="flex items-center gap-2 pt-1 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                                 <input type="checkbox" x-model="dashboardControls.show_asset_group_selector"
                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
                                 <span class="text-xs text-gray-600 dark:text-gray-300">{{ __('Show this selector in the dashboard view') }}</span>
                             </label>
                         </div>
 
-                        {{-- PDF / Print Export Feature (Encircled with subtle background & borderless) --}}
-                        <div class="rounded-xl p-5 bg-gray-50 dark:bg-gray-800 space-y-3">
-                            <div class="flex items-center justify-between">
-                                <label class="flex items-center gap-2 text-sm text-gray-900 dark:text-white cursor-pointer select-none">
-                                    <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
-                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                    <span class="font-semibold">{{ __('Enable PDF Export / Print') }}</span>
-                                </label>
-                            </div>
+                        {{-- PDF / Print Export Feature --}}
+                        <div class="rounded-xl p-5 bg-gray-100/80 dark:bg-gray-800/80 space-y-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-900 dark:text-white cursor-pointer select-none">
+                                <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
+                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                <span class="font-semibold text-gray-900 dark:text-white">{{ __('Enable PDF Export / Print') }}</span>
+                            </label>
 
                             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ __('Allows exporting the dashboard as a PDF or printing it directly.') }}
@@ -340,17 +341,17 @@
 
                             {{-- Role-based Capabilities Table Framework --}}
                             <div x-show="dashboardControls.allow_pdf_export" x-transition class="pt-2 space-y-2">
-                                <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 tracking-wide uppercase">{{ __('Role Permissions') }}</span>
+                                <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 tracking-wider uppercase">{{ __('Role Permissions') }}</span>
                                 
-                                <div class="overflow-hidden rounded-lg shadow-sm bg-white dark:bg-gray-900">
-                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
-                                        <thead class="bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 font-medium">
+                                <div class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                                    <table class="w-full table-auto divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                                        <thead class="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">
                                             <tr>
-                                                <th scope="col" class="px-3 py-2.5 text-left">{{ __('Feature') }}</th>
-                                                <th scope="col" class="px-2 py-2.5 text-center" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
-                                                <th scope="col" class="px-2 py-2.5 text-center" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
-                                                <th scope="col" class="px-2 py-2.5 text-center">{{ __('Viewer') }}</th>
-                                                <th scope="col" class="px-2 py-2.5 text-center">{{ __('User') }}</th>
+                                                <th class="px-3 py-2.5 text-left font-medium">{{ __('Feature') }}</th>
+                                                <th class="px-2 py-2.5 text-center font-medium" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
+                                                <th class="px-2 py-2.5 text-center font-medium" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
+                                                <th class="px-2 py-2.5 text-center font-medium">{{ __('Viewer') }}</th>
+                                                <th class="px-2 py-2.5 text-center font-medium">{{ __('User') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
