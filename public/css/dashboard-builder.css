@@ -868,9 +868,42 @@ body.pv-page .dvc-controls-bar {
     }
 
     /* Table widgets in PDF print */
-    .table-container, .table-wrapper {
+    .table-container, .table-wrapper, .table-outer-wrap {
+        display: flex !important;
+        flex-direction: row !important;
         overflow: visible !important;
         max-height: none !important;
+        height: auto !important;
+        width: 100% !important;
+    }
+
+    .fixed-col-wrap {
+        flex-shrink: 0 !important;
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .table-scroll-wrap {
+        flex: 1 1 auto !important;
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .fixed-col-wrap thead,
+    .table-scroll-wrap thead {
+        position: static !important;
+    }
+
+    .table-outer-wrap table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .table-outer-wrap th,
+    .table-outer-wrap td {
+        white-space: normal !important;
+        word-break: break-word !important;
+        min-width: 0 !important;
     }
 }
 
