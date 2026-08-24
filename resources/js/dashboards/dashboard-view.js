@@ -108,10 +108,20 @@ export function dashboardView(config = {}) {
                         validAssets = (this.settingsOriginalControls.series_assets && this.settingsOriginalControls.series_assets[vKey])
                             ? this.settingsOriginalControls.series_assets[vKey].map(String)
                             : (this.settingsControls.series_assets[vKey] || []);
-                    } else if (allowedWhitelist && allowedWhitelist.length > 0) {
-                        validAssets = allowedWhitelist.filter(a => groupAllowed.includes(String(a)));
-                    } else if (groupAllowed.length > 0) {
-                        validAssets = groupAllowed;
+                    } else {
+                        const currentSelection = (this.settingsControls.series_assets && this.settingsControls.series_assets[vKey])
+                            ? this.settingsControls.series_assets[vKey].map(String)
+                            : ((this.settingsOriginalControls.series_assets && this.settingsOriginalControls.series_assets[vKey]) ? this.settingsOriginalControls.series_assets[vKey].map(String) : []);
+                        
+                        const intersectedCurrent = currentSelection.filter(a => groupAllowed.includes(String(a)));
+                        if (intersectedCurrent.length > 0) {
+                            validAssets = intersectedCurrent;
+                        } else if (allowedWhitelist && allowedWhitelist.length > 0) {
+                            validAssets = allowedWhitelist.filter(a => groupAllowed.includes(String(a)));
+                        }
+                        if (validAssets.length === 0 && groupAllowed.length > 0) {
+                            validAssets = [groupAllowed[0]];
+                        }
                     }
 
                     this.settingsControls.series_assets = {
@@ -192,12 +202,21 @@ export function dashboardView(config = {}) {
                     validAssets = (initialControls.series_assets && initialControls.series_assets[vKey])
                         ? initialControls.series_assets[vKey].map(String)
                         : (nextControls.series_assets[vKey] || []);
-                } else if (allowedWhitelist && allowedWhitelist.length > 0) {
-                    // Intersect the widget's allowed series assets with the selected group
-                    validAssets = allowedWhitelist.filter(a => groupAllowed.includes(String(a)));
-                } else if (groupAllowed.length > 0) {
-                    // If no explicit whitelist, all group assets for this channel are valid
-                    validAssets = groupAllowed;
+                } else {
+                    const currentSelection = (nextControls.series_assets && nextControls.series_assets[vKey])
+                        ? nextControls.series_assets[vKey].map(String)
+                        : ((initialControls.series_assets && initialControls.series_assets[vKey]) ? initialControls.series_assets[vKey].map(String) : []);
+                    
+                    const intersectedCurrent = currentSelection.filter(a => groupAllowed.includes(String(a)));
+                    if (intersectedCurrent.length > 0) {
+                        validAssets = intersectedCurrent;
+                    } else if (allowedWhitelist && allowedWhitelist.length > 0) {
+                        // Intersect the widget's allowed series assets with the selected group
+                        validAssets = allowedWhitelist.filter(a => groupAllowed.includes(String(a)));
+                    }
+                    if (validAssets.length === 0 && groupAllowed.length > 0) {
+                        validAssets = [groupAllowed[0]];
+                    }
                 }
 
                 let newAssets;

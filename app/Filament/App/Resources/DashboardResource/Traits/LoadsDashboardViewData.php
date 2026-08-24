@@ -495,6 +495,15 @@ trait LoadsDashboardViewData
                             $validAssets = array_intersect($assetIds, $allowedAssets);
                             if (!empty($validAssets)) {
                                 $resolved['series_assets'][$assetKey] = array_values($validAssets);
+                            } elseif (!empty($allowedAssets)) {
+                                // If previously configured asset is not in this group, autoselect from group's allowed assets
+                                $whitelist = $resolved['series_allowed_assets'][$assetKey] ?? null;
+                                if (!empty($whitelist) && is_array($whitelist)) {
+                                    $whitelisted = array_intersect($whitelist, $allowedAssets);
+                                    $resolved['series_assets'][$assetKey] = !empty($whitelisted) ? array_values($whitelisted) : array_values($allowedAssets);
+                                } else {
+                                    $resolved['series_assets'][$assetKey] = array_values($allowedAssets);
+                                }
                             } else {
                                 $resolved['series_assets'][$assetKey] = ['___EMPTY_GROUP___'];
                             }
