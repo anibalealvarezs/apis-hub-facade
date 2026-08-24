@@ -1487,13 +1487,13 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if (isset($controls['series_assets']['dependent']) && ! empty($controls['series_assets']['dependent'])) {
-            $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
-            $controlsToMerge['dependent_asset_group'] = null;
-        }
         if (! empty($controls['series_asset_groups']['dependent'])) {
             $controlsToMerge['dependent_asset_group'] = $controls['series_asset_groups']['dependent'];
             $controlsToMerge['dependent_asset_filter'] = null;
+        }
+        if (isset($controls['series_assets']['dependent']) && ! empty($controls['series_assets']['dependent'])) {
+            $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
+            $controlsToMerge['dependent_asset_group'] = null;
         }
 
         if (! empty($controls['date_start'])) {
@@ -1555,6 +1555,10 @@ class DashboardWidgetDataController extends Controller
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
 
+                if (! empty($controls['series_asset_groups']["independent_{$key}"])) {
+                    $uiState['independent_variables'][$key]['independent_asset_group'] = $controls['series_asset_groups']["independent_{$key}"];
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = null;
+                }
                 if (isset($controls['series_assets']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
@@ -1564,10 +1568,6 @@ class DashboardWidgetDataController extends Controller
                 } elseif (is_numeric($key) && isset($controls['series_assets'][(string)($key + 1)])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets'][(string)($key + 1)];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                }
-                if (! empty($controls['series_asset_groups']["independent_{$key}"])) {
-                    $uiState['independent_variables'][$key]['independent_asset_group'] = $controls['series_asset_groups']["independent_{$key}"];
-                    $uiState['independent_variables'][$key]['independent_asset_filter'] = null;
                 }
                 if (! empty($controls['series_dependencies']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies']["independent_{$key}"];
