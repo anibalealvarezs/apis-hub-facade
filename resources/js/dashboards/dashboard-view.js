@@ -121,19 +121,14 @@ export function dashboardView(config = {}) {
             const originalGridHeight = gridEl ? gridEl.style.height : '';
 
             if (widgetEls.length > 0) {
-                const cellH = (grid && grid.getCellHeight(true)) || 100;
-                const margin = (grid && grid.opts.margin) || 12;
-                const rowUnit = cellH + margin;
-
                 // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
                 const pagePrintHeight = 730;
 
                 // All boundary cuts: [0, cut1, cut2, ...]
                 const cuts = [0, ...emptyLines];
                 
-                // Group sections and measure their natural height span
                 let currentPageIndex = 0;
-                let currentPageUsedHeight = 0;
+                let maxShiftedBottom = 0;
 
                 for (let i = 0; i < cuts.length; i++) {
                     const secStartY = cuts[i];
@@ -146,38 +141,31 @@ export function dashboardView(config = {}) {
 
                     if (secWidgets.length === 0) continue;
 
-                    // Calculate section height in rows and pixels
-                    const maxWidgetEndY = Math.max(...secWidgets.map(wEl => {
-                        const node = wEl.gridstackNode;
-                        const y = node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
-                        const h = node ? node.h : parseInt(wEl.getAttribute('gs-h') || '1');
-                        return y + h;
-                    }));
-                    const secHeightPx = (maxWidgetEndY - secStartY) * rowUnit;
-
-                    // If not the first section and there was an explicit cut before this, advance to new page
+                    // If not the first section with widgets, advance to the next paper page
                     if (i > 0) {
                         currentPageIndex++;
-                        currentPageUsedHeight = 0;
                     }
 
-                    const pageBaseTopPx = currentPageIndex * pagePrintHeight;
-                    const secNaturalTopPx = secStartY * rowUnit;
-                    const shiftPx = (pageBaseTopPx + currentPageUsedHeight) - secNaturalTopPx;
+                    // Find the natural top offset of the highest widget in this section
+                    const minWidgetNaturalTop = Math.min(...secWidgets.map(wEl => wEl.offsetTop || parseFloat(wEl.style.top) || 0));
+                    const targetSectionPageTop = currentPageIndex * pagePrintHeight;
+                    const shiftPx = targetSectionPageTop - minWidgetNaturalTop;
 
                     secWidgets.forEach(wEl => {
                         originalTops.set(wEl, wEl.style.top);
-                        const node = wEl.gridstackNode;
-                        const y = node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
-                        const relativeYInSec = (y - secStartY) * rowUnit;
-                        wEl.style.top = `${pageBaseTopPx + currentPageUsedHeight + relativeYInSec}px`;
-                    });
+                        const currentTop = parseFloat(wEl.style.top) || (wEl.offsetTop);
+                        const newTop = currentTop + shiftPx;
+                        wEl.style.top = `${newTop}px`;
 
-                    currentPageUsedHeight += secHeightPx + margin;
+                        const widgetBottom = newTop + (wEl.offsetHeight || 100);
+                        if (widgetBottom > maxShiftedBottom) {
+                            maxShiftedBottom = widgetBottom;
+                        }
+                    });
                 }
 
                 if (gridEl) {
-                    gridEl.style.height = `${(currentPageIndex + 1) * pagePrintHeight}px`;
+                    gridEl.style.height = `${maxShiftedBottom + 20}px`;
                 }
             }
 
