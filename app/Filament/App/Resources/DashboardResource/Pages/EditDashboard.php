@@ -20,8 +20,7 @@ class EditDashboard extends EditRecord
                 ->label(__('Open Builder'))
                 ->icon('heroicon-o-pencil-square')
                 ->url(DashboardResource::getUrl('builder', ['record' => $this->record])),
-            Actions\DeleteAction::make()
-                ->redirectUrl(DashboardResource::getUrl('index')),
+            Actions\DeleteAction::make(),
         ];
     }
 }
