@@ -321,6 +321,57 @@
                     </div>
                 </div>
 
+                {{-- Export Options --}}
+                <div>
+                    <label
+                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('PDF / Print Export') }}</label>
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
+                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                            <span class="font-medium text-gray-900 dark:text-white">{{ __('Enable PDF Export / Print') }}</span>
+                        </label>
+                        
+                        <div x-show="dashboardControls.allow_pdf_export" x-transition class="pl-6 space-y-2">
+                            <span class="block text-xs font-medium text-gray-600 dark:text-gray-400">{{ __('Allowed Project Roles:') }}</span>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Project Owners and Editors can always export. Choose lower-level roles that can also print/export this dashboard:') }}</p>
+                            
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox"
+                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_viewer')"
+                                           @change="
+                                               let roles = dashboardControls.pdf_export_roles || [];
+                                               if ($event.target.checked) {
+                                                   if (!roles.includes('project_viewer')) roles.push('project_viewer');
+                                               } else {
+                                                   roles = roles.filter(r => r !== 'project_viewer');
+                                               }
+                                               dashboardControls.pdf_export_roles = roles;
+                                           "
+                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                    <span>{{ __('Project Viewer') }}</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox"
+                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_user')"
+                                           @change="
+                                               let roles = dashboardControls.pdf_export_roles || [];
+                                               if ($event.target.checked) {
+                                                   if (!roles.includes('project_user')) roles.push('project_user');
+                                               } else {
+                                                   roles = roles.filter(r => r !== 'project_user');
+                                               }
+                                               dashboardControls.pdf_export_roles = roles;
+                                           "
+                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                    <span>{{ __('Project User') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <button
                         class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"

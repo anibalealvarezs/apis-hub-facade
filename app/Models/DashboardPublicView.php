@@ -21,10 +21,12 @@ class DashboardPublicView extends Model
         'token',
         'token_secret',
         'is_active',
+        'allow_pdf_export',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'allow_pdf_export' => 'boolean',
         'asset_group_ids' => 'array',
     ];
 

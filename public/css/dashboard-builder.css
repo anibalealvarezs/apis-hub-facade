@@ -786,3 +786,52 @@ body.pv-page .dvc-controls-bar {
     background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* ─── Print & PDF Export Styles ─── */
+@media print {
+    /* Hide topbar, navigation, sidebar, and control buttons */
+    header,
+    nav,
+    aside,
+    .fi-topbar,
+    .fi-sidebar,
+    .dvc-controls-bar,
+    .bd-modal-root,
+    .dvc-popout-root,
+    button,
+    .no-print {
+        display: none !important;
+    }
+
+    body, html {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #dashboard-view-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .grid-stack {
+        height: auto !important;
+    }
+
+    .grid-stack-item {
+        position: relative !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .grid-stack-item-content {
+        box-shadow: none !important;
+        border: 1px solid #e5e7eb !important;
+    }
+}
+
+

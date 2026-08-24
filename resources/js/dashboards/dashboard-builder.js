@@ -1958,6 +1958,8 @@ export function dashboardBuilder(config = {}) {
                 edge_case_grouping: c.edge_case_grouping || 'none',
                 asset_group: c.asset_group || '',
                 show_asset_group_selector: c.show_asset_group_selector === true,
+                allow_pdf_export: c.allow_pdf_export === true,
+                pdf_export_roles: Array.isArray(c.pdf_export_roles) ? c.pdf_export_roles : [],
             };
             if (this.$wire) {
                 this.$wire.saveDashboardControls(payload).then(() => {

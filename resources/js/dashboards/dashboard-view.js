@@ -47,6 +47,10 @@ export function dashboardView(config = {}) {
             });
         },
 
+        exportPdf() {
+            window.print();
+        },
+
         _applyAssetGroupAfterInitialRender() {
             const attempt = () => {
                 const settled = this._pendingRenders <= 0 && this._startedCount >= this.totalCount;

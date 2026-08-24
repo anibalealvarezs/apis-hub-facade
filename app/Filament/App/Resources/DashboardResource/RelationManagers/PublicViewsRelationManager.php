@@ -39,9 +39,16 @@ class PublicViewsRelationManager extends RelationManager
                     ->multiple()
                     ->searchable()
                     ->helperText(__('Select one or more asset groups to restrict the public view data. Leave empty for all project assets.')),
-                Forms\Components\Toggle::make('is_active')
-                    ->label(__('Active'))
-                    ->default(true),
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->label(__('Active'))
+                            ->default(true),
+                        Forms\Components\Toggle::make('allow_pdf_export')
+                            ->label(__('Allow PDF Export'))
+                            ->helperText(__('Enable printing / PDF export in this public view'))
+                            ->default(false),
+                    ]),
             ]);
     }
 
@@ -72,6 +79,10 @@ class PublicViewsRelationManager extends RelationManager
                     ->copyMessage(__('Public URL copied to clipboard')),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label(__('Active'))
+                    ->boolean()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('allow_pdf_export')
+                    ->label(__('PDF Export'))
                     ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')

@@ -204,6 +204,8 @@ class DashboardBuilder extends Page
             'assets' => [],
             'asset_group' => '',
             'show_asset_group_selector' => false,
+            'allow_pdf_export' => false,
+            'pdf_export_roles' => [],
         ];
     }
 
