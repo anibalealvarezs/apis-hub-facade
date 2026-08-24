@@ -2341,8 +2341,22 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
 
+                \Illuminate\Support\Facades\Log::error("[DM_PREVIEW_DEBUG] fetching source series {$ssKey}:", [
+                    'channel' => $ssChannel,
+                    'metric' => $ssMetric,
+                    'assetFilter' => $assetFilter,
+                    'ssDependency' => $ssDependency,
+                    'payload' => $payload,
+                ]);
+
                 $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
                 $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
+
+                \Illuminate\Support\Facades\Log::error("[DM_PREVIEW_DEBUG] response for source series {$ssKey}:", [
+                    'channelResponse_keys' => is_array($channelResponse) ? array_keys($channelResponse) : gettype($channelResponse),
+                    'seriesData_count' => is_array($seriesData) ? count($seriesData) : gettype($seriesData),
+                    'seriesData_sample' => is_array($seriesData) ? array_slice($seriesData, 0, 3) : null,
+                ]);
 
                 if ($effectiveGranularity !== 'daily' && ! empty($seriesData)) {
                     $aggregator = new \App\Services\Analytics\GranularityAggregationService;
@@ -2365,8 +2379,21 @@ class DashboardWidgetDataController extends Controller
                 'derived_metrics' => $derivedResults,
             ];
 
+            \Illuminate\Support\Facades\Log::error('[DM_PREVIEW_DEBUG] computePayload:', [
+                'dm_id' => $dmId,
+                'fetched_keys' => array_keys($fetchedSeries),
+                'fetched_counts' => array_map(fn($s) => is_array($s) ? count($s) : gettype($s), $fetchedSeries),
+                'sample_series_a' => isset($fetchedSeries['a']) ? array_slice($fetchedSeries['a'], 0, 3) : null,
+                'sample_series_b' => isset($fetchedSeries['b']) ? array_slice($fetchedSeries['b'], 0, 3) : null,
+            ]);
+
             $result = $this->remoteEngineService->computeKpi($project, $computePayload);
             $data = $result['data'] ?? $result;
+
+            \Illuminate\Support\Facades\Log::error('[DM_PREVIEW_DEBUG] remoteEngine result:', [
+                'dm_id' => $dmId,
+                'result_sample' => is_array($data) ? array_slice($data, 0, 3) : $data,
+            ]);
 
             $dmTimeSeries = [];
             if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
