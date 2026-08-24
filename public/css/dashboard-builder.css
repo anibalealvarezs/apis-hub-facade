@@ -854,9 +854,22 @@ body.pv-page .dvc-controls-bar {
         height: auto !important;
     }
 
-    .dashboard-empty-line {
+    .dashboard-print-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        width: 100% !important;
+        position: relative !important;
+    }
+
+    .dashboard-print-page-break {
         display: block !important;
-        visibility: visible !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        clear: both !important;
     }
 
     /* Ensure widgets never split horizontally across paper pages */

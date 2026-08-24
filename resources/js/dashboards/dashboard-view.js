@@ -77,17 +77,15 @@ export function dashboardView(config = {}) {
         },
 
         exportPdf() {
-            if (this._pendingRenders > 0) {
-                // If any widgets are currently fetching/loading, wait until all complete
-                const checkReady = setInterval(() => {
-                    if (this._pendingRenders <= 0) {
-                        clearInterval(checkReady);
-                        this._triggerPdfPrint();
-                    }
-                }, 100);
-                return;
-            }
-            this._triggerPdfPrint();
+            const checkReady = () => {
+                const allSettled = this._startedCount >= this.totalCount && this._pendingRenders <= 0;
+                if (allSettled) {
+                    this._triggerPdfPrint();
+                } else {
+                    setTimeout(checkReady, 100);
+                }
+            };
+            checkReady();
         },
 
         _triggerPdfPrint() {
