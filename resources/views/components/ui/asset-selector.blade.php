@@ -72,15 +72,15 @@
             <template x-for="(val, id) in {{ $options }}" :key="id">
                 <div x-show="searchAssetGroup === '' || getItemTitle(val, id).toLowerCase().includes(searchAssetGroup.toLowerCase()) || (getItemDescription(val) && getItemDescription(val).toLowerCase().includes(searchAssetGroup.toLowerCase())) || String(id).toLowerCase().includes(searchAssetGroup.toLowerCase()) || (typeof val === 'string' && val.toLowerCase().includes(searchAssetGroup.toLowerCase()))"
                      @if($multiple)
-                         @click="{{ $model }}.includes(String(id)) ? {{ $model }} = {{ $model }}.filter(a => a != id) : {{ $model }} = [...({{ $model }} || []), String(id)]; {{ $changeEvent }}"
+                         @click="{{ $model }}.map(String).includes(String(id)) ? {{ $model }} = {{ $model }}.filter(a => String(a) !== String(id)) : {{ $model }} = [...({{ $model }} || []), String(id)]; {{ $changeEvent }}"
                      @else
-                         @click="{{ $model }} = id; {{ $changeEvent ? $changeEvent . ';' : '' }} open = false;"
+                         @click="{{ $model }} = String(id); {{ $changeEvent ? $changeEvent . ';' : '' }} open = false;"
                      @endif
                      class="flex gap-x-2.5 items-center px-3 py-2 text-xs text-gray-700 dark:text-gray-300 rounded-md cursor-pointer transition-all duration-150 border"
-                     :class="@if($multiple) {{ $model }}.includes(String(id)) @else {{ $model }} == id @endif ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'">
+                     :class="@if($multiple) ({{ $model }} || []).map(String).includes(String(id)) @else String({{ $model }} || '') === String(id) @endif ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'">
                     <div class="w-4 h-4 shrink-0 flex items-center justify-center rounded-full border-2 transition-colors duration-150"
-                         :class="@if($multiple) {{ $model }}.includes(String(id)) @else {{ $model }} == id @endif ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600'">
-                        <svg x-show="@if($multiple) {{ $model }}.includes(String(id)) @else {{ $model }} == id @endif" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
+                         :class="@if($multiple) ({{ $model }} || []).map(String).includes(String(id)) @else String({{ $model }} || '') === String(id) @endif ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600'">
+                        <svg x-show="@if($multiple) ({{ $model }} || []).map(String).includes(String(id)) @else String({{ $model }} || '') === String(id) @endif" class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                         </svg>
                     </div>
