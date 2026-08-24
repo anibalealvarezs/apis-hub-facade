@@ -83,17 +83,17 @@ export function dashboardView(config = {}) {
                 });
             }
 
-            // ── Pagination Flow Optimization for 12-col Grid ──
-            // Landscape A4/Letter page printable height accommodates approximately 6 grid rows per page (with header/margins).
-            // Calculate row offsets so that widgets that would split across a page boundary cleanly start on the next page.
+            // ── Section-Based Pagination Flow (Full Empty Lines Detection) ──
+            // Detect continuous widget clusters bounded by full horizontal empty lines.
+            // Each section is kept contiguous and packed into landscape pages (~6 grid units high).
             const items = Array.from(gridEl ? gridEl.querySelectorAll('.grid-stack-item') : []);
             const savedPositions = [];
 
             if (grid && items.length > 0) {
-                const PAGE_CAPACITY_ROWS = 6; // Optimal visual row height per landscape page
+                const PAGE_CAPACITY_ROWS = 6; // Grid row capacity per printable landscape sheet
 
-                // Sort items by original grid Y, then X
-                const sortedItems = items.map(el => {
+                // 1. Gather all widget geometries
+                const widgetBoxes = items.map(el => {
                     const node = el.gridstackNode || {
                         x: parseInt(el.getAttribute('gs-x') || '0'),
                         y: parseInt(el.getAttribute('gs-y') || '0'),
@@ -101,35 +101,60 @@ export function dashboardView(config = {}) {
                         h: parseInt(el.getAttribute('gs-h') || '4'),
                     };
                     savedPositions.push({ el, node, originalY: node.y, originalH: node.h });
-                    return { el, node, y: node.y, h: node.h, x: node.x, w: node.w };
-                }).sort((a, b) => a.y - b.y || a.x - b.x);
+                    return { el, node, y: node.y, h: node.h, x: node.x, w: node.w, yEnd: node.y + node.h };
+                });
 
-                // Build mapping of original Y row -> shifted Y row
-                const distinctYs = [...new Set(sortedItems.map(i => i.y))].sort((a, b) => a - b);
-                const yShiftMap = new Map();
+                // 2. Identify Section Boundaries via Connected Components in Y-intervals
+                // An empty line occurs wherever no widget spans the horizontal Y-slice.
+                const maxY = Math.max(...widgetBoxes.map(b => b.yEnd), 0);
+                const occupiedRows = new Array(maxY).fill(false);
+                widgetBoxes.forEach(b => {
+                    for (let r = b.y; r < b.yEnd; r++) {
+                        occupiedRows[r] = true;
+                    }
+                });
+
+                // Build sections: continuous intervals of occupied rows
+                const sections = [];
+                let inSection = false;
+                let secStartY = 0;
+
+                for (let r = 0; r <= maxY; r++) {
+                    if (occupiedRows[r] && !inSection) {
+                        inSection = true;
+                        secStartY = r;
+                    } else if ((!occupiedRows[r] || r === maxY) && inSection) {
+                        inSection = false;
+                        const secEndY = r;
+                        const secWidgets = widgetBoxes.filter(b => b.y >= secStartY && b.y < secEndY);
+                        sections.push({
+                            startY: secStartY,
+                            endY: secEndY,
+                            height: secEndY - secStartY,
+                            widgets: secWidgets
+                        });
+                    }
+                }
+
+                // 3. Pack sections into pages
                 let currentVirtualY = 0;
-                let lastOrigY = 0;
 
-                distinctYs.forEach(origY => {
-                    const rowItems = sortedItems.filter(i => i.y === origY);
-                    const rowMaxH = Math.max(...rowItems.map(i => i.h), 1);
-                    
+                sections.forEach(section => {
                     const pageOffset = currentVirtualY % PAGE_CAPACITY_ROWS;
-                    // If row exceeds the remaining space on current page, break to top of next page
-                    if (pageOffset > 0 && (pageOffset + rowMaxH > PAGE_CAPACITY_ROWS)) {
+                    // If this section doesn't fit on the current page, move it to the top of the next page
+                    if (pageOffset > 0 && (pageOffset + section.height > PAGE_CAPACITY_ROWS)) {
                         currentVirtualY += (PAGE_CAPACITY_ROWS - pageOffset);
                     }
 
-                    yShiftMap.set(origY, currentVirtualY);
-                    currentVirtualY += rowMaxH;
-                });
+                    const sectionShift = currentVirtualY - section.startY;
+                    section.widgets.forEach(w => {
+                        const newY = w.y + sectionShift;
+                        if (newY !== w.y) {
+                            grid.update(w.el, { y: newY });
+                        }
+                    });
 
-                // Apply shifted positions to grid elements for print
-                sortedItems.forEach(item => {
-                    const newY = yShiftMap.get(item.y);
-                    if (newY !== undefined && newY !== item.y) {
-                        grid.update(item.el, { y: newY });
-                    }
+                    currentVirtualY += section.height;
                 });
             }
 
