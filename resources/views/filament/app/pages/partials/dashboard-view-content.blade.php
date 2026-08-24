@@ -83,7 +83,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $viewObj->dashboard->description }}</p>
             @endif
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 no-print">
             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
             </span>
@@ -104,6 +104,28 @@
                     <span>{{ __('Export PDF') }}</span>
                 </button>
             @endif
+        </div>
+    </div>
+
+    {{-- Print-Only Summary Header --}}
+    <div class="print-only-header hidden">
+        <div class="flex items-center justify-between gap-4 border-b pb-3 mb-4 border-gray-300 dark:border-gray-700">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $viewObj->dashboard->name }}</h1>
+                @if ($viewObj->dashboard->description)
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $viewObj->dashboard->description }}</p>
+                @endif
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
+                <div x-show="dashboardOverrides.date_start || dashboardOverrides.date_end">
+                    <span class="font-semibold text-gray-500 dark:text-gray-400">{{ __('Date Range:') }}</span>
+                    <span x-text="(dashboardOverrides.date_start || '...') + ' → ' + (dashboardOverrides.date_end || '...')"></span>
+                </div>
+                <div x-show="selectedAssetGroup">
+                    <span class="font-semibold text-gray-500 dark:text-gray-400">{{ __('Asset Group:') }}</span>
+                    <span x-text="assetGroups[selectedAssetGroup] || selectedAssetGroup"></span>
+                </div>
+            </div>
         </div>
     </div>
 

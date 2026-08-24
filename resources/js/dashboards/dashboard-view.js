@@ -48,7 +48,29 @@ export function dashboardView(config = {}) {
         },
 
         exportPdf() {
-            window.print();
+            const gridEl = document.querySelector('#view-grid-stack');
+            const grid = gridEl && gridEl.gridstack;
+            const originalColumn = grid ? grid.getColumn() : 12;
+
+            if (grid && originalColumn !== 12) {
+                grid.column(12, 'none');
+            }
+
+            // Trigger window resize so Chart.js canvases redraw at exact 12-col landscape dimensions
+            window.dispatchEvent(new Event('resize'));
+
+            const restoreAfterPrint = () => {
+                if (grid && originalColumn !== 12) {
+                    grid.column(originalColumn, 'none');
+                    window.dispatchEvent(new Event('resize'));
+                }
+                window.removeEventListener('afterprint', restoreAfterPrint);
+            };
+            window.addEventListener('afterprint', restoreAfterPrint);
+
+            setTimeout(() => {
+                window.print();
+            }, 150);
         },
 
         _applyAssetGroupAfterInitialRender() {
