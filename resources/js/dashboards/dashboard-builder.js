@@ -134,7 +134,9 @@ export function dashboardBuilder(config = {}) {
                     } else {
                         const depChannel = uiState.dependent_channel || current.channel || this.dashboardControls.channel || 'facebook_marketing';
                         ensureChannelLoaded(depChannel);
-                        const depAllowed = uiState.dependent_allowed_assets || uiState.dependent_asset_filter || [];
+                        const depAllowed = (current.series_allowed_assets && current.series_allowed_assets['dependent'])
+                            ? current.series_allowed_assets['dependent']
+                            : (uiState.dependent_allowed_assets || uiState.dependent_asset_filter || (current.series_assets && current.series_assets['dependent'] ? current.series_assets['dependent'] : []));
                         vars['dependent'] = {
                             index: 0,
                             channel: depChannel,
@@ -174,6 +176,9 @@ export function dashboardBuilder(config = {}) {
                                     const key = 'ind_' + k + '_dm_' + sIdx;
                                     const ch = s.channel || '';
                                     ensureChannelLoaded(ch);
+                                    const dmAllowed = (current.series_allowed_assets && current.series_allowed_assets[key])
+                                        ? current.series_allowed_assets[key]
+                                        : (s.allowed_assets || s.asset_filter || s.asset_ids || (current.series_assets && current.series_assets[key] ? current.series_assets[key] : []));
                                     vars[key] = {
                                         index: indIndex,
                                         channel: ch,
@@ -183,7 +188,7 @@ export function dashboardBuilder(config = {}) {
                                         dm_name: indDm.name || '',
                                         dm_source_label: s.label || ('Series ' + (sIdx + 1)),
                                         is_dm_source: true,
-                                        allowed_assets: s.allowed_assets || s.asset_filter || s.asset_ids || [],
+                                        allowed_assets: Array.isArray(dmAllowed) ? dmAllowed.map(String) : [],
                                     };
                                     this.sandboxSearchQueries[key] = '';
                                     if (!this.sandboxForm.series_assets[key]) {
@@ -198,7 +203,9 @@ export function dashboardBuilder(config = {}) {
                                 if (iv.independent_channel) {
                                     ensureChannelLoaded(iv.independent_channel);
                                 }
-                                const indAllowed = iv.independent_allowed_assets || iv.independent_asset_filter || [];
+                                const indAllowed = (current.series_allowed_assets && current.series_allowed_assets[varKey])
+                                    ? current.series_allowed_assets[varKey]
+                                    : (iv.independent_allowed_assets || iv.independent_asset_filter || (current.series_assets && current.series_assets[varKey] ? current.series_assets[varKey] : []));
                                 vars[varKey] = {
                                     index: indIndex,
                                     channel: iv.independent_channel || '',
@@ -2230,8 +2237,12 @@ export function dashboardBuilder(config = {}) {
                         this.widgetControlsForm.max_ratio = config?.max_ratio !== undefined ? config.max_ratio : null;
                     }
 
-                    if (!this.widgetControlsForm.series_assets.dependent) this.widgetControlsForm.series_assets.dependent = [];
-                    if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = '';
+                    if (!this.widgetControlsForm.series_assets.dependent) {
+                        this.widgetControlsForm.series_assets.dependent = (wc.series_assets && wc.series_assets.dependent)
+                            ? [...wc.series_assets.dependent]
+                            : (uiState.dependent_asset_filter ? (Array.isArray(uiState.dependent_asset_filter) ? [...uiState.dependent_asset_filter] : [uiState.dependent_asset_filter]) : []);
+                    }
+                    if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = (wc.series_asset_groups && wc.series_asset_groups.dependent) || uiState.dependent_asset_group || '';
                     if (!this.widgetControlsForm.series_dependencies) this.widgetControlsForm.series_dependencies = {};
                     if (!this.widgetControlsForm.series_dependencies.dependent && uiState.dependent_dependency) {
                         this.widgetControlsForm.series_dependencies.dependent = uiState.dependent_dependency;
@@ -2239,10 +2250,13 @@ export function dashboardBuilder(config = {}) {
                     if (this.widgetKpiConfig.independent_variables) {
                         for (let key in this.widgetKpiConfig.independent_variables) {
                             if (!this.widgetControlsForm.series_assets['independent_' + key]) {
-                                this.widgetControlsForm.series_assets['independent_' + key] = [];
+                                const ivFilter = this.widgetKpiConfig.independent_variables[key]?.independent_asset_filter;
+                                this.widgetControlsForm.series_assets['independent_' + key] = (wc.series_assets && wc.series_assets['independent_' + key])
+                                    ? [...wc.series_assets['independent_' + key]]
+                                    : (ivFilter ? (Array.isArray(ivFilter) ? [...ivFilter] : [ivFilter]) : []);
                             }
                             if (!this.widgetControlsForm.series_asset_groups['independent_' + key]) {
-                                this.widgetControlsForm.series_asset_groups['independent_' + key] = '';
+                                this.widgetControlsForm.series_asset_groups['independent_' + key] = (wc.series_asset_groups && wc.series_asset_groups['independent_' + key]) || this.widgetKpiConfig.independent_variables[key]?.independent_asset_group || '';
                             }
                             if (!this.widgetControlsForm.series_dependencies['independent_' + key] && this.widgetKpiConfig.independent_variables[key]?.independent_dependency) {
                                 this.widgetControlsForm.series_dependencies['independent_' + key] = this.widgetKpiConfig.independent_variables[key].independent_dependency;
