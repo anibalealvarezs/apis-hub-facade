@@ -2914,8 +2914,11 @@ export function dashboardBuilder(config = {}) {
                 rawSourceSeries.forEach((ss, idx) => {
                     const ch = ss.channel || '';
                     const metric = ss.metric || ss.metric_key || ss.metric_name || '';
-                    const deps = this.getDependenciesForChannel(ch);
-                    const defaultDep = deps && Object.keys(deps).length > 0 ? Object.keys(deps)[0] : '';
+                    let defaultDep = '';
+                    if (ch === 'facebook_marketing') defaultDep = 'ad_level';
+                    else if (ch === 'facebook_organic') defaultDep = 'instagram_account';
+                    else if (ch === 'google_search_console') defaultDep = 'non-searchAppearance';
+                    else if (ch === 'google_analytics') defaultDep = 'traffic_matrix';
                     const dep = ss.dependency || defaultDep || '';
                     const assets = Array.isArray(ss.assets) ? [...ss.assets] : [];
 
@@ -2934,6 +2937,17 @@ export function dashboardBuilder(config = {}) {
                     seriesAssets[idx] = assets;
                     seriesChannels[idx] = ch;
                     seriesDependencies[idx] = dep;
+
+                    if (ch && !this.allChannelAssets[ch] && this.$wire) {
+                        this.$wire.getAssetsForChannel(ch).then(a => {
+                            this.allChannelAssets = { ...this.allChannelAssets, [ch]: a };
+                        });
+                    }
+                    if (ch && !this.allChannelMetrics[ch] && this.$wire) {
+                        this.$wire.getMetricsForChannel(ch).then(m => {
+                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: m };
+                        });
+                    }
                 });
 
                 sourceConfig = {
