@@ -781,31 +781,20 @@ body.pv-page .dvc-controls-bar {
     color: #9CA3AF !important;
 }
 
-.dark .bd-modal-header-close:hover {
-    color: #F9FAFB !important;
-    background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
 /* ─── Permanent Empty Lines for Layout Section Partitioning ─── */
 .dashboard-empty-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 100%;
     height: 0 !important;
     min-height: 0 !important;
-    max-height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
     pointer-events: none !important;
     visibility: hidden;
-}
-
-.dashboard-empty-line .dashboard-page-break-marker {
-    height: 0 !important;
-    min-height: 0 !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    background: transparent !important;
+    z-index: 0;
 }
 
 /* ─── Print & PDF Export Translation Framework ─── */
@@ -867,13 +856,11 @@ body.pv-page .dvc-controls-bar {
 
     .dashboard-empty-line {
         display: block !important;
-        height: 0 !important;
-        min-height: 0 !important;
         visibility: visible !important;
     }
 
     /* Ensure widgets never split horizontally across paper pages */
-    .grid-stack-item:not(.dashboard-empty-line) {
+    .grid-stack-item {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }

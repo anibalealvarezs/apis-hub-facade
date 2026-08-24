@@ -148,7 +148,7 @@
     </div>
 
     {{-- Grid --}}
-    <div id="view-grid-stack" class="grid-stack" wire:ignore>
+    <div id="view-grid-stack" class="grid-stack relative" wire:ignore>
         @php
             $cutCandidates = collect($viewObj->widgets)->map(fn($w) => ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1))->unique()->sort()->values();
             $emptyCutLines = [];
@@ -160,18 +160,11 @@
             }
         @endphp
 
-        {{-- Permanent Empty Line Markers for Section Breaks --}}
+        {{-- Permanent Empty Lines (Layout Section Dividers) --}}
         @foreach ($emptyCutLines as $cutY)
-            <div class="grid-stack-item dashboard-empty-line no-screen"
-                 gs-x="0"
-                 gs-y="{{ $cutY }}"
-                 gs-w="12"
-                 gs-h="0"
-                 gs-no-resize="true"
-                 gs-no-move="true"
-                 gs-locked="true">
-                <div class="grid-stack-item-content dashboard-page-break-marker"></div>
-            </div>
+            <div class="dashboard-empty-line"
+                 data-cut-y="{{ $cutY }}"
+                 style="top: calc({{ $cutY }} * (100px + 12px));"></div>
         @endforeach
 
         @foreach ($viewObj->widgets as $widget)
