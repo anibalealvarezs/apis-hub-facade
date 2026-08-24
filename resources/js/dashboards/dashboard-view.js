@@ -15,15 +15,8 @@ export function dashboardView(config = {}) {
         _dashboardConfiguredGroup: config.selectedAssetGroup || '',
         _applyGroupOnInitialRender: false,
         init() {
-            const groupKeys = Object.keys(this.assetGroups || {});
-            if (!this.selectedAssetGroup && groupKeys.length > 0) {
-                this.selectedAssetGroup = groupKeys[0];
-            }
-            this._applyGroupOnInitialRender = Boolean(this.selectedAssetGroup) && !this._dashboardConfiguredGroup;
+            this._applyGroupOnInitialRender = false;
             this.$nextTick(() => {
-                if (this._applyGroupOnInitialRender) {
-                    this._applyAssetGroupAfterInitialRender();
-                }
                 const tryInit = () => {
                     if (typeof GridStack !== 'undefined') {
                         const grid = GridStack.init({

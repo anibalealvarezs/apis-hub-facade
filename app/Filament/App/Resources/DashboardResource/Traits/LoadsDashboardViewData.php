@@ -149,23 +149,19 @@ trait LoadsDashboardViewData
 
                 // Determine default selection from allowed IDs (KPI group / widget config).
                 // Options list shows channel assets (filtered to availableAssets whitelist if configured)
-                $defaultAssets = $allAssets;
-                if (!empty($allowedIds)) {
+                if (isset($resolved['series_assets'][$key]) && is_array($resolved['series_assets'][$key]) && !empty($resolved['series_assets'][$key])) {
+                    // Already explicitly resolved to specific assets
+                } elseif (is_array($allowedIds) && !empty($allowedIds)) {
                     $filtered = [];
                     foreach ($allowedIds as $id) {
-                        if (isset($allAssets[$id])) {
-                            $filtered[$id] = $allAssets[$id];
+                        if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                            $filtered[] = strval($id);
                         }
                     }
-                    if (!empty($filtered)) {
-                        $defaultAssets = $filtered;
-                    }
-                }
-
-                // Default selection: single asset
-                if (!empty($defaultAssets)) {
-                    reset($defaultAssets);
-                    $resolved['series_assets'][$key] = [strval(key($defaultAssets))];
+                    $resolved['series_assets'][$key] = $filtered;
+                } elseif (!empty($allAssets)) {
+                    reset($allAssets);
+                    $resolved['series_assets'][$key] = [strval(key($allAssets))];
                 } else {
                     $resolved['series_assets'][$key] = [];
                 }
@@ -274,21 +270,17 @@ trait LoadsDashboardViewData
                                 ];
                                 if (! $alreadySaved) {
                                     $allowedIds = $series['asset_filter'] ?? null;
-                                    $defaultAssets = $allAssets;
                                     if (is_array($allowedIds) && ! empty($allowedIds)) {
                                         $filtered = [];
                                         foreach ($allowedIds as $id) {
-                                            if (isset($allAssets[$id])) {
-                                                $filtered[$id] = $allAssets[$id];
+                                            if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                                                $filtered[] = strval($id);
                                             }
                                         }
-                                        if (! empty($filtered)) {
-                                            $defaultAssets = $filtered;
-                                        }
-                                    }
-                                    if (! empty($defaultAssets)) {
-                                        reset($defaultAssets);
-                                        $resolved['series_assets'][$key] = [strval(key($defaultAssets))];
+                                        $resolved['series_assets'][$key] = $filtered;
+                                    } elseif (! empty($allAssets)) {
+                                        reset($allAssets);
+                                        $resolved['series_assets'][$key] = [strval(key($allAssets))];
                                     } else {
                                         $resolved['series_assets'][$key] = [];
                                     }
@@ -326,21 +318,17 @@ trait LoadsDashboardViewData
                                         ];
                                         if (! $alreadySaved) {
                                             $allowedIds = $series['asset_filter'] ?? null;
-                                            $defaultAssets = $allAssets;
                                             if (is_array($allowedIds) && ! empty($allowedIds)) {
                                                 $filtered = [];
                                                 foreach ($allowedIds as $id) {
-                                                    if (isset($allAssets[$id])) {
-                                                        $filtered[$id] = $allAssets[$id];
+                                                    if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                                                        $filtered[] = strval($id);
                                                     }
                                                 }
-                                                if (! empty($filtered)) {
-                                                    $defaultAssets = $filtered;
-                                                }
-                                            }
-                                            if (! empty($defaultAssets)) {
-                                                reset($defaultAssets);
-                                                $resolved['series_assets'][$assetKey] = [strval(key($defaultAssets))];
+                                                $resolved['series_assets'][$assetKey] = $filtered;
+                                            } elseif (! empty($allAssets)) {
+                                                reset($allAssets);
+                                                $resolved['series_assets'][$assetKey] = [strval(key($allAssets))];
                                             } else {
                                                 $resolved['series_assets'][$assetKey] = [];
                                             }
@@ -380,21 +368,17 @@ trait LoadsDashboardViewData
                                 // Preserve view-saved selection; fallback to builder dm_assets or definition asset_filter
                                 if (!$alreadySaved) {
                                     $allowedIds = $resolved['dm_assets'][$sIdx] ?? $series['asset_filter'] ?? null;
-                                    $defaultAssets = $allAssets;
                                     if (is_array($allowedIds) && !empty($allowedIds)) {
                                         $filtered = [];
                                         foreach ($allowedIds as $id) {
-                                            if (isset($allAssets[$id])) {
-                                                $filtered[$id] = $allAssets[$id];
+                                            if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                                                $filtered[] = strval($id);
                                             }
                                         }
-                                        if (!empty($filtered)) {
-                                            $defaultAssets = $filtered;
-                                        }
-                                    }
-                                    if (!empty($defaultAssets)) {
-                                        reset($defaultAssets);
-                                        $resolved['series_assets'][$dmAssetKey] = [strval(key($defaultAssets))];
+                                        $resolved['series_assets'][$dmAssetKey] = $filtered;
+                                    } elseif (!empty($allAssets)) {
+                                        reset($allAssets);
+                                        $resolved['series_assets'][$dmAssetKey] = [strval(key($allAssets))];
                                     } else {
                                         $resolved['series_assets'][$dmAssetKey] = [];
                                     }
