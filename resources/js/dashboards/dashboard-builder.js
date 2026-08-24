@@ -111,6 +111,9 @@ export function dashboardBuilder(config = {}) {
                             const key = 'dep_dm_' + sIdx;
                             const ch = s.channel || '';
                             ensureChannelLoaded(ch);
+                            const dmAllowed = (current.series_allowed_assets && current.series_allowed_assets[key])
+                                ? current.series_allowed_assets[key]
+                                : (s.allowed_assets || s.asset_filter || s.asset_ids || (current.series_assets && current.series_assets[key] ? current.series_assets[key] : []));
                             vars[key] = {
                                 index: 0,
                                 channel: ch,
@@ -120,7 +123,7 @@ export function dashboardBuilder(config = {}) {
                                 dm_name: depDm.name || '',
                                 dm_source_label: s.label || ('Series ' + (sIdx + 1)),
                                 is_dm_source: true,
-                                allowed_assets: s.allowed_assets || s.asset_filter || s.asset_ids || [],
+                                allowed_assets: Array.isArray(dmAllowed) ? dmAllowed.map(String) : [],
                             };
                             this.sandboxSearchQueries[key] = '';
                             if (!this.sandboxForm.series_assets[key]) {
