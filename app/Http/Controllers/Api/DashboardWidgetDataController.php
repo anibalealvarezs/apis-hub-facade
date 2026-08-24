@@ -2625,22 +2625,24 @@ class DashboardWidgetDataController extends Controller
         }
 
         $requestedAssets = [];
-        if (! empty($controls['assets']) && is_array($controls['assets'])) {
-            $requestedAssets = $controls['assets'];
-        } elseif (! empty($controls['asset_group'])) {
-            $group = $this->resolveGroupForUser($project, $controls['asset_group']);
+        if ($seriesAssetFilter === null) {
+            if (! empty($controls['assets']) && is_array($controls['assets'])) {
+                $requestedAssets = $controls['assets'];
+            } elseif (! empty($controls['asset_group'])) {
+                $group = $this->resolveGroupForUser($project, $controls['asset_group']);
 
-            if (! $group) {
-                return '___EMPTY_GROUP___';
-            }
+                if (! $group) {
+                    return '___EMPTY_GROUP___';
+                }
 
-            $requestedAssets = $group->items()
-                ->where('channel', $channel)
-                ->pluck('asset_id')
-                ->toArray();
+                $requestedAssets = $group->items()
+                    ->where('channel', $channel)
+                    ->pluck('asset_id')
+                    ->toArray();
 
-            if (empty($requestedAssets)) {
-                return '___EMPTY_GROUP___';
+                if (empty($requestedAssets)) {
+                    return '___EMPTY_GROUP___';
+                }
             }
         }
 
@@ -2653,14 +2655,6 @@ class DashboardWidgetDataController extends Controller
             }
 
             $filtered = array_values($filtered);
-
-            if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
-                $filtered = array_intersect($filtered, $seriesAssetFilter);
-                if (empty($filtered)) {
-                    return '___EMPTY_GROUP___';
-                }
-                $filtered = array_values($filtered);
-            }
 
             return $constrain($allowsMultiple ? $filtered : $filtered[0]);
         }
@@ -3158,22 +3152,47 @@ class DashboardWidgetDataController extends Controller
             // Per-series asset override from widget controls (series_assets['dm_N'] from view, dm_assets[N] from builder) merged with DM-level asset_filter
             $seriesAssetFilter = $series['asset_filter'] ?? null;
             $seriesAssetKey = 'dm_' . $index;
-            $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey] ?? $dmAssets[$index] ?? null;
+            $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey]
+                ?? $controls['series_assets'][$index]
+                ?? $controls['series_assets'][$key]
+                ?? $dmAssets[$index]
+                ?? null;
+
             if (! empty($widgetAssetOverride)) {
-                $mergedFilter = is_array($seriesAssetFilter)
+                $mergedFilter = (! empty($seriesAssetFilter) && is_array($seriesAssetFilter))
                     ? array_values(array_intersect($seriesAssetFilter, $widgetAssetOverride))
                     : $widgetAssetOverride;
                 $seriesAssetFilter = $mergedFilter;
+            } elseif (is_array($widgetAssetOverride) && empty($widgetAssetOverride)) {
+                $seriesAssetFilter = ! empty($seriesAssetFilter) ? $seriesAssetFilter : [];
             }
+
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
 
-            if ($assetFilter === '___EMPTY_GROUP___') {
+            if ($assetFilter === null || $assetFilter === '___EMPTY_GROUP___') {
+                $validAssets = $this->getValidAssetsForChannel($project, $channel);
+                if (! empty($validAssets)) {
+                    $allowsMultiple = in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                    $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
+                }
+            }
+
+            if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
                 \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for {$key} channel={$channel} seriesAssetFilter=" . json_encode($seriesAssetFilter));
                 $fetchedSeries[$key] = [];
                 continue;
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+
+            $ssDependency = $series['dependency']
+                ?? ($controls['series_dependencies'][$seriesAssetKey] ?? null)
+                ?? ($controls['series_dependencies'][$index] ?? null)
+                ?? ($controls['series_dependencies'][$key] ?? null);
+
+            if ($ssDependency === null && ($controls['channel'] ?? '') === $channel && ! empty($controls['dependency'])) {
+                $ssDependency = $controls['dependency'];
+            }
 
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] source series {$key} channel={$channel} metric={$metric} assetFilter=" . json_encode($assetFilter));
 
@@ -3191,6 +3210,18 @@ class DashboardWidgetDataController extends Controller
                 'granularity' => 'daily',
                 'metrics' => [$metric],
             ];
+
+            if (! empty($ssDependency)) {
+                $payload['dependency'] = $ssDependency;
+            }
+
+            if ($channel === 'facebook_organic') {
+                if (($ssDependency ?? '') === 'instagram_account') {
+                    $payload['activeTab'] = 'instagram';
+                } else {
+                    $payload['activeTab'] = 'facebook';
+                }
+            }
 
             $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
 
