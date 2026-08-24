@@ -786,6 +786,28 @@ body.pv-page .dvc-controls-bar {
     background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* ─── Permanent Empty Lines for Layout Section Partitioning ─── */
+.dashboard-empty-line {
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    pointer-events: none !important;
+    visibility: hidden;
+}
+
+.dashboard-empty-line .dashboard-page-break-marker {
+    height: 0 !important;
+    min-height: 0 !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
 /* ─── Print & PDF Export Translation Framework ─── */
 @page {
     size: landscape;
@@ -843,16 +865,15 @@ body.pv-page .dvc-controls-bar {
         height: auto !important;
     }
 
-    /* Print Section Break Control: Keep each discrete cluster contiguous */
-    .dashboard-print-section {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-        margin-bottom: 1.5rem !important;
+    .dashboard-empty-line {
         display: block !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        visibility: visible !important;
     }
 
     /* Ensure widgets never split horizontally across paper pages */
-    .grid-stack-item {
+    .grid-stack-item:not(.dashboard-empty-line) {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
     }

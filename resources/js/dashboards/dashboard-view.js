@@ -83,82 +83,11 @@ export function dashboardView(config = {}) {
                 });
             }
 
-            // ── Section-Based Pagination with Universal Cut-Lines ──
-            const items = Array.from(gridEl ? gridEl.querySelectorAll('.grid-stack-item') : []);
-            const savedPositions = [];
-
-            if (grid && items.length > 0) {
-                const PAGE_CAPACITY_ROWS = 6; // Grid row capacity per printable landscape page
-
-                const widgetBoxes = items.map(el => {
-                    const node = el.gridstackNode || {
-                        x: parseInt(el.getAttribute('gs-x') || '0'),
-                        y: parseInt(el.getAttribute('gs-y') || '0'),
-                        w: parseInt(el.getAttribute('gs-w') || '12'),
-                        h: parseInt(el.getAttribute('gs-h') || '4'),
-                    };
-                    savedPositions.push({ el, node, originalY: node.y, originalH: node.h });
-                    return { el, node, y: node.y, h: node.h, x: node.x, w: node.w, yEnd: node.y + node.h };
-                });
-
-                // Find all valid cut-lines (Y boundaries where no widget spans across)
-                const cutCandidates = [...new Set(widgetBoxes.map(b => b.yEnd))].sort((a, b) => a - b);
-                const validCuts = [0];
-
-                cutCandidates.forEach(cutY => {
-                    const crosses = widgetBoxes.some(b => b.y < cutY && b.yEnd > cutY);
-                    if (!crosses && !validCuts.includes(cutY)) {
-                        validCuts.push(cutY);
-                    }
-                });
-                validCuts.sort((a, b) => a - b);
-
-                // Build clean contiguous sections
-                const sections = [];
-                for (let i = 0; i < validCuts.length - 1; i++) {
-                    const secStart = validCuts[i];
-                    const secEnd = validCuts[i + 1];
-                    const secWidgets = widgetBoxes.filter(b => b.y >= secStart && b.y < secEnd);
-                    if (secWidgets.length > 0) {
-                        sections.push({
-                            startY: secStart,
-                            endY: secEnd,
-                            height: secEnd - secStart,
-                            widgets: secWidgets
-                        });
-                    }
-                }
-
-                // Pack sections into pages without slicing any section
-                let currentVirtualY = 0;
-                sections.forEach(section => {
-                    const pageOffset = currentVirtualY % PAGE_CAPACITY_ROWS;
-                    if (pageOffset > 0 && (pageOffset + section.height > PAGE_CAPACITY_ROWS)) {
-                        currentVirtualY += (PAGE_CAPACITY_ROWS - pageOffset);
-                    }
-
-                    const sectionShift = currentVirtualY - section.startY;
-                    section.widgets.forEach(w => {
-                        const newY = w.y + sectionShift;
-                        if (newY !== w.y) {
-                            grid.update(w.el, { y: newY });
-                        }
-                    });
-
-                    currentVirtualY += section.height;
-                });
-            }
-
             window.dispatchEvent(new Event('resize'));
 
             const restoreAfterPrint = () => {
-                if (grid) {
-                    if (originalColumn !== 12) {
-                        grid.column(originalColumn, 'none');
-                    }
-                    savedPositions.forEach(item => {
-                        grid.update(item.el, { y: item.originalY });
-                    });
+                if (grid && originalColumn !== 12) {
+                    grid.column(originalColumn, 'none');
                 }
                 if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
                     window.dashboardRenderer._chartInstances.forEach(chart => {

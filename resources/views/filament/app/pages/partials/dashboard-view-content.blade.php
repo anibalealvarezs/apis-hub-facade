@@ -149,6 +149,31 @@
 
     {{-- Grid --}}
     <div id="view-grid-stack" class="grid-stack" wire:ignore>
+        @php
+            $cutCandidates = collect($viewObj->widgets)->map(fn($w) => ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1))->unique()->sort()->values();
+            $emptyCutLines = [];
+            foreach ($cutCandidates as $cutY) {
+                $crosses = collect($viewObj->widgets)->contains(fn($w) => ($w['grid_y'] ?? 0) < $cutY && (($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1)) > $cutY);
+                if (!$crosses) {
+                    $emptyCutLines[] = $cutY;
+                }
+            }
+        @endphp
+
+        {{-- Permanent Empty Line Markers for Section Breaks --}}
+        @foreach ($emptyCutLines as $cutY)
+            <div class="grid-stack-item dashboard-empty-line no-screen"
+                 gs-x="0"
+                 gs-y="{{ $cutY }}"
+                 gs-w="12"
+                 gs-h="0"
+                 gs-no-resize="true"
+                 gs-no-move="true"
+                 gs-locked="true">
+                <div class="grid-stack-item-content dashboard-page-break-marker"></div>
+            </div>
+        @endforeach
+
         @foreach ($viewObj->widgets as $widget)
             <div class="grid-stack-item"
                  gs-id="{{ $widget['id'] }}"
