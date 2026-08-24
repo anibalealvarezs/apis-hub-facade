@@ -2313,15 +2313,20 @@ export function dashboardBuilder(config = {}) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                 if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
-                                    const firstMetric = Object.keys(metrics)[0];
-                                    this.widgetControlsForm.metrics[0] = firstMetric;
+                                    if (!this.widgetControlsForm.metrics[0]) {
+                                        const firstMetric = Object.keys(metrics)[0];
+                                        this.widgetControlsForm.metrics[0] = firstMetric;
+                                    }
                                 }
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
+                                        const targetIdx = parseInt(key) + 1;
                                         if (v.independent_channel === ch && !v.independent_metric && metrics && Object.keys(metrics).length > 0) {
-                                            const firstMetric = Object.keys(metrics)[0];
-                                            this.widgetControlsForm.metrics[parseInt(key) + 1] = firstMetric;
+                                            if (!this.widgetControlsForm.metrics[targetIdx]) {
+                                                const firstMetric = Object.keys(metrics)[0];
+                                                this.widgetControlsForm.metrics[targetIdx] = firstMetric;
+                                            }
                                         }
                                     }
                                 }
@@ -2888,6 +2893,8 @@ export function dashboardBuilder(config = {}) {
                 payload.channel = c.channel;
                 payload.assets = c.assets;
                 payload.metrics = c.metrics;
+                payload.series_assets = c.series_assets || {};
+                payload.series_asset_groups = c.series_asset_groups || {};
                 payload.series_dependencies = c.series_dependencies || {};
             }
 
