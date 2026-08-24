@@ -1263,8 +1263,6 @@ window.dashboardRenderer = {
         containerEl.style.overflow = 'hidden';
         containerEl.innerHTML = badgeHtml + '<div class="chart-canvas-wrap flex-1 min-h-0 relative w-full h-full"></div>';
 
-        const canvasWrap = containerEl.querySelector('.chart-canvas-wrap');
-        this.renderChart(canvasWrap, config);
         const hasLineDs = mappedData.datasets.some(ds => ds.type === 'line');
         if (hasLineDs) {
             config.options = config.options || {};
@@ -1368,6 +1366,9 @@ window.dashboardRenderer = {
                 });
             }
         }
+
+        const canvasWrap = containerEl.querySelector('.chart-canvas-wrap');
+        this.renderChart(canvasWrap, config);
 
         // Add show/hide toggle for the cluster point
         if (clusterPoint && mainScatterDs) {

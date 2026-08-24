@@ -83,11 +83,67 @@ export function dashboardView(config = {}) {
                 });
             }
 
+            // ── Pagination Flow Optimization for 12-col Grid ──
+            // Landscape A4/Letter page printable height accommodates approximately 6 grid rows per page (with header/margins).
+            // Calculate row offsets so that widgets that would split across a page boundary cleanly start on the next page.
+            const items = Array.from(gridEl ? gridEl.querySelectorAll('.grid-stack-item') : []);
+            const savedPositions = [];
+
+            if (grid && items.length > 0) {
+                const PAGE_CAPACITY_ROWS = 6; // Optimal visual row height per landscape page
+
+                // Sort items by original grid Y, then X
+                const sortedItems = items.map(el => {
+                    const node = el.gridstackNode || {
+                        x: parseInt(el.getAttribute('gs-x') || '0'),
+                        y: parseInt(el.getAttribute('gs-y') || '0'),
+                        w: parseInt(el.getAttribute('gs-w') || '12'),
+                        h: parseInt(el.getAttribute('gs-h') || '4'),
+                    };
+                    savedPositions.push({ el, node, originalY: node.y, originalH: node.h });
+                    return { el, node, y: node.y, h: node.h, x: node.x, w: node.w };
+                }).sort((a, b) => a.y - b.y || a.x - b.x);
+
+                // Build mapping of original Y row -> shifted Y row
+                const distinctYs = [...new Set(sortedItems.map(i => i.y))].sort((a, b) => a - b);
+                const yShiftMap = new Map();
+                let currentVirtualY = 0;
+                let lastOrigY = 0;
+
+                distinctYs.forEach(origY => {
+                    const rowItems = sortedItems.filter(i => i.y === origY);
+                    const rowMaxH = Math.max(...rowItems.map(i => i.h), 1);
+                    
+                    const pageOffset = currentVirtualY % PAGE_CAPACITY_ROWS;
+                    // If row exceeds the remaining space on current page, break to top of next page
+                    if (pageOffset > 0 && (pageOffset + rowMaxH > PAGE_CAPACITY_ROWS)) {
+                        currentVirtualY += (PAGE_CAPACITY_ROWS - pageOffset);
+                    }
+
+                    yShiftMap.set(origY, currentVirtualY);
+                    currentVirtualY += rowMaxH;
+                });
+
+                // Apply shifted positions to grid elements for print
+                sortedItems.forEach(item => {
+                    const newY = yShiftMap.get(item.y);
+                    if (newY !== undefined && newY !== item.y) {
+                        grid.update(item.el, { y: newY });
+                    }
+                });
+            }
+
             window.dispatchEvent(new Event('resize'));
 
             const restoreAfterPrint = () => {
-                if (grid && originalColumn !== 12) {
-                    grid.column(originalColumn, 'none');
+                if (grid) {
+                    if (originalColumn !== 12) {
+                        grid.column(originalColumn, 'none');
+                    }
+                    // Restore original grid Y coordinates
+                    savedPositions.forEach(item => {
+                        grid.update(item.el, { y: item.originalY });
+                    });
                 }
                 if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
                     window.dashboardRenderer._chartInstances.forEach(chart => {
