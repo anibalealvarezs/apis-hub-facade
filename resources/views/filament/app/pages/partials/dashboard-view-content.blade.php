@@ -158,16 +158,10 @@
                     $emptyCutLines[] = $cutY;
                 }
             }
+            $insertedCuts = [];
         @endphp
 
-        {{-- Permanent Empty Lines (Layout Section Dividers) --}}
-        @foreach ($emptyCutLines as $cutY)
-            <div class="dashboard-empty-line"
-                 data-cut-y="{{ $cutY }}"
-                 style="top: calc({{ $cutY }} * (100px + 12px));"></div>
-        @endforeach
-
-        @foreach ($viewObj->widgets as $widget)
+        @foreach ($viewObj->widgets as $wIndex => $widget)
             <div class="grid-stack-item"
                  gs-id="{{ $widget['id'] }}"
                  gs-x="{{ $widget['grid_x'] }}"
@@ -354,6 +348,21 @@
                     </div>
                 </div>
             </div>
+
+            @php
+                $nextWidget = $viewObj->widgets[$wIndex + 1] ?? null;
+                $currentEndY = ($widget['grid_y'] ?? 0) + ($widget['grid_h'] ?? 1);
+                $nextStartY = $nextWidget ? ($nextWidget['grid_y'] ?? 0) : null;
+            @endphp
+
+            @foreach ($emptyCutLines as $cutY)
+                @if (!in_array($cutY, $insertedCuts, true) && $currentEndY <= $cutY && ($nextStartY === null || $nextStartY >= $cutY))
+                    @php $insertedCuts[] = $cutY; @endphp
+                    <div class="dashboard-empty-line"
+                         data-cut-y="{{ $cutY }}"
+                         style="top: calc({{ $cutY }} * (100px + 12px));"></div>
+                @endif
+            @endforeach
         @endforeach
     </div>
 
