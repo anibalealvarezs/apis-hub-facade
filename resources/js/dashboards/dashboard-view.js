@@ -89,21 +89,35 @@ export function dashboardView(config = {}) {
                 for (const vKey in this.settingsSeriesOptions) {
                     const channel = this.settingsVariables[vKey]?.channel;
                     if (!channel) continue;
-                    const currentAssets = this.settingsControls.series_assets[vKey] || [];
-                    if (currentAssets.length === 0) continue;
 
                     const groupId = this.selectedAssetGroup;
-                    if (!groupId || !this.channelAssetGroupMap[channel]?.[groupId]) continue;
+                    const groupAllowed = (groupId && this.channelAssetGroupMap[channel]?.[groupId])
+                        ? this.channelAssetGroupMap[channel][groupId].map(String)
+                        : [];
 
-                    const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
-                    const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
+                    const seriesOptionsMap = this.settingsSeriesOptions[vKey]?.options || {};
+                    const allAvailableOptions = Object.keys(seriesOptionsMap).map(String);
+                    const allowedWhitelist = (this.settingsControls.series_allowed_assets && this.settingsControls.series_allowed_assets[vKey] && this.settingsControls.series_allowed_assets[vKey].length > 0)
+                        ? this.settingsControls.series_allowed_assets[vKey].map(String)
+                        : (this.settingsOriginalControls.series_allowed_assets && this.settingsOriginalControls.series_allowed_assets[vKey] && this.settingsOriginalControls.series_allowed_assets[vKey].length > 0)
+                            ? this.settingsOriginalControls.series_allowed_assets[vKey].map(String)
+                            : (allAvailableOptions.length > 0 ? allAvailableOptions : null);
 
-                    if (validAssets.length === 0) {
-                        this.settingsControls.series_assets = {
-                            ...this.settingsControls.series_assets,
-                            [vKey]: ['___EMPTY_GROUP___']
-                        };
+                    let validAssets = [];
+                    if (!groupId) {
+                        validAssets = (this.settingsOriginalControls.series_assets && this.settingsOriginalControls.series_assets[vKey])
+                            ? this.settingsOriginalControls.series_assets[vKey].map(String)
+                            : (this.settingsControls.series_assets[vKey] || []);
+                    } else if (allowedWhitelist && allowedWhitelist.length > 0) {
+                        validAssets = allowedWhitelist.filter(a => groupAllowed.includes(String(a)));
+                    } else if (groupAllowed.length > 0) {
+                        validAssets = groupAllowed;
                     }
+
+                    this.settingsControls.series_assets = {
+                        ...this.settingsControls.series_assets,
+                        [vKey]: validAssets.length > 0 ? validAssets : ['___EMPTY_GROUP___']
+                    };
                 }
 
                 const widgetId = this.settingsWidgetId;
@@ -137,27 +151,54 @@ export function dashboardView(config = {}) {
         _applyGroupToWidgetControls(controls, el) {
             const headerEl = el.closest('.grid-stack-item-content')?.querySelector('[data-variables]');
             let variables = {};
+            let seriesAssetsOptions = {};
+            let initialControls = {};
             if (headerEl) {
                 try {
                     variables = JSON.parse(headerEl.getAttribute('data-variables') || '{}');
+                } catch (e) {}
+                try {
+                    seriesAssetsOptions = JSON.parse(headerEl.getAttribute('data-series-options') || '{}');
+                } catch (e) {}
+                try {
+                    initialControls = JSON.parse(headerEl.getAttribute('data-controls') || '{}');
                 } catch (e) {}
             }
 
             const nextControls = { ...controls, series_assets: { ...(controls.series_assets || {}) } };
             let changed = false;
 
-            for (const vKey in nextControls.series_assets) {
+            for (const vKey in (variables || {})) {
                 const channel = variables[vKey]?.channel;
                 if (!channel) continue;
-                const currentAssets = nextControls.series_assets[vKey] || [];
-                if (currentAssets.length === 0) continue;
 
                 const groupId = this.selectedAssetGroup;
-                const allowedAssets = (groupId && this.channelAssetGroupMap[channel]?.[groupId])
+                const groupAllowed = (groupId && this.channelAssetGroupMap[channel]?.[groupId])
                     ? this.channelAssetGroupMap[channel][groupId].map(String)
                     : [];
 
-                const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
+                // Base assets whitelist: series_allowed_assets from initial/current controls, or all options for this series
+                const seriesOptionsMap = seriesAssetsOptions[vKey]?.options || {};
+                const allAvailableOptions = Object.keys(seriesOptionsMap).map(String);
+                const allowedWhitelist = (controls.series_allowed_assets && controls.series_allowed_assets[vKey] && controls.series_allowed_assets[vKey].length > 0)
+                    ? controls.series_allowed_assets[vKey].map(String)
+                    : (initialControls.series_allowed_assets && initialControls.series_allowed_assets[vKey] && initialControls.series_allowed_assets[vKey].length > 0)
+                        ? initialControls.series_allowed_assets[vKey].map(String)
+                        : (allAvailableOptions.length > 0 ? allAvailableOptions : null);
+
+                let validAssets = [];
+                if (!groupId) {
+                    // No group selected: restore initial default selection or keep current
+                    validAssets = (initialControls.series_assets && initialControls.series_assets[vKey])
+                        ? initialControls.series_assets[vKey].map(String)
+                        : (nextControls.series_assets[vKey] || []);
+                } else if (allowedWhitelist && allowedWhitelist.length > 0) {
+                    // Intersect the widget's allowed series assets with the selected group
+                    validAssets = allowedWhitelist.filter(a => groupAllowed.includes(String(a)));
+                } else if (groupAllowed.length > 0) {
+                    // If no explicit whitelist, all group assets for this channel are valid
+                    validAssets = groupAllowed;
+                }
 
                 let newAssets;
                 if (validAssets.length > 0) {
@@ -166,6 +207,7 @@ export function dashboardView(config = {}) {
                     newAssets = ['___EMPTY_GROUP___'];
                 }
 
+                const currentAssets = nextControls.series_assets[vKey] || [];
                 if (JSON.stringify(newAssets) !== JSON.stringify(currentAssets)) {
                     nextControls.series_assets[vKey] = newAssets;
                     changed = true;
