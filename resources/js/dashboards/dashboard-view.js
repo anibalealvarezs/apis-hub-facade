@@ -110,9 +110,67 @@ export function dashboardView(config = {}) {
                 });
             }
 
+            // Calculate print page heights based on empty cut lines
+            const emptyLines = Array.from(document.querySelectorAll('#view-grid-stack .dashboard-empty-line'))
+                .map(el => parseInt(el.dataset.cutY || '0'))
+                .filter(y => y > 0)
+                .sort((a, b) => a - b);
+
+            const widgetEls = Array.from(document.querySelectorAll('#view-grid-stack .grid-stack-item'));
+            const originalTops = new Map();
+            const originalGridHeight = gridEl ? gridEl.style.height : '';
+
+            if (emptyLines.length > 0 && widgetEls.length > 0) {
+                const cellH = (grid && grid.getCellHeight(true)) || 100;
+                const margin = (grid && grid.opts.margin) || 12;
+                const rowUnit = cellH + margin;
+
+                // Page dimensions in print pixels (standard landscape A4/Letter ~730px printable height)
+                const pagePrintHeight = 730;
+
+                // Build sections: [0, cut1, cut2, ...]
+                const cuts = [0, ...emptyLines];
+                let currentAccumulatedOffset = 0;
+
+                for (let i = 0; i < cuts.length; i++) {
+                    const secStartY = cuts[i];
+                    const secEndY = cuts[i + 1] || 9999;
+                    const secWidgets = widgetEls.filter(wEl => {
+                        const node = wEl.gridstackNode;
+                        const y = node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
+                        return y >= secStartY && y < secEndY;
+                    });
+
+                    if (secWidgets.length === 0) continue;
+
+                    // Compute current natural min/max Y for this section
+                    const naturalMinPx = secStartY * rowUnit;
+                    const pageTargetTopPx = i * pagePrintHeight;
+                    const shiftPx = pageTargetTopPx - naturalMinPx;
+
+                    secWidgets.forEach(wEl => {
+                        originalTops.set(wEl, wEl.style.top);
+                        const currentTop = parseFloat(wEl.style.top) || (wEl.offsetTop);
+                        wEl.style.top = `${currentTop + shiftPx}px`;
+                    });
+                }
+
+                if (gridEl) {
+                    gridEl.style.height = `${cuts.length * pagePrintHeight}px`;
+                }
+            }
+
             window.dispatchEvent(new Event('resize'));
 
             const restoreAfterPrint = () => {
+                // Restore widget tops
+                originalTops.forEach((top, wEl) => {
+                    wEl.style.top = top;
+                });
+                if (gridEl) {
+                    gridEl.style.height = originalGridHeight;
+                }
+
                 if (grid && originalColumn !== 12) {
                     grid.column(originalColumn, 'none');
                 }
