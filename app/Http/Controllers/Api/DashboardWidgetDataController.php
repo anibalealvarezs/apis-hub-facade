@@ -2297,14 +2297,25 @@ class DashboardWidgetDataController extends Controller
                     $cardAssetOverride = $controls['series_assets'][$cardIdx] ?? $matchingItem['series']['assets'] ?? null;
                 }
                 if (! empty($cardAssetOverride)) {
-                    $mergedFilter = is_array($seriesAssetFilter)
+                    $mergedFilter = (! empty($seriesAssetFilter) && is_array($seriesAssetFilter))
                         ? array_values(array_intersect($seriesAssetFilter, $cardAssetOverride))
                         : $cardAssetOverride;
                     $seriesAssetFilter = $mergedFilter;
+                } elseif (is_array($cardAssetOverride) && empty($cardAssetOverride)) {
+                    // Card asset override is explicitly empty array [] ("All assets")
+                    $seriesAssetFilter = ! empty($seriesAssetFilter) ? $seriesAssetFilter : [];
                 }
 
                 $assetFilter = $this->extractAssetFilter($controls, $project, $ssChannel, $seriesAssetFilter);
-                if ($assetFilter === '___EMPTY_GROUP___') {
+                if ($assetFilter === null || $assetFilter === '___EMPTY_GROUP___') {
+                    // Fallback to all valid assets for this channel
+                    $validAssets = $this->getValidAssetsForChannel($project, $ssChannel);
+                    if (! empty($validAssets)) {
+                        $allowsMultiple = in_array($ssChannel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                        $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
+                    }
+                }
+                if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
                     $fetchedSeries[$ssKey] = [];
                     continue;
                 }
