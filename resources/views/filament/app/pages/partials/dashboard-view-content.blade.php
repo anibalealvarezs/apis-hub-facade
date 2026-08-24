@@ -2,10 +2,14 @@
 @php
     $viewObj = $viewObj ?? $viewModel ?? null;
     $dc = $viewObj->dashboard->controls ?? [];
+    $allGroups = $viewObj->getAllAssetGroups();
     $dcAssetGroup = (string) ($dc['asset_group'] ?? '');
-    $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $viewObj->getAllAssetGroups())
+    $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $allGroups)
         ? $dcAssetGroup
         : '';
+    if ($dashboardGroup === '' && !empty($allGroups)) {
+        $dashboardGroup = (string) array_key_first($allGroups);
+    }
     $yesterdayDate = date('Y-m-d', strtotime('-1 day'));
 @endphp
 

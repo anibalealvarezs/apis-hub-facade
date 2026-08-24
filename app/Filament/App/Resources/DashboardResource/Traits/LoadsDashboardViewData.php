@@ -453,6 +453,12 @@ trait LoadsDashboardViewData
             // This prevents JS applyAssetGroup() from detecting changes and
             // triggering an unnecessary widget reload on page init.
             $dashboardAssetGroup = $this->dashboard->controls['asset_group'] ?? null;
+            if (empty($dashboardAssetGroup) && method_exists($this, 'getAllAssetGroups')) {
+                $allGroups = $this->getAllAssetGroups();
+                if (!empty($allGroups)) {
+                    $dashboardAssetGroup = (string) array_key_first($allGroups);
+                }
+            }
             if ($dashboardAssetGroup && method_exists($this, 'getChannelAssetGroupMap')) {
                 $channelGroupMap = $this->getChannelAssetGroupMap();
                 if (!empty($channelGroupMap)) {

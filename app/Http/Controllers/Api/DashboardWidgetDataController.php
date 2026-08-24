@@ -144,29 +144,61 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if ($pv && ! empty($pv->asset_group_ids) && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
+        if ($pv && ! empty($pv->asset_group_ids)) {
             $assetGroups = $pv->assetGroups();
             if ($assetGroups->isNotEmpty()) {
-                $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
-                if (! empty($channel)) {
-                    // Union of allowed assets across all groups
-                    $allowedAssets = $assetGroups->flatMap(function ($group) use ($channel) {
-                        return $group->items()->where('channel', $channel)->pluck('asset_id');
-                    })->unique()->values()->toArray();
-
-                    if (empty($allowedAssets)) {
-                        return response()->json([
-                            'success' => false,
-                            'error' => 'access_restricted',
-                            'message' => 'You do not have access to any asset for this public view.',
-                        ], 403, [], JSON_UNESCAPED_UNICODE);
+                // Build a map of channel => allowed asset IDs for this public view
+                $pvAllowedByChannel = [];
+                foreach ($assetGroups as $group) {
+                    foreach ($group->items as $item) {
+                        $pvAllowedByChannel[$item->channel][] = (string) $item->asset_id;
                     }
+                }
+                foreach ($pvAllowedByChannel as $ch => $ids) {
+                    $pvAllowedByChannel[$ch] = array_values(array_unique($ids));
+                }
 
+                // 1. Filter series_assets
+                if (! empty($resolvedControls['series_assets']) && is_array($resolvedControls['series_assets'])) {
+                    foreach ($resolvedControls['series_assets'] as $sKey => $sAssets) {
+                        if (! is_array($sAssets)) continue;
+                        $sChannel = null;
+                        if ($widget->source_type === 'kpi' && $widget->customKpi) {
+                            $uiState = $widget->customKpi->filters['_ui_state'] ?? [];
+                            if ($sKey === 'dependent') {
+                                $sChannel = $uiState['dependent_channel'] ?? $resolvedControls['channel'] ?? null;
+                            } elseif (str_starts_with($sKey, 'independent_')) {
+                                $idx = substr($sKey, strlen('independent_'));
+                                $sChannel = $uiState['independent_variables'][$idx]['independent_channel'] ?? null;
+                            }
+                        }
+                        if (empty($sChannel)) {
+                            $sChannel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
+                        }
+
+                        if (! empty($sChannel) && isset($pvAllowedByChannel[$sChannel])) {
+                            $allowed = $pvAllowedByChannel[$sChannel];
+                            $filtered = array_values(array_intersect(array_map('String', $sAssets), $allowed));
+                            if (empty($filtered)) {
+                                return response()->json([
+                                    'success' => false,
+                                    'error' => 'access_restricted',
+                                    'message' => 'You do not have access to the selected asset for this public view.',
+                                ], 403, [], JSON_UNESCAPED_UNICODE);
+                            }
+                            $resolvedControls['series_assets'][$sKey] = $filtered;
+                        }
+                    }
+                }
+
+                // 2. Filter root channel assets
+                $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
+                if (! empty($channel) && isset($pvAllowedByChannel[$channel])) {
+                    $allowedAssets = $pvAllowedByChannel[$channel];
                     $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
 
                     if (! empty($assetList)) {
-                        $filtered = array_values(array_intersect($assetList, $allowedAssets));
-
+                        $filtered = array_values(array_intersect(array_map('String', $assetList), $allowedAssets));
                         if (empty($filtered)) {
                             return response()->json([
                                 'success' => false,
@@ -174,7 +206,6 @@ class DashboardWidgetDataController extends Controller
                                 'message' => 'You do not have access to the selected asset for this public view.',
                             ], 403, [], JSON_UNESCAPED_UNICODE);
                         }
-
                         $resolvedControls['assets'] = $filtered;
                     } else {
                         $resolvedControls['assets'] = array_values($allowedAssets);
