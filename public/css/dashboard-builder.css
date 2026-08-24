@@ -852,16 +852,11 @@ body.pv-page .dvc-controls-bar {
     .grid-stack {
         width: 100% !important;
         height: auto !important;
+        min-height: 0 !important;
     }
 
     .dashboard-empty-line {
-        display: block !important;
-        position: relative !important;
-        width: 100% !important;
-        height: 1px !important;
-        page-break-after: always !important;
-        break-after: page !important;
-        clear: both !important;
+        display: none !important;
     }
 
     /* Ensure widgets never split horizontally across paper pages */
