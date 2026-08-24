@@ -2287,7 +2287,11 @@ export function dashboardBuilder(config = {}) {
                             ? [...wc.series_allowed_assets.dependent]
                             : [...(this.widgetControlsForm.series_assets.dependent || [])];
                     }
-                    if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = (wc.series_asset_groups && wc.series_asset_groups.dependent) || uiState.dependent_asset_group || '';
+                    if (this.widgetControlsForm.series_asset_groups.dependent === undefined) {
+                        this.widgetControlsForm.series_asset_groups.dependent = (wc.series_asset_groups && wc.series_asset_groups.dependent !== undefined)
+                            ? wc.series_asset_groups.dependent
+                            : ((wc.series_assets && wc.series_assets.dependent) ? '' : (uiState.dependent_asset_group || ''));
+                    }
                     if (!this.widgetControlsForm.series_dependencies) this.widgetControlsForm.series_dependencies = {};
                     if (!this.widgetControlsForm.series_dependencies.dependent && uiState.dependent_dependency) {
                         this.widgetControlsForm.series_dependencies.dependent = uiState.dependent_dependency;
@@ -2306,8 +2310,10 @@ export function dashboardBuilder(config = {}) {
                                     ? [...wc.series_allowed_assets[indKey]]
                                     : [...(this.widgetControlsForm.series_assets[indKey] || [])];
                             }
-                            if (!this.widgetControlsForm.series_asset_groups[indKey]) {
-                                this.widgetControlsForm.series_asset_groups[indKey] = (wc.series_asset_groups && wc.series_asset_groups[indKey]) || this.widgetKpiConfig.independent_variables[key]?.independent_asset_group || '';
+                            if (this.widgetControlsForm.series_asset_groups[indKey] === undefined) {
+                                this.widgetControlsForm.series_asset_groups[indKey] = (wc.series_asset_groups && wc.series_asset_groups[indKey] !== undefined)
+                                    ? wc.series_asset_groups[indKey]
+                                    : ((wc.series_assets && wc.series_assets[indKey]) ? '' : (this.widgetKpiConfig.independent_variables[key]?.independent_asset_group || ''));
                             }
                             if (!this.widgetControlsForm.series_dependencies[indKey] && this.widgetKpiConfig.independent_variables[key]?.independent_dependency) {
                                 this.widgetControlsForm.series_dependencies[indKey] = this.widgetKpiConfig.independent_variables[key].independent_dependency;

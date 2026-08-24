@@ -185,7 +185,9 @@ trait LoadsDashboardViewData
 
             if (! empty($uiState['dependent_channel'])) {
                 $depAssetIds = null;
-                $configuredGroup = $uiState['global_asset_group'] ?? $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
+                $configuredGroup = array_key_exists('dependent', $resolved['series_asset_groups'] ?? [])
+                    ? $resolved['series_asset_groups']['dependent']
+                    : ($uiState['dependent_asset_group'] ?? $uiState['global_asset_group'] ?? null);
                 if (!empty($configuredGroup)) {
                     $group = $access->getAllowedAssetGroupQuery($project, $user?->getAuthIdentifier())->find($configuredGroup);
                     if ($group) {
@@ -215,7 +217,9 @@ trait LoadsDashboardViewData
                     if (! empty($var['independent_channel'])) {
                         $idxKey = 'independent_' . $key;
                         $indAssetIds = null;
-                        $configuredGroup = $uiState['global_asset_group'] ?? $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
+                        $configuredGroup = array_key_exists($idxKey, $resolved['series_asset_groups'] ?? [])
+                            ? $resolved['series_asset_groups'][$idxKey]
+                            : ($var['independent_asset_group'] ?? $uiState['global_asset_group'] ?? null);
                         if (!empty($configuredGroup)) {
                             $group = $access->getAllowedAssetGroupQuery($project, $user?->getAuthIdentifier())->find($configuredGroup);
                             if ($group) {
