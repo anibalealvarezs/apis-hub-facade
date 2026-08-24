@@ -83,12 +83,70 @@ trait LoadsDashboardViewData
         \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData getActiveChannels done', ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         $t1 = microtime(true);
-        $this->widgets = $this->dashboard->widgets()
+        $rawWidgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
             ->orderBy('grid_x')
             ->get()
             ->toArray();
-        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData widgets loaded', ['count' => count($this->widgets), 'ms' => round((microtime(true) - $t1) * 1000, 1)]);
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData widgets loaded', ['count' => count($rawWidgets), 'ms' => round((microtime(true) - $t1) * 1000, 1)]);
+
+        $this->widgets = $rawWidgets;
+
+        // Group widgets into sections bounded by full empty horizontal rows
+        $maxY = 0;
+        foreach ($this->widgets as $w) {
+            $yEnd = ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1);
+            if ($yEnd > $maxY) $maxY = $yEnd;
+        }
+
+        $occupied = array_fill(0, $maxY + 1, false);
+        foreach ($this->widgets as $w) {
+            $yStart = $w['grid_y'] ?? 0;
+            $yEnd = $yStart + ($w['grid_h'] ?? 1);
+            for ($r = $yStart; $r < $yEnd; $r++) {
+                $occupied[$r] = true;
+            }
+        }
+
+        $this->sections = [];
+        $secIndex = 0;
+        $inSec = false;
+        $secStart = 0;
+        for ($r = 0; $r <= $maxY; $r++) {
+            if (!empty($occupied[$r]) && !$inSec) {
+                $inSec = true;
+                $secStart = $r;
+            } elseif (empty($occupied[$r]) && $inSec) {
+                $inSec = false;
+                $this->sections[] = [
+                    'index' => $secIndex++,
+                    'grid_y_start' => $secStart,
+                    'grid_y_end' => $r,
+                    'height' => $r - $secStart,
+                ];
+            }
+        }
+        if ($inSec) {
+            $this->sections[] = [
+                'index' => $secIndex++,
+                'grid_y_start' => $secStart,
+                'grid_y_end' => $maxY,
+                'height' => $maxY - $secStart,
+            ];
+        }
+
+        // Map section index back to each widget
+        foreach ($this->widgets as &$w) {
+            $wY = $w['grid_y'] ?? 0;
+            $w['section_index'] = 0;
+            foreach ($this->sections as $sec) {
+                if ($wY >= $sec['grid_y_start'] && $wY < $sec['grid_y_end']) {
+                    $w['section_index'] = $sec['index'];
+                    break;
+                }
+            }
+        }
+        unset($w);
 
         $service = app(WidgetDataService::class);
         $wi = 0;

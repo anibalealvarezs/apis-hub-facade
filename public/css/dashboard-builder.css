@@ -843,6 +843,14 @@ body.pv-page .dvc-controls-bar {
         height: auto !important;
     }
 
+    /* Print Section Break Control: Keep each discrete cluster contiguous */
+    .dashboard-print-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 1.5rem !important;
+        display: block !important;
+    }
+
     /* Ensure widgets never split horizontally across paper pages */
     .grid-stack-item {
         page-break-inside: avoid !important;

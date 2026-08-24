@@ -19,25 +19,30 @@ export function dashboardView(config = {}) {
             this.$nextTick(() => {
                 const tryInit = () => {
                     if (typeof GridStack !== 'undefined') {
-                        const grid = GridStack.init({
-                            staticGrid: true,
-                            float: true,
-                            column: 12,
-                            cellHeight: 100,
-                            margin: 12,
-                            minRow: 6,
-                            columnOpts: {
-                                columnMax: 12,
-                                breakpointForWindow: true,
-                                layout: 'moveScale',
-                                breakpoints: [
-                                    { w: 1024, c: 12 },
-                                    { w: 1023, c: 1 }
-                                ]
-                            }
-                        }, '#view-grid-stack');
-                        if (grid && window.innerWidth < 1024) {
-                            grid.column(1, 'moveScale');
+                        const gridEls = document.querySelectorAll('.grid-stack.dashboard-print-section');
+                        if (gridEls.length > 0) {
+                            gridEls.forEach(el => {
+                                const grid = GridStack.init({
+                                    staticGrid: true,
+                                    float: true,
+                                    column: 12,
+                                    cellHeight: 100,
+                                    margin: 12,
+                                    minRow: 1,
+                                    columnOpts: {
+                                        columnMax: 12,
+                                        breakpointForWindow: true,
+                                        layout: 'moveScale',
+                                        breakpoints: [
+                                            { w: 1024, c: 12 },
+                                            { w: 1023, c: 1 }
+                                        ]
+                                    }
+                                }, el);
+                                if (grid && window.innerWidth < 1024) {
+                                    grid.column(1, 'moveScale');
+                                }
+                            });
                         }
                     } else {
                         setTimeout(tryInit, 50);
@@ -62,13 +67,19 @@ export function dashboardView(config = {}) {
         },
 
         _triggerPdfPrint() {
-            const gridEl = document.querySelector('#view-grid-stack');
-            const grid = gridEl && gridEl.gridstack;
-            const originalColumn = grid ? grid.getColumn() : 12;
+            const gridEls = document.querySelectorAll('.grid-stack.dashboard-print-section');
+            const originalColumns = new Map();
 
-            if (grid && originalColumn !== 12) {
-                grid.column(12, 'none');
-            }
+            gridEls.forEach(el => {
+                const grid = el.gridstack;
+                if (grid) {
+                    const col = grid.getColumn();
+                    originalColumns.set(el, col);
+                    if (col !== 12) {
+                        grid.column(12, 'none');
+                    }
+                }
+            });
 
             // Trigger window resize and force charts to render without animations
             if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
@@ -83,93 +94,17 @@ export function dashboardView(config = {}) {
                 });
             }
 
-            // ── Section-Based Pagination Flow (Full Empty Lines Detection) ──
-            // Detect continuous widget clusters bounded by full horizontal empty lines.
-            // Each section is kept contiguous and packed into landscape pages (~6 grid units high).
-            const items = Array.from(gridEl ? gridEl.querySelectorAll('.grid-stack-item') : []);
-            const savedPositions = [];
-
-            if (grid && items.length > 0) {
-                const PAGE_CAPACITY_ROWS = 6; // Grid row capacity per printable landscape sheet
-
-                // 1. Gather all widget geometries
-                const widgetBoxes = items.map(el => {
-                    const node = el.gridstackNode || {
-                        x: parseInt(el.getAttribute('gs-x') || '0'),
-                        y: parseInt(el.getAttribute('gs-y') || '0'),
-                        w: parseInt(el.getAttribute('gs-w') || '12'),
-                        h: parseInt(el.getAttribute('gs-h') || '4'),
-                    };
-                    savedPositions.push({ el, node, originalY: node.y, originalH: node.h });
-                    return { el, node, y: node.y, h: node.h, x: node.x, w: node.w, yEnd: node.y + node.h };
-                });
-
-                // 2. Identify Section Boundaries via Connected Components in Y-intervals
-                // An empty line occurs wherever no widget spans the horizontal Y-slice.
-                const maxY = Math.max(...widgetBoxes.map(b => b.yEnd), 0);
-                const occupiedRows = new Array(maxY).fill(false);
-                widgetBoxes.forEach(b => {
-                    for (let r = b.y; r < b.yEnd; r++) {
-                        occupiedRows[r] = true;
-                    }
-                });
-
-                // Build sections: continuous intervals of occupied rows
-                const sections = [];
-                let inSection = false;
-                let secStartY = 0;
-
-                for (let r = 0; r <= maxY; r++) {
-                    if (occupiedRows[r] && !inSection) {
-                        inSection = true;
-                        secStartY = r;
-                    } else if ((!occupiedRows[r] || r === maxY) && inSection) {
-                        inSection = false;
-                        const secEndY = r;
-                        const secWidgets = widgetBoxes.filter(b => b.y >= secStartY && b.y < secEndY);
-                        sections.push({
-                            startY: secStartY,
-                            endY: secEndY,
-                            height: secEndY - secStartY,
-                            widgets: secWidgets
-                        });
-                    }
-                }
-
-                // 3. Pack sections into pages
-                let currentVirtualY = 0;
-
-                sections.forEach(section => {
-                    const pageOffset = currentVirtualY % PAGE_CAPACITY_ROWS;
-                    // If this section doesn't fit on the current page, move it to the top of the next page
-                    if (pageOffset > 0 && (pageOffset + section.height > PAGE_CAPACITY_ROWS)) {
-                        currentVirtualY += (PAGE_CAPACITY_ROWS - pageOffset);
-                    }
-
-                    const sectionShift = currentVirtualY - section.startY;
-                    section.widgets.forEach(w => {
-                        const newY = w.y + sectionShift;
-                        if (newY !== w.y) {
-                            grid.update(w.el, { y: newY });
-                        }
-                    });
-
-                    currentVirtualY += section.height;
-                });
-            }
-
             window.dispatchEvent(new Event('resize'));
 
             const restoreAfterPrint = () => {
-                if (grid) {
-                    if (originalColumn !== 12) {
-                        grid.column(originalColumn, 'none');
+                gridEls.forEach(el => {
+                    const grid = el.gridstack;
+                    const col = originalColumns.get(el);
+                    if (grid && col !== undefined && col !== 12) {
+                        grid.column(col, 'none');
                     }
-                    // Restore original grid Y coordinates
-                    savedPositions.forEach(item => {
-                        grid.update(item.el, { y: item.originalY });
-                    });
-                }
+                });
+
                 if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
                     window.dashboardRenderer._chartInstances.forEach(chart => {
                         try {

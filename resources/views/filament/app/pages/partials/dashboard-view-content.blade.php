@@ -147,22 +147,28 @@
         </template>
     </div>
 
-    {{-- Grid --}}
-    <div id="view-grid-stack" class="grid-stack" wire:ignore>
-        @foreach ($viewObj->widgets as $widget)
-            <div class="grid-stack-item"
-                 gs-id="{{ $widget['id'] }}"
-                 gs-x="{{ $widget['grid_x'] }}"
-                 gs-y="{{ $widget['grid_y'] }}"
-                 gs-w="{{ $widget['grid_w'] }}"
-                 gs-h="{{ $widget['grid_h'] }}">
-                <div
-                    class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col pd-widget-content">
-                    <div
-                        class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
-                            x-data="widgetHeader"
-                            data-widget-id="{{ $widget['id'] }}"
-                            data-controls="{{ json_encode($widget['resolved_controls']) }}"
+    {{-- Sections / Grid Container --}}
+    <div id="view-grid-stack-root" class="space-y-6">
+        @php
+            $groupedBySection = collect($viewObj->widgets)->groupBy('section_index');
+        @endphp
+
+        @foreach ($groupedBySection as $secIdx => $secWidgets)
+            <div id="view-grid-stack-sec-{{ $secIdx }}" class="grid-stack dashboard-print-section" wire:ignore>
+                @foreach ($secWidgets as $widget)
+                    <div class="grid-stack-item"
+                         gs-id="{{ $widget['id'] }}"
+                         gs-x="{{ $widget['grid_x'] }}"
+                         gs-y="{{ $widget['grid_y'] - ($viewObj->sections[$secIdx]['grid_y_start'] ?? 0) }}"
+                         gs-w="{{ $widget['grid_w'] }}"
+                         gs-h="{{ $widget['grid_h'] }}">
+                        <div
+                            class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col pd-widget-content">
+                            <div
+                                class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
+                                    x-data="widgetHeader"
+                                    data-widget-id="{{ $widget['id'] }}"
+                                    data-controls="{{ json_encode($widget['resolved_controls']) }}"
                             data-series-options="{{ json_encode($widget['series_assets_options']) }}"
                             data-metric-options="{{ json_encode($widget['metric_options']) }}"
                             data-source-type="{{ $widget['source_type'] }}"
@@ -335,6 +341,8 @@
                          x-init="renderWidget({{ $widget['id'] }}, $el, {{ json_encode($widget['resolved_controls']) }})">
                     </div>
                 </div>
+            </div>
+        @endforeach
             </div>
         @endforeach
     </div>
