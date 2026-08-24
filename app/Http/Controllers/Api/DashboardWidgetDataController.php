@@ -2294,7 +2294,17 @@ class DashboardWidgetDataController extends Controller
                 $cardAssetOverride = null;
                 if ($matchingItem) {
                     $cardIdx = $matchingItem['series_index'];
-                    $cardAssetOverride = $controls['series_assets'][$cardIdx] ?? $matchingItem['series']['assets'] ?? null;
+                    $cardAssetOverride = $controls['series_assets'][$cardIdx]
+                        ?? $controls['series_assets'][(string)$cardIdx]
+                        ?? $controls['series_assets']['dm_' . $ssIdx]
+                        ?? $controls['series_assets'][$ssKey]
+                        ?? $matchingItem['series']['assets']
+                        ?? null;
+                } else {
+                    $cardAssetOverride = $controls['series_assets']['dm_' . $ssIdx]
+                        ?? $controls['series_assets'][$ssIdx]
+                        ?? $controls['series_assets'][$ssKey]
+                        ?? null;
                 }
                 if (! empty($cardAssetOverride)) {
                     $mergedFilter = (! empty($seriesAssetFilter) && is_array($seriesAssetFilter))
@@ -2324,7 +2334,9 @@ class DashboardWidgetDataController extends Controller
 
                 $ssDependency = $ss['dependency']
                     ?? ($matchingItem && ! empty($matchingItem['series']['dependency']) ? $matchingItem['series']['dependency'] : null)
-                    ?? ($matchingItem && isset($matchingItem['series_index']) && ! empty($controls['series_dependencies'][$matchingItem['series_index']]) ? $controls['series_dependencies'][$matchingItem['series_index']] : null);
+                    ?? ($matchingItem && isset($matchingItem['series_index']) && ! empty($controls['series_dependencies'][$matchingItem['series_index']]) ? $controls['series_dependencies'][$matchingItem['series_index']] : null)
+                    ?? ($controls['series_dependencies']['dm_' . $ssIdx] ?? null)
+                    ?? ($controls['series_dependencies'][$ssKey] ?? null);
 
                 // Only fall back to global controls['dependency'] if the DM source series channel matches the widget channel
                 if ($ssDependency === null && ($controls['channel'] ?? '') === $ssChannel && ! empty($controls['dependency'])) {
