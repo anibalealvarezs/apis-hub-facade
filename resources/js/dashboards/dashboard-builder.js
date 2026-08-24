@@ -2893,19 +2893,72 @@ export function dashboardBuilder(config = {}) {
             if (!this.canAddWidget() || !this.$wire) return;
 
             const form = this.addWidgetForm;
+            let sourceType = form.source_type;
+            let sourceConfig = {};
+            let controls = {};
+
+            if (form.source_type === 'kpi') {
+                sourceConfig = { custom_kpi_id: form.custom_kpi_id };
+            } else if (form.source_type === 'derived_metric') {
+                sourceType = 'metric';
+                const dmId = String(form.derived_metric_id);
+                const dmInfo = this.derivedMetrics[dmId] || {};
+                const dmName = dmInfo.name || ('DM #' + dmId);
+                const rawSourceSeries = Array.isArray(dmInfo.source_series) ? dmInfo.source_series : [];
+
+                const rawSeries = [];
+                const seriesAssets = {};
+                const seriesChannels = {};
+                const seriesDependencies = {};
+
+                rawSourceSeries.forEach((ss, idx) => {
+                    const ch = ss.channel || '';
+                    const metric = ss.metric || ss.metric_key || ss.metric_name || '';
+                    const deps = this.getDependenciesForChannel(ch);
+                    const defaultDep = deps && Object.keys(deps).length > 0 ? Object.keys(deps)[0] : '';
+                    const dep = ss.dependency || defaultDep || '';
+                    const assets = Array.isArray(ss.assets) ? [...ss.assets] : [];
+
+                    rawSeries.push({
+                        type: 'derived_metric',
+                        dm_id: dmId,
+                        dm_name: dmName,
+                        dm_series_index: idx,
+                        label: ss.label || '',
+                        channel: ch,
+                        dependency: dep,
+                        metrics: metric ? [metric] : [],
+                        assets: assets
+                    });
+
+                    seriesAssets[idx] = assets;
+                    seriesChannels[idx] = ch;
+                    seriesDependencies[idx] = dep;
+                });
+
+                sourceConfig = {
+                    derived_metric_id: form.derived_metric_id,
+                    raw_series: rawSeries,
+                    granularity: dmInfo.output_granularity || 'daily'
+                };
+                controls = {
+                    granularity: dmInfo.output_granularity || 'daily',
+                    raw_series: rawSeries,
+                    series_assets: seriesAssets,
+                    series_channels: seriesChannels,
+                    series_dependencies: seriesDependencies
+                };
+            }
+
             const data = {
                 name: form.name || form.widget_type,
                 title: form.name || form.widget_type,
-                source_type: form.source_type,
+                source_type: sourceType,
                 custom_kpi_id: form.source_type === 'kpi' ? form.custom_kpi_id : null,
                 derived_metric_id: form.source_type === 'derived_metric' ? form.derived_metric_id : null,
-                source_config: form.source_type === 'kpi'
-                    ? { custom_kpi_id: form.custom_kpi_id }
-                    : form.source_type === 'derived_metric'
-                        ? { derived_metric_id: form.derived_metric_id }
-                        : {},
+                source_config: sourceConfig,
                 widget_type: form.widget_type,
-                controls: {},
+                controls: controls,
                 grid_x: null,
                 grid_y: null,
                 grid_w: 4,
