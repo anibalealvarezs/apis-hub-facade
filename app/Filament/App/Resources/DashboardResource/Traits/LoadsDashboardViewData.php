@@ -659,6 +659,8 @@ trait LoadsDashboardViewData
                                 'index' => $sIdx,
                                 'channel' => $sChannel,
                                 'channel_name' => $sLabel ?? KpiFormBuilder::getChannelDisplayName($sChannel),
+                                'dependency' => $dependency,
+                                'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($sChannel),
                                 'metrics' => $metrics,
                                 'type' => $s['type'] ?? 'metric',
                                 'dm_name' => $s['dm_name'] ?? null,
@@ -686,6 +688,8 @@ trait LoadsDashboardViewData
                                 'index' => (int)$sIdx,
                                 'channel' => $sChannel,
                                 'channel_name' => $sLabel ?? KpiFormBuilder::getChannelDisplayName($sChannel),
+                                'dependency' => $dependency,
+                                'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($sChannel),
                                 'metrics' => $metrics,
                             ];
                         }
@@ -706,6 +710,8 @@ trait LoadsDashboardViewData
                             'index' => 0,
                             'channel' => $primaryChannel,
                             'channel_name' => KpiFormBuilder::getChannelDisplayName($primaryChannel),
+                            'dependency' => $dependency,
+                            'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($primaryChannel),
                             'metrics' => $metrics,
                         ];
                     }

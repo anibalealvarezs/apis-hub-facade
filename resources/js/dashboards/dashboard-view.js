@@ -370,19 +370,20 @@ export function dashboardView(config = {}) {
                 this.settingsControls.series_dependencies = {};
             }
 
-            if (sourceType === 'kpi') {
-                for (const vKey in this.settingsVariables) {
-                    const vConfig = this.settingsVariables[vKey];
-                    if (vConfig && vConfig.index !== undefined) {
+            for (const vKey in this.settingsVariables) {
+                const vConfig = this.settingsVariables[vKey];
+                if (vConfig) {
+                    if (sourceType === 'kpi' && vConfig.index !== undefined) {
                         const idx = vConfig.index;
                         if (!this.settingsControls.metrics[idx] && vConfig.metrics && Object.keys(vConfig.metrics).length > 0) {
                             this.settingsControls.metrics[idx] = vConfig.selected_metric || Object.keys(vConfig.metrics)[0];
                         }
-                        if (!this.settingsControls.series_dependencies[vKey]) {
-                            this.settingsControls.series_dependencies[vKey] = this.settingsControls.series_dependencies[String(idx)]
-                                || vConfig.dependency
-                                || '';
-                        }
+                    }
+                    if (!this.settingsControls.series_dependencies[vKey]) {
+                        const idx = vConfig.index !== undefined ? String(vConfig.index) : null;
+                        this.settingsControls.series_dependencies[vKey] = (idx && this.settingsControls.series_dependencies[idx])
+                            || vConfig.dependency
+                            || (vConfig.dependencies && Object.keys(vConfig.dependencies).length > 0 ? Object.keys(vConfig.dependencies)[0] : '');
                     }
                 }
             }

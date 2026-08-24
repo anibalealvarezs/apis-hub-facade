@@ -597,8 +597,8 @@
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
-                                                {{-- Data Scope / Dependency selector (KPI Widgets) --}}
-                                                <template x-if="settingsSourceType === 'kpi' && vConfig.dependencies && Object.keys(vConfig.dependencies).length > 0">
+                                                {{-- Data Scope / Dependency selector --}}
+                                                <template x-if="vConfig.dependencies && Object.keys(vConfig.dependencies).length > 0">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
                                                         <select x-model="settingsControls.series_dependencies[vKey]"

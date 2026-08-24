@@ -31,6 +31,17 @@ class ChannelGranularityRegistry
         return array_merge($commonTimely, $dimensions);
     }
 
+    public static function getDefaultDependencyForChannel(string $channel): ?string
+    {
+        return match ($channel) {
+            'facebook_marketing' => 'ad_level',
+            'facebook_organic' => 'instagram_account',
+            'google_search_console' => 'non-searchAppearance',
+            'google_analytics' => 'traffic_matrix',
+            default => null,
+        };
+    }
+
     public static function getDependenciesForChannel(string $channel): array
     {
         return match ($channel) {
@@ -39,14 +50,14 @@ class ChannelGranularityRegistry
                 'searchAppearance' => __('Search Appearance'),
             ],
             'facebook_organic' => [
-                'facebook_page' => __('Facebook Page'),
                 'instagram_account' => __('Instagram Account'),
+                'facebook_page' => __('Facebook Page'),
             ],
             'facebook_marketing' => [
+                'ad_level' => __('Ad Level'),
                 'account_level' => __('Account Level'),
                 'campaign_level' => __('Campaign Level'),
                 'adset_level' => __('Ad Set Level'),
-                'ad_level' => __('Ad Level'),
             ],
             'google_analytics' => [
                 'traffic_matrix' => __('Traffic Matrix (Session)'),
@@ -60,7 +71,7 @@ class ChannelGranularityRegistry
 
     private static function getGscDimensions(?string $dependency): array
     {
-        $dependency = $dependency ?? 'non-searchAppearance';
+        $dependency = $dependency ?? self::getDefaultDependencyForChannel('google_search_console');
 
         return match ($dependency) {
             'searchAppearance' => [
@@ -78,7 +89,7 @@ class ChannelGranularityRegistry
 
     private static function getFbOrganicDimensions(?string $dependency): array
     {
-        $dependency = $dependency ?? 'facebook_page';
+        $dependency = $dependency ?? self::getDefaultDependencyForChannel('facebook_organic');
 
         return match ($dependency) {
             'instagram_account' => [
@@ -93,7 +104,7 @@ class ChannelGranularityRegistry
 
     private static function getFbMarketingDimensions(?string $dependency): array
     {
-        $dependency = $dependency ?? 'account_level';
+        $dependency = $dependency ?? self::getDefaultDependencyForChannel('facebook_marketing');
 
         return match ($dependency) {
             'account_level' => [
