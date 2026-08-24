@@ -101,61 +101,123 @@ export function dashboardBuilder(config = {}) {
                     const uiState = config?.filters?._ui_state || config || {};
                     const vars = {};
                     let indIndex = 1;
-                    const depChannel = uiState.dependent_channel || current.channel || this.dashboardControls.channel || 'facebook_marketing';
-                    ensureChannelLoaded(depChannel);
-                    vars['dependent'] = {
-                        index: 0,
-                        channel: depChannel,
-                        channel_name: depChannel,
-                        selected_metric: uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : ''),
-                        dm_id: uiState.dependent_dm_id || null,
-                        dm_name: uiState.dependent_dm_id && this.derivedMetrics?.[uiState.dependent_dm_id] ? this.derivedMetrics[uiState.dependent_dm_id].name : null,
-                    };
-                    this.sandboxSearchQueries['dependent'] = '';
-                    if (!this.sandboxForm.series_assets['dependent']) {
-                        const defaultAssets = uiState.dependent_asset_filter || (current.assets && current.assets.length > 0 ? current.assets : []);
-                        this.sandboxForm.series_assets['dependent'] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+
+                    // 1. Dependent Variable
+                    const depDmId = uiState.dependent_dm_id || (uiState.dependent_source_type === 'derived_metric' ? uiState.dependent_dm_id : null);
+                    const depDm = depDmId ? (this.derivedMetrics?.[depDmId] || this.derivedMetrics?.[String(depDmId)]) : null;
+
+                    if (depDm && Array.isArray(depDm.source_series) && depDm.source_series.length > 0) {
+                        depDm.source_series.forEach((s, sIdx) => {
+                            const key = 'dep_dm_' + sIdx;
+                            const ch = s.channel || '';
+                            ensureChannelLoaded(ch);
+                            vars[key] = {
+                                index: 0,
+                                channel: ch,
+                                channel_name: ch,
+                                selected_metric: s.metric || '',
+                                dm_id: depDmId,
+                                dm_name: depDm.name || '',
+                                dm_source_label: s.label || ('Series ' + (sIdx + 1)),
+                                is_dm_source: true,
+                            };
+                            this.sandboxSearchQueries[key] = '';
+                            if (!this.sandboxForm.series_assets[key]) {
+                                const defaultAssets = s.asset_filter || s.asset_ids || (current.assets && current.assets.length > 0 ? current.assets : []);
+                                this.sandboxForm.series_assets[key] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                            }
+                            if (s.dependency && !this.sandboxForm.series_dependencies[key]) {
+                                this.sandboxForm.series_dependencies[key] = s.dependency;
+                            }
+                        });
+                    } else {
+                        const depChannel = uiState.dependent_channel || current.channel || this.dashboardControls.channel || 'facebook_marketing';
+                        ensureChannelLoaded(depChannel);
+                        vars['dependent'] = {
+                            index: 0,
+                            channel: depChannel,
+                            channel_name: depChannel,
+                            selected_metric: uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : ''),
+                            dm_id: depDmId || null,
+                            dm_name: depDm?.name || null,
+                        };
+                        this.sandboxSearchQueries['dependent'] = '';
+                        if (!this.sandboxForm.series_assets['dependent']) {
+                            const defaultAssets = uiState.dependent_asset_filter || (current.assets && current.assets.length > 0 ? current.assets : []);
+                            this.sandboxForm.series_assets['dependent'] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                        }
+                        const defaultMetric = uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : null);
+                        if (defaultMetric && (!this.sandboxForm.metrics || this.sandboxForm.metrics.length === 0 || !this.sandboxForm.metrics[0])) {
+                            this.sandboxForm.metrics[0] = defaultMetric;
+                        } else if (!this.sandboxForm.metrics[0] && this.allChannelMetrics[depChannel]) {
+                            const mKeys = Object.keys(this.allChannelMetrics[depChannel]);
+                            if (mKeys.length > 0) this.sandboxForm.metrics[0] = mKeys[0];
+                        }
+                        if (uiState.dependent_dependency && !this.sandboxForm.series_dependencies['dependent']) {
+                            this.sandboxForm.series_dependencies['dependent'] = uiState.dependent_dependency;
+                        }
                     }
-                    const defaultMetric = uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : null);
-                    if (defaultMetric && (!this.sandboxForm.metrics || this.sandboxForm.metrics.length === 0 || !this.sandboxForm.metrics[0])) {
-                        this.sandboxForm.metrics[0] = defaultMetric;
-                    } else if (!this.sandboxForm.metrics[0] && this.allChannelMetrics[depChannel]) {
-                        const mKeys = Object.keys(this.allChannelMetrics[depChannel]);
-                        if (mKeys.length > 0) this.sandboxForm.metrics[0] = mKeys[0];
-                    }
-                    if (uiState.dependent_dependency && !this.sandboxForm.series_dependencies['dependent']) {
-                        this.sandboxForm.series_dependencies['dependent'] = uiState.dependent_dependency;
-                    }
+
+                    // 2. Independent Variables
                     if (uiState.independent_variables) {
                         for (let k in uiState.independent_variables) {
                             const iv = uiState.independent_variables[k];
                             const varKey = 'independent_' + k;
-                            if (iv.independent_channel) {
-                                ensureChannelLoaded(iv.independent_channel);
-                            }
-                            vars[varKey] = {
-                                index: indIndex,
-                                channel: iv.independent_channel || '',
-                                channel_name: iv.independent_channel || '',
-                                selected_metric: iv.independent_metric || '',
-                                dm_id: iv.independent_dm_id || null,
-                                dm_name: iv.independent_dm_id && this.derivedMetrics?.[iv.independent_dm_id] ? this.derivedMetrics[iv.independent_dm_id].name : null,
-                            };
-                            this.sandboxSearchQueries[varKey] = '';
-                            if (!this.sandboxForm.series_assets[varKey]) {
-                                const defaultAssets = iv.independent_asset_filter || [];
-                                this.sandboxForm.series_assets[varKey] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
-                            }
-                            if (!this.sandboxForm.metrics[indIndex]) {
-                                if (iv.independent_metric) {
-                                    this.sandboxForm.metrics[indIndex] = iv.independent_metric;
-                                } else if (this.allChannelMetrics[iv.independent_channel]) {
-                                    const mKeys = Object.keys(this.allChannelMetrics[iv.independent_channel]);
-                                    if (mKeys.length > 0) this.sandboxForm.metrics[indIndex] = mKeys[0];
+                            const indDmId = iv.independent_dm_id || (iv.independent_source_type === 'derived_metric' ? iv.independent_dm_id : null);
+                            const indDm = indDmId ? (this.derivedMetrics?.[indDmId] || this.derivedMetrics?.[String(indDmId)]) : null;
+
+                            if (indDm && Array.isArray(indDm.source_series) && indDm.source_series.length > 0) {
+                                indDm.source_series.forEach((s, sIdx) => {
+                                    const key = 'ind_' + k + '_dm_' + sIdx;
+                                    const ch = s.channel || '';
+                                    ensureChannelLoaded(ch);
+                                    vars[key] = {
+                                        index: indIndex,
+                                        channel: ch,
+                                        channel_name: ch,
+                                        selected_metric: s.metric || '',
+                                        dm_id: indDmId,
+                                        dm_name: indDm.name || '',
+                                        dm_source_label: s.label || ('Series ' + (sIdx + 1)),
+                                        is_dm_source: true,
+                                    };
+                                    this.sandboxSearchQueries[key] = '';
+                                    if (!this.sandboxForm.series_assets[key]) {
+                                        const defaultAssets = s.asset_filter || s.asset_ids || [];
+                                        this.sandboxForm.series_assets[key] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                                    }
+                                    if (s.dependency && !this.sandboxForm.series_dependencies[key]) {
+                                        this.sandboxForm.series_dependencies[key] = s.dependency;
+                                    }
+                                });
+                            } else {
+                                if (iv.independent_channel) {
+                                    ensureChannelLoaded(iv.independent_channel);
                                 }
-                            }
-                            if (iv.independent_dependency && !this.sandboxForm.series_dependencies[varKey]) {
-                                this.sandboxForm.series_dependencies[varKey] = iv.independent_dependency;
+                                vars[varKey] = {
+                                    index: indIndex,
+                                    channel: iv.independent_channel || '',
+                                    channel_name: iv.independent_channel || '',
+                                    selected_metric: iv.independent_metric || '',
+                                    dm_id: indDmId || null,
+                                    dm_name: indDm?.name || null,
+                                };
+                                this.sandboxSearchQueries[varKey] = '';
+                                if (!this.sandboxForm.series_assets[varKey]) {
+                                    const defaultAssets = iv.independent_asset_filter || [];
+                                    this.sandboxForm.series_assets[varKey] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                                }
+                                if (!this.sandboxForm.metrics[indIndex]) {
+                                    if (iv.independent_metric) {
+                                        this.sandboxForm.metrics[indIndex] = iv.independent_metric;
+                                    } else if (this.allChannelMetrics[iv.independent_channel]) {
+                                        const mKeys = Object.keys(this.allChannelMetrics[iv.independent_channel]);
+                                        if (mKeys.length > 0) this.sandboxForm.metrics[indIndex] = mKeys[0];
+                                    }
+                                }
+                                if (iv.independent_dependency && !this.sandboxForm.series_dependencies[varKey]) {
+                                    this.sandboxForm.series_dependencies[varKey] = iv.independent_dependency;
+                                }
                             }
                             indIndex++;
                         }

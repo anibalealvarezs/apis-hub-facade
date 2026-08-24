@@ -2419,7 +2419,7 @@
                                             </template>
 
                                             {{-- Metric selector for KPI Widgets --}}
-                                            <template x-if="sandboxTargetWidget?.source_type === 'kpi' && Object.keys(getSandboxMetricsForSeries(vKey, vConfig)).length > 0">
+                                            <template x-if="sandboxTargetWidget?.source_type === 'kpi' && !vConfig.is_dm_source && Object.keys(getSandboxMetricsForSeries(vKey, vConfig)).length > 0">
                                                 <div class="my-2">
                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Metric') }}</label>
                                                     <select x-model="sandboxForm.metrics[vConfig.index]"
