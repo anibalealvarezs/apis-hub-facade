@@ -98,10 +98,10 @@ export function dashboardView(config = {}) {
                     const allowedAssets = this.channelAssetGroupMap[channel][groupId].map(String);
                     const validAssets = currentAssets.filter(a => allowedAssets.includes(String(a)));
 
-                    if (validAssets.length === 0 && allowedAssets.length > 0) {
+                    if (validAssets.length === 0) {
                         this.settingsControls.series_assets = {
                             ...this.settingsControls.series_assets,
-                            [vKey]: [allowedAssets[0]]
+                            [vKey]: ['___EMPTY_GROUP___']
                         };
                     }
                 }
@@ -162,8 +162,6 @@ export function dashboardView(config = {}) {
                 let newAssets;
                 if (validAssets.length > 0) {
                     newAssets = validAssets;
-                } else if (allowedAssets.length > 0) {
-                    newAssets = [allowedAssets[0]];
                 } else {
                     newAssets = ['___EMPTY_GROUP___'];
                 }
@@ -585,7 +583,6 @@ export function dashboardView(config = {}) {
             const allowedAssets = groupAssets.map(String);
             const validAssets = (selectedAssets || []).filter(a => allowedAssets.includes(String(a)));
             if (validAssets.length > 0) return validAssets;
-            if (allowedAssets.length > 0) return [allowedAssets[0]];
             return ['___EMPTY_GROUP___'];
         },
 

@@ -485,8 +485,8 @@ trait LoadsDashboardViewData
                             $validAssets = array_intersect($assetIds, $allowedAssets);
                             if (!empty($validAssets)) {
                                 $resolved['series_assets'][$assetKey] = array_values($validAssets);
-                            } elseif (!empty($allowedAssets)) {
-                                $resolved['series_assets'][$assetKey] = [reset($allowedAssets)];
+                            } else {
+                                $resolved['series_assets'][$assetKey] = ['___EMPTY_GROUP___'];
                             }
                         }
                     }
