@@ -235,9 +235,9 @@
         <div x-show="showDashboardControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showDashboardControls = false"></div>
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto p-7 space-y-6">
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-5xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('These defaults apply to all widgets. Widgets can override individually.') }}</p>
                 </div>
 
@@ -245,7 +245,7 @@
                     $yesterdayDate = date('Y-m-d', strtotime('-1 day'));
                 @endphp
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-7 items-start">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     {{-- Left Column: General Analytics Controls --}}
                     <div class="space-y-5">
                         {{-- Date Range --}}
@@ -295,7 +295,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Edge Cases') }}</label>
                             <div class="space-y-3">
-                                <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                                <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer select-none">
                                     <input type="checkbox" x-model="dashboardControls.edge_case_weighted"
                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
                                     {{ __('Weighted regression (WLS)') }}
@@ -312,7 +312,7 @@
                     {{-- Right Column: Asset Groups & Export Permissions --}}
                     <div class="space-y-5">
                         {{-- Asset Group Container (Encircled with subtle background & borderless) --}}
-                        <div class="rounded-xl p-4 bg-gray-50 dark:bg-gray-800/50 space-y-3">
+                        <div class="rounded-xl p-5 bg-gray-50 dark:bg-gray-800 space-y-3">
                             <label class="block text-sm font-semibold text-gray-900 dark:text-white">{{ __('Asset Group') }}</label>
                             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ __('Filters available assets for widgets that don’t have their own asset group selected.') }}</p>
                             <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent=""
@@ -320,17 +320,17 @@
                             <label class="flex items-center gap-2 mt-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                                 <input type="checkbox" x-model="dashboardControls.show_asset_group_selector"
                                        class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                <span class="text-xs text-gray-600 dark:text-gray-400">{{ __('Show this selector in the dashboard view') }}</span>
+                                <span class="text-xs text-gray-600 dark:text-gray-300">{{ __('Show this selector in the dashboard view') }}</span>
                             </label>
                         </div>
 
                         {{-- PDF / Print Export Feature (Encircled with subtle background & borderless) --}}
-                        <div class="rounded-xl p-4 bg-gray-50 dark:bg-gray-800/50 space-y-3">
+                        <div class="rounded-xl p-5 bg-gray-50 dark:bg-gray-800 space-y-3">
                             <div class="flex items-center justify-between">
-                                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                                <label class="flex items-center gap-2 text-sm text-gray-900 dark:text-white cursor-pointer select-none">
                                     <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                    <span class="font-semibold text-gray-900 dark:text-white">{{ __('Enable PDF Export / Print') }}</span>
+                                    <span class="font-semibold">{{ __('Enable PDF Export / Print') }}</span>
                                 </label>
                             </div>
 
@@ -343,30 +343,30 @@
                                 <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 tracking-wide uppercase">{{ __('Role Permissions') }}</span>
                                 
                                 <div class="overflow-hidden rounded-lg shadow-sm bg-white dark:bg-gray-900">
-                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-xs">
-                                        <thead class="bg-gray-100/80 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                                        <thead class="bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 font-medium">
                                             <tr>
-                                                <th scope="col" class="px-3 py-2 text-left">{{ __('Feature') }}</th>
-                                                <th scope="col" class="px-2 py-2 text-center" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
-                                                <th scope="col" class="px-2 py-2 text-center" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
-                                                <th scope="col" class="px-2 py-2 text-center">{{ __('Viewer') }}</th>
-                                                <th scope="col" class="px-2 py-2 text-center">{{ __('User') }}</th>
+                                                <th scope="col" class="px-3 py-2.5 text-left">{{ __('Feature') }}</th>
+                                                <th scope="col" class="px-2 py-2.5 text-center" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
+                                                <th scope="col" class="px-2 py-2.5 text-center" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
+                                                <th scope="col" class="px-2 py-2.5 text-center">{{ __('Viewer') }}</th>
+                                                <th scope="col" class="px-2 py-2.5 text-center">{{ __('User') }}</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
                                             <tr>
-                                                <td class="px-3 py-2 text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
+                                                <td class="px-3 py-2.5 text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
                                                     {{ __('Export PDF') }}
                                                 </td>
-                                                <td class="px-2 py-2 text-center">
+                                                <td class="px-2 py-2.5 text-center">
                                                     <input type="checkbox" checked disabled
                                                            class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
                                                 </td>
-                                                <td class="px-2 py-2 text-center">
+                                                <td class="px-2 py-2.5 text-center">
                                                     <input type="checkbox" checked disabled
                                                            class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
                                                 </td>
-                                                <td class="px-2 py-2 text-center">
+                                                <td class="px-2 py-2.5 text-center">
                                                     <input type="checkbox"
                                                            :checked="(dashboardControls.pdf_export_roles || []).includes('project_viewer')"
                                                            @change="
@@ -380,7 +380,7 @@
                                                            "
                                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
                                                 </td>
-                                                <td class="px-2 py-2 text-center">
+                                                <td class="px-2 py-2.5 text-center">
                                                     <input type="checkbox"
                                                            :checked="(dashboardControls.pdf_export_roles || []).includes('project_user')"
                                                            @change="
