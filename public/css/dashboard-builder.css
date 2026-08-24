@@ -853,40 +853,52 @@ body.pv-page .dvc-controls-bar {
         box-shadow: none !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
-        overflow: visible !important;
+        overflow: hidden !important;
     }
 
     .widget-content {
-        overflow: visible !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: calc(100% - 48px) !important;
+        min-height: 0 !important;
     }
 
-    /* Ensure chart canvases & SVG gauges take full width without clipping */
-    canvas, svg {
+    /* Ensure chart canvases & SVG gauges render cleanly */
+    .widget-content canvas {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100% !important;
+    }
+
+    svg {
         max-width: 100% !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
     }
 
-    /* Table widgets in PDF print */
-    .table-container, .table-wrapper, .table-outer-wrap {
+    /* Table widgets in PDF print - convert into clean side-by-side or block table */
+    .table-outer-wrap {
         display: flex !important;
         flex-direction: row !important;
-        overflow: visible !important;
-        max-height: none !important;
-        height: auto !important;
+        overflow: hidden !important;
+        height: 100% !important;
+        max-height: 100% !important;
         width: 100% !important;
     }
 
     .fixed-col-wrap {
-        flex-shrink: 0 !important;
-        overflow: visible !important;
-        height: auto !important;
+        flex: 0 0 auto !important;
+        width: 150px !important;
+        max-width: 35% !important;
+        overflow: hidden !important;
+        height: 100% !important;
     }
 
     .table-scroll-wrap {
         flex: 1 1 auto !important;
-        overflow: visible !important;
-        height: auto !important;
+        overflow: hidden !important;
+        height: 100% !important;
+        min-width: 0 !important;
     }
 
     .fixed-col-wrap thead,
@@ -896,14 +908,20 @@ body.pv-page .dvc-controls-bar {
 
     .table-outer-wrap table {
         width: 100% !important;
-        border-collapse: collapse !important;
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        table-layout: fixed !important;
     }
 
-    .table-outer-wrap th,
-    .table-outer-wrap td {
-        white-space: normal !important;
-        word-break: break-word !important;
-        min-width: 0 !important;
+    .fixed-col-wrap th,
+    .fixed-col-wrap td,
+    .table-scroll-wrap th,
+    .table-scroll-wrap td {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 10px !important;
+        padding: 4px 6px !important;
     }
 }
 

@@ -48,6 +48,20 @@ export function dashboardView(config = {}) {
         },
 
         exportPdf() {
+            if (this._pendingRenders > 0) {
+                // If any widgets are currently fetching/loading, wait until all complete
+                const checkReady = setInterval(() => {
+                    if (this._pendingRenders <= 0) {
+                        clearInterval(checkReady);
+                        this._triggerPdfPrint();
+                    }
+                }, 100);
+                return;
+            }
+            this._triggerPdfPrint();
+        },
+
+        _triggerPdfPrint() {
             const gridEl = document.querySelector('#view-grid-stack');
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
@@ -56,21 +70,42 @@ export function dashboardView(config = {}) {
                 grid.column(12, 'none');
             }
 
-            // Trigger window resize so Chart.js canvases redraw at exact 12-col landscape dimensions
+            // Trigger window resize and force charts to render without animations
+            if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
+                window.dashboardRenderer._chartInstances.forEach(chart => {
+                    try {
+                        if (chart && chart.options) {
+                            chart.options.animation = false;
+                            chart.resize();
+                            chart.update('none');
+                        }
+                    } catch (e) {}
+                });
+            }
+
             window.dispatchEvent(new Event('resize'));
 
             const restoreAfterPrint = () => {
                 if (grid && originalColumn !== 12) {
                     grid.column(originalColumn, 'none');
-                    window.dispatchEvent(new Event('resize'));
                 }
+                if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
+                    window.dashboardRenderer._chartInstances.forEach(chart => {
+                        try {
+                            if (chart) {
+                                chart.resize();
+                            }
+                        } catch (e) {}
+                    });
+                }
+                window.dispatchEvent(new Event('resize'));
                 window.removeEventListener('afterprint', restoreAfterPrint);
             };
             window.addEventListener('afterprint', restoreAfterPrint);
 
             setTimeout(() => {
                 window.print();
-            }, 150);
+            }, 300);
         },
 
         _applyAssetGroupAfterInitialRender() {
