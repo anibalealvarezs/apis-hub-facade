@@ -30,11 +30,25 @@ class PublicDashboardViewModel
     public function getAllAssetGroups(): array
     {
         $ids = $this->pv->asset_group_ids ?? [];
-        if (empty($ids)) {
-            return [];
+        $dcAssetGroups = (array) ($this->pv->dashboard->controls['asset_group'] ?? []);
+        $dcAssetGroups = array_values(array_filter(array_map('strval', $dcAssetGroups)));
+
+        $query = AssetGroup::where('project_id', $this->project->id);
+
+        if (!empty($ids)) {
+            $ids = array_map('strval', $ids);
+            if (!empty($dcAssetGroups)) {
+                $ids = array_values(array_intersect($ids, $dcAssetGroups));
+            }
+            if (empty($ids)) {
+                return [];
+            }
+            $query->whereIn('id', $ids);
+        } elseif (!empty($dcAssetGroups)) {
+            $query->whereIn('id', $dcAssetGroups);
         }
 
-        return AssetGroup::whereIn('id', $ids)->pluck('name', 'id')
+        return $query->pluck('name', 'id')
             ->mapWithKeys(fn ($name, $id) => [(string) $id => $name])
             ->toArray();
     }
@@ -42,11 +56,25 @@ class PublicDashboardViewModel
     public function getChannelAssetGroupMap(): array
     {
         $ids = $this->pv->asset_group_ids ?? [];
-        if (empty($ids)) {
-            return [];
+        $dcAssetGroups = (array) ($this->pv->dashboard->controls['asset_group'] ?? []);
+        $dcAssetGroups = array_values(array_filter(array_map('strval', $dcAssetGroups)));
+
+        $query = AssetGroup::where('project_id', $this->project->id)->with('items');
+
+        if (!empty($ids)) {
+            $ids = array_map('strval', $ids);
+            if (!empty($dcAssetGroups)) {
+                $ids = array_values(array_intersect($ids, $dcAssetGroups));
+            }
+            if (empty($ids)) {
+                return [];
+            }
+            $query->whereIn('id', $ids);
+        } elseif (!empty($dcAssetGroups)) {
+            $query->whereIn('id', $dcAssetGroups);
         }
 
-        $groups = AssetGroup::whereIn('id', $ids)->with('items')->get();
+        $groups = $query->get();
         $map = [];
         foreach ($groups as $group) {
             foreach ($group->active_items->groupBy('channel') as $channel => $items) {

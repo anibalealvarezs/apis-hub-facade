@@ -61,10 +61,26 @@ class DashboardPublicView extends Model
     public function assetGroups(): Collection
     {
         $ids = $this->asset_group_ids ?? [];
-        if (empty($ids)) {
-            return collect();
+        $dashAllowed = (array) ($this->dashboard?->controls['asset_group'] ?? []);
+        $dashAllowed = array_values(array_filter(array_map('strval', $dashAllowed)));
+
+        if (!empty($ids)) {
+            $ids = array_map('strval', $ids);
+            if (!empty($dashAllowed)) {
+                $ids = array_values(array_intersect($ids, $dashAllowed));
+            }
+            if (empty($ids)) {
+                return collect();
+            }
+            return AssetGroup::whereIn('id', $ids)->get();
         }
-        return AssetGroup::whereIn('id', $ids)->get();
+
+        // If public view has no specific asset groups selected, it inherits all dashboard-allowed groups
+        if (!empty($dashAllowed)) {
+            return AssetGroup::whereIn('id', $dashAllowed)->get();
+        }
+
+        return AssetGroup::where('project_id', $this->dashboard?->project_id)->get();
     }
 
     public function scopeActive($query)

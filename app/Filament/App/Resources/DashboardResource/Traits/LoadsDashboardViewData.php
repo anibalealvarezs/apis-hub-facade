@@ -31,9 +31,15 @@ trait LoadsDashboardViewData
             ->getAllowedAssetGroupQuery($project, auth()->user()?->getAuthIdentifier())
             ->get();
 
+        $dcAssetGroups = (array) ($this->dashboard->controls['asset_group'] ?? []);
+        $dcAssetGroups = array_values(array_filter(array_map('strval', $dcAssetGroups)));
+
         $result = [];
         foreach ($groups as $group) {
-            $result[$group->id] = $group->name;
+            if (!empty($dcAssetGroups) && !in_array((string) $group->id, $dcAssetGroups, true)) {
+                continue;
+            }
+            $result[(string) $group->id] = $group->name;
         }
         return $result;
     }
@@ -48,8 +54,14 @@ trait LoadsDashboardViewData
             ->with('items')
             ->get();
 
+        $dcAssetGroups = (array) ($this->dashboard->controls['asset_group'] ?? []);
+        $dcAssetGroups = array_values(array_filter(array_map('strval', $dcAssetGroups)));
+
         $map = [];
         foreach ($groups as $group) {
+            if (!empty($dcAssetGroups) && !in_array((string) $group->id, $dcAssetGroups, true)) {
+                continue;
+            }
             $activeAssets = $group->active_items;
             foreach ($activeAssets->groupBy('channel') as $channel => $items) {
                 if (!isset($map[$channel])) {
@@ -452,14 +464,17 @@ trait LoadsDashboardViewData
             // Apply dashboard-level asset group filter to resolved series assets.
             // This prevents JS applyAssetGroup() from detecting changes and
             // triggering an unnecessary widget reload on page init.
-            $dashboardAssetGroup = $this->dashboard->controls['asset_group'] ?? null;
-            if (empty($dashboardAssetGroup) && method_exists($this, 'getAllAssetGroups')) {
+            $rawDashGroups = $this->dashboard->controls['asset_group'] ?? [];
+            if (!is_array($rawDashGroups)) {
+                $rawDashGroups = $rawDashGroups !== '' ? [(string) $rawDashGroups] : [];
+            }
+            if (empty($rawDashGroups) && method_exists($this, 'getAllAssetGroups')) {
                 $allGroups = $this->getAllAssetGroups();
                 if (!empty($allGroups)) {
-                    $dashboardAssetGroup = (string) array_key_first($allGroups);
+                    $rawDashGroups = array_map('strval', array_keys($allGroups));
                 }
             }
-            if ($dashboardAssetGroup && method_exists($this, 'getChannelAssetGroupMap')) {
+            if (!empty($rawDashGroups) && method_exists($this, 'getChannelAssetGroupMap')) {
                 $channelGroupMap = $this->getChannelAssetGroupMap();
                 if (!empty($channelGroupMap)) {
                     foreach ($resolved['series_assets'] ?? [] as $assetKey => $assetIds) {
@@ -490,19 +505,28 @@ trait LoadsDashboardViewData
                                 $channel = $resolved['series_channels'][$idx] ?? $resolved['channel'] ?? null;
                             }
                         }
-                        if ($channel && isset($channelGroupMap[$channel][$dashboardAssetGroup])) {
-                            $allowedAssets = $channelGroupMap[$channel][$dashboardAssetGroup];
-                            $validAssets = array_intersect($assetIds, $allowedAssets);
-                            if (!empty($validAssets)) {
-                                $resolved['series_assets'][$assetKey] = array_values($validAssets);
-                            } elseif (!empty($allowedAssets)) {
-                                // If previously configured asset is not in this group, autoselect from group's allowed assets
-                                $whitelist = $resolved['series_allowed_assets'][$assetKey] ?? null;
-                                if (!empty($whitelist) && is_array($whitelist)) {
-                                    $whitelisted = array_intersect($whitelist, $allowedAssets);
-                                    $resolved['series_assets'][$assetKey] = !empty($whitelisted) ? array_values($whitelisted) : array_values($allowedAssets);
+                        if ($channel) {
+                            $allowedAssets = [];
+                            foreach ($rawDashGroups as $gId) {
+                                if (isset($channelGroupMap[$channel][(string) $gId])) {
+                                    $allowedAssets = array_merge($allowedAssets, $channelGroupMap[$channel][(string) $gId]);
+                                }
+                            }
+                            $allowedAssets = array_values(array_unique($allowedAssets));
+
+                            if (!empty($allowedAssets)) {
+                                $validAssets = array_intersect($assetIds, $allowedAssets);
+                                if (!empty($validAssets)) {
+                                    $resolved['series_assets'][$assetKey] = array_values($validAssets);
                                 } else {
-                                    $resolved['series_assets'][$assetKey] = array_values($allowedAssets);
+                                    // If previously configured asset is not in these groups, autoselect from allowed assets
+                                    $whitelist = $resolved['series_allowed_assets'][$assetKey] ?? null;
+                                    if (!empty($whitelist) && is_array($whitelist)) {
+                                        $whitelisted = array_intersect($whitelist, $allowedAssets);
+                                        $resolved['series_assets'][$assetKey] = !empty($whitelisted) ? array_values($whitelisted) : array_values($allowedAssets);
+                                    } else {
+                                        $resolved['series_assets'][$assetKey] = array_values($allowedAssets);
+                                    }
                                 }
                             } else {
                                 $resolved['series_assets'][$assetKey] = ['___EMPTY_GROUP___'];

@@ -380,7 +380,7 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ __('Filters available assets for widgets that don’t have their own asset group selected.') }}</p>
                                     
                                     <div class="w-full relative z-30">
-                                        <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent="" size="sm"/>
+                                        <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" :multiple="true" placeholder="{{ __('All Asset Groups (Unrestricted)') }}" changeEvent="" size="sm"/>
                                     </div>
 
                                     <label class="flex items-center gap-2 pt-1 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">

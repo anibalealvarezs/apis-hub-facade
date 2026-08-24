@@ -3,10 +3,18 @@
     $viewObj = $viewObj ?? $viewModel ?? null;
     $dc = $viewObj->dashboard->controls ?? [];
     $allGroups = $viewObj->getAllAssetGroups();
-    $dcAssetGroup = (string) ($dc['asset_group'] ?? '');
-    $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $allGroups)
-        ? $dcAssetGroup
-        : '';
+    $rawDcGroups = (array) ($dc['asset_group'] ?? []);
+    $rawDcGroups = array_values(array_filter(array_map('strval', $rawDcGroups)));
+
+    $dashboardGroup = '';
+    if (!empty($rawDcGroups)) {
+        foreach ($rawDcGroups as $gId) {
+            if (array_key_exists($gId, $allGroups)) {
+                $dashboardGroup = (string) $gId;
+                break;
+            }
+        }
+    }
     if ($dashboardGroup === '' && !empty($allGroups)) {
         $dashboardGroup = (string) array_key_first($allGroups);
     }

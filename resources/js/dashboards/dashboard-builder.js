@@ -1911,6 +1911,11 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Dashboard Controls ──
         openDashboardControls() {
+            if (!this.dashboardControls.asset_group) {
+                this.dashboardControls.asset_group = [];
+            } else if (!Array.isArray(this.dashboardControls.asset_group)) {
+                this.dashboardControls.asset_group = [String(this.dashboardControls.asset_group)];
+            }
             this.showDashboardControls = true;
         },
 
@@ -1949,6 +1954,9 @@ export function dashboardBuilder(config = {}) {
                 alert("Warning: " + adjustedWidgets + " widget(s) did not comply with the new dashboard date range and were automatically adjusted.");
             }
 
+            const rawGroup = c.asset_group;
+            const assetGroupArray = Array.isArray(rawGroup) ? rawGroup.map(String) : (rawGroup ? [String(rawGroup)] : []);
+
             const payload = {
                 date_start: c.date_start || '',
                 date_end: c.date_end || '',
@@ -1956,7 +1964,7 @@ export function dashboardBuilder(config = {}) {
                 granularity: c.granularity || 'daily',
                 edge_case_weighted: c.edge_case_weighted !== undefined ? !!c.edge_case_weighted : true,
                 edge_case_grouping: c.edge_case_grouping || 'none',
-                asset_group: c.asset_group || '',
+                asset_group: assetGroupArray,
                 show_asset_group_selector: c.show_asset_group_selector === true,
                 allow_pdf_export: c.allow_pdf_export === true,
                 pdf_export_roles: Array.isArray(c.pdf_export_roles) ? c.pdf_export_roles : [],

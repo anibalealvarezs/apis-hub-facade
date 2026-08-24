@@ -144,7 +144,7 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if ($pv && ! empty($pv->asset_group_ids)) {
+        if ($pv) {
             $assetGroups = $pv->assetGroups();
             if ($assetGroups->isNotEmpty()) {
                 // Build a map of channel => allowed asset IDs for this public view
