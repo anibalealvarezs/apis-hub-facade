@@ -1989,7 +1989,10 @@ export function dashboardBuilder(config = {}) {
                     this.widgetControlsForm.raw_series = wc.raw_series.map((s, sIdx) => {
                         const rawAllowed = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : (Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []));
                         const rawSelected = Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []);
-                        const rawDep = s.dependency || (wc.series_dependencies && (wc.series_dependencies[sIdx] || wc.series_dependencies[String(sIdx)])) || wc.dependency || '';
+                        let rawDep = s.dependency || (wc.series_dependencies && (wc.series_dependencies[sIdx] || wc.series_dependencies[String(sIdx)])) || '';
+                        if (!rawDep && s.channel === (wc.channel || this.dashboardControls?.channel)) {
+                            rawDep = wc.dependency || '';
+                        }
                         return {
                             type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
                             dm_id: s.dm_id ? String(s.dm_id) : undefined,
@@ -2024,7 +2027,10 @@ export function dashboardBuilder(config = {}) {
                             metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
                         }
                         const allowed = (wc.series_allowed_metrics && wc.series_allowed_metrics[key]) ? [...wc.series_allowed_metrics[key]] : [...metrics];
-                        const rawDep = (wc.series_dependencies && (wc.series_dependencies[key] || wc.series_dependencies[sIdx])) || wc.dependency || '';
+                        let rawDep = (wc.series_dependencies && (wc.series_dependencies[key] || wc.series_dependencies[sIdx])) || '';
+                        if (!rawDep && channel === (wc.channel || this.dashboardControls?.channel)) {
+                            rawDep = wc.dependency || '';
+                        }
                         groupedSeries.push({
                             channel,
                             dependency: rawDep,

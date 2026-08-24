@@ -2312,10 +2312,13 @@ class DashboardWidgetDataController extends Controller
                 $assetFilter = $this->resolveChanneledAccountId($project, $ssChannel, $assetFilter);
 
                 $ssDependency = $ss['dependency']
-                    ?? ($matchingItem ? ($matchingItem['series']['dependency'] ?? null) : null)
-                    ?? ($matchingItem && isset($matchingItem['series_index']) ? ($controls['series_dependencies'][$matchingItem['series_index']] ?? null) : null)
-                    ?? $controls['dependency']
-                    ?? null;
+                    ?? ($matchingItem && ! empty($matchingItem['series']['dependency']) ? $matchingItem['series']['dependency'] : null)
+                    ?? ($matchingItem && isset($matchingItem['series_index']) && ! empty($controls['series_dependencies'][$matchingItem['series_index']]) ? $controls['series_dependencies'][$matchingItem['series_index']] : null);
+
+                // Only fall back to global controls['dependency'] if the DM source series channel matches the widget channel
+                if ($ssDependency === null && ($controls['channel'] ?? '') === $ssChannel && ! empty($controls['dependency'])) {
+                    $ssDependency = $controls['dependency'];
+                }
 
                 $payload = [
                     'tenant' => $project->id,
