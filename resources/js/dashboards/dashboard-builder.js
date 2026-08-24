@@ -651,6 +651,9 @@ export function dashboardBuilder(config = {}) {
             if (!resolved.edge_case_grouping && dc.edge_case_grouping) {
                 resolved.edge_case_grouping = dc.edge_case_grouping;
             }
+            if (dc.asset_group) {
+                resolved.asset_group = dc.asset_group;
+            }
             return resolved;
         },
 
