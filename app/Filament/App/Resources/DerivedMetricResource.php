@@ -366,8 +366,6 @@
                                         ->live()
                                         ->afterStateUpdated(function (Forms\Set $set) {
                                             $set('metric', null);
-                                            $set('asset_group', null);
-                                            $set('asset_filter', null);
                                         }),
                                     Forms\Components\Select::make('metric')
                                         ->label(__('Metric'))
@@ -393,19 +391,6 @@
                                             'annually'  => __('Annually'),
                                         ])
                                         ->default('daily'),
-                                    Forms\Components\Select::make('asset_group')
-                                        ->label(__('Asset Group'))
-                                        ->options(fn() => \App\Services\Analytics\KpiFormBuilder::getAssetGroupOptions())
-                                        ->disabled(fn(Forms\Get $get) => filled($get('asset_filter')))
-                                        ->live(),
-                                    Forms\Components\Select::make('asset_filter')
-                                        ->label(__('Asset Filter'))
-                                        ->multiple()
-                                        ->options(fn(Forms\Get $get) => !empty($get('channel'))
-                                            ? \App\Services\Analytics\KpiFormBuilder::getAssetOptionsForChannel($get('channel'))
-                                            : [])
-                                        ->disabled(fn(Forms\Get $get) => filled($get('asset_group')))
-                                        ->live(),
                                 ])
                                 ->columns(3)
                                 ->defaultItems(2)

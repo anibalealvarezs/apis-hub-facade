@@ -2731,21 +2731,14 @@ export function dashboardBuilder(config = {}) {
             this.widgetControlsForm.raw_series[index].assets = [...validIds];
         },
 
-        selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
+        selectAllKpiAssets(seriesKey, channel) {
             this.markWidgetControlsDirty();
             const assets = this.allChannelAssets[channel] || {};
             let validIds = Object.keys(assets).map(String);
-            if (kpiGroup && this.allChannelAssetGroups[channel] && this.allChannelAssetGroups[channel][kpiGroup]) {
-                const groupAssets = this.allChannelAssetGroups[channel][kpiGroup].assets.map(String);
+            const globalGroup = this.dashboardControls?.asset_group;
+            if (globalGroup && this.allChannelAssetGroups[channel]?.[globalGroup]) {
+                const groupAssets = this.allChannelAssetGroups[channel][globalGroup].assets.map(String);
                 validIds = validIds.filter(id => groupAssets.includes(id));
-            }
-            const widgetGroup = this.widgetControlsForm?.series_asset_groups?.[seriesKey];
-            if (!widgetGroup && !kpiGroup) {
-                const globalGroup = this.dashboardControls?.asset_group;
-                if (globalGroup && this.allChannelAssetGroups[channel]?.[globalGroup]) {
-                    const groupAssets = this.allChannelAssetGroups[channel][globalGroup].assets.map(String);
-                    validIds = validIds.filter(id => groupAssets.includes(id));
-                }
             }
             this.widgetControlsForm.series_assets[seriesKey] = validIds;
         },
@@ -2813,18 +2806,6 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Asset Group Helpers ───
         getEffectiveGroup(seriesKey, channel) {
-            const widgetGroup = this.widgetControlsForm?.series_asset_groups?.[seriesKey];
-            if (widgetGroup) return widgetGroup;
-
-            if (seriesKey === 'dependent' && this.widgetKpiConfig?.dependent_asset_group) {
-                return this.widgetKpiConfig.dependent_asset_group;
-            }
-            if (seriesKey && seriesKey.startsWith('independent_')) {
-                const idx = seriesKey.replace('independent_', '');
-                const kpiGroup = this.widgetKpiConfig?.independent_variables?.[idx]?.independent_asset_group;
-                if (kpiGroup) return kpiGroup;
-            }
-
             if (this.dashboardControls?.asset_group) {
                 return this.dashboardControls.asset_group;
             }
