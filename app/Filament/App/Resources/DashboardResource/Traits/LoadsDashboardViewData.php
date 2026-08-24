@@ -149,8 +149,8 @@ trait LoadsDashboardViewData
 
                 // Determine default selection from allowed IDs (KPI group / widget config).
                 // Options list shows channel assets (filtered to availableAssets whitelist if configured)
-                if (isset($resolved['series_assets'][$key]) && is_array($resolved['series_assets'][$key]) && !empty($resolved['series_assets'][$key])) {
-                    // Already explicitly resolved to specific assets
+                if (isset($resolved['series_assets'][$key]) && is_array($resolved['series_assets'][$key])) {
+                    // Already explicitly resolved or empty selection
                 } elseif (is_array($allowedIds) && !empty($allowedIds)) {
                     $filtered = [];
                     foreach ($allowedIds as $id) {
@@ -206,7 +206,7 @@ trait LoadsDashboardViewData
                         $depAssetIds = array_intersect($depAssetIds, $resolved['series_assets']['dependent']);
                     }
                 }
-                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . Str::headline($uiState['dependent_channel']) . ')', $depAssetIds);
+                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . Str::headline($uiState['dependent_channel']) . ')', $depAssetIds, $depAssetIds);
             }
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
@@ -235,7 +235,7 @@ trait LoadsDashboardViewData
                                 $indAssetIds = array_intersect($indAssetIds, $resolved['series_assets'][$idxKey]);
                             }
                         }
-                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . Str::headline($var['independent_channel']) . ')', $indAssetIds);
+                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . Str::headline($var['independent_channel']) . ')', $indAssetIds, $indAssetIds);
                     }
                 }
             }
