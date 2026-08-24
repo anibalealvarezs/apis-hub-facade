@@ -235,144 +235,175 @@
         <div x-show="showDashboardControls" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
             <div class="absolute inset-0 bg-black/50" x-on:click="showDashboardControls = false"></div>
             <div
-                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('These defaults apply to all widgets. Widgets can
-                    override individually.') }}</p>
+                class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto p-6 space-y-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Controls') }}</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ __('These defaults apply to all widgets. Widgets can override individually.') }}</p>
+                </div>
 
-                {{-- Date Range --}}
                 @php
                     $yesterdayDate = date('Y-m-d', strtotime('-1 day'));
                 @endphp
-                <div>
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Date Range') }}</label>
-                    <div class="grid grid-cols-2 gap-3">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    {{-- Left Column: General Analytics Controls --}}
+                    <div class="space-y-5">
+                        {{-- Date Range --}}
                         <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
-                            <x-ui.date-input x-model="dashboardControls.date_start"
-                                             x-bind:max="dashboardControls.date_end || '{{ $yesterdayDate }}'"
-                                             class="w-full"/>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Date Range') }}</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Start') }}</span>
+                                    <x-ui.date-input x-model="dashboardControls.date_start"
+                                                     x-bind:max="dashboardControls.date_end || '{{ $yesterdayDate }}'"
+                                                     class="w-full"/>
+                                </div>
+                                <div>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
+                                    <x-ui.date-input x-model="dashboardControls.date_end" max="{{ $yesterdayDate }}"
+                                                     class="w-full"/>
+                                </div>
+                            </div>
                         </div>
+
+                        {{-- Zero Handling --}}
                         <div>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('End') }}</span>
-                            <x-ui.date-input x-model="dashboardControls.date_end" max="{{ $yesterdayDate }}"
-                                             class="w-full"/>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Zero / Missing Data') }}</label>
+                            <x-ui.select-input x-model="dashboardControls.zero_handling" class="w-full">
+                                <x-ui.select-option value="remove">{{ __('Remove zeros from results') }}</x-ui.select-option>
+                                <x-ui.select-option value="keep">{{ __('Keep zeros in results') }}</x-ui.select-option>
+                                <x-ui.select-option value="trim">{{ __('Trim leading/trailing zeros') }}</x-ui.select-option>
+                            </x-ui.select-input>
+                        </div>
+
+                        {{-- Granularity --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Granularity') }}</label>
+                            <x-ui.select-input x-model="dashboardControls.granularity" class="w-full">
+                                <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
+                                <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
+                                <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
+                                <x-ui.select-option value="query">{{ __('Query') }}</x-ui.select-option>
+                                <x-ui.select-option value="dimensions.page">{{ __('Page') }}</x-ui.select-option>
+                                <x-ui.select-option value="country">{{ __('Country') }}</x-ui.select-option>
+                                <x-ui.select-option value="device">{{ __('Device') }}</x-ui.select-option>
+                                <x-ui.select-option value="post">{{ __('Post') }}</x-ui.select-option>
+                            </x-ui.select-input>
+                        </div>
+
+                        {{-- Edge Cases --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Edge Cases') }}</label>
+                            <div class="space-y-3">
+                                <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                    <input type="checkbox" x-model="dashboardControls.edge_case_weighted"
+                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                    {{ __('Weighted regression (WLS)') }}
+                                </label>
+                                <x-ui.select-input x-model="dashboardControls.edge_case_grouping" class="w-full">
+                                    <x-ui.select-option value="none">{{ __('No grouping') }}</x-ui.select-option>
+                                    <x-ui.select-option value="histogram">{{ __('Auto histogram-elbow') }}</x-ui.select-option>
+                                    <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
+                                </x-ui.select-input>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {{-- Asset Group --}}
-                <div>
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Asset Group') }}</label>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Filters available assets for widgets that don&rsquo;t have their own asset group selected.') }}</p>
-                    <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent=""
-                                         size="sm"/>
-                    <label class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        <input type="checkbox" x-model="dashboardControls.show_asset_group_selector"
-                               class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                        {{ __('Show this selector in the dashboard view') }}
-                    </label>
-                </div>
+                    {{-- Right Column: Asset Groups & Export Permissions --}}
+                    <div class="space-y-5">
+                        {{-- Asset Group --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Asset Group') }}</label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Filters available assets for widgets that don&rsquo;t have their own asset group selected.') }}</p>
+                            <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" changeEvent=""
+                                                 size="sm"/>
+                            <label class="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                <input type="checkbox" x-model="dashboardControls.show_asset_group_selector"
+                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                {{ __('Show this selector in the dashboard view') }}
+                            </label>
+                        </div>
 
-                {{-- Zero Handling --}}
-                <div>
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Zero / Missing Data') }}</label>
-                    <x-ui.select-input x-model="dashboardControls.zero_handling" class="w-full">
-                        <x-ui.select-option value="remove">{{ __('Remove zeros from results') }}</x-ui.select-option>
-                        <x-ui.select-option value="keep">{{ __('Keep zeros in results') }}</x-ui.select-option>
-                        <x-ui.select-option value="trim">{{ __('Trim leading/trailing zeros') }}</x-ui.select-option>
-                    </x-ui.select-input>
-                </div>
-
-                {{-- Granularity --}}
-                <div>
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Granularity') }}</label>
-                    <x-ui.select-input x-model="dashboardControls.granularity" class="w-full">
-                        <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
-                        <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
-                        <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
-                        <x-ui.select-option value="query">{{ __('Query') }}</x-ui.select-option>
-                        <x-ui.select-option value="dimensions.page">{{ __('Page') }}</x-ui.select-option>
-                        <x-ui.select-option value="country">{{ __('Country') }}</x-ui.select-option>
-                        <x-ui.select-option value="device">{{ __('Device') }}</x-ui.select-option>
-                        <x-ui.select-option value="post">{{ __('Post') }}</x-ui.select-option>
-                    </x-ui.select-input>
-                </div>
-
-                {{-- Edge Cases --}}
-                <div>
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('Edge Cases') }}</label>
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <input type="checkbox" x-model="dashboardControls.edge_case_weighted"
-                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                            {{ __('Weighted regression (WLS)') }}
-                        </label>
-                        <x-ui.select-input x-model="dashboardControls.edge_case_grouping" class="w-full">
-                            <x-ui.select-option value="none">{{ __('No grouping') }}</x-ui.select-option>
-                            <x-ui.select-option value="histogram">{{ __('Auto histogram-elbow') }}</x-ui.select-option>
-                            <x-ui.select-option value="percentile">{{ __('Bottom percentile') }}</x-ui.select-option>
-                        </x-ui.select-input>
-                    </div>
-                </div>
-
-                {{-- Export Options --}}
-                <div>
-                    <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ __('PDF / Print Export') }}</label>
-                    <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
-                                   class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                            <span class="font-medium text-gray-900 dark:text-white">{{ __('Enable PDF Export / Print') }}</span>
-                        </label>
-                        
-                        <div x-show="dashboardControls.allow_pdf_export" x-transition class="pl-6 space-y-2">
-                            <span class="block text-xs font-medium text-gray-600 dark:text-gray-400">{{ __('Allowed Project Roles:') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">{{ __('Project Owners and Editors can always export. Choose lower-level roles that can also print/export this dashboard:') }}</p>
-                            
-                            <div class="space-y-1.5">
-                                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox"
-                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_viewer')"
-                                           @change="
-                                               let roles = dashboardControls.pdf_export_roles || [];
-                                               if ($event.target.checked) {
-                                                   if (!roles.includes('project_viewer')) roles.push('project_viewer');
-                                               } else {
-                                                   roles = roles.filter(r => r !== 'project_viewer');
-                                               }
-                                               dashboardControls.pdf_export_roles = roles;
-                                           "
+                        {{-- PDF / Print Export Feature --}}
+                        <div class="border border-gray-200 dark:border-gray-700/80 rounded-xl p-4 bg-gray-50/50 dark:bg-gray-800/40 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                                    <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                    <span>{{ __('Project Viewer') }}</span>
+                                    <span class="font-medium text-gray-900 dark:text-white">{{ __('Enable PDF Export / Print') }}</span>
                                 </label>
-                                <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-                                    <input type="checkbox"
-                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_user')"
-                                           @change="
-                                               let roles = dashboardControls.pdf_export_roles || [];
-                                               if ($event.target.checked) {
-                                                   if (!roles.includes('project_user')) roles.push('project_user');
-                                               } else {
-                                                   roles = roles.filter(r => r !== 'project_user');
-                                               }
-                                               dashboardControls.pdf_export_roles = roles;
-                                           "
-                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                    <span>{{ __('Project User') }}</span>
-                                </label>
+                            </div>
+
+                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                {{ __('Allows exporting the dashboard as a PDF or printing it directly.') }}
+                            </p>
+
+                            {{-- Role-based Capabilities Table Framework --}}
+                            <div x-show="dashboardControls.allow_pdf_export" x-transition class="pt-2 space-y-2">
+                                <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 tracking-wide uppercase">{{ __('Role Permissions') }}</span>
+                                
+                                <div class="overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                                        <thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium">
+                                            <tr>
+                                                <th scope="col" class="px-3 py-2 text-left">{{ __('Feature') }}</th>
+                                                <th scope="col" class="px-2 py-2 text-center" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
+                                                <th scope="col" class="px-2 py-2 text-center" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
+                                                <th scope="col" class="px-2 py-2 text-center">{{ __('Viewer') }}</th>
+                                                <th scope="col" class="px-2 py-2 text-center">{{ __('User') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                            <tr>
+                                                <td class="px-3 py-2 text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
+                                                    {{ __('Export PDF') }}
+                                                </td>
+                                                <td class="px-2 py-2 text-center">
+                                                    <input type="checkbox" checked disabled
+                                                           class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
+                                                </td>
+                                                <td class="px-2 py-2 text-center">
+                                                    <input type="checkbox" checked disabled
+                                                           class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
+                                                </td>
+                                                <td class="px-2 py-2 text-center">
+                                                    <input type="checkbox"
+                                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_viewer')"
+                                                           @change="
+                                                               let roles = dashboardControls.pdf_export_roles || [];
+                                                               if ($event.target.checked) {
+                                                                   if (!roles.includes('project_viewer')) roles.push('project_viewer');
+                                                               } else {
+                                                                   roles = roles.filter(r => r !== 'project_viewer');
+                                                               }
+                                                               dashboardControls.pdf_export_roles = roles;
+                                                           "
+                                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                </td>
+                                                <td class="px-2 py-2 text-center">
+                                                    <input type="checkbox"
+                                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_user')"
+                                                           @change="
+                                                               let roles = dashboardControls.pdf_export_roles || [];
+                                                               if ($event.target.checked) {
+                                                                   if (!roles.includes('project_user')) roles.push('project_user');
+                                                               } else {
+                                                                   roles = roles.filter(r => r !== 'project_user');
+                                                               }
+                                                               dashboardControls.pdf_export_roles = roles;
+                                                           "
+                                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                         class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-sm"
                         x-on:click="showDashboardControls = false">{{ __('Cancel') }}
