@@ -2518,8 +2518,8 @@
                                                     </div>
                                                     <div class="flex-1 relative min-h-0">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                            <template x-for="[assetId, assetName] in Object.entries(vConfig.allowed_assets && vConfig.allowed_assets.length > 0 ? Object.fromEntries(Object.entries(allChannelAssets[vConfig.channel] || {}).filter(([id]) => vConfig.allowed_assets.includes(String(id)))) : (allChannelAssets[vConfig.channel] || {}))" :key="assetId">
-                                                                <div x-show="isAssetAllowedByGroups(vKey, vConfig.channel, assetId) && (!sandboxSearchQueries[vKey] || assetName.toLowerCase().includes(sandboxSearchQueries[vKey].toLowerCase()))"
+                                                            <template x-for="[assetId, assetName] in Object.entries(getSandboxAssetsForSeries(vKey, vConfig))" :key="assetId">
+                                                                <div x-show="(!sandboxSearchQueries[vKey] || assetName.toLowerCase().includes(sandboxSearchQueries[vKey].toLowerCase()))"
                                                                      @click="sandboxToggleAsset(vKey, assetId)"
                                                                      class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
                                                                      :class="sandboxIsAssetSelected(vKey, assetId) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">

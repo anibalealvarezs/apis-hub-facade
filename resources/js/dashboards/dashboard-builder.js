@@ -359,6 +359,42 @@ export function dashboardBuilder(config = {}) {
             return this._scopedMetricsCache?.[cacheKey] || this.allChannelMetrics[ch] || {};
         },
 
+        getSandboxAssetsForSeries(vKey, vConfig) {
+            const ch = vConfig?.channel;
+            if (!ch || !this.allChannelAssets[ch]) return {};
+            const all = this.allChannelAssets[ch];
+
+            let allowed = vConfig?.allowed_assets;
+            if (!allowed || allowed.length === 0) {
+                // If allowed_assets wasn't explicitly populated on vConfig, check sandboxForm series_assets / widget series_assets
+                const widget = this.sandboxTargetWidget;
+                const controls = this.resolveWidgetControls(widget);
+                if (controls.series_allowed_assets?.[vKey]) {
+                    allowed = controls.series_allowed_assets[vKey];
+                } else if (controls.series_assets?.[vKey]) {
+                    allowed = controls.series_assets[vKey];
+                } else if (widget?.source_type !== 'kpi' && controls.assets) {
+                    allowed = controls.assets;
+                }
+            }
+
+            const allowedStrs = Array.isArray(allowed) && allowed.length > 0 ? allowed.map(String) : null;
+            const res = {};
+
+            for (const [id, name] of Object.entries(all)) {
+                const strId = String(id);
+                if (allowedStrs && !allowedStrs.includes(strId)) {
+                    continue;
+                }
+                if (!this.isAssetAllowedByGroups(vKey, ch, strId)) {
+                    continue;
+                }
+                res[id] = name;
+            }
+
+            return res;
+        },
+
         onSandboxDependencyChange(vKey, vConfig) {
             const ch = vConfig?.channel;
             const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
