@@ -309,10 +309,10 @@
                         </div>
                     </div>
 
-                    {{-- Right Column: Asset Groups & Export Permissions --}}
+                    {{-- Right Column: Asset Groups & Role-Based Permissions --}}
                     <div class="space-y-6">
                         {{-- Asset Group Container --}}
-                        <div class="rounded-xl p-5 bg-gray-100/80 dark:bg-gray-800/80 space-y-3">
+                        <div class="rounded-xl p-5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/60 space-y-3">
                             <label class="block text-sm font-semibold text-gray-900 dark:text-white">{{ __('Asset Group') }}</label>
                             <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ __('Filters available assets for widgets that don’t have their own asset group selected.') }}</p>
                             
@@ -327,78 +327,77 @@
                             </label>
                         </div>
 
-                        {{-- PDF / Print Export Feature --}}
-                        <div class="rounded-xl p-5 bg-gray-100/80 dark:bg-gray-800/80 space-y-3">
-                            <label class="flex items-center gap-2 text-sm text-gray-900 dark:text-white cursor-pointer select-none">
-                                <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
-                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ __('Enable PDF Export / Print') }}</span>
-                            </label>
+                        {{-- Role Permissions Container (Unconditional Extensible Table Framework) --}}
+                        <div class="rounded-xl p-5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-gray-700/60 space-y-3">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Role Permissions') }}</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                                    {{ __('Configure feature capabilities by project role. Project Owners and Editors are enabled by default.') }}
+                                </p>
+                            </div>
 
-                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                {{ __('Allows exporting the dashboard as a PDF or printing it directly.') }}
-                            </p>
-
-                            {{-- Role-based Capabilities Table Framework --}}
-                            <div x-show="dashboardControls.allow_pdf_export" x-transition class="pt-2 space-y-2">
-                                <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 tracking-wider uppercase">{{ __('Role Permissions') }}</span>
-                                
-                                <div class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                                    <table class="w-full table-auto divide-y divide-gray-200 dark:divide-gray-700 text-xs">
-                                        <thead class="bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">
-                                            <tr>
-                                                <th class="px-3 py-2.5 text-left font-medium">{{ __('Feature') }}</th>
-                                                <th class="px-2 py-2.5 text-center font-medium" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
-                                                <th class="px-2 py-2.5 text-center font-medium" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
-                                                <th class="px-2 py-2.5 text-center font-medium">{{ __('Viewer') }}</th>
-                                                <th class="px-2 py-2.5 text-center font-medium">{{ __('User') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                            <tr>
-                                                <td class="px-3 py-2.5 text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
-                                                    {{ __('Export PDF') }}
-                                                </td>
-                                                <td class="px-2 py-2.5 text-center">
-                                                    <input type="checkbox" checked disabled
-                                                           class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
-                                                </td>
-                                                <td class="px-2 py-2.5 text-center">
-                                                    <input type="checkbox" checked disabled
-                                                           class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
-                                                </td>
-                                                <td class="px-2 py-2.5 text-center">
-                                                    <input type="checkbox"
-                                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_viewer')"
-                                                           @change="
-                                                               let roles = dashboardControls.pdf_export_roles || [];
-                                                               if ($event.target.checked) {
-                                                                   if (!roles.includes('project_viewer')) roles.push('project_viewer');
-                                                               } else {
-                                                                   roles = roles.filter(r => r !== 'project_viewer');
-                                                               }
-                                                               dashboardControls.pdf_export_roles = roles;
-                                                           "
+                            <div class="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                                <table class="w-full table-auto divide-y divide-gray-200 dark:divide-gray-700 text-xs">
+                                    <thead class="bg-gray-100/80 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left font-medium">{{ __('Feature') }}</th>
+                                            <th class="px-2 py-2.5 text-center font-medium" title="{{ __('Always enabled') }}">{{ __('Owner') }}</th>
+                                            <th class="px-2 py-2.5 text-center font-medium" title="{{ __('Always enabled') }}">{{ __('Editor') }}</th>
+                                            <th class="px-2 py-2.5 text-center font-medium">{{ __('Viewer') }}</th>
+                                            <th class="px-2 py-2.5 text-center font-medium">{{ __('User') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+                                        {{-- Row: Export PDF --}}
+                                        <tr :class="!dashboardControls.allow_pdf_export ? 'opacity-60 bg-gray-50/50 dark:bg-gray-800/30' : ''">
+                                            <td class="px-3 py-2.5 text-gray-900 dark:text-gray-100 font-medium whitespace-nowrap">
+                                                <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                    <input type="checkbox" x-model="dashboardControls.allow_pdf_export"
                                                            class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                </td>
-                                                <td class="px-2 py-2.5 text-center">
-                                                    <input type="checkbox"
-                                                           :checked="(dashboardControls.pdf_export_roles || []).includes('project_user')"
-                                                           @change="
-                                                               let roles = dashboardControls.pdf_export_roles || [];
-                                                               if ($event.target.checked) {
-                                                                   if (!roles.includes('project_user')) roles.push('project_user');
-                                                               } else {
-                                                                   roles = roles.filter(r => r !== 'project_user');
-                                                               }
-                                                               dashboardControls.pdf_export_roles = roles;
-                                                           "
-                                                           class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"/>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                    <span class="text-xs font-semibold text-gray-900 dark:text-white">{{ __('Export PDF') }}</span>
+                                                </label>
+                                            </td>
+                                            <td class="px-2 py-2.5 text-center">
+                                                <input type="checkbox" checked disabled
+                                                       class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
+                                            </td>
+                                            <td class="px-2 py-2.5 text-center">
+                                                <input type="checkbox" checked disabled
+                                                       class="rounded border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"/>
+                                            </td>
+                                            <td class="px-2 py-2.5 text-center">
+                                                <input type="checkbox"
+                                                       :disabled="!dashboardControls.allow_pdf_export"
+                                                       :checked="(dashboardControls.pdf_export_roles || []).includes('project_viewer')"
+                                                       @change="
+                                                           let roles = dashboardControls.pdf_export_roles || [];
+                                                           if ($event.target.checked) {
+                                                               if (!roles.includes('project_viewer')) roles.push('project_viewer');
+                                                           } else {
+                                                               roles = roles.filter(r => r !== 'project_viewer');
+                                                           }
+                                                           dashboardControls.pdf_export_roles = roles;
+                                                       "
+                                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 disabled:opacity-40 disabled:cursor-not-allowed"/>
+                                            </td>
+                                            <td class="px-2 py-2.5 text-center">
+                                                <input type="checkbox"
+                                                       :disabled="!dashboardControls.allow_pdf_export"
+                                                       :checked="(dashboardControls.pdf_export_roles || []).includes('project_user')"
+                                                       @change="
+                                                           let roles = dashboardControls.pdf_export_roles || [];
+                                                           if ($event.target.checked) {
+                                                               if (!roles.includes('project_user')) roles.push('project_user');
+                                                           } else {
+                                                               roles = roles.filter(r => r !== 'project_user');
+                                                           }
+                                                           dashboardControls.pdf_export_roles = roles;
+                                                       "
+                                                       class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 disabled:opacity-40 disabled:cursor-not-allowed"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
