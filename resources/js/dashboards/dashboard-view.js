@@ -110,7 +110,7 @@ export function dashboardView(config = {}) {
                 });
             }
 
-            // Calculate print page heights based on empty cut lines
+            // Calculate print page heights based on empty cut lines and actual section pixel heights
             const emptyLines = Array.from(document.querySelectorAll('#view-grid-stack .dashboard-empty-line'))
                 .map(el => parseInt(el.dataset.cutY || '0'))
                 .filter(y => y > 0)
@@ -120,17 +120,20 @@ export function dashboardView(config = {}) {
             const originalTops = new Map();
             const originalGridHeight = gridEl ? gridEl.style.height : '';
 
-            if (emptyLines.length > 0 && widgetEls.length > 0) {
+            if (widgetEls.length > 0) {
                 const cellH = (grid && grid.getCellHeight(true)) || 100;
                 const margin = (grid && grid.opts.margin) || 12;
                 const rowUnit = cellH + margin;
 
-                // Page dimensions in print pixels (standard landscape A4/Letter ~730px printable height)
+                // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
                 const pagePrintHeight = 730;
 
-                // Build sections: [0, cut1, cut2, ...]
+                // All boundary cuts: [0, cut1, cut2, ...]
                 const cuts = [0, ...emptyLines];
-                let currentAccumulatedOffset = 0;
+                
+                // Group sections and measure their natural height span
+                let currentPageIndex = 0;
+                let currentPageUsedHeight = 0;
 
                 for (let i = 0; i < cuts.length; i++) {
                     const secStartY = cuts[i];
@@ -143,20 +146,38 @@ export function dashboardView(config = {}) {
 
                     if (secWidgets.length === 0) continue;
 
-                    // Compute current natural min/max Y for this section
-                    const naturalMinPx = secStartY * rowUnit;
-                    const pageTargetTopPx = i * pagePrintHeight;
-                    const shiftPx = pageTargetTopPx - naturalMinPx;
+                    // Calculate section height in rows and pixels
+                    const maxWidgetEndY = Math.max(...secWidgets.map(wEl => {
+                        const node = wEl.gridstackNode;
+                        const y = node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
+                        const h = node ? node.h : parseInt(wEl.getAttribute('gs-h') || '1');
+                        return y + h;
+                    }));
+                    const secHeightPx = (maxWidgetEndY - secStartY) * rowUnit;
+
+                    // If not the first section and there was an explicit cut before this, advance to new page
+                    if (i > 0) {
+                        currentPageIndex++;
+                        currentPageUsedHeight = 0;
+                    }
+
+                    const pageBaseTopPx = currentPageIndex * pagePrintHeight;
+                    const secNaturalTopPx = secStartY * rowUnit;
+                    const shiftPx = (pageBaseTopPx + currentPageUsedHeight) - secNaturalTopPx;
 
                     secWidgets.forEach(wEl => {
                         originalTops.set(wEl, wEl.style.top);
-                        const currentTop = parseFloat(wEl.style.top) || (wEl.offsetTop);
-                        wEl.style.top = `${currentTop + shiftPx}px`;
+                        const node = wEl.gridstackNode;
+                        const y = node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
+                        const relativeYInSec = (y - secStartY) * rowUnit;
+                        wEl.style.top = `${pageBaseTopPx + currentPageUsedHeight + relativeYInSec}px`;
                     });
+
+                    currentPageUsedHeight += secHeightPx + margin;
                 }
 
                 if (gridEl) {
-                    gridEl.style.height = `${cuts.length * pagePrintHeight}px`;
+                    gridEl.style.height = `${(currentPageIndex + 1) * pagePrintHeight}px`;
                 }
             }
 
