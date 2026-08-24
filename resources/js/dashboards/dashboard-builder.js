@@ -272,6 +272,7 @@ export function dashboardBuilder(config = {}) {
                             channel: s.channel || '',
                             channel_name: s.channel || '',
                             allowed_metrics: Array.isArray(s.allowed_metrics) ? s.allowed_metrics : (Array.isArray(s.metrics) ? s.metrics : []),
+                            allowed_assets: Array.isArray(s.allowed_assets) ? s.allowed_assets : (Array.isArray(s.assets) ? s.assets : []),
                             selected_metric: '',
                         };
                         this.sandboxSearchQueries[key] = '';
@@ -2051,6 +2052,8 @@ export function dashboardBuilder(config = {}) {
                     this.widgetControlsForm.raw_series = wc.raw_series.map((s, sIdx) => {
                         const rawAllowed = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : (Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []));
                         const rawSelected = Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []);
+                        const rawAllowedAssets = Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []);
+                        const rawSelectedAssets = Array.isArray(s.assets) ? [...s.assets] : [];
                         let rawDep = s.dependency || (wc.series_dependencies && (wc.series_dependencies[sIdx] || wc.series_dependencies[String(sIdx)])) || '';
                         if (!rawDep && s.channel === (wc.channel || this.dashboardControls?.channel)) {
                             rawDep = wc.dependency || '';
@@ -2065,7 +2068,8 @@ export function dashboardBuilder(config = {}) {
                             dependency: rawDep,
                             allowed_metrics: rawAllowed,
                             metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
-                            assets: Array.isArray(s.assets) ? [...s.assets] : []
+                            allowed_assets: rawAllowedAssets,
+                            assets: rawSelectedAssets.length > 0 ? rawSelectedAssets : [...rawAllowedAssets]
                         };
                     });
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
@@ -2605,16 +2609,56 @@ export function dashboardBuilder(config = {}) {
             series.metrics = [];
         },
 
-        toggleRawAsset(index, id) {
+        toggleRawAssetIncluded(index, assetId) {
             this.markWidgetControlsDirty();
-            const current = this.widgetControlsForm.raw_series[index].assets || [];
-            const strId = String(id);
-            if (current.includes(strId)) {
-                if (current.length <= 1) return;
-                this.widgetControlsForm.raw_series[index].assets = current.filter(a => a !== strId);
-            } else {
-                this.widgetControlsForm.raw_series[index].assets = [...current, strId];
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            const strId = String(assetId);
+            if (!Array.isArray(series.allowed_assets)) {
+                series.allowed_assets = Array.isArray(series.assets) ? [...series.assets] : [];
             }
+            if (!Array.isArray(series.assets)) series.assets = [];
+
+            if (series.allowed_assets.includes(strId)) {
+                // Remove from allowed and active
+                series.allowed_assets = series.allowed_assets.filter(a => a !== strId);
+                series.assets = series.assets.filter(a => a !== strId);
+            } else {
+                // Add to allowed and mark as active by default
+                series.allowed_assets = [...series.allowed_assets, strId];
+                if (!series.assets.includes(strId)) {
+                    series.assets = [...series.assets, strId];
+                }
+            }
+        },
+
+        toggleRawAssetDefaultActive(index, assetId) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            const strId = String(assetId);
+            if (!Array.isArray(series.allowed_assets)) {
+                series.allowed_assets = Array.isArray(series.assets) ? [...series.assets] : [];
+            }
+            if (!Array.isArray(series.assets)) series.assets = [];
+
+            // If not included yet, include it first
+            if (!series.allowed_assets.includes(strId)) {
+                series.allowed_assets = [...series.allowed_assets, strId];
+                series.assets = [...series.assets, strId];
+                return;
+            }
+
+            // Toggle active state
+            if (series.assets.includes(strId)) {
+                series.assets = series.assets.filter(a => a !== strId);
+            } else {
+                series.assets = [...series.assets, strId];
+            }
+        },
+
+        toggleRawAsset(index, id) {
+            this.toggleRawAssetIncluded(index, id);
         },
 
         selectAllRawAssets(index) {
@@ -2627,7 +2671,8 @@ export function dashboardBuilder(config = {}) {
                 const groupAssets = this.allChannelAssetGroups[ch][globalGroup].assets.map(String);
                 validIds = validIds.filter(id => groupAssets.includes(id));
             }
-            this.widgetControlsForm.raw_series[index].assets = validIds;
+            this.widgetControlsForm.raw_series[index].allowed_assets = [...validIds];
+            this.widgetControlsForm.raw_series[index].assets = [...validIds];
         },
 
         selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
@@ -2694,7 +2739,10 @@ export function dashboardBuilder(config = {}) {
 
         clearAllRawAssets(index) {
             this.markWidgetControlsDirty();
-            this.widgetControlsForm.raw_series[index].assets = [];
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            series.allowed_assets = [];
+            series.assets = [];
         },
 
         clearAllDmAssets(index) {
@@ -2850,6 +2898,7 @@ export function dashboardBuilder(config = {}) {
                 payload.assets = [];
                 payload.metrics = [];
                 payload.series_assets = {};
+                payload.series_allowed_assets = {};
                 payload.series_channels = {};
                 payload.series_dependencies = {};
                 payload.series_allowed_metrics = {};
@@ -2865,11 +2914,14 @@ export function dashboardBuilder(config = {}) {
 
                     let channelAssets = this.allChannelAssets[s.channel] || {};
                     let validAssets = [...(s.assets || [])];
+                    let validAllowedAssets = Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : [...validAssets];
                     if (Object.keys(channelAssets).length > 0) {
                         validAssets = validAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
+                        validAllowedAssets = validAllowedAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
                     }
 
                     payload.series_assets[sIdx] = validAssets;
+                    payload.series_allowed_assets[sIdx] = validAllowedAssets;
                     payload.series_channels[sIdx] = s.channel || '';
                     payload.series_dependencies[sIdx] = s.dependency || '';
                     payload.series_allowed_metrics[sIdx] = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [];
@@ -2884,6 +2936,7 @@ export function dashboardBuilder(config = {}) {
                     dependency: s.dependency || '',
                     allowed_metrics: Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [],
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                    allowed_assets: Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []),
                     assets: Array.isArray(s.assets) ? [...s.assets] : []
                 }));
                 if (payload.series_channels['0']) {

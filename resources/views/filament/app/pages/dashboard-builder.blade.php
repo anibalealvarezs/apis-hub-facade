@@ -1099,25 +1099,41 @@
                                                                     :key="id">
                                                                     <div
                                                                         x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
-                                                                        @click="toggleRawAsset(index, id)"
-                                                                        class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"
-                                                                        :class="(series.assets || []).includes(String(id)) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                        <div
-                                                                            class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                            :class="(series.assets || []).includes(String(id)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                            <svg
-                                                                                x-show="(series.assets || []).includes(String(id))"
-                                                                                class="w-3 h-3 text-white" fill="none"
-                                                                                viewBox="0 0 24 24" stroke-width="3"
-                                                                                stroke="currentColor">
-                                                                                <path stroke-linecap="round"
-                                                                                      stroke-linejoin="round"
-                                                                                      d="m4.5 12.75 6 6 9-13.5"/>
-                                                                            </svg>
+                                                                        class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                        :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                        <div @click="toggleRawAssetIncluded(index, id)"
+                                                                             class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                            <div
+                                                                                class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                                :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                <svg
+                                                                                    x-show="series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)"
+                                                                                    class="w-3 h-3 text-white" fill="none"
+                                                                                    viewBox="0 0 24 24" stroke-width="3"
+                                                                                    stroke="currentColor">
+                                                                                    <path stroke-linecap="round"
+                                                                                          stroke-linejoin="round"
+                                                                                          d="m4.5 12.75 6 6 9-13.5"/>
+                                                                                </svg>
+                                                                            </div>
+                                                                            <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                                  :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                                  x-text="name"></span>
                                                                         </div>
-                                                                        <span class="truncate font-medium"
-                                                                              :class="(series.assets || []).includes(String(id)) ? 'text-primary-800 dark:text-primary-200' : ''"
-                                                                              x-text="name"></span>
+                                                                        {{-- Badge for Default Active on Load --}}
+                                                                        <template x-if="series.allowed_assets && series.allowed_assets.includes(String(id))">
+                                                                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
+                                                                                <button type="button"
+                                                                                        @click.stop="toggleRawAssetDefaultActive(index, id)"
+                                                                                        :title="(series.assets || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                        class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                        :class="(series.assets || []).includes(String(id))
+                                                                                            ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                                    <span x-text="(series.assets || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                                </button>
+                                                                            </div>
+                                                                        </template>
                                                                     </div>
                                                                 </template>
                                                                 <template
@@ -2502,7 +2518,7 @@
                                                     </div>
                                                     <div class="flex-1 relative min-h-0">
                                                         <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                            <template x-for="[assetId, assetName] in Object.entries(allChannelAssets[vConfig.channel] || {})" :key="assetId">
+                                                            <template x-for="[assetId, assetName] in Object.entries(vConfig.allowed_assets && vConfig.allowed_assets.length > 0 ? Object.fromEntries(Object.entries(allChannelAssets[vConfig.channel] || {}).filter(([id]) => vConfig.allowed_assets.includes(String(id)))) : (allChannelAssets[vConfig.channel] || {}))" :key="assetId">
                                                                 <div x-show="isAssetAllowedByGroups(vKey, vConfig.channel, assetId) && (!sandboxSearchQueries[vKey] || assetName.toLowerCase().includes(sandboxSearchQueries[vKey].toLowerCase()))"
                                                                      @click="sandboxToggleAsset(vKey, assetId)"
                                                                      class="flex gap-x-3 items-center px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 rounded-lg cursor-pointer transition-colors border border-transparent"

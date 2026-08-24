@@ -141,15 +141,14 @@ trait LoadsDashboardViewData
             };
 
             // Always provide asset filter options when a channel with assets is available
-            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode, &$resolved) {
+            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null, ?array $availableAssets = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode, &$resolved) {
                 $allAssets = $getAssetsForChannel($channel);
                 if (empty($allAssets)) {
                     $allAssets = [];
                 }
 
                 // Determine default selection from allowed IDs (KPI group / widget config).
-                // Options list always shows ALL channel assets — group filtering happens
-                // client-side via isViewAssetInGroup so switching asset groups works.
+                // Options list shows channel assets (filtered to availableAssets whitelist if configured)
                 $defaultAssets = $allAssets;
                 if (!empty($allowedIds)) {
                     $filtered = [];
@@ -161,7 +160,6 @@ trait LoadsDashboardViewData
                     if (!empty($filtered)) {
                         $defaultAssets = $filtered;
                     }
-                    // If all filtered out (e.g. channel changed), keep default as all assets
                 }
 
                 // Default selection: single asset
@@ -172,6 +170,11 @@ trait LoadsDashboardViewData
                     $resolved['series_assets'][$key] = [];
                 }
 
+                $optionsList = $allAssets;
+                if (!empty($availableAssets) && is_array($availableAssets)) {
+                    $optionsList = array_intersect_key($allAssets, array_flip($availableAssets));
+                }
+
                 $computedMode = $kpiAssetMode;
                 if (!\App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
                     $computedMode = 'single';
@@ -179,7 +182,7 @@ trait LoadsDashboardViewData
 
                 $widgetArray['series_assets_options'][$key] = [
                     'label' => $label ?? Str::headline($channel),
-                    'options' => (object) $allAssets,
+                    'options' => (object) $optionsList,
                     'mode' => $computedMode,
                 ];
             };
@@ -409,16 +412,18 @@ trait LoadsDashboardViewData
                         $sChannel = $s['channel'] ?? $resolved['series_channels'][$sIdx] ?? $resolved['channel'] ?? null;
                         if (!empty($sChannel)) {
                             $rawAssetIds = $resolved['series_assets'][$sIdx] ?? $s['assets'] ?? null;
+                            $allowedAssetIds = $s['allowed_assets'] ?? $resolved['series_allowed_assets'][$sIdx] ?? null;
                             $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
-                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds);
+                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds, $allowedAssetIds);
                         }
                     }
                 } elseif (!empty($resolved['series_channels']) && is_array($resolved['series_channels'])) {
                     foreach ($resolved['series_channels'] as $sIdx => $sChannel) {
                         if (!empty($sChannel)) {
                             $rawAssetIds = $resolved['series_assets'][$sIdx] ?? null;
+                            $allowedAssetIds = $resolved['series_allowed_assets'][$sIdx] ?? null;
                             $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
-                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds);
+                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds, $allowedAssetIds);
                         }
                     }
                 }
@@ -438,7 +443,8 @@ trait LoadsDashboardViewData
                         } elseif (!empty($resolved['raw_series'][0]['assets'])) {
                             $rawAssetIds = $resolved['raw_series'][0]['assets'];
                         }
-                        $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds);
+                        $allowedAssetIds = $resolved['series_allowed_assets']['0'] ?? $resolved['raw_series'][0]['allowed_assets'] ?? null;
+                        $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds, $allowedAssetIds);
                     }
                 }
             }
