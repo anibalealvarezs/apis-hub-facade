@@ -92,47 +92,46 @@ trait LoadsDashboardViewData
 
         $this->widgets = $rawWidgets;
 
-        // Group widgets into sections bounded by full empty horizontal rows
-        $maxY = 0;
-        foreach ($this->widgets as $w) {
-            $yEnd = ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1);
-            if ($yEnd > $maxY) $maxY = $yEnd;
-        }
+        // Group widgets into sections bounded by clean cut-lines (where no widget crosses vertically)
+        $cutCandidates = collect($this->widgets)
+            ->map(fn ($w) => ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1))
+            ->unique()
+            ->sort()
+            ->values()
+            ->toArray();
 
-        $occupied = array_fill(0, $maxY + 1, false);
-        foreach ($this->widgets as $w) {
-            $yStart = $w['grid_y'] ?? 0;
-            $yEnd = $yStart + ($w['grid_h'] ?? 1);
-            for ($r = $yStart; $r < $yEnd; $r++) {
-                $occupied[$r] = true;
+        $validCuts = [0];
+        foreach ($cutCandidates as $cutY) {
+            $crosses = collect($this->widgets)->contains(function ($w) use ($cutY) {
+                $startY = $w['grid_y'] ?? 0;
+                $endY = $startY + ($w['grid_h'] ?? 1);
+                return $startY < $cutY && $endY > $cutY;
+            });
+
+            if (! $crosses && ! in_array($cutY, $validCuts, true)) {
+                $validCuts[] = $cutY;
             }
         }
+        sort($validCuts);
 
         $this->sections = [];
         $secIndex = 0;
-        $inSec = false;
-        $secStart = 0;
-        for ($r = 0; $r <= $maxY; $r++) {
-            if (!empty($occupied[$r]) && !$inSec) {
-                $inSec = true;
-                $secStart = $r;
-            } elseif (empty($occupied[$r]) && $inSec) {
-                $inSec = false;
+        for ($i = 0; $i < count($validCuts) - 1; $i++) {
+            $secStart = $validCuts[$i];
+            $secEnd = $validCuts[$i + 1];
+            $secWidgets = collect($this->widgets)->filter(function ($w) use ($secStart, $secEnd) {
+                $y = $w['grid_y'] ?? 0;
+                return $y >= $secStart && $y < $secEnd;
+            });
+
+            if ($secWidgets->isNotEmpty()) {
                 $this->sections[] = [
                     'index' => $secIndex++,
                     'grid_y_start' => $secStart,
-                    'grid_y_end' => $r,
-                    'height' => $r - $secStart,
+                    'grid_y_end' => $secEnd,
+                    'height' => $secEnd - $secStart,
                 ];
             }
-        }
-        if ($inSec) {
-            $this->sections[] = [
-                'index' => $secIndex++,
-                'grid_y_start' => $secStart,
-                'grid_y_end' => $maxY,
-                'height' => $maxY - $secStart,
-            ];
         }
 
         // Map section index back to each widget
