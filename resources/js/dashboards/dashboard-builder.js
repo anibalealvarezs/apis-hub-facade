@@ -1838,6 +1838,18 @@ export function dashboardBuilder(config = {}) {
 
             this._gridItemsObserver.observe(container, { childList: true });
             console.log('[DB][observer] registered on #grid-stack');
+
+            this.positionPalette();
+            this._positionPaletteRAF = null;
+            this._onPositionPaletteScroll = () => {
+                if (this._positionPaletteRAF) return;
+                this._positionPaletteRAF = requestAnimationFrame(() => {
+                    this._positionPaletteRAF = null;
+                    this.positionPalette();
+                });
+            };
+            window.addEventListener('resize', this._onPositionPaletteScroll, { passive: true });
+            window.addEventListener('scroll', this._onPositionPaletteScroll, { passive: true });
         },
 
         saveLayout() {
@@ -3175,6 +3187,15 @@ export function dashboardBuilder(config = {}) {
             this.targetGridY = null;
             this.pendingDragSourceType = null;
             this.showAddWidgetModal = false;
+        },
+
+        positionPalette() {
+            const palette = document.querySelector('.bd-palette-left');
+            const canvas = document.getElementById('grid-container');
+            if (!palette || !canvas) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            const paletteWidth = palette.offsetWidth || 50;
+            palette.style.setProperty('left', `${canvasRect.left - paletteWidth - 12}px`, 'important');
         },
 
         confirmAddWidget() {
