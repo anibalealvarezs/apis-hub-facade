@@ -960,6 +960,12 @@ body.pv-page .dvc-controls-bar {
     -webkit-backdrop-filter: blur(8px);
 }
 
+/* ─── Floating Left Widget Palette ─── */
+.bd-widget-palette {
+    z-index: 2;
+    margin-left: -1rem;
+}
+
 /* ─── Drag-in Palette Cards ─── */
 .grid-stack-drag-in {
     user-select: none;

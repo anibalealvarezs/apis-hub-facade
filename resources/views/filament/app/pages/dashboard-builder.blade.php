@@ -2719,7 +2719,7 @@
         </x-confirm-modal>
 
         {{-- Floating Left Widget Palette --}}
-        <div class="fixed left-6 top-1/2 -translate-y-1/2 z-[2] -ml-4 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+        <div class="bd-widget-palette fixed left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
             <div class="px-2 pt-1">
                 <span class="text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ __('Palette') }}</span>
             </div>
