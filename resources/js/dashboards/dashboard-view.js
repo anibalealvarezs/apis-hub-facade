@@ -144,6 +144,12 @@ export function dashboardView(config = {}) {
         },
 
         _triggerPdfPrint() {
+            // In mobile screen, print exactly as-is without any resizing, column changes, or repositioning
+            if (window.innerWidth < 1024) {
+                window.print();
+                return;
+            }
+
             const gridEl = document.querySelector("#view-grid-stack");
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
