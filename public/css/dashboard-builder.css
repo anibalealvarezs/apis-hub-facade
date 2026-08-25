@@ -824,11 +824,11 @@ body.pv-page .dvc-controls-bar {
     }
 
     /* Preserve exact theme backgrounds, colors, and layout fidelity */
-    html, body, .pv-page {
+    html, body {
         width: 100% !important;
-        max-width: 100% !important;
+        max-width: 1320px !important;
         height: auto !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         padding: 0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -843,7 +843,7 @@ body.pv-page .dvc-controls-bar {
 
     #dashboard-view-container {
         width: 100% !important;
-        max-width: 100% !important;
+        max-width: 1320px !important;
         padding: 0 !important;
         margin: 0 auto !important;
         box-shadow: none !important;

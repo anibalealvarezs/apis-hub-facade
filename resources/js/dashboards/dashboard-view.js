@@ -148,15 +148,17 @@ export function dashboardView(config = {}) {
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
 
-            // If currently in full-width mode, temporarily switch to contained for print
+            // If currently in full-width mode, switch to contained before printing
             const wasFullWidth = this.isFullWidth;
             if (wasFullWidth) {
                 this.isFullWidth = false;
+                // Internal Filament: restore content wrapper max-width
                 const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
                                          this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
                 if (filamentContent) {
                     filamentContent.style.maxWidth = '';
                 }
+                // Public view: swap body classes
                 const body = document.body;
                 if (body.classList.contains('pv-page')) {
                     body.classList.remove('w-full');
@@ -164,97 +166,93 @@ export function dashboardView(config = {}) {
                 }
             }
 
-            const isMobileScreen = window.innerWidth < 1024;
+            if (grid && originalColumn !== 12) {
+                grid.column(12, "none");
+            }
 
-            if (!isMobileScreen) {
-                if (grid && originalColumn !== 12) {
-                    grid.column(12, "none");
-                }
+            // Trigger window resize and force charts to render without animations
+            if (
+                window.dashboardRenderer &&
+                window.dashboardRenderer._chartInstances
+            ) {
+                window.dashboardRenderer._chartInstances.forEach((chart) => {
+                    try {
+                        if (chart && chart.options) {
+                            chart.options.animation = false;
+                            chart.resize();
+                            chart.update("none");
+                        }
+                    } catch (e) {}
+                });
+            }
 
-                // Trigger window resize and force charts to render without animations
-                if (
-                    window.dashboardRenderer &&
-                    window.dashboardRenderer._chartInstances
+            // Calculate print page heights based on empty cut lines and actual section pixel heights
+            const emptyLines = Array.from(
+                document.querySelectorAll(
+                    "#view-grid-stack .dashboard-empty-line",
+                ),
+            )
+                .map((el) => parseInt(el.dataset.cutY || "0"))
+                .filter((y) => y > 0)
+                .sort((a, b) => a - b);
+
+            const widgetEls = Array.from(
+                document.querySelectorAll("#view-grid-stack .grid-stack-item"),
+            );
+            const originalTops = new Map();
+            const originalGridHeight = gridEl ? gridEl.style.height : "";
+
+            if (widgetEls.length > 0) {
+                // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
+                const pagePrintHeight = 730;
+
+                // The assigned empty lines ARE the page breaks: [0, break1, break2, ...]
+                const pageBreakCuts = [0, ...emptyLines];
+                let maxShiftedBottom = 0;
+
+                for (
+                    let pageIdx = 0;
+                    pageIdx < pageBreakCuts.length;
+                    pageIdx++
                 ) {
-                    window.dashboardRenderer._chartInstances.forEach((chart) => {
-                        try {
-                            if (chart && chart.options) {
-                                chart.options.animation = false;
-                                chart.resize();
-                                chart.update("none");
-                            }
-                        } catch (e) {}
+                    const secStartY = pageBreakCuts[pageIdx];
+                    const secEndY = pageBreakCuts[pageIdx + 1] || 9999;
+                    const secWidgets = widgetEls.filter((wEl) => {
+                        const node = wEl.gridstackNode;
+                        const y = node
+                            ? node.y
+                            : parseInt(wEl.getAttribute("gs-y") || "0");
+                        return y >= secStartY && y < secEndY;
+                    });
+
+                    if (secWidgets.length === 0) continue;
+
+                    // The top of this page
+                    const pageTargetTop = pageIdx * pagePrintHeight;
+                    const minWidgetNaturalTop = Math.min(
+                        ...secWidgets.map(
+                            (wEl) =>
+                                wEl.offsetTop || parseFloat(wEl.style.top) || 0,
+                        ),
+                    );
+                    const shiftPx = pageTargetTop - minWidgetNaturalTop;
+
+                    secWidgets.forEach((wEl) => {
+                        originalTops.set(wEl, wEl.style.top);
+                        const currentTop =
+                            parseFloat(wEl.style.top) || wEl.offsetTop;
+                        const newTop = currentTop + shiftPx;
+                        wEl.style.top = `${newTop}px`;
+
+                        const widgetBottom = newTop + (wEl.offsetHeight || 100);
+                        if (widgetBottom > maxShiftedBottom) {
+                            maxShiftedBottom = widgetBottom;
+                        }
                     });
                 }
 
-                // Calculate print page heights based on empty cut lines and actual section pixel heights
-                const emptyLines = Array.from(
-                    document.querySelectorAll(
-                        "#view-grid-stack .dashboard-empty-line",
-                    ),
-                )
-                    .map((el) => parseInt(el.dataset.cutY || "0"))
-                    .filter((y) => y > 0)
-                    .sort((a, b) => a - b);
-
-                const widgetEls = Array.from(
-                    document.querySelectorAll("#view-grid-stack .grid-stack-item"),
-                );
-                const originalTops = new Map();
-                const originalGridHeight = gridEl ? gridEl.style.height : "";
-
-                if (widgetEls.length > 0) {
-                    // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
-                    const pagePrintHeight = 730;
-
-                    // The assigned empty lines ARE the page breaks: [0, break1, break2, ...]
-                    const pageBreakCuts = [0, ...emptyLines];
-                    let maxShiftedBottom = 0;
-
-                    for (
-                        let pageIdx = 0;
-                        pageIdx < pageBreakCuts.length;
-                        pageIdx++
-                    ) {
-                        const secStartY = pageBreakCuts[pageIdx];
-                        const secEndY = pageBreakCuts[pageIdx + 1] || 9999;
-                        const secWidgets = widgetEls.filter((wEl) => {
-                            const node = wEl.gridstackNode;
-                            const y = node
-                                ? node.y
-                                : parseInt(wEl.getAttribute("gs-y") || "0");
-                            return y >= secStartY && y < secEndY;
-                        });
-
-                        if (secWidgets.length === 0) continue;
-
-                        // The top of this page
-                        const pageTargetTop = pageIdx * pagePrintHeight;
-                        const minWidgetNaturalTop = Math.min(
-                            ...secWidgets.map(
-                                (wEl) =>
-                                    wEl.offsetTop || parseFloat(wEl.style.top) || 0,
-                            ),
-                        );
-                        const shiftPx = pageTargetTop - minWidgetNaturalTop;
-
-                        secWidgets.forEach((wEl) => {
-                            originalTops.set(wEl, wEl.style.top);
-                            const currentTop =
-                                parseFloat(wEl.style.top) || wEl.offsetTop;
-                            const newTop = currentTop + shiftPx;
-                            wEl.style.top = `${newTop}px`;
-
-                            const widgetBottom = newTop + (wEl.offsetHeight || 100);
-                            if (widgetBottom > maxShiftedBottom) {
-                                maxShiftedBottom = widgetBottom;
-                            }
-                        });
-                    }
-
-                    if (gridEl) {
-                        gridEl.style.height = `${maxShiftedBottom + 20}px`;
-                    }
+                if (gridEl) {
+                    gridEl.style.height = `${maxShiftedBottom + 20}px`;
                 }
             }
 
