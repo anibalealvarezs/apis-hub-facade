@@ -113,157 +113,132 @@ export function dashboardView(config = {}) {
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
 
-            // Step 1: Temporarily remove w-full / force standard container width
-            const bodyEl = document.body;
-            const hadFullWidth = bodyEl.classList.contains("w-full");
-            if (hadFullWidth) {
-                bodyEl.classList.remove("w-full");
-            }
-            const containerEl = document.querySelector("#dashboard-view-container");
-            const originalContainerStyle = containerEl ? containerEl.getAttribute("style") : null;
-            if (containerEl) {
-                containerEl.style.maxWidth = "1320px";
-                containerEl.style.margin = "0 auto";
-            }
-            if (grid) {
-                grid.onResize();
+            if (grid && originalColumn !== 12) {
+                grid.column(12, "none");
             }
 
-            // Step 2: Allow browser reflow & Chart.js recalculation before measuring page cuts and printing
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    // Trigger chart resizes with new un-stretched width
-                    if (
-                        window.dashboardRenderer &&
-                        window.dashboardRenderer._chartInstances
-                    ) {
-                        window.dashboardRenderer._chartInstances.forEach((chart) => {
+            // Trigger window resize and force charts to render without animations
+            if (
+                window.dashboardRenderer &&
+                window.dashboardRenderer._chartInstances
+            ) {
+                window.dashboardRenderer._chartInstances.forEach((chart) => {
+                    try {
+                        if (chart && chart.options) {
+                            chart.options.animation = false;
+                            chart.resize();
+                            chart.update("none");
+                        }
+                    } catch (e) {}
+                });
+            }
+
+            // Calculate print page heights based on empty cut lines and actual section pixel heights
+            const emptyLines = Array.from(
+                document.querySelectorAll(
+                    "#view-grid-stack .dashboard-empty-line",
+                ),
+            )
+                .map((el) => parseInt(el.dataset.cutY || "0"))
+                .filter((y) => y > 0)
+                .sort((a, b) => a - b);
+
+            const widgetEls = Array.from(
+                document.querySelectorAll("#view-grid-stack .grid-stack-item"),
+            );
+            const originalTops = new Map();
+            const originalGridHeight = gridEl ? gridEl.style.height : "";
+
+            if (widgetEls.length > 0) {
+                // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
+                const pagePrintHeight = 730;
+
+                // The assigned empty lines ARE the page breaks: [0, break1, break2, ...]
+                const pageBreakCuts = [0, ...emptyLines];
+                let maxShiftedBottom = 0;
+
+                for (
+                    let pageIdx = 0;
+                    pageIdx < pageBreakCuts.length;
+                    pageIdx++
+                ) {
+                    const secStartY = pageBreakCuts[pageIdx];
+                    const secEndY = pageBreakCuts[pageIdx + 1] || 9999;
+                    const secWidgets = widgetEls.filter((wEl) => {
+                        const node = wEl.gridstackNode;
+                        const y = node
+                            ? node.y
+                            : parseInt(wEl.getAttribute("gs-y") || "0");
+                        return y >= secStartY && y < secEndY;
+                    });
+
+                    if (secWidgets.length === 0) continue;
+
+                    // The top of this page
+                    const pageTargetTop = pageIdx * pagePrintHeight;
+                    const minWidgetNaturalTop = Math.min(
+                        ...secWidgets.map(
+                            (wEl) =>
+                                wEl.offsetTop || parseFloat(wEl.style.top) || 0,
+                        ),
+                    );
+                    const shiftPx = pageTargetTop - minWidgetNaturalTop;
+
+                    secWidgets.forEach((wEl) => {
+                        originalTops.set(wEl, wEl.style.top);
+                        const currentTop =
+                            parseFloat(wEl.style.top) || wEl.offsetTop;
+                        const newTop = currentTop + shiftPx;
+                        wEl.style.top = `${newTop}px`;
+
+                        const widgetBottom = newTop + (wEl.offsetHeight || 100);
+                        if (widgetBottom > maxShiftedBottom) {
+                            maxShiftedBottom = widgetBottom;
+                        }
+                    });
+                }
+
+                if (gridEl) {
+                    gridEl.style.height = `${maxShiftedBottom + 20}px`;
+                }
+            }
+
+            window.dispatchEvent(new Event("resize"));
+
+            const restoreAfterPrint = () => {
+                // Restore widget tops
+                originalTops.forEach((top, wEl) => {
+                    wEl.style.top = top;
+                });
+                if (gridEl) {
+                    gridEl.style.height = originalGridHeight;
+                }
+
+                if (grid && originalColumn !== 12) {
+                    grid.column(originalColumn, "none");
+                }
+                if (
+                    window.dashboardRenderer &&
+                    window.dashboardRenderer._chartInstances
+                ) {
+                    window.dashboardRenderer._chartInstances.forEach(
+                        (chart) => {
                             try {
-                                if (chart && chart.options) {
-                                    chart.options.animation = false;
+                                if (chart) {
                                     chart.resize();
-                                    chart.update("none");
                                 }
                             } catch (e) {}
-                        });
-                    }
-
-                    // Calculate print page heights based on empty cut lines and actual section pixel heights
-                    const emptyLines = Array.from(
-                        document.querySelectorAll(
-                            "#view-grid-stack .dashboard-empty-line",
-                        ),
-                    )
-                        .map((el) => parseInt(el.dataset.cutY || "0"))
-                        .filter((y) => y > 0)
-                        .sort((a, b) => a - b);
-
-                    const widgetEls = Array.from(
-                        document.querySelectorAll("#view-grid-stack .grid-stack-item"),
+                        },
                     );
-                    const originalTops = new Map();
-                    const originalGridHeight = gridEl ? gridEl.style.height : "";
+                }
+                window.dispatchEvent(new Event("resize"));
+                window.removeEventListener("afterprint", restoreAfterPrint);
+            };
+            window.addEventListener("afterprint", restoreAfterPrint);
 
-                    if (widgetEls.length > 0) {
-                        // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
-                        const pagePrintHeight = 730;
-
-                        // The assigned empty lines ARE the page breaks: [0, break1, break2, ...]
-                        const pageBreakCuts = [0, ...emptyLines];
-                        let maxShiftedBottom = 0;
-
-                        for (
-                            let pageIdx = 0;
-                            pageIdx < pageBreakCuts.length;
-                            pageIdx++
-                        ) {
-                            const secStartY = pageBreakCuts[pageIdx];
-                            const secEndY = pageBreakCuts[pageIdx + 1] || 9999;
-                            const secWidgets = widgetEls.filter((wEl) => {
-                                const node = wEl.gridstackNode;
-                                const y = node
-                                    ? node.y
-                                    : parseInt(wEl.getAttribute("gs-y") || "0");
-                                return y >= secStartY && y < secEndY;
-                            });
-
-                            if (secWidgets.length === 0) continue;
-
-                            // The top of this page
-                            const pageTargetTop = pageIdx * pagePrintHeight;
-                            const minWidgetNaturalTop = Math.min(
-                                ...secWidgets.map(
-                                    (wEl) =>
-                                        wEl.offsetTop || parseFloat(wEl.style.top) || 0,
-                                ),
-                            );
-                            const shiftPx = pageTargetTop - minWidgetNaturalTop;
-
-                            secWidgets.forEach((wEl) => {
-                                originalTops.set(wEl, wEl.style.top);
-                                const currentTop =
-                                    parseFloat(wEl.style.top) || wEl.offsetTop;
-                                const newTop = currentTop + shiftPx;
-                                wEl.style.top = `${newTop}px`;
-
-                                const widgetBottom = newTop + (wEl.offsetHeight || 100);
-                                if (widgetBottom > maxShiftedBottom) {
-                                    maxShiftedBottom = widgetBottom;
-                                }
-                            });
-                        }
-
-                        if (gridEl) {
-                            gridEl.style.height = `${maxShiftedBottom + 20}px`;
-                        }
-                    }
-
-                    const restoreAfterPrint = () => {
-                        // Restore widget tops
-                        originalTops.forEach((top, wEl) => {
-                            wEl.style.top = top;
-                        });
-                        if (gridEl) {
-                            gridEl.style.height = originalGridHeight;
-                        }
-
-                        if (hadFullWidth) {
-                            bodyEl.classList.add("w-full");
-                        }
-                        if (containerEl) {
-                            if (originalContainerStyle !== null) {
-                                containerEl.setAttribute("style", originalContainerStyle);
-                            } else {
-                                containerEl.removeAttribute("style");
-                            }
-                        }
-                        if (grid) {
-                            grid.onResize();
-                        }
-                        if (
-                            window.dashboardRenderer &&
-                            window.dashboardRenderer._chartInstances
-                        ) {
-                            window.dashboardRenderer._chartInstances.forEach(
-                                (chart) => {
-                                    try {
-                                        if (chart) {
-                                            chart.resize();
-                                        }
-                                    } catch (e) {}
-                                },
-                            );
-                        }
-                        window.dispatchEvent(new Event("resize"));
-                        window.removeEventListener("afterprint", restoreAfterPrint);
-                    };
-                    window.addEventListener("afterprint", restoreAfterPrint);
-
-                    setTimeout(() => {
-                        window.print();
-                    }, 150);
-                });
-            });
+            setTimeout(() => {
+                window.print();
+            }, 300);
         },
 
         _applyAssetGroupAfterInitialRender() {
