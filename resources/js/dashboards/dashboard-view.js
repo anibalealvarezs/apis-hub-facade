@@ -126,10 +126,9 @@ export function dashboardView(config = {}) {
 
                 // All boundary cuts: [0, cut1, cut2, ...]
                 const cuts = [0, ...emptyLines];
-                
-                let currentPageIndex = 0;
-                let maxShiftedBottom = 0;
 
+                // Determine row spans and widgets for each candidate slice
+                const rawSections = [];
                 for (let i = 0; i < cuts.length; i++) {
                     const secStartY = cuts[i];
                     const secEndY = cuts[i + 1] || 9999;
@@ -141,17 +140,60 @@ export function dashboardView(config = {}) {
 
                     if (secWidgets.length === 0) continue;
 
-                    // If not the first section with widgets, advance to the next paper page
-                    if (i > 0) {
-                        currentPageIndex++;
+                    const minStartY = Math.min(...secWidgets.map(wEl => {
+                        const node = wEl.gridstackNode;
+                        return node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
+                    }));
+                    const maxEndY = Math.max(...secWidgets.map(wEl => {
+                        const node = wEl.gridstackNode;
+                        const y = node ? node.y : parseInt(wEl.getAttribute('gs-y') || '0');
+                        const h = node ? node.h : parseInt(wEl.getAttribute('gs-h') || '1');
+                        return y + h;
+                    }));
+
+                    rawSections.push({
+                        startY: minStartY,
+                        endY: maxEndY,
+                        rowCount: maxEndY - minStartY,
+                        widgets: secWidgets
+                    });
+                }
+
+                // Optimal row limit: 6 rows on first page (accounting for header reserve), 7 rows on subsequent pages
+                const firstPageMaxRows = 6;
+                const subsequentPageMaxRows = 7;
+
+                let currentPageIndex = 0;
+                let currentPageUsedRows = 0;
+                let currentPageStartY = 0;
+                let maxShiftedBottom = 0;
+
+                rawSections.forEach((sec, idx) => {
+                    const pageLimit = (currentPageIndex === 0) ? firstPageMaxRows : subsequentPageMaxRows;
+
+                    if (idx > 0) {
+                        // Check if adding this section exceeds page capacity
+                        const totalRowsIfAdded = (sec.endY - currentPageStartY);
+                        if (totalRowsIfAdded > pageLimit) {
+                            // Section does NOT fit on current page -> advance to fresh page
+                            currentPageIndex++;
+                            currentPageUsedRows = sec.rowCount;
+                            currentPageStartY = sec.startY;
+                        } else {
+                            // Section FITS on the same page!
+                            currentPageUsedRows = totalRowsIfAdded;
+                        }
+                    } else {
+                        currentPageUsedRows = sec.rowCount;
+                        currentPageStartY = sec.startY;
                     }
 
-                    // Find the natural top offset of the highest widget in this section
-                    const minWidgetNaturalTop = Math.min(...secWidgets.map(wEl => wEl.offsetTop || parseFloat(wEl.style.top) || 0));
-                    const targetSectionPageTop = currentPageIndex * pagePrintHeight;
-                    const shiftPx = targetSectionPageTop - minWidgetNaturalTop;
+                    // Shift widgets relative to current page's base starting Y
+                    const targetPageBasePx = currentPageIndex * pagePrintHeight;
+                    const minWidgetNaturalTop = Math.min(...sec.widgets.map(wEl => wEl.offsetTop || parseFloat(wEl.style.top) || 0));
+                    const shiftPx = targetPageBasePx - (currentPageStartY * 112); // 112px is rowUnit (100px + 12px margin)
 
-                    secWidgets.forEach(wEl => {
+                    sec.widgets.forEach(wEl => {
                         originalTops.set(wEl, wEl.style.top);
                         const currentTop = parseFloat(wEl.style.top) || (wEl.offsetTop);
                         const newTop = currentTop + shiftPx;
@@ -162,7 +204,7 @@ export function dashboardView(config = {}) {
                             maxShiftedBottom = widgetBottom;
                         }
                     });
-                }
+                });
 
                 if (gridEl) {
                     gridEl.style.height = `${maxShiftedBottom + 20}px`;
