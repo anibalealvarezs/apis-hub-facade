@@ -1638,6 +1638,10 @@ export function dashboardBuilder(config = {}) {
                 this.openAddWidgetModal(sourceType);
             });
 
+            this.positionPalette();
+            window.addEventListener('scroll', () => this.positionPalette(), { passive: true });
+            window.addEventListener('resize', () => this.positionPalette(), { passive: true });
+
             let autoScrollTimer = null;
             let multiDragStartPositions = null;
 
@@ -3158,6 +3162,15 @@ export function dashboardBuilder(config = {}) {
             if (this.addWidgetForm.source_type === 'kpi' && !this.addWidgetForm.custom_kpi_id) return false;
             if (this.addWidgetForm.source_type === 'derived_metric' && !this.addWidgetForm.derived_metric_id) return false;
             return true;
+        },
+
+        positionPalette() {
+            const palette = document.querySelector('.bd-palette-left');
+            const container = document.getElementById('grid-container');
+            if (!palette || !container) return;
+            const rect = container.getBoundingClientRect();
+            palette.style.top = (rect.top + rect.height / 2) + 'px';
+            palette.style.transform = 'translateY(-50%)';
         },
 
         cancelAddWidget() {
