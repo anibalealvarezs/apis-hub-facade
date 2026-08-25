@@ -164,31 +164,8 @@ export function dashboardView(config = {}) {
                 }
             }
 
-            const widgetEls = Array.from(
-                document.querySelectorAll("#view-grid-stack .grid-stack-item"),
-            );
-
-            if (grid) {
-                gridEl.classList.remove("grid-stack-1");
-                gridEl.classList.add("grid-stack-12");
+            if (grid && originalColumn !== 12) {
                 grid.column(12, "none");
-                // Restore each widget's original grid coordinates from gs- attributes
-                widgetEls.forEach((wEl) => {
-                    const node = wEl.gridstackNode;
-                    const origX = parseInt(wEl.getAttribute("gs-x") || "0");
-                    const origY = parseInt(wEl.getAttribute("gs-y") || "0");
-                    const origW = parseInt(wEl.getAttribute("gs-w") || "12");
-                    const origH = parseInt(wEl.getAttribute("gs-h") || "1");
-                    if (node) {
-                        node.x = origX;
-                        node.y = origY;
-                        node.w = origW;
-                        node.h = origH;
-                    }
-                    wEl.style.width = `calc(${origW} / 12 * 100%)`;
-                    wEl.style.left = `calc(${origX} / 12 * 100%)`;
-                });
-                grid.onResize();
             }
 
             // Trigger window resize and force charts to render without animations
@@ -217,6 +194,9 @@ export function dashboardView(config = {}) {
                 .filter((y) => y > 0)
                 .sort((a, b) => a - b);
 
+            const widgetEls = Array.from(
+                document.querySelectorAll("#view-grid-stack .grid-stack-item"),
+            );
             const originalTops = new Map();
             const originalGridHeight = gridEl ? gridEl.style.height : "";
 
