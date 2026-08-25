@@ -814,6 +814,8 @@ body.pv-page .dvc-controls-bar {
     .bd-modal-root,
     .dvc-popout-root,
     .builder-toolbar,
+    .bd-canvas-add-bar,
+    .grid-stack-drag-in,
     button,
     .no-print {
         display: none !important;
@@ -947,6 +949,28 @@ body.pv-page .dvc-controls-bar {
     .dashboard-export-pdf-btn {
         display: none !important;
     }
+}
+
+/* ─── Sticky Add Widget Bar ─── */
+.bd-canvas-add-bar {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ─── Drag-in Palette Cards ─── */
+.grid-stack-drag-in {
+    user-select: none;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.grid-stack-drag-in.ui-draggable-dragging {
+    opacity: 0.85;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.dark .grid-stack-drag-in.ui-draggable-dragging {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 

@@ -75,13 +75,20 @@
                 <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 space-y-4">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Widget Palette') }}</h3>
                     <div class="space-y-2">
-                        <div
-                            class="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-pointer hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-                            x-on:click="openAddWidgetModal()">
-                            <x-filament::icon name="heroicon-o-plus-circle"
-                                              class="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500"/>
-                            <span
-                                class="block text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Add Widget') }}</span>
+                        <div class="grid-stack-drag-in rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-grab active:cursor-grabbing hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                             data-source-type="kpi" gs-w="4" gs-h="3">
+                            <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 mx-auto text-gray-400 dark:text-gray-500"/>
+                            <span class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('KPI') }}</span>
+                        </div>
+                        <div class="grid-stack-drag-in rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-grab active:cursor-grabbing hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                             data-source-type="metric" gs-w="4" gs-h="3">
+                            <x-filament::icon name="heroicon-o-chart-bar" class="w-6 h-6 mx-auto text-gray-400 dark:text-gray-500"/>
+                            <span class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('Metric') }}</span>
+                        </div>
+                        <div class="grid-stack-drag-in rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-grab active:cursor-grabbing hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                             data-source-type="derived_metric" gs-w="4" gs-h="3">
+                            <x-filament::icon name="heroicon-o-beaker" class="w-6 h-6 mx-auto text-gray-400 dark:text-gray-500"/>
+                            <span class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('Derived Metric') }}</span>
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
@@ -225,6 +232,12 @@
                                 to get started.') }}</p>
                         </div>
                     </template>
+                </div>
+
+                <div class="bd-canvas-add-bar mt-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-900/80 p-3 flex items-center justify-center gap-2 hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-colors cursor-pointer"
+                     x-on:click="targetGridX = null; targetGridY = null; pendingDragSourceType = null; openAddWidgetModal()">
+                    <x-filament::icon name="heroicon-o-plus-circle" class="w-5 h-5 text-gray-400 dark:text-gray-500"/>
+                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Add Widget') }}</span>
                 </div>
             </div>
         </div>
@@ -2096,7 +2109,7 @@
         {{-- ADD WIDGET MODAL                                            --}}
         {{-- ============================================================ --}}
         <div x-show="showAddWidgetModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center">
-            <div class="absolute inset-0 bg-black/50" x-on:click="showAddWidgetModal = false"></div>
+            <div class="absolute inset-0 bg-black/50" x-on:click="cancelAddWidget()"></div>
             <div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-5xl w-full mx-4 p-6 flex flex-col max-h-[90vh]">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">{{ __('Add Widget') }}</h2>
@@ -2205,7 +2218,7 @@
                 <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <button
                         class="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        x-on:click="showAddWidgetModal = false">{{ __('Cancel') }}
+                        x-on:click="cancelAddWidget()">{{ __('Cancel') }}
                     </button>
                     <button
                         class="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-500 disabled:opacity-50"

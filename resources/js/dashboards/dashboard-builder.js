@@ -831,6 +831,9 @@ export function dashboardBuilder(config = {}) {
         customKpiId: '',
         derivedMetricId: '',
         widgetName: '',
+        targetGridX: null,
+        targetGridY: null,
+        pendingDragSourceType: null,
 
         get addWidgetForm() {
             return {
@@ -851,9 +854,9 @@ export function dashboardBuilder(config = {}) {
             this.widgetName = val.name || '';
         },
 
-        openAddWidgetModal() {
-            console.log('[DB][openAddWidgetModal] ENTER');
-            this.selectedSourceType = '';
+        openAddWidgetModal(preselectedSourceType = null) {
+            console.log('[DB][openAddWidgetModal] ENTER', { preselectedSourceType });
+            this.selectedSourceType = preselectedSourceType || '';
             this.selectedWidgetType = '';
             this.customKpiId = '';
             this.derivedMetricId = '';
@@ -1608,6 +1611,31 @@ export function dashboardBuilder(config = {}) {
                     handle: '.widget-header, .widget-drag-handle, .widget-body-drag',
                     scroll: false
                 },
+            });
+
+            GridStack.setupDragIn('.grid-stack-drag-in', {
+                helper: 'clone',
+                appendTo: 'body',
+                revert: 'invalid',
+                scroll: false,
+            });
+
+            this.grid.on('dropped', (event, previousNode, newNode) => {
+                if (!newNode || !newNode.el) return;
+
+                const dragEl = event?.target?.closest?.('.grid-stack-drag-in')
+                            || event?.originalEvent?.target?.closest?.('.grid-stack-drag-in');
+                const sourceType = dragEl?.getAttribute('data-source-type') || 'metric';
+
+                this.targetGridX = newNode.x;
+                this.targetGridY = newNode.y;
+                this.pendingDragSourceType = sourceType;
+
+                if (newNode.el && newNode.el.isConnected) {
+                    this.grid.removeWidget(newNode.el, false);
+                }
+
+                this.openAddWidgetModal(sourceType);
             });
 
             let autoScrollTimer = null;
@@ -3119,8 +3147,8 @@ export function dashboardBuilder(config = {}) {
         },
 
         // ─── Add Widget ──
-        openAddWidgetModal() {
-            this.addWidgetForm = { source_type: '', custom_kpi_id: '', derived_metric_id: '', widget_type: '', name: '' };
+        openAddWidgetModal(preselectedSourceType = null) {
+            this.addWidgetForm = { source_type: preselectedSourceType || '', custom_kpi_id: '', derived_metric_id: '', widget_type: '', name: '' };
             this.showAddWidgetModal = true;
         },
 
@@ -3130,6 +3158,23 @@ export function dashboardBuilder(config = {}) {
             if (this.addWidgetForm.source_type === 'kpi' && !this.addWidgetForm.custom_kpi_id) return false;
             if (this.addWidgetForm.source_type === 'derived_metric' && !this.addWidgetForm.derived_metric_id) return false;
             return true;
+        },
+
+        cancelAddWidget() {
+            if (this.targetGridX !== null && this.targetGridY !== null && this.grid) {
+                const nodes = this.grid.engine?.nodes || [];
+                const orphan = nodes.find(n => {
+                    if (!n || n.id) return false;
+                    return n.x === this.targetGridX && n.y === this.targetGridY;
+                });
+                if (orphan && orphan.el) {
+                    this.grid.removeWidget(orphan.el, false);
+                }
+            }
+            this.targetGridX = null;
+            this.targetGridY = null;
+            this.pendingDragSourceType = null;
+            this.showAddWidgetModal = false;
         },
 
         confirmAddWidget() {
@@ -3216,18 +3261,21 @@ export function dashboardBuilder(config = {}) {
                 source_config: sourceConfig,
                 widget_type: form.widget_type,
                 controls: controls,
-                grid_x: null,
-                grid_y: null,
+                grid_x: this.targetGridX ?? null,
+                grid_y: this.targetGridY ?? null,
                 grid_w: 4,
                 grid_h: 3,
             };
 
             this.$wire.addWidget(data).then(widget => {
                 widget._isNew = true;
-                widget.grid_x = null;
-                widget.grid_y = null;
+                widget.grid_x = this.targetGridX;
+                widget.grid_y = this.targetGridY;
                 this.widgets.push(widget);
                 this.showAddWidgetModal = false;
+                this.targetGridX = null;
+                this.targetGridY = null;
+                this.pendingDragSourceType = null;
 
                 this.$nextTick(() => {
                     setTimeout(() => {
