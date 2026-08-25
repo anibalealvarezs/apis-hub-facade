@@ -71,24 +71,24 @@
 
         <div class="grid grid-cols-12 gap-4">
             {{-- Widget Palette (sidebar) --}}
-            <div class="col-span-2 hidden lg:block">
-                <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 space-y-4">
+            <div class="col-span-12 lg:col-span-2">
+                <div class="rounded-xl bg-gray-50 dark:bg-gray-900 p-4 space-y-4 lg:sticky lg:top-24">
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{{ __('Widget Palette') }}</h3>
                     <div class="space-y-2">
                         <div class="grid-stack-drag-in rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-grab active:cursor-grabbing hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                              data-source-type="kpi" gs-w="4" gs-h="3">
                             <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 mx-auto text-gray-400 dark:text-gray-500"/>
-                            <span class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('KPI') }}</span>
+                            <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('KPI') }}</span>
                         </div>
                         <div class="grid-stack-drag-in rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-grab active:cursor-grabbing hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                              data-source-type="metric" gs-w="4" gs-h="3">
                             <x-filament::icon name="heroicon-o-chart-bar" class="w-6 h-6 mx-auto text-gray-400 dark:text-gray-500"/>
-                            <span class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('Metric') }}</span>
+                            <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('Metric') }}</span>
                         </div>
                         <div class="grid-stack-drag-in rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-3 text-center cursor-grab active:cursor-grabbing hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                              data-source-type="derived_metric" gs-w="4" gs-h="3">
                             <x-filament::icon name="heroicon-o-beaker" class="w-6 h-6 mx-auto text-gray-400 dark:text-gray-500"/>
-                            <span class="block text-[11px] font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('Derived Metric') }}</span>
+                            <span class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mt-1">{{ __('Derived Metric') }}</span>
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
@@ -232,12 +232,6 @@
                                 to get started.') }}</p>
                         </div>
                     </template>
-                </div>
-
-                <div class="bd-canvas-add-bar mt-4 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-900/80 p-3 flex items-center justify-center gap-2 hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-colors cursor-pointer"
-                     x-on:click="targetGridX = null; targetGridY = null; pendingDragSourceType = null; openAddWidgetModal()">
-                    <x-filament::icon name="heroicon-o-plus-circle" class="w-5 h-5 text-gray-400 dark:text-gray-500"/>
-                    <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ __('Add Widget') }}</span>
                 </div>
             </div>
         </div>
