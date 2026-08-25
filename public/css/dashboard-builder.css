@@ -866,9 +866,8 @@ body.pv-page .dvc-controls-bar {
         break-inside: avoid !important;
     }
 
-    /* In 1-column mobile view, let items flow naturally and set proportional height */
-    .grid-stack-1 > .grid-stack-item,
-    .grid-stack[gs-current-row] > .grid-stack-item {
+    /* In 1-column mobile view, let items flow naturally */
+    .grid-stack-1 > .grid-stack-item {
         position: relative !important;
         width: 100% !important;
         left: 0 !important;
