@@ -47,7 +47,7 @@
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="pv-page bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 w-full' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}">
+<body class="pv-page bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 max-w-7xl mx-auto' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}" x-data="{ pvFullWidth: false }" :class="{ 'max-w-7xl mx-auto': !pvFullWidth && !{{ $isEmbedded ? 'true' : 'false' }}, 'w-full': pvFullWidth && !{{ $isEmbedded ? 'true' : 'false' }} }">
 
     {{-- Public View Bar: Dark/Light Mode & Language Selector --}}
     <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-800 text-xs" x-data="publicViewBar({
@@ -68,6 +68,11 @@
                         <span>{{ __('Dark Mode') }}</span>
                     </span>
                 </template>
+            </button>
+            {{-- Full Width Toggle --}}
+            <button @click="pvFullWidth = !pvFullWidth; window.dispatchEvent(new Event('resize'))" class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm focus:outline-none" :class="pvFullWidth ? 'ring-2 ring-primary-500' : ''">
+                <svg class="w-3.5 h-3.5" :class="pvFullWidth ? 'text-primary-500' : 'text-gray-500 dark:text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>
+                <span x-text="pvFullWidth ? '{{ __('Contained') }}' : '{{ __('Full Width') }}'"></span>
             </button>
         </div>
 
