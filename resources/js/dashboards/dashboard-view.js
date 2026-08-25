@@ -166,7 +166,7 @@ export function dashboardView(config = {}) {
                 }
             }
 
-            if (grid && originalColumn !== 12) {
+            if (grid && originalColumn !== 12 && window.innerWidth >= 1024) {
                 grid.column(12, "none");
             }
 
