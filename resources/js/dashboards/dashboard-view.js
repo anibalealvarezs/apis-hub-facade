@@ -78,19 +78,7 @@ export function dashboardView(config = {}) {
         },
 
         exportPdf() {
-            if (this.isExporting) return;
-            this.isExporting = true;
-
-            // Immediately force-render all offscreen widgets from their cached JSON data
-            if (window.dashboardRenderer && typeof window.dashboardRenderer.flushAllRender === 'function') {
-                window.dashboardRenderer.flushAllRender();
-            }
-
-            // Wait a brief tick for Chart.js/SVG/DOM to paint, then trigger print
-            setTimeout(() => {
-                this._triggerPdfPrint();
-                this.isExporting = false;
-            }, 400);
+            this._triggerPdfPrint();
         },
 
         _triggerPdfPrint() {
