@@ -77,8 +77,22 @@ export function dashboardView(config = {}) {
         },
 
         exportPdf() {
+            // Find any widget whose content is empty or unrendered, and trigger its render
+            const widgetContainers = Array.from(document.querySelectorAll('#view-grid-stack .grid-stack-item .widget-content'));
+            widgetContainers.forEach(el => {
+                const widgetId = parseInt(el.getAttribute('data-widget-id') || el.closest('.grid-stack-item')?.getAttribute('gs-id') || '0');
+                if (widgetId && !this._loadedWidgets[widgetId]) {
+                    const rawControlsStr = el.getAttribute('data-raw-controls');
+                    let controls = {};
+                    if (rawControlsStr) {
+                        try { controls = JSON.parse(rawControlsStr); } catch (e) {}
+                    }
+                    this.renderWidget(widgetId, el, controls);
+                }
+            });
+
             const checkReady = () => {
-                const allSettled = this._startedCount >= this.totalCount && this._pendingRenders <= 0;
+                const allSettled = this._startedCount >= this.totalCount && this._pendingRenders <= 0 && this.loadedCount >= this.totalCount;
                 if (allSettled) {
                     this._triggerPdfPrint();
                 } else {
