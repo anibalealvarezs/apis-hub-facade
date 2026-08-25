@@ -824,10 +824,11 @@ body.pv-page .dvc-controls-bar {
     }
 
     /* Preserve exact theme backgrounds, colors, and layout fidelity */
-    html, body {
+    html, body, .pv-page {
         width: 100% !important;
+        max-width: 100% !important;
         height: auto !important;
-        margin: 0 auto !important;
+        margin: 0 !important;
         padding: 0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -842,14 +843,16 @@ body.pv-page .dvc-controls-bar {
 
     #dashboard-view-container {
         width: 100% !important;
+        max-width: 100% !important;
         padding: 0 !important;
         margin: 0 auto !important;
         box-shadow: none !important;
     }
 
     @media (min-width: 1024px) {
-        html, body, #dashboard-view-container {
+        html, body, .pv-page, #dashboard-view-container {
             max-width: 1320px !important;
+            margin: 0 auto !important;
         }
     }
 
@@ -870,14 +873,16 @@ body.pv-page .dvc-controls-bar {
         break-inside: avoid !important;
     }
 
-    /* In 1-column mobile view, let items flow naturally */
+    /* In 1-column mobile view, let items flow naturally and take 100% of printable width */
     .grid-stack-1 > .grid-stack-item {
         position: relative !important;
         width: 100% !important;
+        max-width: 100% !important;
         left: 0 !important;
         top: auto !important;
-        margin-bottom: 16px !important;
-        min-height: 280px !important;
+        margin-bottom: 20px !important;
+        min-height: auto !important;
+        height: auto !important;
     }
 
     .grid-stack-item-content {
