@@ -148,26 +148,7 @@ export function dashboardView(config = {}) {
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
 
-            // If currently in full-width mode, switch to contained before printing (Desktop only)
-            const isMobile = window.innerWidth < 1024;
-            const wasFullWidth = this.isFullWidth;
-            if (wasFullWidth && !isMobile) {
-                this.isFullWidth = false;
-                // Internal Filament: restore content wrapper max-width
-                const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
-                                         this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
-                if (filamentContent) {
-                    filamentContent.style.maxWidth = '';
-                }
-                // Public view: swap body classes
-                const body = document.body;
-                if (body.classList.contains('pv-page')) {
-                    body.classList.remove('w-full');
-                    body.classList.add('max-w-7xl', 'mx-auto');
-                }
-            }
-
-            if (grid && originalColumn !== 12 && window.innerWidth >= 1024) {
+            if (grid && originalColumn !== 12) {
                 grid.column(12, "none");
             }
 
@@ -203,7 +184,7 @@ export function dashboardView(config = {}) {
             const originalTops = new Map();
             const originalGridHeight = gridEl ? gridEl.style.height : "";
 
-            if (widgetEls.length > 0 && !isMobile) {
+            if (widgetEls.length > 0) {
                 // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
                 const pagePrintHeight = 730;
 
@@ -270,21 +251,6 @@ export function dashboardView(config = {}) {
 
                 if (grid && originalColumn !== 12) {
                     grid.column(originalColumn, "none");
-                }
-
-                // Restore full-width mode if it was active before print
-                if (wasFullWidth) {
-                    this.isFullWidth = true;
-                    const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
-                                             this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
-                    if (filamentContent) {
-                        filamentContent.style.maxWidth = 'none';
-                    }
-                    const body = document.body;
-                    if (body.classList.contains('pv-page')) {
-                        body.classList.remove('max-w-7xl', 'mx-auto');
-                        body.classList.add('w-full');
-                    }
                 }
 
                 if (
