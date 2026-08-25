@@ -150,14 +150,34 @@
     {{-- Grid --}}
     <div id="view-grid-stack" class="grid-stack relative" wire:ignore>
         @php
+            // 1. Find all natural boundaries where no widget is crossed vertically
             $cutCandidates = collect($viewObj->widgets)->map(fn($w) => ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1))->unique()->sort()->values();
-            $emptyCutLines = [];
+            $naturalCuts = [];
             foreach ($cutCandidates as $cutY) {
                 $crosses = collect($viewObj->widgets)->contains(fn($w) => ($w['grid_y'] ?? 0) < $cutY && (($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1)) > $cutY);
                 if (!$crosses) {
-                    $emptyCutLines[] = $cutY;
+                    $naturalCuts[] = $cutY;
                 }
             }
+
+            // 2. Filter empty lines using the 7-row budget (6 for page 1) so only true page breaks between widgets are generated
+            $emptyCutLines = [];
+            $currentPageStart = 0;
+            $isFirstPage = true;
+
+            for ($i = 0; $i < count($naturalCuts) - 1; $i++) {
+                $currentCut = $naturalCuts[$i];
+                $nextCut = $naturalCuts[$i + 1];
+                $maxAllowedRows = $isFirstPage ? 6 : 7;
+
+                // Check if the next segment would exceed the page row budget from the current page start
+                if (($nextCut - $currentPageStart) > $maxAllowedRows) {
+                    $emptyCutLines[] = $currentCut;
+                    $currentPageStart = $currentCut;
+                    $isFirstPage = false;
+                }
+            }
+
             $insertedCuts = [];
         @endphp
 
