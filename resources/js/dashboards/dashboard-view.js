@@ -113,8 +113,20 @@ export function dashboardView(config = {}) {
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
 
-            if (grid && originalColumn !== 12) {
-                grid.column(12, "none");
+            // Temporarily remove w-full / force standard container width for non-stretched printing
+            const bodyEl = document.body;
+            const hadFullWidth = bodyEl.classList.contains("w-full");
+            if (hadFullWidth) {
+                bodyEl.classList.remove("w-full");
+            }
+            const containerEl = document.querySelector("#dashboard-view-container");
+            const originalContainerStyle = containerEl ? containerEl.getAttribute("style") : null;
+            if (containerEl) {
+                containerEl.style.maxWidth = "1320px";
+                containerEl.style.margin = "0 auto";
+            }
+            if (grid) {
+                grid.onResize();
             }
 
             // Trigger window resize and force charts to render without animations
@@ -214,8 +226,18 @@ export function dashboardView(config = {}) {
                     gridEl.style.height = originalGridHeight;
                 }
 
-                if (grid && originalColumn !== 12) {
-                    grid.column(originalColumn, "none");
+                if (hadFullWidth) {
+                    bodyEl.classList.add("w-full");
+                }
+                if (containerEl) {
+                    if (originalContainerStyle !== null) {
+                        containerEl.setAttribute("style", originalContainerStyle);
+                    } else {
+                        containerEl.removeAttribute("style");
+                    }
+                }
+                if (grid) {
+                    grid.onResize();
                 }
                 if (
                     window.dashboardRenderer &&
