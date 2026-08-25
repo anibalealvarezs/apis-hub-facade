@@ -942,4 +942,11 @@ body.pv-page .dvc-controls-bar {
     }
 }
 
+/* ─── Screen Responsive Controls ─── */
+@media (max-width: 1023px) {
+    .dashboard-export-pdf-btn {
+        display: none !important;
+    }
+}
+
 
