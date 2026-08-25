@@ -2719,15 +2719,15 @@
         </x-confirm-modal>
 
         {{-- Floating Left Widget Palette --}}
-        <div class="fixed left-6 top-1/2 -translate-y-1/2 z-[99999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+        <div class="fixed left-6 top-1/2 -translate-y-1/2 z-[2] -ml-4 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
             <div class="px-2 pt-1">
                 <span class="text-[9px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ __('Palette') }}</span>
             </div>
             <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
             <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in rounded-xl px-3 py-2 text-center cursor-grab active:cursor-grabbing hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="kpi" gs-w="4" gs-h="3">
-                    <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300">{{ __('KPI') }}</span>
+                    <span class="text-[10px] font-bold">{{ __('KPI') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2736,9 +2736,9 @@
                 </div>
             </div>
             <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in rounded-xl px-3 py-2 text-center cursor-grab active:cursor-grabbing hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="metric" gs-w="4" gs-h="3">
-                    <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300">{{ __('Metric') }}</span>
+                    <span class="text-[10px] font-bold">{{ __('Metric') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2747,9 +2747,9 @@
                 </div>
             </div>
             <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in rounded-xl px-3 py-2 text-center cursor-grab active:cursor-grabbing hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="derived_metric" gs-w="4" gs-h="3">
-                    <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300">{{ __('Derived') }}</span>
+                    <span class="text-[10px] font-bold">{{ __('Derived') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
