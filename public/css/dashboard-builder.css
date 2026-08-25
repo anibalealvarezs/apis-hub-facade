@@ -849,13 +849,6 @@ body.pv-page .dvc-controls-bar {
         box-shadow: none !important;
     }
 
-    @media (max-width: 1023px) {
-        html, body, #dashboard-view-container {
-            max-width: 520px !important;
-            margin: 0 auto !important;
-        }
-    }
-
     /* Lock GridStack container & preserve 12-column coordinates */
     .grid-stack {
         width: 100% !important;

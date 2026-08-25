@@ -144,26 +144,9 @@ export function dashboardView(config = {}) {
         },
 
         _triggerPdfPrint() {
-            // In mobile screen, force portrait orientation and print as-is
+            // In mobile screen, print exactly as-is without any resizing, column changes, or repositioning
             if (window.innerWidth < 1024) {
-                let portraitStyle = document.getElementById("mobile-print-page-style");
-                if (!portraitStyle) {
-                    portraitStyle = document.createElement("style");
-                    portraitStyle.id = "mobile-print-page-style";
-                    portraitStyle.innerHTML = "@page { size: portrait !important; margin: 8mm 6mm !important; }";
-                    document.head.appendChild(portraitStyle);
-                }
-
-                const removeMobileStyle = () => {
-                    const el = document.getElementById("mobile-print-page-style");
-                    if (el) el.remove();
-                    window.removeEventListener("afterprint", removeMobileStyle);
-                };
-                window.addEventListener("afterprint", removeMobileStyle);
-
-                setTimeout(() => {
-                    window.print();
-                }, 50);
+                window.print();
                 return;
             }
 
