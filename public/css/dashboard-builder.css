@@ -583,9 +583,13 @@ body.pv-page .dvc-controls-bar {
 }
 
 .floating-selection-bar.bd-palette-left {
-    right: auto !important;
-    left: 1.5rem !important;
-    margin-left: -1rem !important;
+    position: absolute !important;
+    right: 100% !important;
+    left: auto !important;
+    margin-right: 1rem !important;
+    margin-left: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
     z-index: 2 !important;
 }
 
