@@ -168,21 +168,9 @@ export function dashboardView(config = {}) {
                 document.querySelectorAll("#view-grid-stack .grid-stack-item"),
             );
 
-            const containerEl = document.querySelector("#dashboard-view-container");
-            const originalContainerWidth = containerEl ? containerEl.style.width : "";
-            const originalContainerMaxWidth = containerEl ? containerEl.style.maxWidth : "";
-            const originalContainerMinWidth = containerEl ? containerEl.style.minWidth : "";
-
-            if (containerEl) {
-                containerEl.style.width = "1320px";
-                containerEl.style.maxWidth = "1320px";
-                containerEl.style.minWidth = "1320px";
-            }
-
             if (grid) {
                 gridEl.classList.remove("grid-stack-1");
                 gridEl.classList.add("grid-stack-12");
-                gridEl.style.width = "1320px";
                 grid.column(12, "none");
                 // Restore each widget's original grid coordinates from gs- attributes
                 widgetEls.forEach((wEl) => {
@@ -210,10 +198,8 @@ export function dashboardView(config = {}) {
             ) {
                 window.dashboardRenderer._chartInstances.forEach((chart) => {
                     try {
-                        if (chart) {
-                            if (chart.options) {
-                                chart.options.animation = false;
-                            }
+                        if (chart && chart.options) {
+                            chart.options.animation = false;
                             chart.resize();
                             chart.update("none");
                         }
@@ -297,13 +283,6 @@ export function dashboardView(config = {}) {
                 });
                 if (gridEl) {
                     gridEl.style.height = originalGridHeight;
-                    gridEl.style.width = "";
-                }
-
-                if (containerEl) {
-                    containerEl.style.width = originalContainerWidth;
-                    containerEl.style.maxWidth = originalContainerMaxWidth;
-                    containerEl.style.minWidth = originalContainerMinWidth;
                 }
 
                 if (grid && originalColumn !== 12) {
