@@ -148,6 +148,22 @@ export function dashboardView(config = {}) {
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
 
+            // If currently in full-width mode, temporarily switch to contained for print
+            const wasFullWidth = this.isFullWidth;
+            if (wasFullWidth) {
+                this.isFullWidth = false;
+                const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
+                                         this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
+                if (filamentContent) {
+                    filamentContent.style.maxWidth = '';
+                }
+                const body = document.body;
+                if (body.classList.contains('pv-page')) {
+                    body.classList.remove('w-full');
+                    body.classList.add('max-w-7xl', 'mx-auto');
+                }
+            }
+
             if (grid && originalColumn !== 12) {
                 grid.column(12, "none");
             }
@@ -251,6 +267,21 @@ export function dashboardView(config = {}) {
 
                 if (grid && originalColumn !== 12) {
                     grid.column(originalColumn, "none");
+                }
+
+                // Restore full-width mode if it was active before print
+                if (wasFullWidth) {
+                    this.isFullWidth = true;
+                    const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
+                                             this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
+                    if (filamentContent) {
+                        filamentContent.style.maxWidth = 'none';
+                    }
+                    const body = document.body;
+                    if (body.classList.contains('pv-page')) {
+                        body.classList.remove('max-w-7xl', 'mx-auto');
+                        body.classList.add('w-full');
+                    }
                 }
 
                 if (
