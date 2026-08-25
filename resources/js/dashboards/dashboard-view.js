@@ -111,6 +111,11 @@ export function dashboardView(config = {}) {
                 grid.column(12, 'none');
             }
 
+            // Force all deferred IntersectionObserver widgets to render DOM immediately
+            if (window.dashboardRenderer && typeof window.dashboardRenderer.flushAllRender === 'function') {
+                window.dashboardRenderer.flushAllRender();
+            }
+
             // Trigger window resize and force charts to render without animations
             if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
                 window.dashboardRenderer._chartInstances.forEach(chart => {

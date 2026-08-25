@@ -197,6 +197,24 @@ window.dashboardRenderer = {
     },
 
     /**
+     * Force-render all deferred widgets from cached data immediately.
+     */
+    flushAllRender() {
+        if (!this._widgetData) return;
+        this._widgetData.forEach((json, containerEl) => {
+            if (this._renderObservers?.has(containerEl)) {
+                const observer = this._renderObservers.get(containerEl);
+                observer.unobserve(containerEl);
+                this._renderObservers.delete(containerEl);
+            }
+            // If the widget is still showing the skeleton or empty, force render
+            if (!containerEl.querySelector('canvas') && !containerEl.querySelector('table') && !containerEl.querySelector('svg')) {
+                this.render(containerEl, json);
+            }
+        });
+    },
+
+    /**
      * Force-render a widget immediately from cached data, regardless of viewport.
      * Used by pop-out to ensure the chart exists before moving its canvas.
      */
