@@ -202,7 +202,9 @@ export function dashboardView(config = {}) {
             const originalTops = new Map();
             const originalGridHeight = gridEl ? gridEl.style.height : "";
 
-            if (widgetEls.length > 0) {
+            const isMobile = window.innerWidth < 1024;
+
+            if (widgetEls.length > 0 && !isMobile) {
                 // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
                 const pagePrintHeight = 730;
 
