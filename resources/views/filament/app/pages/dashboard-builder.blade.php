@@ -71,7 +71,59 @@
 
         <div class="grid grid-cols-12 gap-4">
             {{-- Grid Area --}}
-            <div class="col-span-12">
+            <div class="col-span-12 relative">
+                {{-- Floating Left Widget Palette --}}
+                <div class="floating-selection-bar bd-palette-left absolute right-full top-1/2 -translate-y-1/2 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
+
+                    <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
+                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
+                        <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                            <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                                {{ __('Widget source types') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
+
+                    <div class="group relative flex items-center justify-center">
+                        <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
+                             data-source-type="kpi" gs-w="4" gs-h="3" title="{{ __('KPI') }}">
+                            <span class="text-[10px] font-bold">{{ __('KPI') }}</span>
+                        </div>
+                        <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                            <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                                {{ __('Drag KPI widget to canvas') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group relative flex items-center justify-center">
+                        <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
+                             data-source-type="metric" gs-w="4" gs-h="3" title="{{ __('Metric') }}">
+                            <span class="text-[10px] font-bold">{{ __('Metric') }}</span>
+                        </div>
+                        <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                            <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                                {{ __('Drag Metric widget to canvas') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="group relative flex items-center justify-center">
+                        <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
+                             data-source-type="derived_metric" gs-w="4" gs-h="3" title="{{ __('Derived') }}">
+                            <span class="text-[10px] font-bold">{{ __('Derived') }}</span>
+                        </div>
+                        <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                            <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                                {{ __('Drag Derived Metric widget to canvas') }}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
                 <div id="grid-container" wire:ignore
                      class="rounded-xl bg-white dark:bg-gray-950 p-4 border border-gray-200 dark:border-gray-800">
                     <div id="grid-stack" class="grid-stack">
@@ -2717,58 +2769,6 @@
             <p class="text-sm text-gray-500 dark:text-gray-400"
                x-show="deleteConfirmTargets.length > 1">{{ __('Remove') }} <strong class="text-gray-900 dark:text-white" x-text="deleteConfirmTargets.length"></strong> {{ __('selected widgets from the dashboard?') }}</p>
         </x-confirm-modal>
-
-        {{-- Floating Left Widget Palette --}}
-        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
-
-            <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Widget source types') }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
-
-            <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
-                     data-source-type="kpi" gs-w="4" gs-h="3" title="{{ __('KPI') }}">
-                    <span class="text-[10px] font-bold">{{ __('KPI') }}</span>
-                </div>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Drag KPI widget to canvas') }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
-                     data-source-type="metric" gs-w="4" gs-h="3" title="{{ __('Metric') }}">
-                    <span class="text-[10px] font-bold">{{ __('Metric') }}</span>
-                </div>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Drag Metric widget to canvas') }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
-                     data-source-type="derived_metric" gs-w="4" gs-h="3" title="{{ __('Derived') }}">
-                    <span class="text-[10px] font-bold">{{ __('Derived') }}</span>
-                </div>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Drag Derived Metric widget to canvas') }}
-                    </div>
-                </div>
-            </div>
-
-        </div>
 
         {{-- Floating Vertical Multi-Select Action Bar --}}
         <div x-show="selectedWidgetIds.length > 0 && !deleteConfirmOpen" x-cloak
