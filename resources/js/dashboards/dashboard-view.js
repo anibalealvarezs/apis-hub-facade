@@ -237,7 +237,6 @@ export function dashboardView(config = {}) {
             if (widgetEls.length > 0) {
                 // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
                 const pagePrintHeight = 730;
-                const cellHeightWithMargin = 112; // cellHeight (100) + margin (12)
 
                 // The assigned empty lines ARE the page breaks: [0, break1, break2, ...]
                 const pageBreakCuts = [0, ...emptyLines];
@@ -251,28 +250,33 @@ export function dashboardView(config = {}) {
                     const secStartY = pageBreakCuts[pageIdx];
                     const secEndY = pageBreakCuts[pageIdx + 1] || 9999;
                     const secWidgets = widgetEls.filter((wEl) => {
-                        const origY = parseInt(wEl.getAttribute("gs-y") || "0");
-                        return origY >= secStartY && origY < secEndY;
+                        const node = wEl.gridstackNode;
+                        const y = node
+                            ? node.y
+                            : parseInt(wEl.getAttribute("gs-y") || "0");
+                        return y >= secStartY && y < secEndY;
                     });
 
                     if (secWidgets.length === 0) continue;
 
                     // The top of this page
                     const pageTargetTop = pageIdx * pagePrintHeight;
-                    const minWidgetNaturalTop = secStartY * cellHeightWithMargin;
+                    const minWidgetNaturalTop = Math.min(
+                        ...secWidgets.map(
+                            (wEl) =>
+                                wEl.offsetTop || parseFloat(wEl.style.top) || 0,
+                        ),
+                    );
+                    const shiftPx = pageTargetTop - minWidgetNaturalTop;
 
                     secWidgets.forEach((wEl) => {
                         originalTops.set(wEl, wEl.style.top);
-                        const origY = parseInt(wEl.getAttribute("gs-y") || "0");
-                        const widgetNaturalTop = origY * cellHeightWithMargin;
-                        const shiftPx = pageTargetTop + (widgetNaturalTop - minWidgetNaturalTop);
-                        wEl.style.top = `${shiftPx}px`;
+                        const currentTop =
+                            parseFloat(wEl.style.top) || wEl.offsetTop;
+                        const newTop = currentTop + shiftPx;
+                        wEl.style.top = `${newTop}px`;
 
-                        const origH = parseInt(wEl.getAttribute("gs-h") || "1");
-                        const widgetHeight = (origH * cellHeightWithMargin) - 12;
-                        wEl.style.height = `${widgetHeight}px`;
-
-                        const widgetBottom = shiftPx + widgetHeight;
+                        const widgetBottom = newTop + (wEl.offsetHeight || 100);
                         if (widgetBottom > maxShiftedBottom) {
                             maxShiftedBottom = widgetBottom;
                         }
@@ -287,12 +291,9 @@ export function dashboardView(config = {}) {
             window.dispatchEvent(new Event("resize"));
 
             const restoreAfterPrint = () => {
-                // Restore widget tops, heights, widths, and lefts
+                // Restore widget tops
                 originalTops.forEach((top, wEl) => {
                     wEl.style.top = top;
-                    wEl.style.height = "";
-                    wEl.style.width = "";
-                    wEl.style.left = "";
                 });
                 if (gridEl) {
                     gridEl.style.height = originalGridHeight;
