@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
+<link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
 <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ file_exists(public_path('js/dashboard-renderer.js')) ? filemtime(public_path('js/dashboard-renderer.js')) : time() }}"></script>

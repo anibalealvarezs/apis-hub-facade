@@ -842,9 +842,9 @@ body.pv-page .dvc-controls-bar {
 
     #dashboard-view-container {
         width: 100% !important;
-        max-width: none !important;
+        max-width: 1320px !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         box-shadow: none !important;
     }
 
