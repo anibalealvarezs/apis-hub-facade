@@ -824,9 +824,8 @@ body.pv-page .dvc-controls-bar {
     }
 
     /* Preserve exact theme backgrounds, colors, and layout fidelity */
-    html, body {
+    html, body, .pv-page {
         width: 100% !important;
-        max-width: 1320px !important;
         height: auto !important;
         margin: 0 auto !important;
         padding: 0 !important;
@@ -841,15 +840,36 @@ body.pv-page .dvc-controls-bar {
         color: #f9fafb !important;
     }
 
+    /* Desktop print: 1320px contained layout */
+    @media (min-width: 1024px) {
+        html, body, .pv-page, #dashboard-view-container {
+            max-width: 1320px !important;
+            margin: 0 auto !important;
+        }
+    }
+
+    /* Mobile print: maintain native mobile single-column card width */
+    @media (max-width: 1023px) {
+        html, body, .pv-page, #dashboard-view-container {
+            max-width: 480px !important;
+            margin: 0 auto !important;
+        }
+
+        .grid-stack {
+            width: 100% !important;
+            max-width: 480px !important;
+            margin: 0 auto !important;
+        }
+    }
+
     #dashboard-view-container {
         width: 100% !important;
-        max-width: 1320px !important;
         padding: 0 !important;
         margin: 0 auto !important;
         box-shadow: none !important;
     }
 
-    /* Lock GridStack container & preserve 12-column coordinates */
+    /* Lock GridStack container & preserve 12-column coordinates on desktop */
     .grid-stack {
         width: 100% !important;
         height: auto !important;
