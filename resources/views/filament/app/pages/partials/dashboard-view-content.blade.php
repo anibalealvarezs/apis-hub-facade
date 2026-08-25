@@ -97,6 +97,16 @@
                 </svg>
                 <span>{{ __('Refresh all') }}</span>
             </button>
+            {{-- Full Width Toggle --}}
+            <button x-on:click="toggleFullWidth()"
+                    :title="isFullWidth ? '{{ __('Switch to contained view') }}' : '{{ __('Switch to full width view') }}'"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    :class="isFullWidth ? 'ring-2 ring-primary-500' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5" :class="isFullWidth ? 'text-primary-500' : 'text-gray-500 dark:text-gray-400'">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                </svg>
+                <span x-text="isFullWidth ? '{{ __('Contained') }}' : '{{ __('Full Width') }}'"></span>
+            </button>
             @if ($canExportPdf)
                 <button x-on:click="exportPdf()"
                         title="{{ __('Export to PDF / Print') }}"

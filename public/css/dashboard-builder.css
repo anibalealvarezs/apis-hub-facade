@@ -826,8 +826,9 @@ body.pv-page .dvc-controls-bar {
     /* Preserve exact theme backgrounds, colors, and layout fidelity */
     html, body {
         width: 100% !important;
+        max-width: 1320px !important;
         height: auto !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         padding: 0 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;

@@ -24,6 +24,7 @@ export function dashboardView(config = {}) {
         selectedAssetGroup: config.selectedAssetGroup || "",
         _dashboardConfiguredGroup: config.selectedAssetGroup || "",
         _applyGroupOnInitialRender: false,
+        isFullWidth: false,
         init() {
             this._applyGroupOnInitialRender = false;
             this.$nextTick(() => {
@@ -104,6 +105,40 @@ export function dashboardView(config = {}) {
             });
         },
 
+        toggleFullWidth() {
+            this.isFullWidth = !this.isFullWidth;
+            // For internal Filament pages: toggle the Filament content wrapper width
+            const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
+                                     this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
+            if (filamentContent) {
+                if (this.isFullWidth) {
+                    filamentContent.style.maxWidth = 'none';
+                } else {
+                    filamentContent.style.maxWidth = '';
+                }
+            }
+            // For public view pages: toggle the body width class
+            const body = document.body;
+            if (body.classList.contains('pv-page')) {
+                if (this.isFullWidth) {
+                    body.classList.remove('max-w-7xl', 'mx-auto');
+                    body.classList.add('w-full');
+                } else {
+                    body.classList.remove('w-full');
+                    body.classList.add('max-w-7xl', 'mx-auto');
+                }
+            }
+            // Fire resize so GridStack columns and Chart.js canvases reflow
+            this.$nextTick(() => {
+                window.dispatchEvent(new Event('resize'));
+                if (window.dashboardRenderer && window.dashboardRenderer._chartInstances) {
+                    window.dashboardRenderer._chartInstances.forEach(chart => {
+                        try { chart.resize(); } catch(e) {}
+                    });
+                }
+            });
+        },
+
         exportPdf() {
             this._triggerPdfPrint();
         },
@@ -112,6 +147,24 @@ export function dashboardView(config = {}) {
             const gridEl = document.querySelector("#view-grid-stack");
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
+
+            // If currently in full-width mode, switch to contained before printing
+            const wasFullWidth = this.isFullWidth;
+            if (wasFullWidth) {
+                this.isFullWidth = false;
+                // Internal Filament: restore content wrapper max-width
+                const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
+                                         this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
+                if (filamentContent) {
+                    filamentContent.style.maxWidth = '';
+                }
+                // Public view: swap body classes
+                const body = document.body;
+                if (body.classList.contains('pv-page')) {
+                    body.classList.remove('w-full');
+                    body.classList.add('max-w-7xl', 'mx-auto');
+                }
+            }
 
             if (grid && originalColumn !== 12) {
                 grid.column(12, "none");
@@ -217,6 +270,22 @@ export function dashboardView(config = {}) {
                 if (grid && originalColumn !== 12) {
                     grid.column(originalColumn, "none");
                 }
+
+                // Restore full-width mode if it was active before print
+                if (wasFullWidth) {
+                    this.isFullWidth = true;
+                    const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
+                                             this.$el.closest('[class*="fi-page"]')?.querySelector('.fi-page-content-wrapper');
+                    if (filamentContent) {
+                        filamentContent.style.maxWidth = 'none';
+                    }
+                    const body = document.body;
+                    if (body.classList.contains('pv-page')) {
+                        body.classList.remove('max-w-7xl', 'mx-auto');
+                        body.classList.add('w-full');
+                    }
+                }
+
                 if (
                     window.dashboardRenderer &&
                     window.dashboardRenderer._chartInstances
