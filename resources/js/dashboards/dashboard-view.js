@@ -148,9 +148,10 @@ export function dashboardView(config = {}) {
             const grid = gridEl && gridEl.gridstack;
             const originalColumn = grid ? grid.getColumn() : 12;
 
-            // If currently in full-width mode, switch to contained before printing
+            // If currently in full-width mode, switch to contained before printing (Desktop only)
+            const isMobile = window.innerWidth < 1024;
             const wasFullWidth = this.isFullWidth;
-            if (wasFullWidth) {
+            if (wasFullWidth && !isMobile) {
                 this.isFullWidth = false;
                 // Internal Filament: restore content wrapper max-width
                 const filamentContent = this.$el.closest('.fi-page-content-wrapper') ||
@@ -201,8 +202,6 @@ export function dashboardView(config = {}) {
             );
             const originalTops = new Map();
             const originalGridHeight = gridEl ? gridEl.style.height : "";
-
-            const isMobile = window.innerWidth < 1024;
 
             if (widgetEls.length > 0 && !isMobile) {
                 // Printable height for landscape page (A4 landscape ~794px - margins = ~730px)
