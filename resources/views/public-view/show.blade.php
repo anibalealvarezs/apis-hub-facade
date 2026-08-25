@@ -47,7 +47,7 @@
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="pv-page bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 max-w-7xl mx-auto' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}">
+<body class="pv-page bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 {{ $isEmbedded ? 'p-2' : 'p-6 w-full' }}" data-pv-token="{{ $pv->token }}" data-embedded="{{ $isEmbedded ? '1' : '0' }}">
 
     {{-- Public View Bar: Dark/Light Mode & Language Selector --}}
     <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-200 dark:border-gray-800 text-xs" x-data="publicViewBar({
