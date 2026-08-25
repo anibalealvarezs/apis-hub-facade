@@ -81,30 +81,35 @@ export function dashboardView(config = {}) {
             if (this.isExporting) return;
             this.isExporting = true;
 
-            // Find any widget whose content is empty or unrendered, and trigger its render
-            const widgetContainers = Array.from(document.querySelectorAll('#view-grid-stack .grid-stack-item .widget-content'));
-            widgetContainers.forEach(el => {
-                const widgetId = parseInt(el.getAttribute('data-widget-id') || el.closest('.grid-stack-item')?.getAttribute('gs-id') || '0');
-                if (widgetId && !this._loadedWidgets[widgetId]) {
-                    const rawControlsStr = el.getAttribute('data-raw-controls');
-                    let controls = {};
-                    if (rawControlsStr) {
-                        try { controls = JSON.parse(rawControlsStr); } catch (e) {}
-                    }
-                    this.renderWidget(widgetId, el, controls);
+            const scrollDownAndPrint = async () => {
+                const totalHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+                const step = window.innerHeight || 800;
+                
+                // Sweep down through the page to trigger all viewport observers
+                for (let pos = 0; pos <= totalHeight; pos += step) {
+                    window.scrollTo(0, pos);
+                    await new Promise(r => setTimeout(r, 60));
                 }
-            });
+                window.scrollTo(0, totalHeight);
+                await new Promise(r => setTimeout(r, 100));
 
-            const checkReady = () => {
-                const allSettled = this._startedCount >= this.totalCount && this._pendingRenders <= 0 && this.loadedCount >= this.totalCount;
-                if (allSettled) {
-                    this._triggerPdfPrint();
-                    this.isExporting = false;
-                } else {
-                    setTimeout(checkReady, 100);
-                }
+                // Scroll back to top
+                window.scrollTo(0, 0);
+
+                // Wait until all widgets are loaded
+                const checkReady = () => {
+                    const allSettled = this.loadedCount >= this.totalCount && this._pendingRenders <= 0;
+                    if (allSettled) {
+                        this._triggerPdfPrint();
+                        this.isExporting = false;
+                    } else {
+                        setTimeout(checkReady, 100);
+                    }
+                };
+                checkReady();
             };
-            checkReady();
+
+            scrollDownAndPrint();
         },
 
         _triggerPdfPrint() {
