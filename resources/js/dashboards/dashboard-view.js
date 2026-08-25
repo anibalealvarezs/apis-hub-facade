@@ -81,35 +81,16 @@ export function dashboardView(config = {}) {
             if (this.isExporting) return;
             this.isExporting = true;
 
-            const scrollDownAndPrint = async () => {
-                const totalHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-                const step = window.innerHeight || 800;
-                
-                // Sweep down through the page to trigger all viewport observers
-                for (let pos = 0; pos <= totalHeight; pos += step) {
-                    window.scrollTo(0, pos);
-                    await new Promise(r => setTimeout(r, 60));
-                }
-                window.scrollTo(0, totalHeight);
-                await new Promise(r => setTimeout(r, 100));
+            // Immediately force-render all offscreen widgets from their cached JSON data
+            if (window.dashboardRenderer && typeof window.dashboardRenderer.flushAllRender === 'function') {
+                window.dashboardRenderer.flushAllRender();
+            }
 
-                // Scroll back to top
-                window.scrollTo(0, 0);
-
-                // Wait until all widgets are loaded
-                const checkReady = () => {
-                    const allSettled = this.loadedCount >= this.totalCount && this._pendingRenders <= 0;
-                    if (allSettled) {
-                        this._triggerPdfPrint();
-                        this.isExporting = false;
-                    } else {
-                        setTimeout(checkReady, 100);
-                    }
-                };
-                checkReady();
-            };
-
-            scrollDownAndPrint();
+            // Wait a brief tick for Chart.js/SVG/DOM to paint, then trigger print
+            setTimeout(() => {
+                this._triggerPdfPrint();
+                this.isExporting = false;
+            }, 400);
         },
 
         _triggerPdfPrint() {
