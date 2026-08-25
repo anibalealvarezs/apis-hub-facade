@@ -842,8 +842,9 @@ body.pv-page .dvc-controls-bar {
     }
 
     #dashboard-view-container {
-        width: 100% !important;
-        max-width: 100% !important;
+        width: 1320px !important;
+        max-width: 1320px !important;
+        min-width: 1320px !important;
         padding: 0 !important;
         margin: 0 auto !important;
         box-shadow: none !important;
@@ -851,7 +852,9 @@ body.pv-page .dvc-controls-bar {
 
     /* Lock GridStack container & preserve 12-column coordinates */
     .grid-stack {
-        width: 100% !important;
+        width: 1320px !important;
+        max-width: 1320px !important;
+        min-width: 1320px !important;
         height: auto !important;
         min-height: 0 !important;
     }
