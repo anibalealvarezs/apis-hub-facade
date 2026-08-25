@@ -4,6 +4,7 @@ export function dashboardView(config = {}) {
         _loadedWidgets: {},
         _pendingRenders: 0,
         _startedCount: 0,
+        isExporting: false,
         totalCount: config.totalCount || 0,
         tenant: config.tenant || '',
         dashboardDefaults: config.dashboardDefaults || { date_start: '', date_end: '', zero_handling: 'remove', show_asset_group_selector: false },
@@ -77,6 +78,9 @@ export function dashboardView(config = {}) {
         },
 
         exportPdf() {
+            if (this.isExporting) return;
+            this.isExporting = true;
+
             // Find any widget whose content is empty or unrendered, and trigger its render
             const widgetContainers = Array.from(document.querySelectorAll('#view-grid-stack .grid-stack-item .widget-content'));
             widgetContainers.forEach(el => {
@@ -95,6 +99,7 @@ export function dashboardView(config = {}) {
                 const allSettled = this._startedCount >= this.totalCount && this._pendingRenders <= 0 && this.loadedCount >= this.totalCount;
                 if (allSettled) {
                     this._triggerPdfPrint();
+                    this.isExporting = false;
                 } else {
                     setTimeout(checkReady, 100);
                 }
