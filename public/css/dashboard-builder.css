@@ -884,9 +884,9 @@ body.pv-page .dvc-controls-bar {
     /* Ensure chart canvases & SVG gauges render cleanly */
     .widget-content canvas {
         display: block !important;
-        width: 100% !important;
-        height: 100% !important;
+        max-width: 100% !important;
         max-height: 100% !important;
+        object-fit: contain !important;
     }
 
     svg {
