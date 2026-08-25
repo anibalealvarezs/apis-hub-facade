@@ -582,6 +582,13 @@ body.pv-page .dvc-controls-bar {
     background-color: #FFFFFF !important;
 }
 
+.floating-selection-bar.bd-palette-left {
+    right: auto !important;
+    left: 1.5rem !important;
+    margin-left: -1rem !important;
+    z-index: 2 !important;
+}
+
 .dark .floating-selection-bar {
     background-color: #111827 !important;
     border-color: #1F2937 !important;
@@ -597,6 +604,23 @@ body.pv-page .dvc-controls-bar {
 
 .dark .floating-selection-bar button:hover {
     background-color: #1F2937 !important;
+}
+
+.floating-selection-bar .grid-stack-drag-in {
+    background-color: transparent !important;
+    cursor: grab !important;
+}
+
+.floating-selection-bar .grid-stack-drag-in:hover {
+    background-color: #F3F4F6 !important;
+}
+
+.dark .floating-selection-bar .grid-stack-drag-in:hover {
+    background-color: #1F2937 !important;
+}
+
+.floating-selection-bar .grid-stack-drag-in:active {
+    cursor: grabbing !important;
 }
 
 .floating-selection-bar .selection-tooltip {
@@ -960,10 +984,37 @@ body.pv-page .dvc-controls-bar {
     -webkit-backdrop-filter: blur(8px);
 }
 
-/* ─── Floating Left Widget Palette ─── */
+/* Floating Left Widget Palette */
 .bd-widget-palette {
-    z-index: 2;
-    margin-left: -1rem;
+    position: fixed !important;
+    left: 1.5rem !important;
+    margin-left: -1rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 2 !important;
+    background-color: #FFFFFF !important;
+}
+
+.dark .bd-widget-palette {
+    background-color: #111827 !important;
+    border-color: #1F2937 !important;
+}
+
+.bd-widget-palette .grid-stack-drag-in {
+    background-color: transparent !important;
+    cursor: grab !important;
+}
+
+.bd-widget-palette .grid-stack-drag-in:hover {
+    background-color: #F3F4F6 !important;
+}
+
+.dark .bd-widget-palette .grid-stack-drag-in:hover {
+    background-color: #1F2937 !important;
+}
+
+.bd-widget-palette .grid-stack-drag-in:active {
+    cursor: grabbing !important;
 }
 
 /* ─── Drag-in Palette Cards ─── */
