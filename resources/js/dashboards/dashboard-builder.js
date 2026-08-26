@@ -1618,6 +1618,7 @@ export function dashboardBuilder(config = {}) {
                     grid.removeWidget(ghostEl, false);
                 }
                 ghostEl = null;
+                try { grid.batchUpdate(false); } catch (_) { /* noop if not in batch */ }
                 if (savedFloat !== null) {
                     grid.float(savedFloat);
                     savedFloat = null;
@@ -1925,6 +1926,7 @@ export function dashboardBuilder(config = {}) {
                     if (mutation.type !== 'childList') return;
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType !== 1 || !node.classList || !node.classList.contains('grid-stack-item')) return;
+                        if (node.getAttribute('gs-id') === '__palette_ghost__') return;
                         if (node.gridstackNode) return;
                         const rawId = node.getAttribute('gs-id') || node.getAttribute('data-id');
                         if (rawId === null || rawId === undefined) return;
