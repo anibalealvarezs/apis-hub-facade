@@ -1589,32 +1589,64 @@ export function dashboardBuilder(config = {}) {
             if (!grid) return;
             const palette = document.querySelector('.bd-palette-left');
             if (!palette) return;
-
-            const GHOST_ID = '__palette_ghost__';
-            let activeSource = null;
-            let startX = 0, startY = 0;
-            let dragging = false;
-            let ghostEl = null;
+            const gridEl = grid.el;
 
             const COLUMNS = 12;
+            const PLACEHOLDER_W = 4;
+            const PLACEHOLDER_H = 3;
             const CELL_H = parseInt(grid.opts.cellHeight, 10) || 100;
             const MARGIN = (typeof grid.opts.margin === 'number' ? grid.opts.margin : parseInt(grid.opts.margin, 10)) || 12;
 
-            const cellFromPoint = (cx, cy) => {
-                const container = grid.el;
-                const rect = container.getBoundingClientRect();
+            let activeSource = null;
+            let startX = 0, startY = 0;
+            let dragging = false;
+            let overlay = null;
+            let lastKey = null;
+
+            const getGridMetrics = () => {
+                const rect = gridEl.getBoundingClientRect();
                 const colW = rect.width / COLUMNS;
-                const scrollY = container.scrollTop || 0;
-                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - 1));
+                return { rect, colW };
+            };
+
+            const cellFromPoint = (cx, cy) => {
+                const { rect, colW } = getGridMetrics();
+                const scrollY = gridEl.scrollTop || 0;
+                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - PLACEHOLDER_W));
                 const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / (CELL_H + MARGIN)));
                 return { x, y };
             };
 
-            const removeGhost = () => {
-                if (ghostEl) {
-                    grid.removeWidget(ghostEl, false);
-                    ghostEl = null;
-                }
+            const createOverlay = () => {
+                overlay = document.createElement('div');
+                overlay.className = 'bd-palette-grid-overlay';
+                overlay.style.cssText = 'position:absolute;pointer-events:none;z-index:10;border:2px dashed var(--primary-400,#818cf8);background:var(--primary-50,rgba(99,102,241,.06));border-radius:8px;transition:left .1s ease,top .1s ease;will-change:transform;';
+                const label = document.createElement('div');
+                label.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+                const span = document.createElement('span');
+                span.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary-500,#6366f1);text-transform:uppercase;letter-spacing:.5px;opacity:.6;pointer-events:none;';
+                label.appendChild(span);
+                overlay.appendChild(label);
+                gridEl.appendChild(overlay);
+                return span;
+            };
+
+            const updateOverlay = (x, y, labelText) => {
+                if (!overlay) return;
+                const key = `${x},${y}`;
+                if (key === lastKey) return;
+                lastKey = key;
+                const { rect, colW } = getGridMetrics();
+                overlay.style.left = `${x * colW + MARGIN / 2}px`;
+                overlay.style.top = `${y * (CELL_H + MARGIN)}px`;
+                overlay.style.width = `${PLACEHOLDER_W * colW - MARGIN}px`;
+                overlay.style.height = `${PLACEHOLDER_H * (CELL_H + MARGIN) - MARGIN}px`;
+                overlay.querySelector('span').textContent = labelText;
+            };
+
+            const removeOverlay = () => {
+                if (overlay) { overlay.remove(); overlay = null; }
+                lastKey = null;
             };
 
             const onPointerDown = (e) => {
@@ -1622,7 +1654,7 @@ export function dashboardBuilder(config = {}) {
                 const el = e.target.closest('.grid-stack-drag-in');
                 if (!el) return;
                 e.preventDefault();
-                activeSource = el.getAttribute('data-source-type') || 'metric';
+                activeSource = (el.getAttribute('data-source-type') || 'metric').replace(/_/g, ' ');
                 startX = e.clientX;
                 startY = e.clientY;
                 dragging = false;
@@ -1633,32 +1665,13 @@ export function dashboardBuilder(config = {}) {
             const onPointerMove = (e) => {
                 const dx = e.clientX - startX;
                 const dy = e.clientY - startY;
-
                 if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                     dragging = true;
-                    const pos = cellFromPoint(e.clientX, e.clientY);
-                    ghostEl = grid.addWidget({
-                        id: GHOST_ID,
-                        x: pos.x,
-                        y: pos.y,
-                        w: 4,
-                        h: 3,
-                        minW: 4,
-                        minH: 3,
-                        noMove: true,
-                        noResize: true,
-                        content: `<div class="flex items-center justify-center h-full rounded-lg border-2 border-dashed border-primary-400 dark:border-primary-500 bg-primary-50/60 dark:bg-primary-500/10 pointer-events-none">
-                            <span class="text-xs font-bold uppercase tracking-wider text-primary-500 dark:text-primary-400 opacity-70">${activeSource.replace(/_/g, ' ')}</span>
-                        </div>`,
-                    });
+                    createOverlay();
                 }
-
-                if (dragging && ghostEl) {
+                if (dragging && overlay) {
                     const pos = cellFromPoint(e.clientX, e.clientY);
-                    const node = ghostEl.gridstackNode;
-                    if (node && (node.x !== pos.x || node.y !== pos.y)) {
-                        grid.update(ghostEl, { x: pos.x, y: pos.y });
-                    }
+                    updateOverlay(pos.x, pos.y, activeSource);
                 }
             };
 
@@ -1668,17 +1681,23 @@ export function dashboardBuilder(config = {}) {
 
                 if (!dragging || !activeSource) {
                     activeSource = null;
+                    removeOverlay();
                     return;
                 }
 
-                const pos = ghostEl ? cellFromPoint(e.clientX, e.clientY) : null;
-                removeGhost();
+                const { rect: gridRect } = getGridMetrics();
+                const overGrid = e.clientX >= gridRect.left && e.clientX <= gridRect.right
+                               && e.clientY >= gridRect.top && e.clientY <= gridRect.bottom;
 
-                if (pos) {
+                if (overGrid) {
+                    const pos = cellFromPoint(e.clientX, e.clientY);
                     this.targetGridX = pos.x;
                     this.targetGridY = pos.y;
-                    this.pendingDragSourceType = activeSource;
-                    this.openAddWidgetModal(activeSource);
+                    this.pendingDragSourceType = activeSource.replace(/ /g, '_');
+                    removeOverlay();
+                    this.openAddWidgetModal(this.pendingDragSourceType);
+                } else {
+                    removeOverlay();
                 }
 
                 activeSource = null;
