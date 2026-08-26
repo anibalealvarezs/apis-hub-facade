@@ -580,6 +580,12 @@ body.pv-page .dvc-controls-bar {
     transform: translateY(-50%) !important;
     z-index: 999999 !important;
     background-color: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-radius: 1rem !important;
+    transition: box-shadow 0.2s ease;
+}
+.floating-selection-bar:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .floating-selection-bar.bd-palette-left {
@@ -594,6 +600,10 @@ body.pv-page .dvc-controls-bar {
 .dark .floating-selection-bar {
     background-color: #111827 !important;
     border-color: #1F2937 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.dark .floating-selection-bar:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .floating-selection-bar button {
