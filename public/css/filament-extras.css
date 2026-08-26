@@ -744,6 +744,7 @@ input[type="datetime-local"] {
         box-shadow: none !important;
         border: none !important;
     }
+}
 
 .joint-print-page-break {
     display: none;
