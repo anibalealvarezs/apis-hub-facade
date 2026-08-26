@@ -1704,6 +1704,7 @@ export function dashboardBuilder(config = {}) {
                     if (cellKey !== lastCellKey) {
                         lastCellKey = cellKey;
                         grid.update(ghostEl, { x: pos.x, y: pos.y });
+                        grid.compact();
                     }
                 }
             };
