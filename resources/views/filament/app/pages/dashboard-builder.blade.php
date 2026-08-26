@@ -1,5 +1,13 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}"/>
+    <style>
+        .bd-text-6xs{font-size:6px;line-height:1}
+        .bd-text-5xs{font-size:7px;line-height:1}
+        .bd-text-4xs{font-size:8px;line-height:1}
+        .bd-text-3xs{font-size:9px;line-height:1}
+        .bd-text-2xs{font-size:10px;line-height:1.25}
+        .bd-text-xs-plus{font-size:11px;line-height:1.25}
+    </style>
 
     <div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
