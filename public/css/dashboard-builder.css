@@ -584,7 +584,7 @@ body.pv-page .dvc-controls-bar {
 
 .floating-selection-bar.bd-palette-left {
     position: absolute !important;
-    right: calc(100% - 6rem) !important;
+    right: calc(100% - 5.2rem) !important;
     left: auto !important;
     top: auto !important;
     transform: none !important;
