@@ -1850,6 +1850,23 @@ export function dashboardBuilder(config = {}) {
             };
             window.addEventListener('resize', this._onPaletteReposition, { passive: true });
             window.addEventListener('scroll', this._onPaletteReposition, { passive: true });
+
+            const paletteEl = document.querySelector('.bd-palette-left');
+            if (paletteEl) {
+                const observePalette = () => {
+                    const el = document.querySelector('.bd-palette-left');
+                    if (!el) return;
+                    if (this._paletteObserver) this._paletteObserver.disconnect();
+                    this._paletteObserver = new MutationObserver(() => {
+                        if (!this._repositioningPalette) this.positionPalette();
+                    });
+                    this._paletteObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+                };
+                observePalette();
+                if (paletteEl.parentElement) {
+                    new MutationObserver(observePalette).observe(paletteEl.parentElement, { childList: true, subtree: true });
+                }
+            }
         },
 
         saveLayout() {
@@ -3196,7 +3213,9 @@ export function dashboardBuilder(config = {}) {
             if (!container) return;
             const containerTop = container.getBoundingClientRect().top;
             const top = (window.innerHeight / 2) - containerTop - (palette.offsetHeight / 2);
+            this._repositioningPalette = true;
             palette.style.setProperty('top', `${Math.max(0, top)}px`, 'important');
+            this._repositioningPalette = false;
         },
 
         confirmAddWidget() {
