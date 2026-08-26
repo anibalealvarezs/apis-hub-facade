@@ -1584,6 +1584,91 @@ export function dashboardBuilder(config = {}) {
         },
 
         // ─── Grid ──
+        _initPaletteDrag(gridEl) {
+            if (!gridEl) return;
+            const palette = document.querySelector('.bd-palette-left');
+            if (!palette) return;
+            const dragIns = palette.querySelectorAll('.grid-stack-drag-in');
+            if (!dragIns.length) return;
+
+            let ghost = null;
+            let sourceType = null;
+            let startX = 0;
+            let startY = 0;
+            let isDragging = false;
+
+            const onPointerDown = (e) => {
+                if (e.button !== 0) return;
+                const el = e.target.closest('.grid-stack-drag-in');
+                if (!el) return;
+                e.preventDefault();
+                sourceType = el.getAttribute('data-source-type');
+                startX = e.clientX;
+                startY = e.clientY;
+                isDragging = false;
+
+                document.addEventListener('pointermove', onPointerMove, { capture: true });
+                document.addEventListener('pointerup', onPointerUp, { capture: true });
+            };
+
+            const onPointerMove = (e) => {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                    isDragging = true;
+                    ghost = document.createElement('div');
+                    ghost.className = 'bd-palette-ghost';
+                    ghost.style.cssText = 'position:fixed;z-index:999999;pointer-events:none;opacity:0.85;padding:8px 16px;border-radius:10px;background:#fff;border:2px dashed var(--primary-500,#6366f1);box-shadow:0 4px 12px rgba(0,0,0,.15);font-size:12px;font-weight:600;color:#374151;white-space:nowrap;will-change:transform;';
+                    ghost.textContent = (sourceType || 'widget').replace(/_/g, ' ');
+                    document.body.appendChild(ghost);
+                }
+                if (ghost) {
+                    ghost.style.transform = `translate(${e.clientX + 12}px, ${e.clientY + 12}px)`;
+                }
+            };
+
+            const onPointerUp = (e) => {
+                document.removeEventListener('pointermove', onPointerMove, { capture: true });
+                document.removeEventListener('pointerup', onPointerUp, { capture: true });
+                if (ghost) {
+                    ghost.remove();
+                    ghost = null;
+                }
+                if (!isDragging || !sourceType) {
+                    sourceType = null;
+                    return;
+                }
+
+                const gridRect = gridEl.getBoundingClientRect();
+                const cx = e.clientX;
+                const cy = e.clientY;
+                const isOverGrid = cx >= gridRect.left && cx <= gridRect.right
+                                 && cy >= gridRect.top  && cy <= gridRect.bottom;
+                if (!isOverGrid) {
+                    sourceType = null;
+                    return;
+                }
+
+                const colWidth = gridRect.width / 12;
+                const rawX = Math.floor((cx - gridRect.left) / colWidth);
+                const targetX = Math.max(0, Math.min(rawX, 8));
+                const cellH = 100;
+                const margin = 12;
+                const scrollOffset = gridEl.scrollTop || 0;
+                const rawY = Math.floor((cy - gridRect.top + scrollOffset) / (cellH + margin));
+                const targetY = Math.max(0, rawY);
+
+                this.targetGridX = targetX;
+                this.targetGridY = targetY;
+                this.pendingDragSourceType = sourceType;
+                sourceType = null;
+
+                this.openAddWidgetModal(this.pendingDragSourceType);
+            };
+
+            palette.addEventListener('pointerdown', onPointerDown);
+        },
+
         initGrid() {
             if (typeof GridStack === 'undefined') {
                 setTimeout(() => this.initGrid(), 50);
@@ -1613,143 +1698,9 @@ export function dashboardBuilder(config = {}) {
                 },
             });
 
-            // ── DEBUG: palette drag-and-drop diagnostics ──
-            const dragInEls = document.querySelectorAll('.grid-stack-drag-in');
-            console.log('[DB][debug] .grid-stack-drag-in elements found:', dragInEls.length);
-            dragInEls.forEach((el, i) => {
-                const cs = getComputedStyle(el);
-                const rect = el.getBoundingClientRect();
-                console.log(`[DB][debug] drag-in[${i}]:`, {
-                    tag: el.tagName,
-                    sourceType: el.getAttribute('data-source-type'),
-                    rect: { top: rect.top, left: rect.left, w: rect.width, h: rect.height },
-                    pointerEvents: cs.pointerEvents,
-                    display: cs.display,
-                    visibility: cs.visibility,
-                    overflow: cs.overflow,
-                    position: cs.position,
-                    zIndex: cs.zIndex,
-                    opacity: cs.opacity,
-                    parentOverflow: getComputedStyle(el.closest('.floating-selection-bar') || el.parentElement).overflow,
-                    parentOverflowClip: getComputedStyle(el.closest('.floating-selection-bar') || el.parentElement).overflowClip,
-                });
-            });
-
+            // ── Palette drag-in: custom pointer-based (bypasses jQuery UI + overflow clips) ──
             const gridEl = document.getElementById('grid-stack');
-            const gridContainer = document.getElementById('grid-container');
-            if (gridEl) {
-                const gcs = getComputedStyle(gridEl);
-                console.log('[DB][debug] #grid-stack:', {
-                    overflow: gcs.overflow,
-                    position: gcs.position,
-                    zIndex: gcs.zIndex,
-                    rect: gridEl.getBoundingClientRect(),
-                });
-            }
-            if (gridContainer) {
-                const gccs = getComputedStyle(gridContainer);
-                console.log('[DB][debug] #grid-container:', {
-                    overflow: gccs.overflow,
-                    overflowClip: gccs.overflowClip,
-                    clipPath: gccs.clipPath,
-                    contain: gccs.contain,
-                    position: gccs.position,
-                    zIndex: gccs.zIndex,
-                });
-            }
-
-            // Walk up from palette to body checking for overflow clipping
-            const palette = document.querySelector('.bd-palette-left');
-            if (palette) {
-                let el = palette;
-                const clipChain = [];
-                while (el && el !== document.body) {
-                    const cs = getComputedStyle(el);
-                    if (cs.overflow !== 'visible' || cs.overflowClip !== 'none' || cs.clipPath !== 'none' || cs.contain !== 'none') {
-                        clipChain.push({
-                            tag: el.tagName,
-                            id: el.id || '',
-                            class: el.className?.substring?.(0, 80) || '',
-                            overflow: cs.overflow,
-                            overflowClip: cs.overflowClip,
-                            clipPath: cs.clipPath,
-                            contain: cs.contain,
-                        });
-                    }
-                    el = el.parentElement;
-                }
-                console.log('[DB][debug] overflow clip chain (palette→body):', clipChain.length ? clipChain : 'NONE (all visible)');
-            }
-
-            // Check jQuery UI availability
-            console.log('[DB][debug] jQuery UI draggable?', typeof jQuery !== 'undefined' && typeof jQuery.fn?.draggable === 'function');
-            console.log('[DB][debug] GridStack version?', GridStack?.version);
-
-            GridStack.setupDragIn('.grid-stack-drag-in', {
-                helper: 'clone',
-                appendTo: 'body',
-                revert: 'invalid',
-                scroll: false,
-            });
-
-            // Post-setupCheck: did jQuery UI bind?
-            dragInEls.forEach((el, i) => {
-                const hasJqData = el.classList.contains('ui-draggable');
-                console.log(`[DB][debug] post-setupDragIn drag-in[${i}]:`, {
-                    hasUiDraggableClass: hasJqData,
-                    jqDataKeys: typeof jQuery !== 'undefined' ? Object.keys(jQuery._data(el) || {}).join(',') : 'no-jquery',
-                });
-            });
-
-            // Also patch the palette's native mousedown as a fallback signal
-            dragInEls.forEach((el) => {
-                el.addEventListener('mousedown', (e) => {
-                    console.log('[DB][debug] palette mousedown', {
-                        sourceType: el.getAttribute('data-source-type'),
-                        defaultPrevented: e.defaultPrevented,
-                        button: e.button,
-                    });
-                }, { capture: true });
-            });
-
-            // Expose global diagnostic for manual console calls
-            window.__paletteDebug = () => {
-                const els = document.querySelectorAll('.grid-stack-drag-in');
-                console.group('[Palette Debug]');
-                els.forEach((el, i) => {
-                    const rect = el.getBoundingClientRect();
-                    const cs = getComputedStyle(el);
-                    console.log(`drag-in[${i}]`, {
-                        visible: rect.width > 0 && rect.height > 0 && cs.opacity > 0 && cs.visibility !== 'hidden',
-                        rect: `${rect.left.toFixed(0)},${rect.top.toFixed(0)} ${rect.width.toFixed(0)}x${rect.height.toFixed(0)}`,
-                        jqDraggable: el.classList.contains('ui-draggable'),
-                        pointerEvents: cs.pointerEvents,
-                        sourceType: el.getAttribute('data-source-type'),
-                    });
-                });
-                console.groupEnd();
-            };
-            console.log('[DB][debug] Call window.__paletteDebug() in console anytime to re-check');
-
-            this.grid.on('dropped', (event, previousNode, newNode) => {
-                console.log('[DB][dropped] fired', { hasNewNode: !!newNode, hasNewNodeEl: !!newNode?.el, hasEvent: !!event });
-                if (!newNode || !newNode.el) return;
-
-                const dragEl = event?.target?.closest?.('.grid-stack-drag-in')
-                            || event?.originalEvent?.target?.closest?.('.grid-stack-drag-in');
-                const sourceType = dragEl?.getAttribute('data-source-type') || 'metric';
-                console.log('[DB][dropped] resolved sourceType:', sourceType);
-
-                this.targetGridX = newNode.x;
-                this.targetGridY = newNode.y;
-                this.pendingDragSourceType = sourceType;
-
-                if (newNode.el && newNode.el.isConnected) {
-                    this.grid.removeWidget(newNode.el, false);
-                }
-
-                this.openAddWidgetModal(sourceType);
-            });
+            this._initPaletteDrag(gridEl);
 
             let autoScrollTimer = null;
             let multiDragStartPositions = null;
