@@ -1619,7 +1619,7 @@ export function dashboardBuilder(config = {}) {
                 }
                 ghostEl = null;
                 if (savedFloat !== null) {
-                    grid.setFloat(savedFloat);
+                    grid.float(savedFloat);
                     savedFloat = null;
                 }
             };
@@ -1653,8 +1653,8 @@ export function dashboardBuilder(config = {}) {
 
                 if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                     dragging = true;
-                    savedFloat = grid.getFloat();
-                    grid.setFloat(false);
+                    savedFloat = grid.float();
+                    grid.float(false);
                     grid.batchUpdate(true);
                     const pos = cellFromPoint(e.clientX, e.clientY);
                     ghostEl = grid.addWidget({
