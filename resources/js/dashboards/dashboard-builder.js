@@ -3195,7 +3195,7 @@ export function dashboardBuilder(config = {}) {
             const container = palette.closest('[x-data]') || palette.offsetParent;
             if (!container) return;
             const containerTop = container.getBoundingClientRect().top;
-            const top = (window.innerHeight / 2) - containerTop - (palette.offsetHeight / 2) + window.scrollY;
+            const top = (window.innerHeight / 2) - containerTop - (palette.offsetHeight / 2);
             palette.style.setProperty('top', `${Math.max(0, top)}px`, 'important');
         },
 
