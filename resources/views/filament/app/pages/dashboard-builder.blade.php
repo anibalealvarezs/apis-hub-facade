@@ -2687,9 +2687,10 @@
             <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
 
             <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
+                <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="kpi" gs-w="4" gs-h="3" title="{{ __('KPI') }}">
                     <x-heroicon-o-chart-bar class="w-5 h-5" />
+                    <span class="text-[7px] font-bold uppercase leading-none">{{ __('KPI') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2699,9 +2700,10 @@
             </div>
 
             <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
+                <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="metric" gs-w="4" gs-h="3" title="{{ __('Metric') }}">
                     <x-heroicon-o-chart-bar-square class="w-5 h-5" />
+                    <span class="text-[7px] font-bold uppercase leading-none">{{ __('Metric') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2711,9 +2713,10 @@
             </div>
 
             <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
+                <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="derived_metric" gs-w="4" gs-h="3" title="{{ __('Derived') }}">
                     <x-heroicon-o-calculator class="w-5 h-5" />
+                    <span class="text-[7px] font-bold uppercase leading-none">{{ __('Derived') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
