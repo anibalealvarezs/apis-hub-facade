@@ -2672,57 +2672,115 @@
             </div>
         </div>
 
-        {{-- Floating Left Widget Palette --}}
-        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+        {{-- Floating Left Widget Size Palette --}}
+        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
+             x-data="{ sizeCategory: null }">
 
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
+                <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Widget source types') }}
+                        {{ __('Widget dimensions') }}
                     </div>
                 </div>
             </div>
 
             <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
 
-            <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
-                     data-source-type="kpi" gs-w="4" gs-h="3" title="{{ __('KPI') }}">
-                    <x-heroicon-o-chart-bar class="w-5 h-5" />
-                    <span class="bd-text-6xs font-bold uppercase">{{ __('KPI') }}</span>
-                </div>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Drag KPI widget to canvas') }}
-                    </div>
+            {{-- Category: Portrait --}}
+            <div class="relative">
+                <div class="bd-palette-cat-btn" :class="{ 'active': sizeCategory === 'portrait' }"
+                     @click="sizeCategory = sizeCategory === 'portrait' ? null : 'portrait'">
+                    <div class="bd-palette-cat-shape portrait"></div>
                 </div>
             </div>
 
-            <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
-                     data-source-type="metric" gs-w="4" gs-h="3" title="{{ __('Metric') }}">
-                    <x-heroicon-o-chart-bar-square class="w-5 h-5" />
-                    <span class="bd-text-6xs font-bold uppercase">{{ __('Metric') }}</span>
-                </div>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Drag Metric widget to canvas') }}
-                    </div>
+            {{-- Category: Square --}}
+            <div class="relative">
+                <div class="bd-palette-cat-btn" :class="{ 'active': sizeCategory === 'square' }"
+                     @click="sizeCategory = sizeCategory === 'square' ? null : 'square'">
+                    <div class="bd-palette-cat-shape square"></div>
                 </div>
             </div>
 
-            <div class="group relative flex items-center justify-center">
-                <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
-                     data-source-type="derived_metric" gs-w="4" gs-h="3" title="{{ __('Derived') }}">
-                    <x-heroicon-o-calculator class="w-5 h-5" />
-                    <span class="bd-text-6xs font-bold uppercase">{{ __('Derived') }}</span>
+            {{-- Category: Landscape --}}
+            <div class="relative">
+                <div class="bd-palette-cat-btn" :class="{ 'active': sizeCategory === 'landscape' }"
+                     @click="sizeCategory = sizeCategory === 'landscape' ? null : 'landscape'">
+                    <div class="bd-palette-cat-shape landscape"></div>
                 </div>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Drag Derived Metric widget to canvas') }}
+            </div>
+
+            {{-- Sizes Panel --}}
+            <div class="bd-palette-sizes-panel" x-show="sizeCategory !== null" x-transition.opacity.duration.150ms
+                 @click.outside="sizeCategory = null"
+                 style="display:none;">
+
+                {{-- Portrait --}}
+                <div class="bd-palette-sizes-grid" x-show="sizeCategory === 'portrait'">
+                    @php
+                    $portrait = [
+                        ['h'=>3,'w'=>2],['h'=>4,'w'=>2],['h'=>6,'w'=>2],['h'=>7,'w'=>2],
+                        ['h'=>4,'w'=>3],['h'=>6,'w'=>3],['h'=>7,'w'=>3],
+                        ['h'=>6,'w'=>4],['h'=>7,'w'=>4],
+                        ['h'=>7,'w'=>6],
+                    ];
+                    @endphp
+                    @foreach($portrait as $s)
+                    <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
+                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
+                            @for($i = 0; $i < $s['h'] * $s['w']; $i++)
+                                <div class="bd-mini-grid-cell"></div>
+                            @endfor
+                        </div>
+                        <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>
                     </div>
+                    @endforeach
                 </div>
+
+                {{-- Square --}}
+                <div class="bd-palette-sizes-grid" x-show="sizeCategory === 'square'">
+                    @php
+                    $square = [
+                        ['h'=>2,'w'=>2],['h'=>3,'w'=>3],['h'=>4,'w'=>4],
+                        ['h'=>5,'w'=>5],['h'=>6,'w'=>6],['h'=>7,'w'=>7],
+                    ];
+                    @endphp
+                    @foreach($square as $s)
+                    <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
+                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
+                            @for($i = 0; $i < $s['h'] * $s['w']; $i++)
+                                <div class="bd-mini-grid-cell"></div>
+                            @endfor
+                        </div>
+                        <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>
+                    </div>
+                    @endforeach
+                </div>
+
+                {{-- Landscape --}}
+                <div class="bd-palette-sizes-grid" x-show="sizeCategory === 'landscape'">
+                    @php
+                    $landscape = [
+                        ['h'=>2,'w'=>3],['h'=>2,'w'=>4],['h'=>2,'w'=>6],['h'=>2,'w'=>8],['h'=>2,'w'=>12],
+                        ['h'=>3,'w'=>4],['h'=>3,'w'=>6],['h'=>3,'w'=>8],['h'=>3,'w'=>12],
+                        ['h'=>4,'w'=>6],['h'=>4,'w'=>8],['h'=>4,'w'=>12],
+                        ['h'=>6,'w'=>8],['h'=>6,'w'=>12],
+                        ['h'=>7,'w'=>12],
+                    ];
+                    @endphp
+                    @foreach($landscape as $s)
+                    <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
+                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
+                            @for($i = 0; $i < $s['h'] * $s['w']; $i++)
+                                <div class="bd-mini-grid-cell"></div>
+                            @endfor
+                        </div>
+                        <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>
+                    </div>
+                    @endforeach
+                </div>
+
             </div>
 
         </div>

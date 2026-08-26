@@ -1592,9 +1592,9 @@ export function dashboardBuilder(config = {}) {
 
             const GHOST_ID = '__palette_ghost__';
             const COLUMNS = 12;
-            const PW = 4, PH = 3;
 
             let activeSource = null;
+            let activeW = 4, activeH = 3;
             let startX = 0, startY = 0;
             let dragging = false;
             let ghostEl = null;
@@ -1607,7 +1607,7 @@ export function dashboardBuilder(config = {}) {
                 const cellH = parseInt(grid.opts.cellHeight, 10) || 100;
                 const margin = typeof grid.opts.margin === 'number' ? grid.opts.margin : 12;
                 const scrollY = grid.el.scrollTop || 0;
-                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - PW));
+                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - activeW));
                 const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / (cellH + margin)));
                 return { x, y };
             };
@@ -1630,6 +1630,8 @@ export function dashboardBuilder(config = {}) {
                 if (!el) return;
                 e.preventDefault();
                 activeSource = el.getAttribute('data-source-type') || 'metric';
+                activeW = parseInt(el.getAttribute('data-grid-w'), 10) || 4;
+                activeH = parseInt(el.getAttribute('data-grid-h'), 10) || 3;
                 startX = e.clientX;
                 startY = e.clientY;
                 dragging = false;
@@ -1650,8 +1652,8 @@ export function dashboardBuilder(config = {}) {
                     ghostEl = grid.addWidget({
                         id: GHOST_ID,
                         x: pos.x, y: pos.y,
-                        w: PW, h: PH,
-                        minW: PW, minH: PH,
+                        w: activeW, h: activeH,
+                        minW: activeW, minH: activeH,
                         locked: true,
                         noMove: true,
                         noResize: true,
@@ -1661,8 +1663,8 @@ export function dashboardBuilder(config = {}) {
                         inner.innerHTML = '';
                         inner.style.cssText = 'display:flex;align-items:center;justify-content:center;border:2px dashed var(--primary-400,#818cf8);background:var(--primary-50,rgba(99,102,241,.06));border-radius:8px;';
                         const span = document.createElement('span');
-                        span.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary-500,#6366f1);text-transform:uppercase;letter-spacing:.5px;opacity:.7;';
-                        span.textContent = activeSource.replace(/_/g, ' ');
+                        span.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary-500,#6366f1);text-transform:uppercase;letter-spacing:.5px;opacity:.7;pointer-events:none;';
+                        span.textContent = activeH + '×' + activeW;
                         inner.appendChild(span);
                     }
                 }
@@ -1698,6 +1700,8 @@ export function dashboardBuilder(config = {}) {
                     const pos = cellFromPoint(e.clientX, e.clientY);
                     this.targetGridX = pos.x;
                     this.targetGridY = pos.y;
+                    this.targetGridW = activeW;
+                    this.targetGridH = activeH;
                     this.pendingDragSourceType = activeSource;
                     removeGhost();
                     this.openAddWidgetModal(activeSource);
@@ -3308,6 +3312,8 @@ export function dashboardBuilder(config = {}) {
             }
             this.targetGridX = null;
             this.targetGridY = null;
+            this.targetGridW = null;
+            this.targetGridH = null;
             this.pendingDragSourceType = null;
             this.showAddWidgetModal = false;
         },
@@ -3410,8 +3416,8 @@ export function dashboardBuilder(config = {}) {
                 controls: controls,
                 grid_x: this.targetGridX ?? null,
                 grid_y: this.targetGridY ?? null,
-                grid_w: 4,
-                grid_h: 3,
+                grid_w: this.targetGridW ?? 4,
+                grid_h: this.targetGridH ?? 3,
             };
 
             this.$wire.addWidget(data).then(widget => {
@@ -3422,6 +3428,8 @@ export function dashboardBuilder(config = {}) {
                 this.showAddWidgetModal = false;
                 this.targetGridX = null;
                 this.targetGridY = null;
+                this.targetGridW = null;
+                this.targetGridH = null;
                 this.pendingDragSourceType = null;
 
                 this.$nextTick(() => {
