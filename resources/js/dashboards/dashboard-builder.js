@@ -1599,8 +1599,15 @@ export function dashboardBuilder(config = {}) {
                     palette.querySelectorAll('.bd-palette-sizes-panel').forEach(p => p.style.display = 'none');
                     palette.querySelectorAll('.bd-palette-cat-btn').forEach(b => b.classList.remove('active'));
                     if (wasHidden) {
+                        const btnRect = btn.getBoundingClientRect();
+                        panel.style.left = (btnRect.right + 8) + 'px';
+                        panel.style.top = btnRect.top + 'px';
                         panel.style.display = '';
                         btn.classList.add('active');
+                        const panelRect = panel.getBoundingClientRect();
+                        if (panelRect.bottom > window.innerHeight - 8) {
+                            panel.style.top = Math.max(8, window.innerHeight - panelRect.height - 8) + 'px';
+                        }
                     }
                 });
             });
