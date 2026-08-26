@@ -3192,9 +3192,10 @@ export function dashboardBuilder(config = {}) {
         positionPalette() {
             const palette = document.querySelector('.bd-palette-left');
             if (!palette) return;
-            const topbar = document.querySelector('.fi-topbar');
-            const topbarHeight = topbar ? topbar.offsetHeight : 0;
-            const top = (window.innerHeight / 2) - topbarHeight - (palette.offsetHeight / 2) + window.scrollY;
+            const container = palette.closest('[x-data]') || palette.offsetParent;
+            if (!container) return;
+            const containerTop = container.getBoundingClientRect().top;
+            const top = (window.innerHeight / 2) - containerTop - (palette.offsetHeight / 2) + window.scrollY;
             palette.style.setProperty('top', `${Math.max(0, top)}px`, 'important');
         },
 
