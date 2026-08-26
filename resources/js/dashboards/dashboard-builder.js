@@ -1592,10 +1592,65 @@ export function dashboardBuilder(config = {}) {
             if (!dragIns.length) return;
 
             let ghost = null;
+            let placeholder = null;
             let sourceType = null;
             let startX = 0;
             let startY = 0;
             let isDragging = false;
+            let lastCell = null;
+
+            const CELL_H = 100;
+            const MARGIN = 12;
+            const PLACEHOLDER_W = 4;
+            const PLACEHOLDER_H = 3;
+
+            const getGridCoords = (clientX, clientY) => {
+                const rect = gridEl.getBoundingClientRect();
+                const colW = rect.width / 12;
+                const scrollY = gridEl.scrollTop || 0;
+                const x = Math.max(0, Math.min(Math.floor((clientX - rect.left) / colW), 12 - PLACEHOLDER_W));
+                const y = Math.max(0, Math.floor((clientY - rect.top + scrollY) / (CELL_H + MARGIN)));
+                return { x, y, colW, rect };
+            };
+
+            const createPlaceholder = () => {
+                placeholder = document.createElement('div');
+                placeholder.className = 'grid-stack-item';
+                placeholder.style.cssText = `
+                    position:absolute;
+                    pointer-events:none;
+                    z-index:10;
+                    opacity:0.5;
+                    border:2px dashed var(--primary-500,#6366f1);
+                    background:var(--primary-50,rgba(99,102,241,.08));
+                    border-radius:8px;
+                    transition: left .12s ease, top .12s ease;
+                `;
+                const inner = document.createElement('div');
+                inner.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:6px;';
+                const label = document.createElement('span');
+                label.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary-600,#4f46e5);text-transform:uppercase;letter-spacing:.5px;opacity:.7;pointer-events:none;';
+                label.textContent = (sourceType || 'widget').replace(/_/g, ' ');
+                inner.appendChild(label);
+                placeholder.appendChild(inner);
+                gridEl.appendChild(placeholder);
+            };
+
+            const updatePlaceholder = (coords) => {
+                if (!placeholder) return;
+                const key = `${coords.x},${coords.y}`;
+                if (lastCell === key) return;
+                lastCell = key;
+                const { x, y, colW } = coords;
+                const left = x * (colW + (MARGIN * 12 / gridEl.offsetWidth * colW));
+                const top = y * (CELL_H + MARGIN);
+                const w = PLACEHOLDER_W * colW - MARGIN;
+                const h = PLACEHOLDER_H * (CELL_H + MARGIN) - MARGIN;
+                placeholder.style.left = `${x * colW + MARGIN / 2}px`;
+                placeholder.style.top = `${y * (CELL_H + MARGIN)}px`;
+                placeholder.style.width = `${PLACEHOLDER_W * colW - MARGIN}px`;
+                placeholder.style.height = `${PLACEHOLDER_H * (CELL_H + MARGIN) - MARGIN}px`;
+            };
 
             const onPointerDown = (e) => {
                 if (e.button !== 0) return;
@@ -1606,6 +1661,7 @@ export function dashboardBuilder(config = {}) {
                 startX = e.clientX;
                 startY = e.clientY;
                 isDragging = false;
+                lastCell = null;
 
                 document.addEventListener('pointermove', onPointerMove, { capture: true });
                 document.addEventListener('pointerup', onPointerUp, { capture: true });
@@ -1617,7 +1673,6 @@ export function dashboardBuilder(config = {}) {
                 if (!isDragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                     isDragging = true;
                     ghost = document.createElement('div');
-                    ghost.className = 'bd-palette-ghost';
                     ghost.style.cssText = 'position:fixed;z-index:999999;pointer-events:none;opacity:0.85;padding:8px 16px;border-radius:10px;background:#fff;border:2px dashed var(--primary-500,#6366f1);box-shadow:0 4px 12px rgba(0,0,0,.15);font-size:12px;font-weight:600;color:#374151;white-space:nowrap;will-change:transform;';
                     ghost.textContent = (sourceType || 'widget').replace(/_/g, ' ');
                     document.body.appendChild(ghost);
@@ -1625,41 +1680,37 @@ export function dashboardBuilder(config = {}) {
                 if (ghost) {
                     ghost.style.transform = `translate(${e.clientX + 12}px, ${e.clientY + 12}px)`;
                 }
+
+                if (!isDragging) return;
+                const gridRect = gridEl.getBoundingClientRect();
+                const overGrid = e.clientX >= gridRect.left && e.clientX <= gridRect.right
+                               && e.clientY >= gridRect.top - 80 && e.clientY <= gridRect.bottom + 80;
+                if (overGrid) {
+                    if (!placeholder) createPlaceholder();
+                    updatePlaceholder(getGridCoords(e.clientX, e.clientY));
+                } else if (placeholder) {
+                    placeholder.remove();
+                    placeholder = null;
+                    lastCell = null;
+                }
             };
 
             const onPointerUp = (e) => {
                 document.removeEventListener('pointermove', onPointerMove, { capture: true });
                 document.removeEventListener('pointerup', onPointerUp, { capture: true });
-                if (ghost) {
-                    ghost.remove();
-                    ghost = null;
-                }
-                if (!isDragging || !sourceType) {
+                if (ghost) { ghost.remove(); ghost = null; }
+
+                const overGrid = placeholder !== null;
+                const coords = overGrid ? getGridCoords(e.clientX, e.clientY) : null;
+                if (placeholder) { placeholder.remove(); placeholder = null; lastCell = null; }
+
+                if (!isDragging || !sourceType || !coords) {
                     sourceType = null;
                     return;
                 }
 
-                const gridRect = gridEl.getBoundingClientRect();
-                const cx = e.clientX;
-                const cy = e.clientY;
-                const isOverGrid = cx >= gridRect.left && cx <= gridRect.right
-                                 && cy >= gridRect.top  && cy <= gridRect.bottom;
-                if (!isOverGrid) {
-                    sourceType = null;
-                    return;
-                }
-
-                const colWidth = gridRect.width / 12;
-                const rawX = Math.floor((cx - gridRect.left) / colWidth);
-                const targetX = Math.max(0, Math.min(rawX, 8));
-                const cellH = 100;
-                const margin = 12;
-                const scrollOffset = gridEl.scrollTop || 0;
-                const rawY = Math.floor((cy - gridRect.top + scrollOffset) / (cellH + margin));
-                const targetY = Math.max(0, rawY);
-
-                this.targetGridX = targetX;
-                this.targetGridY = targetY;
+                this.targetGridX = coords.x;
+                this.targetGridY = coords.y;
                 this.pendingDragSourceType = sourceType;
                 sourceType = null;
 
