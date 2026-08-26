@@ -595,6 +595,7 @@ body.pv-page .dvc-controls-bar {
     top: auto !important;
     transform: none !important;
     z-index: 3 !important;
+    border: 1px solid #E5E7EB !important;
 }
 
 .dark .floating-selection-bar {
@@ -633,10 +634,10 @@ body.pv-page .dvc-controls-bar {
     box-shadow: 0 4px 16px rgba(0,0,0,0.10);
     padding: 8px;
     z-index: 999999;
-    width: 120px;
-    max-height: 420px;
-    overflow-y: auto;
-    scrollbar-width: thin;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    scrollbar-width: none;
 }
 .dark .bd-palette-sizes-panel {
     background: #111827;
@@ -734,7 +735,9 @@ body.pv-page .dvc-controls-bar {
 }
 
 .bd-palette-cat-shape {
-    border: 2px solid currentColor;
+    border-style: solid !important;
+    border-width: 2px !important;
+    border-color: currentColor !important;
     border-radius: 2px;
 }
 .bd-palette-cat-shape.portrait {
