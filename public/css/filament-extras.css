@@ -744,6 +744,7 @@ input[type="datetime-local"] {
         box-shadow: none !important;
         border: none !important;
     }
+}
 
 .joint-print-page-break {
     display: none;
@@ -810,5 +811,29 @@ input[type="datetime-local"] {
     }
 }
 
-
+/* ─── Global text-size utilities (sizes below Tailwind's `text-xs` floor) ─── */
+.bd-text-6xs {
+    font-size: 10px;
+    line-height: 1;
+}
+.bd-text-5xs {
+    font-size: 11px;
+    line-height: 1.25;
+}
+.bd-text-4xs {
+    font-size: 12px;
+    line-height: 1.25;
+}
+.bd-text-3xs {
+    font-size: 13px;
+    line-height: 1.25;
+}
+.bd-text-2xs {
+    font-size: 14px;
+    line-height: 1.5;
+}
+.bd-text-xs-plus {
+    font-size: 15px;
+    line-height: 1.5;
+}
 

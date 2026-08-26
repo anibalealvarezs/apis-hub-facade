@@ -192,27 +192,27 @@
                                 <div class="flex items-center gap-3 lg:w-1/3 lg:justify-end flex-wrap">
                                     <div class="flex gap-2">
                                         <x-filament::badge color="success" class="flex-col !px-2 !py-1">
-                                            <span class="text-[10px] uppercase opacity-70">{{ __('Completed') }}</span>
+                                            <span class="bd-text-2xs uppercase opacity-70">{{ __('Completed') }}</span>
                                             <span class="font-bold text-sm">{{ $channelData['completed'] ?? 0 }}</span>
                                         </x-filament::badge>
 
                                         @if(($channelData['processing'] ?? 0) > 0)
                                             <x-filament::badge color="warning" class="flex-col !px-2 !py-1">
                                                 <span
-                                                    class="text-[10px] uppercase opacity-70">{{ __('Processing') }}</span>
+                                                    class="bd-text-2xs uppercase opacity-70">{{ __('Processing') }}</span>
                                                 <span class="font-bold text-sm">{{ $channelData['processing'] }}</span>
                                             </x-filament::badge>
                                         @endif
 
                                         <x-filament::badge color="gray" class="flex-col !px-2 !py-1"
                                                            tooltip="Jobs waiting for quota or time limits">
-                                            <span class="text-[10px] uppercase opacity-70">{{ __('Scheduled') }}</span>
+                                            <span class="bd-text-2xs uppercase opacity-70">{{ __('Scheduled') }}</span>
                                             <span class="font-bold text-sm">{{ $channelData['scheduled'] ?? 0 }}</span>
                                         </x-filament::badge>
 
                                         @if($chFailed > 0)
                                             <x-filament::badge color="danger" class="flex-col !px-2 !py-1">
-                                                <span class="text-[10px] uppercase opacity-70">{{ __('Failed') }}</span>
+                                                <span class="bd-text-2xs uppercase opacity-70">{{ __('Failed') }}</span>
                                                 <span class="font-bold text-sm">{{ $chFailed }}</span>
                                             </x-filament::badge>
                                         @endif

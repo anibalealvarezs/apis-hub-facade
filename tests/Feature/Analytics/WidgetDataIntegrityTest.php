@@ -513,7 +513,7 @@ it('normalizes Google Search Console table rows for the data explorer', function
     expect($data['table'])->toHaveCount(2);
     expect($data['table'][0]['id'])->toBe('keyword one');
     expect($data['table'][0]['name'])->toBe('keyword one');
-    expect($data['table'][0]['ctr'])->toBe(5);
+    expect($data['table'][0]['ctr'])->toBe(0.05);
     expect($data['table'][1]['id'])->toBe('keyword two');
 });
 
@@ -652,4 +652,45 @@ it('returns a chart dataset for a derived metric widget through the widget endpo
     expect($payload['widget_type'])->toBe('line_chart');
     expect($payload['data']['labels'])->toBe(['2026-07-01', '2026-07-02']);
     expect($payload['data']['datasets'][0]['data'])->toBe([1, 2]);
+});
+
+it('applies per-variable series_dependencies for KPI widgets and isolates scopes', function () {
+    $kpi = makeWidKpi($this->project, [
+        'filters' => [
+            '_ui_state' => [
+                'dependent_channel' => 'facebook_organic',
+                'dependent_metric' => '',
+                'granularity' => 'daily',
+                'independent_variables' => [
+                    [
+                        'independent_channel' => 'facebook_organic',
+                        'independent_metric' => '',
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $widget = makeWidWidget($this->project, [
+        'custom_kpi_id' => $kpi->id,
+        'source_type' => 'kpi',
+        'widget_type' => 'scatter_plot',
+    ]);
+
+    $captured = bindWidEngine(['chart' => false]);
+
+    $controller = app(WidgetIntegrityTestableController::class);
+    $controller->publicHandleKpiSource($this->project, $widget, [
+        'metrics' => ['reach', 'impressions'],
+        'series_dependencies' => [
+            'dependent' => 'instagram_account',
+            'independent_0' => 'facebook_page',
+        ],
+    ]);
+
+    expect($captured->computeKpiCalls)->toHaveCount(1);
+    $kpiPayload = $captured->computeKpiCalls[0][1];
+
+    expect($kpiPayload)->toHaveKey('ast');
+    expect($kpiPayload['ast']['filters']['account_type'] ?? null)->toBe('instagram_account');
 });

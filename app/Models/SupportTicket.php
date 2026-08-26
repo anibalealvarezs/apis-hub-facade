@@ -60,8 +60,12 @@ class SupportTicket extends Model
         return $this->belongsToMany(BillingProfile::class, 'ticket_internal_billing_profiles');
     }
 
-    public function scopeAccessibleBy(Builder $query, User $user): Builder
+    public function scopeAccessibleBy(Builder $query, ?User $user = null): Builder
     {
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
         if ($user->isAdmin()) {
             return $query;
         }

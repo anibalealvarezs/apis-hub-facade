@@ -8,35 +8,56 @@ window.dashboardRenderer = {
     _widgetData: new Map(),
     _pinnedTooltips: new Map(),
     METRIC_FORMATS: {
-        'spend': {label: 'Spend', format: 'currency', prefix: '$'},
-        'cpc': {label: 'CPC', format: 'currency', prefix: '$'},
-        'cpm': {label: 'CPM', format: 'currency', prefix: '$'},
-        'revenue': {label: 'Revenue', format: 'currency', prefix: '$'},
-        'purchase_roas': {label: 'ROAS', format: 'currency', prefix: '$'},
-        'aov': {label: 'AOV', format: 'currency', prefix: '$'},
-        'cost_per_result': {label: 'Cost/Result', format: 'currency', prefix: '$'},
-        'result_rate': {label: 'Result Rate', format: 'percentage', multiply: 100},
-        'ctr': {label: 'CTR', format: 'percentage', multiply: 100},
-        'bounce_rate': {label: 'Bounce Rate', format: 'percentage', multiply: 100, lower_is_better: true},
-        'clicks': {label: 'Clicks', format: 'number'},
-        'impressions': {label: 'Impressions', format: 'number'},
-        'reach': {label: 'Reach', format: 'number'},
-        'conversions': {label: 'Conversions', format: 'number'},
-        'results': {label: 'Results', format: 'number'},
-        'sessions': {label: 'Sessions', format: 'number'},
-        'pageviews': {label: 'Pageviews', format: 'number'},
-        'new_users': {label: 'New Users', format: 'number'},
-        'followers': {label: 'Followers', format: 'number'},
-        'engaged_users': {label: 'Engaged Users', format: 'number'},
-        'orders': {label: 'Orders', format: 'number'},
-        'sends': {label: 'Sends', format: 'number'},
-        'opens': {label: 'Opens', format: 'number'},
-        'bounces': {label: 'Bounces', format: 'number'},
-        'link_clicks': {label: 'Link Clicks', format: 'number'},
-        'engagements': {label: 'Engagements', format: 'number'},
-        'total_interactions': {label: 'Total Interactions', format: 'number'},
-        'average_session_duration': {label: 'Avg Session', format: 'number', suffix: 's'},
-        'position': {label: 'Avg Position', format: 'number', lower_is_better: true},
+        spend: { label: "Spend", format: "currency", prefix: "$" },
+        cpc: { label: "CPC", format: "currency", prefix: "$" },
+        cpm: { label: "CPM", format: "currency", prefix: "$" },
+        revenue: { label: "Revenue", format: "currency", prefix: "$" },
+        purchase_roas: { label: "ROAS", format: "currency", prefix: "$" },
+        aov: { label: "AOV", format: "currency", prefix: "$" },
+        cost_per_result: {
+            label: "Cost/Result",
+            format: "currency",
+            prefix: "$",
+        },
+        result_rate: {
+            label: "Result Rate",
+            format: "percentage",
+            multiply: 100,
+        },
+        ctr: { label: "CTR", format: "percentage", multiply: 100 },
+        bounce_rate: {
+            label: "Bounce Rate",
+            format: "percentage",
+            multiply: 100,
+            lower_is_better: true,
+        },
+        clicks: { label: "Clicks", format: "number" },
+        impressions: { label: "Impressions", format: "number" },
+        reach: { label: "Reach", format: "number" },
+        conversions: { label: "Conversions", format: "number" },
+        results: { label: "Results", format: "number" },
+        sessions: { label: "Sessions", format: "number" },
+        pageviews: { label: "Pageviews", format: "number" },
+        new_users: { label: "New Users", format: "number" },
+        followers: { label: "Followers", format: "number" },
+        engaged_users: { label: "Engaged Users", format: "number" },
+        orders: { label: "Orders", format: "number" },
+        sends: { label: "Sends", format: "number" },
+        opens: { label: "Opens", format: "number" },
+        bounces: { label: "Bounces", format: "number" },
+        link_clicks: { label: "Link Clicks", format: "number" },
+        engagements: { label: "Engagements", format: "number" },
+        total_interactions: { label: "Total Interactions", format: "number" },
+        average_session_duration: {
+            label: "Avg Session",
+            format: "number",
+            suffix: "s",
+        },
+        position: {
+            label: "Avg Position",
+            format: "number",
+            lower_is_better: true,
+        },
     },
 
     // Ratio KPIs produce a result whose type differs from the raw dependent metric.
@@ -49,48 +70,123 @@ window.dashboardRenderer = {
         const f1 = m1 ? this.METRIC_FORMATS[m1] : null;
 
         // Regression and scatter plot models preserve the raw dependent metric formatting
-        const calcType = controls?.calculation_type || controls?.calculationType || '';
-        const widgetType = controls?.widget_type || controls?.widgetType || '';
-        const isRegressionOrScatter = calcType === 'calculate_regression' || widgetType === 'scatter_plot';
+        const calcType =
+            controls?.calculation_type || controls?.calculationType || "";
+        const widgetType = controls?.widget_type || controls?.widgetType || "";
+        const isRegressionOrScatter =
+            calcType === "calculate_regression" ||
+            widgetType === "scatter_plot";
         if (isRegressionOrScatter) {
             return f0 || null;
         }
 
         // If multiple metrics exist AND this is a KPI ratio widget, apply ratio heuristics.
-        if (m1 && controls?.source_type === 'kpi') {
+        if (m1 && controls?.source_type === "kpi") {
             // Known ratio → output type
             const ratioFormats = {
-                'clicks/impressions': {label: 'CTR', format: 'percentage', multiply: 100},
-                'conversions/impressions': {label: 'Conv. Rate', format: 'percentage', multiply: 100},
-                'conversions/clicks': {label: 'Conv. Rate', format: 'percentage', multiply: 100},
-                'results/impressions': {label: 'Result Rate', format: 'percentage', multiply: 100},
-                'results/clicks': {label: 'Result Rate', format: 'percentage', multiply: 100},
-                'sessions/clicks': {label: 'Session Rate', format: 'percentage', multiply: 100},
-                'sessions/link_clicks': {label: 'Session Rate', format: 'percentage', multiply: 100},
-                'bounce_rate/clicks': {label: 'Bounce Rate', format: 'percentage', multiply: 100},
-                'spend/clicks': {label: 'CPC', format: 'currency', prefix: '$'},
-                'spend/impressions': {label: 'CPM', format: 'currency', prefix: '$'},
-                'spend/conversions': {label: 'CPA', format: 'currency', prefix: '$'},
-                'spend/results': {label: 'Cost/Result', format: 'currency', prefix: '$'},
-                'spend/sessions': {label: 'Cost/Session', format: 'currency', prefix: '$'},
-                'revenue/spend': {label: 'ROAS', format: 'currency', prefix: '$'},
-                'revenue/clicks': {label: 'RPC', format: 'currency', prefix: '$'},
-                'impressions/spend': {label: 'Impr./$', format: 'number'},
-                'sessions/spend': {label: 'Sessions/$', format: 'number'},
-                'new_users/spend': {label: 'New Users/$', format: 'number'},
-                'engaged_users/reach': {label: 'Eng. Rate', format: 'percentage', multiply: 100},
-                'average_session_duration/clicks': {label: 'Session/Click', format: 'number', suffix: 's'},
-                'clicks/position': {label: 'Clicks/Pos.', format: 'number'},
+                "clicks/impressions": {
+                    label: "CTR",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "conversions/impressions": {
+                    label: "Conv. Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "conversions/clicks": {
+                    label: "Conv. Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "results/impressions": {
+                    label: "Result Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "results/clicks": {
+                    label: "Result Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "sessions/clicks": {
+                    label: "Session Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "sessions/link_clicks": {
+                    label: "Session Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "bounce_rate/clicks": {
+                    label: "Bounce Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "spend/clicks": {
+                    label: "CPC",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "spend/impressions": {
+                    label: "CPM",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "spend/conversions": {
+                    label: "CPA",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "spend/results": {
+                    label: "Cost/Result",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "spend/sessions": {
+                    label: "Cost/Session",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "revenue/spend": {
+                    label: "ROAS",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "revenue/clicks": {
+                    label: "RPC",
+                    format: "currency",
+                    prefix: "$",
+                },
+                "impressions/spend": { label: "Impr./$", format: "number" },
+                "sessions/spend": { label: "Sessions/$", format: "number" },
+                "new_users/spend": { label: "New Users/$", format: "number" },
+                "engaged_users/reach": {
+                    label: "Eng. Rate",
+                    format: "percentage",
+                    multiply: 100,
+                },
+                "average_session_duration/clicks": {
+                    label: "Session/Click",
+                    format: "number",
+                    suffix: "s",
+                },
+                "clicks/position": { label: "Clicks/Pos.", format: "number" },
             };
-            const key = m0 + '/' + m1;
+            const key = m0 + "/" + m1;
             if (ratioFormats[key]) return ratioFormats[key];
 
             // Fallback heuristic
-            if (f0?.format === 'currency' && f1?.format === 'number') {
-                return {label: f0.label, format: 'currency', prefix: '$'};
+            if (f0?.format === "currency" && f1?.format === "number") {
+                return { label: f0.label, format: "currency", prefix: "$" };
             }
-            if (f0?.format === 'number' && f1?.format === 'number') {
-                return {label: f0.label + '/' + f1.label, format: 'percentage', multiply: 100};
+            if (f0?.format === "number" && f1?.format === "number") {
+                return {
+                    label: f0.label + "/" + f1.label,
+                    format: "percentage",
+                    multiply: 100,
+                };
             }
             return f0 || null;
         }
@@ -113,33 +209,73 @@ window.dashboardRenderer = {
         containerEl.innerHTML = this.loadingSkeleton();
 
         try {
-            const body = {tenant};
+            const effectiveTenant =
+                tenant ||
+                window.tenant ||
+                window.Filament?.getTenant?.() ||
+                document.querySelector('meta[name="tenant"]')?.content ||
+                window.location.pathname.match(/\/app\/([^\/]+)/)?.[1] ||
+                "";
+            const body = { tenant: effectiveTenant };
             if (controls) {
-                const overrideKeys = ['date_start', 'date_end', 'zero_handling', 'granularity', 'metrics', 'assets', 'asset_group', 'series_assets', 'series_channels', 'channel', 'edge_case_weighted', 'edge_case_grouping', 'max_ratio', 'remove_unknown'];
+                const overrideKeys = [
+                    "date_start",
+                    "date_end",
+                    "zero_handling",
+                    "granularity",
+                    "metrics",
+                    "assets",
+                    "asset_group",
+                    "series_assets",
+                    "series_metrics",
+                    "series_channels",
+                    "channel",
+                    "edge_case_weighted",
+                    "edge_case_grouping",
+                    "max_ratio",
+                    "remove_unknown",
+                    "combo_chart_config",
+                    "combo_series_config",
+                ];
                 const overrides = {};
                 for (const key of overrideKeys) {
-                    if (controls[key] !== undefined) overrides[key] = controls[key];
+                    if (controls[key] !== undefined)
+                        overrides[key] = controls[key];
                 }
-                if (Object.keys(overrides).length > 0) body.controls = overrides;
+                if (Object.keys(overrides).length > 0)
+                    body.controls = overrides;
             }
-            const response = await fetch('/api/dashboard/widget/' + widgetId + '/data', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            const currentLang =
+                document.documentElement.lang ||
+                window.Filament?.locale ||
+                "en";
+            const response = await fetch(
+                "/api/dashboard/widget/" +
+                    widgetId +
+                    "/data?lang=" +
+                    encodeURIComponent(currentLang),
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN":
+                            document.querySelector('meta[name="csrf-token"]')
+                                ?.content || "",
+                    },
+                    body: JSON.stringify(body),
                 },
-                body: JSON.stringify(body),
-            });
+            );
 
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || 'HTTP ' + response.status);
+                throw new Error(err.error || "HTTP " + response.status);
             }
 
             const json = await response.json();
 
             if (!json.success) {
-                throw new Error(json.message || json.error || 'Unknown error');
+                throw new Error(json.message || json.error || "Unknown error");
             }
 
             if (json.missing_assets || json.data?._missing_assets) {
@@ -153,9 +289,15 @@ window.dashboardRenderer = {
             // Render immediately if already in viewport, otherwise defer
             this._lazyRenderWhenVisible(containerEl, json);
         } catch (e) {
-            if (e.message === 'access_restricted') {
+            if (e.message === "access_restricted") {
                 containerEl.innerHTML = this.accessRestrictedState();
-            } else if (e.message && (e.message.includes('___EMPTY_GROUP___') || e.message.includes('no assets') || e.message.includes('No assets found') || e.message.includes('no available assets'))) {
+            } else if (
+                e.message &&
+                (e.message.includes("___EMPTY_GROUP___") ||
+                    e.message.includes("no assets") ||
+                    e.message.includes("No assets found") ||
+                    e.message.includes("no available assets"))
+            ) {
                 containerEl.innerHTML = this.emptyAssetState();
             } else {
                 containerEl.innerHTML = this.errorState(e.message);
@@ -170,7 +312,8 @@ window.dashboardRenderer = {
         if (this._renderObservers?.has(containerEl)) return;
 
         const rect = containerEl.getBoundingClientRect();
-        const isVisible = rect.top < window.innerHeight + 100 && rect.bottom > -100;
+        const isVisible =
+            rect.top < window.innerHeight + 100 && rect.bottom > -100;
 
         if (isVisible) {
             this.render(containerEl, json);
@@ -179,15 +322,18 @@ window.dashboardRenderer = {
 
         if (!this._renderObservers) this._renderObservers = new Map();
 
-        const observer = new IntersectionObserver((entries) => {
-            for (const entry of entries) {
-                if (!entry.isIntersecting) continue;
-                observer.unobserve(containerEl);
-                this._renderObservers.delete(containerEl);
-                const data = this._widgetData.get(containerEl);
-                if (data) this.render(containerEl, data);
-            }
-        }, { rootMargin: '100px' });
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) continue;
+                    observer.unobserve(containerEl);
+                    this._renderObservers.delete(containerEl);
+                    const data = this._widgetData.get(containerEl);
+                    if (data) this.render(containerEl, data);
+                }
+            },
+            { rootMargin: "100px" },
+        );
 
         this._renderObservers.set(containerEl, observer);
         observer.observe(containerEl);
@@ -198,7 +344,7 @@ window.dashboardRenderer = {
      * Used by pop-out to ensure the chart exists before moving its canvas.
      */
     flushRender(containerEl) {
-        if (containerEl.querySelector('canvas')) return; // already rendered
+        if (containerEl.querySelector("canvas")) return; // already rendered
 
         const observer = this._renderObservers?.get(containerEl);
         if (observer) {
@@ -214,14 +360,15 @@ window.dashboardRenderer = {
      * Main render dispatcher.
      */
     render(containerEl, json) {
-        const {widget_type, source_type, calculation_type, data, controls} = json;
+        const { widget_type, source_type, calculation_type, data, controls } =
+            json;
         if (controls) {
             if (source_type) controls.source_type = source_type;
             if (widget_type) controls.widget_type = widget_type;
             if (calculation_type) controls.calculation_type = calculation_type;
         }
         this._widgetData.set(containerEl, json);
-        containerEl.innerHTML = '';
+        containerEl.innerHTML = "";
         this._renderWidget(widget_type, containerEl, data, controls);
     },
 
@@ -254,12 +401,24 @@ window.dashboardRenderer = {
     },
 
     errorState(message) {
-        const icon = '<svg class="w-6 h-6 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>';
+        let displayMessage =
+            message || "An error occurred while loading widget data.";
+        if (
+            displayMessage.includes("SQLSTATE") ||
+            displayMessage.includes("syntax error") ||
+            displayMessage.includes("500 Internal Server Error") ||
+            displayMessage.includes("Server error:")
+        ) {
+            displayMessage =
+                "Unable to display widget data. Please check widget metrics and asset configuration.";
+        }
+        const icon =
+            '<svg class="w-6 h-6 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>';
         return `
             <div class="flex items-center justify-center h-full p-4">
                 <div class="text-center">
                     ${icon}
-                    <p class="text-xs text-red-400 mt-2">${this.escapeHtml(message)}</p>
+                    <p class="text-xs text-red-400 mt-2">${this.escapeHtml(displayMessage)}</p>
                     <button onclick="this.closest('[x-ref]') ? null : location.reload()" class="text-xs text-primary-500 hover:underline mt-1">Retry</button>
                 </div>
             </div>`;
@@ -280,7 +439,7 @@ window.dashboardRenderer = {
     },
 
     escapeHtml(str) {
-        const div = document.createElement('div');
+        const div = document.createElement("div");
         div.textContent = str;
         return div.innerHTML;
     },
@@ -292,40 +451,41 @@ window.dashboardRenderer = {
 
         let value = data?.value ?? data?.current ?? 0;
         const previous = data?.previous ?? null;
-        const prefix = data?.prefix ?? resultFormat?.prefix ?? '';
-        const suffix = data?.suffix ?? resultFormat?.suffix ?? '';
-        const label = data?.label ?? resultFormat?.label ?? '';
-        let format = data?.format ?? resultFormat?.format ?? 'number';
+        const prefix = data?.prefix ?? resultFormat?.prefix ?? "";
+        const suffix = data?.suffix ?? resultFormat?.suffix ?? "";
+        const label = data?.label ?? resultFormat?.label ?? "";
+        let format = data?.format ?? resultFormat?.format ?? "number";
 
-        if (format === 'percentage' && resultFormat?.multiply) {
+        if (format === "percentage" && resultFormat?.multiply) {
             value = value * resultFormat.multiply;
         }
 
-        let trendHtml = '';
+        let trendHtml = "";
         let changePercent = null;
 
         if (previous !== null && previous !== 0) {
             changePercent = ((value - previous) / Math.abs(previous)) * 100;
             const isUp = changePercent >= 0;
-            const arrow = isUp ? '▲' : '▼';
-            const color = isUp ? 'text-green-500' : 'text-red-500';
+            const arrow = isUp ? "▲" : "▼";
+            const color = isUp ? "text-green-500" : "text-red-500";
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
-        const formattedValue = format === 'currency'
-            ? this.formatCurrency(value)
-            : format === 'percentage'
-                ? value.toFixed(1) + '%'
-                : this.formatNumber(value);
+        const formattedValue =
+            format === "currency"
+                ? this.formatCurrency(value)
+                : format === "percentage"
+                  ? value.toFixed(1) + "%"
+                  : this.formatNumber(value);
 
         containerEl.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full p-4">
-                ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">${this.escapeHtml(label)}</p>` : ''}
+                ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">${this.escapeHtml(label)}</p>` : ""}
                 <div class="flex items-baseline">
                     <span class="text-3xl font-bold text-gray-900 dark:text-white">${prefix}${formattedValue}${suffix}</span>
                     ${trendHtml}
                 </div>
-                ${changePercent !== null ? `<p class="text-xs text-gray-400 mt-1">vs previous period</p>` : ''}
+                ${changePercent !== null ? `<p class="text-xs text-gray-400 mt-1">vs previous period</p>` : ""}
             </div>`;
     },
 
@@ -334,35 +494,52 @@ window.dashboardRenderer = {
     renderLineChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
-        const reverseY = controls?.metrics?.[0] === 'position';
+        const reverseY = controls?.metrics?.[0] === "position";
         const resultFormat = this.getKpiResultFormat(controls);
 
         const yMetric = controls?.metrics?.[0];
-        const yFmt = resultFormat || (yMetric ? (this.METRIC_FORMATS[yMetric] || null) : null);
-        const yUnit = yFmt?.format === 'percentage' ? '%' : yFmt?.format === 'currency' ? (yFmt?.prefix || '$') : yFmt?.suffix || '';
-        const yAxisLabel = (yFmt?.label || 'Value') + (yUnit ? ' (' + yUnit + ')' : '');
+        const yFmt =
+            resultFormat ||
+            (yMetric ? this.METRIC_FORMATS[yMetric] || null : null);
+        const yUnit =
+            yFmt?.format === "percentage"
+                ? "%"
+                : yFmt?.format === "currency"
+                  ? yFmt?.prefix || "$"
+                  : yFmt?.suffix || "";
+        const yAxisLabel =
+            (yFmt?.label || "Value") + (yUnit ? " (" + yUnit + ")" : "");
         const yMetricName = this.getMetricName(yMetric);
 
         if (!labels.length || !datasets.length) {
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
-        const mappedDatasets = datasets.map(ds => ({
+        const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+            currency:
+                ds.currency ??
+                (resultFormat?.format === "currency" ? true : undefined),
+            percentage:
+                ds.percentage ??
+                (resultFormat?.format === "percentage" ? true : undefined),
             pointRadius: 6,
             pointHoverRadius: 10,
             pointHitRadius: 15,
-            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
-            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
+            pointBackgroundColor:
+                ds.borderColor || ds.backgroundColor || "#3B82F6",
+            pointBorderColor: ds.borderColor || ds.backgroundColor || "#3B82F6",
             pointBorderWidth: 2,
             pointHoverBorderWidth: 2,
         }));
 
         let chartScales = {
-            x: {grid: {display: false}, ticks: {maxTicksLimit: 8, font: {size: 10}}}
+            x: {
+                grid: { display: false },
+                ticks: { maxTicksLimit: 8, font: { size: 10 } },
+            },
         };
 
         if (datasets.length === 1) {
@@ -370,28 +547,31 @@ window.dashboardRenderer = {
             chartScales.y = {
                 beginAtZero: !reverseY,
                 reverse: reverseY,
-                title: {display: true, text: backendY.title?.text || yAxisLabel},
-                ticks: {font: {size: 10}, ...backendY.ticks},
+                title: {
+                    display: true,
+                    text: backendY.title?.text || yAxisLabel,
+                },
+                ticks: { font: { size: 10 }, ...backendY.ticks },
             };
-            mappedDatasets[0].yAxisID = 'y';
+            mappedDatasets[0].yAxisID = "y";
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
                     chartScales[axisId] = {
                         ...axisConf,
-                        title: {display: false},
-                        ticks: {display: false},
+                        title: { display: false },
+                        ticks: { display: false },
                     };
                 }
             } else {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
                         chartScales[ds.yAxisID] = {
-                            type: 'linear',
+                            type: "linear",
                             display: true,
-                            title: {display: false},
-                            ticks: {display: false},
-                            grid: {drawOnChartArea: idx === 0}
+                            title: { display: false },
+                            ticks: { display: false },
+                            grid: { drawOnChartArea: idx === 0 },
                         };
                     }
                 });
@@ -399,33 +579,54 @@ window.dashboardRenderer = {
         }
 
         const config = {
-            type: 'line',
-            data: {labels, datasets: mappedDatasets},
+            type: "line",
+            data: { labels, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 onHover(e) {
-                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
-                    e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                    const found = e.chart.getElementsAtEventForMode(
+                        e,
+                        "nearest",
+                        { intersect: true },
+                        false,
+                    );
+                    e.native.target.style.cursor = found.length
+                        ? "pointer"
+                        : "default";
                 },
                 plugins: {
-                    legend: {display: datasets.length > 1, position: 'bottom', labels: {boxWidth: 12, padding: 12}},
+                    legend: {
+                        display: datasets.length > 1,
+                        position: "bottom",
+                        labels: { boxWidth: 12, padding: 12 },
+                    },
                     tooltip: {
                         callbacks: {
-                            title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
+                            title: (ctx) =>
+                                ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] ||
+                                "",
                             label: (ctx) => {
-                                const dsLabel = ctx.dataset.label || yMetricName;
+                                const dsLabel =
+                                    ctx.dataset.label || yMetricName;
                                 let val = ctx.parsed.y;
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '% ' + dsLabel;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val) + ' ' + dsLabel;
-                                const valY = this.formatMetricValue(val, yMetric);
-                                return valY + ' ' + dsLabel;
+                                if (ctx.dataset?.percentage)
+                                    return val.toFixed(1) + "% " + dsLabel;
+                                if (ctx.dataset?.currency)
+                                    return (
+                                        this.formatCurrency(val) + " " + dsLabel
+                                    );
+                                const valY = this.formatMetricValue(
+                                    val,
+                                    yMetric,
+                                );
+                                return valY + " " + dsLabel;
                             },
                         },
                     },
                 },
                 scales: chartScales,
-                elements: {line: {tension: 0.3}},
+                elements: { line: { tension: 0.3 } },
             },
         };
         this._setAnimation(config, true);
@@ -437,23 +638,28 @@ window.dashboardRenderer = {
     renderBarChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
-        const reverseY = controls?.metrics?.[0] === 'position';
+        const reverseY = controls?.metrics?.[0] === "position";
 
         const resultFormat = this.getKpiResultFormat(controls);
 
         if (!labels.length || !datasets.length) {
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
-        const mappedDatasets = datasets.map(ds => ({
+        const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+            currency:
+                ds.currency ??
+                (resultFormat?.format === "currency" ? true : undefined),
+            percentage:
+                ds.percentage ??
+                (resultFormat?.format === "percentage" ? true : undefined),
         }));
 
         let chartScales = {
-            x: {grid: {display: false}, ticks: {font: {size: 10}}}
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
         };
 
         if (datasets.length === 1) {
@@ -461,28 +667,28 @@ window.dashboardRenderer = {
             chartScales.y = {
                 beginAtZero: !reverseY,
                 reverse: reverseY,
-                title: {display: true, text: backendY.title?.text || ''},
-                ticks: {font: {size: 10}, ...backendY.ticks},
+                title: { display: true, text: backendY.title?.text || "" },
+                ticks: { font: { size: 10 }, ...backendY.ticks },
             };
-            mappedDatasets[0].yAxisID = 'y';
+            mappedDatasets[0].yAxisID = "y";
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
                     chartScales[axisId] = {
                         ...axisConf,
-                        title: {display: false},
-                        ticks: {display: false},
+                        title: { display: false },
+                        ticks: { display: false },
                     };
                 }
             } else {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
                         chartScales[ds.yAxisID] = {
-                            type: 'linear',
+                            type: "linear",
                             display: true,
-                            title: {display: false},
-                            ticks: {display: false},
-                            grid: {drawOnChartArea: idx === 0}
+                            title: { display: false },
+                            ticks: { display: false },
+                            grid: { drawOnChartArea: idx === 0 },
                         };
                     }
                 });
@@ -490,20 +696,27 @@ window.dashboardRenderer = {
         }
 
         const config = {
-            type: 'bar',
-            data: {labels, datasets: mappedDatasets},
+            type: "bar",
+            data: { labels, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {display: datasets.length > 1, position: 'bottom', labels: {boxWidth: 12, padding: 12}},
+                    legend: {
+                        display: datasets.length > 1,
+                        position: "bottom",
+                        labels: { boxWidth: 12, padding: 12 },
+                    },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
-                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val);
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
+                                if (resultFormat?.multiply)
+                                    val = val * resultFormat.multiply;
+                                if (ctx.dataset?.currency)
+                                    return this.formatCurrency(val);
+                                if (ctx.dataset?.percentage)
+                                    return val.toFixed(1) + "%";
                                 return this.formatNumber(val);
                             },
                         },
@@ -523,70 +736,115 @@ window.dashboardRenderer = {
         const rows = data?.rows ?? [];
 
         if (!columns.length || !rows.length) {
-            containerEl.style.padding = '1rem';
-            containerEl.style.overflow = '';
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            containerEl.style.padding = "1rem";
+            containerEl.style.overflow = "";
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
-        containerEl.style.padding = '0';
-        containerEl.style.overflow = 'hidden';
+        containerEl.style.padding = "0";
+        containerEl.style.overflow = "hidden";
         containerEl._tableData = data;
 
         if (!containerEl._tableSort) {
             // Default sort by first column: DESC for time-based, ASC for dimensions
             const firstCol = columns[0];
             const firstKey = firstCol?.key || firstCol;
-            const timeKeys = ['date', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually'];
+            const timeKeys = [
+                "date",
+                "daily",
+                "weekly",
+                "monthly",
+                "quarterly",
+                "semiannual",
+                "annually",
+            ];
             const isTimeBased = timeKeys.includes(firstKey);
-            containerEl._tableSort = { column: firstKey, direction: isTimeBased ? 'desc' : 'asc' };
+            containerEl._tableSort = {
+                column: firstKey,
+                direction: isTimeBased ? "desc" : "asc",
+            };
         }
         const sort = containerEl._tableSort;
 
         let sortedRows = [...rows];
         if (sort.column) {
-            const colDef = columns.find(c => c.key === sort.column || c === sort.column);
-            const isNumeric = colDef?.format === 'number' || colDef?.format === 'currency' || colDef?.format === 'percentage';
+            const colDef = columns.find(
+                (c) => c.key === sort.column || c === sort.column,
+            );
+            const isNumeric =
+                colDef?.format === "number" ||
+                colDef?.format === "currency" ||
+                colDef?.format === "percentage";
             sortedRows.sort((a, b) => {
-                let va = a[sort.column], vb = b[sort.column];
-                if (isNumeric) { va = Number(va) || 0; vb = Number(vb) || 0; }
-                else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
-                return va < vb ? (sort.direction === 'asc' ? -1 : 1)
-                     : va > vb ? (sort.direction === 'asc' ? 1 : -1) : 0;
+                let va = a[sort.column],
+                    vb = b[sort.column];
+                if (isNumeric) {
+                    va = Number(va) || 0;
+                    vb = Number(vb) || 0;
+                } else {
+                    va = String(va).toLowerCase();
+                    vb = String(vb).toLowerCase();
+                }
+                return va < vb
+                    ? sort.direction === "asc"
+                        ? -1
+                        : 1
+                    : va > vb
+                      ? sort.direction === "asc"
+                          ? 1
+                          : -1
+                      : 0;
             });
         }
 
-        const blockFirstCol = controls.block_first_col !== undefined ? !!controls.block_first_col : true;
+        const blockFirstCol =
+            controls.block_first_col !== undefined
+                ? !!controls.block_first_col
+                : true;
 
-        let html = '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;">';
-        
+        let html =
+            '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;">';
+
         if (blockFirstCol) {
             // Fixed First Column Table
             const firstCol = columns[0];
             const firstKey = firstCol.key || firstCol;
             const firstRawLabel = firstCol.label || firstCol;
-            const firstDisplayLabel = this.getMetricName(firstRawLabel) || firstRawLabel;
+            const firstDisplayLabel =
+                this.getMetricName(firstRawLabel) || firstRawLabel;
             const firstIsActive = sort.column === firstKey;
-            const firstArrow = firstIsActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+            const firstArrow = firstIsActive
+                ? sort.direction === "asc"
+                    ? " \u25B2"
+                    : " \u25BC"
+                : "";
 
-            html += '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
-            html += '<table style="border-collapse:separate;border-spacing:0;">';
+            html +=
+                '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
+            html +=
+                '<table style="border-collapse:separate;border-spacing:0;">';
             html += '<thead style="position:sticky;top:0;z-index:2;">';
             html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${this.escapeHtml(firstDisplayLabel)}">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
             html += '<tbody class="bg-white dark:bg-gray-900">';
             sortedRows.forEach((row, ri) => {
                 const isEven = ri % 2 === 0;
-                const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
-                const val = row[firstKey] ?? row[firstCol] ?? '';
+                const cellBgClass = isEven
+                    ? "bg-white dark:bg-gray-900"
+                    : "bg-gray-50 dark:bg-gray-800";
+                const val = row[firstKey] ?? row[firstCol] ?? "";
                 html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-200 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
             });
-            html += '</tbody></table></div>';
+            html += "</tbody></table></div>";
         }
 
         // Scrollable Columns Table (all columns if !blockFirstCol, columns.slice(1) if blockFirstCol)
         const scrollCols = blockFirstCol ? columns.slice(1) : columns;
-        html += '<div class="table-scroll-wrap" style="flex:1 1 auto;overflow:auto;height:100%;min-width:0;">';
-        html += '<table style="width:100%;border-collapse:separate;border-spacing:0;">';
+        html +=
+            '<div class="table-scroll-wrap" style="flex:1 1 auto;overflow:auto;height:100%;min-width:0;">';
+        html +=
+            '<table style="width:100%;border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
         scrollCols.forEach((col) => {
@@ -594,36 +852,57 @@ window.dashboardRenderer = {
             const rawLabel = col.label || col;
             const displayLabel = this.getMetricName(rawLabel) || rawLabel;
             const isActive = sort.column === key;
-            const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
-            const arrow = isActive ? (sort.direction === 'asc' ? ' \u25B2' : ' \u25BC') : '';
-            const thAlign = isNumeric ? 'text-right' : 'text-left';
-            const thStyle = isNumeric ? 'min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' : 'min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+            const isNumeric =
+                col.format === "currency" ||
+                col.format === "percentage" ||
+                col.format === "number";
+            const arrow = isActive
+                ? sort.direction === "asc"
+                    ? " \u25B2"
+                    : " \u25BC"
+                : "";
+            const thAlign = isNumeric ? "text-right" : "text-left";
+            const thStyle = isNumeric
+                ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
             html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}" title="${this.escapeHtml(displayLabel)}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
-        html += '</tr></thead>';
+        html += "</tr></thead>";
 
         html += '<tbody class="bg-white dark:bg-gray-900">';
         sortedRows.forEach((row, ri) => {
             const isEven = ri % 2 === 0;
-            const cellBgClass = isEven ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800';
+            const cellBgClass = isEven
+                ? "bg-white dark:bg-gray-900"
+                : "bg-gray-50 dark:bg-gray-800";
             html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800">`;
             scrollCols.forEach((col) => {
                 const key = col.key || col;
-                const val = row[key] ?? row[col] ?? '';
-                const isNumeric = col.format === 'currency' || col.format === 'percentage' || col.format === 'number';
-                const formatted = isNumeric && col.format === 'currency' ? this.formatCurrency(val)
-                    : isNumeric && col.format === 'percentage' ? (val != null ? Number(val).toFixed(1) + '%' : '')
-                        : isNumeric && col.format === 'number' ? this._formatTableNumber(val)
+                const val = row[key] ?? row[col] ?? "";
+                const isNumeric =
+                    col.format === "currency" ||
+                    col.format === "percentage" ||
+                    col.format === "number";
+                const formatted =
+                    isNumeric && col.format === "currency"
+                        ? this.formatCurrency(val)
+                        : isNumeric && col.format === "percentage"
+                          ? val != null
+                              ? Number(val).toFixed(1) + "%"
+                              : ""
+                          : isNumeric && col.format === "number"
+                            ? this._formatTableNumber(val)
                             : val;
                 const tdClass = isNumeric
-                    ? 'px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right'
-                    : 'px-3 py-2 text-gray-700 dark:text-gray-200';
-                const tdStyle = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+                    ? "px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right"
+                    : "px-3 py-2 text-gray-700 dark:text-gray-200";
+                const tdStyle =
+                    "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
                 html += `<td class="${tdClass} ${cellBgClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
-            html += '</tr>';
+            html += "</tr>";
         });
-        html += '</tbody></table></div></div>';
+        html += "</tbody></table></div></div>";
 
         if (data.total !== undefined) {
             html += `<div class="px-3 py-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">${this._formatTableNumber(data.total)} results</div>`;
@@ -632,23 +911,23 @@ window.dashboardRenderer = {
         containerEl.innerHTML = html;
 
         if (blockFirstCol) {
-            const scrollWrap = containerEl.querySelector('.table-scroll-wrap');
-            const fixedWrap = containerEl.querySelector('.fixed-col-wrap');
+            const scrollWrap = containerEl.querySelector(".table-scroll-wrap");
+            const fixedWrap = containerEl.querySelector(".fixed-col-wrap");
             if (scrollWrap && fixedWrap) {
-                scrollWrap.addEventListener('scroll', () => {
+                scrollWrap.addEventListener("scroll", () => {
                     fixedWrap.scrollTop = scrollWrap.scrollTop;
                 });
             }
         }
 
-        containerEl.querySelectorAll('th[data-sort-key]').forEach(th => {
-            th.addEventListener('click', () => {
+        containerEl.querySelectorAll("th[data-sort-key]").forEach((th) => {
+            th.addEventListener("click", () => {
                 const key = th.dataset.sortKey;
                 if (sort.column === key) {
-                    sort.direction = sort.direction === 'asc' ? 'desc' : 'asc';
+                    sort.direction = sort.direction === "asc" ? "desc" : "asc";
                 } else {
                     sort.column = key;
-                    sort.direction = 'asc';
+                    sort.direction = "asc";
                 }
                 this.renderTable(containerEl, data, controls);
             });
@@ -669,15 +948,19 @@ window.dashboardRenderer = {
         let value = data?.value ?? 0;
         const min = data?.min ?? 0;
         const max = data?.max ?? 100;
-        const label = data?.label ?? '';
+        const label = data?.label ?? "";
         const thresholds = data?.thresholds ?? [
-            {from: 0, to: 33, color: '#EF4444'},
-            {from: 33, to: 66, color: '#F59E0B'},
-            {from: 66, to: 100, color: '#22C55E'},
+            { from: 0, to: 33, color: "#EF4444" },
+            { from: 33, to: 66, color: "#F59E0B" },
+            { from: 66, to: 100, color: "#22C55E" },
         ];
 
         const metricKey = controls?.metrics?.[0];
-        const isPercentageMetric = metricKey === 'ctr' || metricKey === 'bounce_rate' || metricKey === 'result_rate' || resultFormat?.format === 'percentage';
+        const isPercentageMetric =
+            metricKey === "ctr" ||
+            metricKey === "bounce_rate" ||
+            metricKey === "result_rate" ||
+            resultFormat?.format === "percentage";
 
         let rawValue = data?.value ?? 0;
 
@@ -687,15 +970,18 @@ window.dashboardRenderer = {
         }
 
         // Target max normalization: if metric is percentage and max is whole percentage (>1 e.g. 100 or 6.7), normalize fill comparison
-        let fillValue = isPercentageMetric ? (rawValue * 100) : rawValue;
+        let fillValue = isPercentageMetric ? rawValue * 100 : rawValue;
         let effectiveMax = max;
         if (isPercentageMetric && max <= 1.0) {
             effectiveMax = max * 100;
         }
 
-        const pct = Math.min(100, Math.max(0, ((fillValue - min) / (effectiveMax - min)) * 100));
+        const pct = Math.min(
+            100,
+            Math.max(0, ((fillValue - min) / (effectiveMax - min)) * 100),
+        );
 
-        let color = thresholds[0]?.color ?? '#22C55E';
+        let color = thresholds[0]?.color ?? "#22C55E";
         for (const t of thresholds) {
             if (pct >= t.from && pct <= t.to) {
                 color = t.color;
@@ -704,13 +990,26 @@ window.dashboardRenderer = {
         }
 
         const remainingPct = 100 - pct;
-        const isDark = document.documentElement.classList.contains('dark');
-        const trackColor = isDark ? '#374151' : '#E5E7EB';
+        const isDark = document.documentElement.classList.contains("dark");
+        const trackColor = isDark ? "#374151" : "#E5E7EB";
 
-        const displayLabel = data?.label || (metricKey ? this.getMetricName(metricKey) : '');
+        const displayLabel =
+            data?.label || (metricKey ? this.getMetricName(metricKey) : "");
 
-        const formattedRawVal = metricKey ? this.formatMetricValue(rawValue, metricKey) : (isPercentageMetric ? (rawValue * 100).toFixed(1) + '%' : resultFormat?.format === 'currency' ? this.formatCurrency(rawValue) : this.formatNumber(rawValue));
-        const formattedMaxVal = isPercentageMetric ? (effectiveMax).toFixed(1) + '%' : (metricKey ? this.formatMetricValue(max, metricKey) : (resultFormat?.format === 'currency' ? this.formatCurrency(max) : this.formatNumber(max)));
+        const formattedRawVal = metricKey
+            ? this.formatMetricValue(rawValue, metricKey)
+            : isPercentageMetric
+              ? (rawValue * 100).toFixed(1) + "%"
+              : resultFormat?.format === "currency"
+                ? this.formatCurrency(rawValue)
+                : this.formatNumber(rawValue);
+        const formattedMaxVal = isPercentageMetric
+            ? effectiveMax.toFixed(1) + "%"
+            : metricKey
+              ? this.formatMetricValue(max, metricKey)
+              : resultFormat?.format === "currency"
+                ? this.formatCurrency(max)
+                : this.formatNumber(max);
 
         const formattedValueStr = `${formattedRawVal} / ${formattedMaxVal}`;
 
@@ -722,12 +1021,12 @@ window.dashboardRenderer = {
             </div>`;
 
         const createChart = () => {
-            const canvas = containerEl.querySelector('canvas');
+            const canvas = containerEl.querySelector("canvas");
             if (!canvas) return;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext("2d");
 
             const gaugeTextPlugin = {
-                id: 'gaugeCenterText',
+                id: "gaugeCenterText",
                 afterDraw: (chart) => {
                     const { ctx, chartArea } = chart;
                     if (!chartArea) return;
@@ -742,58 +1041,89 @@ window.dashboardRenderer = {
                     const innerRadius = arc.innerRadius || 60;
 
                     ctx.save();
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'bottom';
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "bottom";
 
                     // Dynamically calculate font sizes proportional to chart size
-                    const pctFontSize = Math.max(16, Math.min(32, Math.round(innerRadius * 0.35)));
-                    const labelFontSize = Math.max(10, Math.min(16, Math.round(innerRadius * 0.16)));
-                    const valFontSize = Math.max(10, Math.min(16, Math.round(innerRadius * 0.15)));
+                    const pctFontSize = Math.max(
+                        16,
+                        Math.min(32, Math.round(innerRadius * 0.35)),
+                    );
+                    const labelFontSize = Math.max(
+                        10,
+                        Math.min(16, Math.round(innerRadius * 0.16)),
+                    );
+                    const valFontSize = Math.max(
+                        10,
+                        Math.min(16, Math.round(innerRadius * 0.15)),
+                    );
 
-                    const isDark = document.documentElement.classList.contains('dark');
+                    const isDark =
+                        document.documentElement.classList.contains("dark");
 
                     // Draw formatted percentage (top line)
-                    ctx.fillStyle = isDark ? '#FFFFFF' : '#111827';
+                    ctx.fillStyle = isDark ? "#FFFFFF" : "#111827";
                     ctx.font = `bold ${pctFontSize}px system-ui, -apple-system, sans-serif`;
-                    ctx.fillText(`${Math.round(pct)}%`, centerX, centerY - (innerRadius * 0.45));
+                    ctx.fillText(
+                        `${Math.round(pct)}%`,
+                        centerX,
+                        centerY - innerRadius * 0.45,
+                    );
 
                     // Draw label (middle line)
                     if (displayLabel) {
-                        ctx.fillStyle = isDark ? '#9CA3AF' : '#6B7280';
+                        ctx.fillStyle = isDark ? "#9CA3AF" : "#6B7280";
                         ctx.font = `600 ${labelFontSize}px system-ui, -apple-system, sans-serif`;
-                        ctx.fillText(displayLabel, centerX, centerY - (innerRadius * 0.22));
+                        ctx.fillText(
+                            displayLabel,
+                            centerX,
+                            centerY - innerRadius * 0.22,
+                        );
                     }
 
                     // Draw value / max (bottom line directly resting on the baseline)
-                    ctx.fillStyle = isDark ? '#6B7280' : '#9CA3AF';
+                    ctx.fillStyle = isDark ? "#6B7280" : "#9CA3AF";
                     ctx.font = `500 ${valFontSize}px system-ui, -apple-system, sans-serif`;
-                    ctx.fillText(formattedValueStr, centerX, centerY - (innerRadius * 0.04));
+                    ctx.fillText(
+                        formattedValueStr,
+                        centerX,
+                        centerY - innerRadius * 0.04,
+                    );
 
                     ctx.restore();
-                }
+                },
             };
 
             const chart = new Chart(ctx, {
-                type: 'doughnut',
+                type: "doughnut",
                 data: {
-                    labels: ['Current Value', 'Target Remaining'],
-                    datasets: [{
-                        data: [pct, remainingPct],
-                        backgroundColor: [color, trackColor],
-                        borderWidth: 0,
-                        borderRadius: 4,
-                    }]
+                    labels: ["Current Value", "Target Remaining"],
+                    datasets: [
+                        {
+                            data: [pct, remainingPct],
+                            backgroundColor: [color, trackColor],
+                            borderWidth: 0,
+                            borderRadius: 4,
+                        },
+                    ],
                 },
                 plugins: [gaugeTextPlugin],
                 options: {
                     rotation: 270,
                     circumference: 180,
-                    cutout: '70%',
+                    cutout: "70%",
                     responsive: true,
                     maintainAspectRatio: false,
                     onHover(e) {
-                        const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
-                        e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                        const found = e.chart.getElementsAtEventForMode(
+                            e,
+                            "nearest",
+                            { intersect: true },
+                            false,
+                        );
+                        e.native.target.style.cursor = found.length
+                            ? "pointer"
+                            : "default";
                     },
                     plugins: {
                         legend: { display: false },
@@ -803,20 +1133,28 @@ window.dashboardRenderer = {
                                     if (tooltipItem.dataIndex === 0) {
                                         return `Current Value: ${formattedRawVal} (${Math.round(pct)}%)`;
                                     } else {
-                                        const remainingRaw = Math.max(0, max - rawValue);
-                                        const formattedRem = metricKey ? this.formatMetricValue(remainingRaw, metricKey) : this.formatNumber(remainingRaw);
+                                        const remainingRaw = Math.max(
+                                            0,
+                                            max - rawValue,
+                                        );
+                                        const formattedRem = metricKey
+                                            ? this.formatMetricValue(
+                                                  remainingRaw,
+                                                  metricKey,
+                                              )
+                                            : this.formatNumber(remainingRaw);
                                         return `Target Max: ${formattedMaxVal} (Remaining: ${formattedRem})`;
                                     }
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     },
                     animation: {
                         animateRotate: true,
                         animateScale: false,
-                        duration: 800
-                    }
-                }
+                        duration: 800,
+                    },
+                },
             });
 
             if (widgetId) {
@@ -824,9 +1162,10 @@ window.dashboardRenderer = {
             }
         };
 
-        if (typeof Chart === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+        if (typeof Chart === "undefined") {
+            const script = document.createElement("script");
+            script.src =
+                "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
             script.onload = createChart;
             document.head.appendChild(script);
         } else {
@@ -840,7 +1179,8 @@ window.dashboardRenderer = {
         const points = data?.points ?? data?.values ?? [];
 
         if (!points.length) {
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data</div>';
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data</div>';
             return;
         }
 
@@ -851,33 +1191,42 @@ window.dashboardRenderer = {
         const current = points[points.length - 1];
         const first = points[0];
         const isUp = lowerIsBetter ? current < first : current >= first;
-        const trend = isUp ? 'up' : 'down';
-        const color = trend === 'up' ? '#22C55E' : '#EF4444';
+        const trend = isUp ? "up" : "down";
+        const color = trend === "up" ? "#22C55E" : "#EF4444";
 
         const min = Math.min(...points);
         const max = Math.max(...points);
         const range = max - min || 1;
-        const w = 160, h = 40;
+        const w = 160,
+            h = 40;
         const stepX = w / (points.length - 1);
 
-        const pathD = points.map((p, i) => {
-            const x = i * stepX;
-            const y = lowerIsBetter ? ((p - min) / range) * h : h - ((p - min) / range) * h;
-            return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1);
-        }).join(' ');
+        const pathD = points
+            .map((p, i) => {
+                const x = i * stepX;
+                const y = lowerIsBetter
+                    ? ((p - min) / range) * h
+                    : h - ((p - min) / range) * h;
+                return (
+                    (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1)
+                );
+            })
+            .join(" ");
 
-        const areaD = pathD + ' L' + (w) + ' ' + h + ' L0 ' + h + ' Z';
+        const areaD = pathD + " L" + w + " " + h + " L0 " + h + " Z";
 
         let changePct = 0;
-        if (first !== 0) changePct = ((current - first) / Math.abs(first)) * 100;
+        if (first !== 0)
+            changePct = ((current - first) / Math.abs(first)) * 100;
 
-        const gradientId = 'spark-fill-' + Math.random().toString(36).substr(2, 9);
+        const gradientId =
+            "spark-fill-" + Math.random().toString(36).substr(2, 9);
 
         containerEl.innerHTML = `
             <div class="flex items-stretch gap-3 p-4 h-full">
                 <div class="flex-shrink-0 text-right self-center flex flex-col">
                     <span class="text-xl font-bold text-gray-900 dark:text-white">${this.formatNumber(current)}</span>
-                    <span class="text-xs ${trend === 'up' ? 'text-green-500' : 'text-red-500'}">${trend === 'up' ? '▲' : '▼'} ${Math.abs(changePct).toFixed(0)}%</span>
+                    <span class="text-xs ${trend === "up" ? "text-green-500" : "text-red-500"}">${trend === "up" ? "▲" : "▼"} ${Math.abs(changePct).toFixed(0)}%</span>
                 </div>
                 <svg viewBox="0 0 ${w} ${h}" class="flex-1 h-full" preserveAspectRatio="none">
                     <defs>
@@ -898,32 +1247,45 @@ window.dashboardRenderer = {
         const anomalies = data?.anomalies ?? data?.points ?? [];
 
         if (!anomalies.length) {
-            containerEl.innerHTML = '<div class="flex items-center justify-center h-full text-sm text-green-500 p-4">✓ No anomalies detected</div>';
+            containerEl.innerHTML =
+                '<div class="flex items-center justify-center h-full text-sm text-green-500 p-4">✓ No anomalies detected</div>';
             return;
         }
 
-        let html = '<div class="overflow-auto max-h-full divide-y divide-gray-200 dark:divide-gray-700">';
-        anomalies.slice(0, 20).forEach(a => {
+        let html =
+            '<div class="overflow-auto max-h-full divide-y divide-gray-200 dark:divide-gray-700">';
+        anomalies.slice(0, 20).forEach((a) => {
             const severity = a.severity ?? a.anomaly_score ?? 0;
-            const severityLabel = severity >= 0.9 ? 'Critical' : severity >= 0.7 ? 'High' : severity >= 0.4 ? 'Medium' : 'Low';
-            const color = severity >= 0.9 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                : severity >= 0.7 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
-                    : severity >= 0.4 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
+            const severityLabel =
+                severity >= 0.9
+                    ? "Critical"
+                    : severity >= 0.7
+                      ? "High"
+                      : severity >= 0.4
+                        ? "Medium"
+                        : "Low";
+            const color =
+                severity >= 0.9
+                    ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+                    : severity >= 0.7
+                      ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
+                      : severity >= 0.4
+                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                        : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
 
             html += `<div class="px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">${this.escapeHtml(a.label || a.name || 'Anomaly')}</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">${this.escapeHtml(a.label || a.name || "Anomaly")}</span>
                     <span class="text-xs px-1.5 py-0.5 rounded-full font-medium ${color}">${severityLabel}</span>
                 </div>
                 <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <span>Value: ${this.formatNumber(a.value ?? a.actual_value)}</span>
                     <span>Expected: ${this.formatNumber(a.expected ?? a.expected_value)}</span>
                 </div>
-                ${a.date ? `<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">${this.escapeHtml(a.date)}</p>` : ''}
+                ${a.date ? `<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">${this.escapeHtml(a.date)}</p>` : ""}
             </div>`;
         });
-        html += '</div>';
+        html += "</div>";
         if (anomalies.length > 20) {
             html += `<div class="px-3 py-1.5 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700">+${anomalies.length - 20} more</div>`;
         }
@@ -937,25 +1299,34 @@ window.dashboardRenderer = {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
         const anomalyDates = data?.anomaly_dates ?? [];
-        const reverseY = controls?.metrics?.[0] === 'position';
+        const reverseY = controls?.metrics?.[0] === "position";
 
         const resultFormat = this.getKpiResultFormat(controls);
 
         const yMetric = controls?.metrics?.[0];
-        const yFmt = resultFormat || (yMetric ? (this.METRIC_FORMATS[yMetric] || null) : null);
-        const yUnit = yFmt?.format === 'percentage' ? '%' : yFmt?.format === 'currency' ? (yFmt?.prefix || '$') : yFmt?.suffix || '';
-        const yAxisLabel = (yFmt?.label || 'Value') + (yUnit ? ' (' + yUnit + ')' : '');
+        const yFmt =
+            resultFormat ||
+            (yMetric ? this.METRIC_FORMATS[yMetric] || null : null);
+        const yUnit =
+            yFmt?.format === "percentage"
+                ? "%"
+                : yFmt?.format === "currency"
+                  ? yFmt?.prefix || "$"
+                  : yFmt?.suffix || "";
+        const yAxisLabel =
+            (yFmt?.label || "Value") + (yUnit ? " (" + yUnit + ")" : "");
         const yMetricName = this.getMetricName(yMetric);
 
         if (!labels.length || !datasets.length) {
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
         const anomalySet = new Set(anomalyDates);
 
         const anomalyPlugin = {
-            id: 'anomalyLines',
+            id: "anomalyLines",
             afterDraw(chart) {
                 const ctx = chart.ctx;
                 const xScale = chart.scales.x;
@@ -963,7 +1334,7 @@ window.dashboardRenderer = {
                 ctx.save();
                 ctx.setLineDash([4, 4]);
                 ctx.lineWidth = 1.5;
-                ctx.strokeStyle = '#EF4444';
+                ctx.strokeStyle = "#EF4444";
 
                 labels.forEach((label, i) => {
                     if (anomalySet.has(label)) {
@@ -982,59 +1353,83 @@ window.dashboardRenderer = {
             },
         };
 
-        const mappedDatasets = datasets.map(ds => ({
+        const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
+            currency:
+                ds.currency ??
+                (resultFormat?.format === "currency" ? true : undefined),
+            percentage:
+                ds.percentage ??
+                (resultFormat?.format === "percentage" ? true : undefined),
             pointRadius: 6,
             pointHoverRadius: 10,
             pointHitRadius: 15,
-            pointBackgroundColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
-            pointBorderColor: ds.borderColor || ds.backgroundColor || '#3B82F6',
+            pointBackgroundColor:
+                ds.borderColor || ds.backgroundColor || "#3B82F6",
+            pointBorderColor: ds.borderColor || ds.backgroundColor || "#3B82F6",
             pointBorderWidth: 2,
             pointHoverBorderWidth: 2,
         }));
 
         const config = {
-            type: 'line',
-            data: {labels, datasets: mappedDatasets},
+            type: "line",
+            data: { labels, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 onHover(e) {
-                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
-                    e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                    const found = e.chart.getElementsAtEventForMode(
+                        e,
+                        "nearest",
+                        { intersect: true },
+                        false,
+                    );
+                    e.native.target.style.cursor = found.length
+                        ? "pointer"
+                        : "default";
                 },
                 plugins: {
-                    legend: {display: false},
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
-                            title: (ctx) => ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] || '',
+                            title: (ctx) =>
+                                ctx[0]?.chart.data.labels?.[ctx[0].dataIndex] ||
+                                "",
                             label: (ctx) => {
-                                const dsLabel = ctx.dataset.label || yMetricName;
+                                const dsLabel =
+                                    ctx.dataset.label || yMetricName;
                                 let val = ctx.parsed.y;
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '% ' + dsLabel;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val) + ' ' + dsLabel;
-                                const valY = this.formatMetricValue(val, yMetric);
-                                return valY + ' ' + dsLabel;
+                                if (ctx.dataset?.percentage)
+                                    return val.toFixed(1) + "% " + dsLabel;
+                                if (ctx.dataset?.currency)
+                                    return (
+                                        this.formatCurrency(val) + " " + dsLabel
+                                    );
+                                const valY = this.formatMetricValue(
+                                    val,
+                                    yMetric,
+                                );
+                                return valY + " " + dsLabel;
                             },
                         },
                     },
                 },
                 scales: {
                     x: {
-                        grid: {display: false},
-                        ticks: {maxTicksLimit: 10, font: {size: 10}},
+                        grid: { display: false },
+                        ticks: { maxTicksLimit: 10, font: { size: 10 } },
                     },
                     y: {
                         beginAtZero: !reverseY,
                         reverse: reverseY,
-                        title: {display: true, text: yAxisLabel},
+                        title: { display: true, text: yAxisLabel },
                         ticks: {
-                            font: {size: 10},
+                            font: { size: 10 },
                             callback(val) {
-                                if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M';
-                                if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+                                if (val >= 1000000)
+                                    return (val / 1000000).toFixed(1) + "M";
+                                if (val >= 1000)
+                                    return (val / 1000).toFixed(1) + "K";
                                 return val;
                             },
                         },
@@ -1051,19 +1446,33 @@ window.dashboardRenderer = {
 
     renderScatterPlot(containerEl, data, controls) {
         if (!data || !data.datasets || !data.datasets.length) {
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
-        const higherIsWorse = ['position', 'bounce_rate', 'bouncerate', 'cpc', 'cpa', 'cost_per_click'];
+        const higherIsWorse = [
+            "position",
+            "bounce_rate",
+            "bouncerate",
+            "cpc",
+            "cpa",
+            "cost_per_click",
+        ];
         const reverseYColor = higherIsWorse.includes(controls?.metrics?.[0]);
         const reverseXColor = higherIsWorse.includes(controls?.metrics?.[1]);
-        const reverseYAxis = controls?.metrics?.[0] === 'position';
-        const reverseXAxis = controls?.metrics?.[1] === 'position';
+        const reverseYAxis = controls?.metrics?.[0] === "position";
+        const reverseXAxis = controls?.metrics?.[1] === "position";
 
         const resultFormat = this.getKpiResultFormat(controls);
-        const xFmt = controls?.metrics?.[1] ? (this.METRIC_FORMATS[controls.metrics[1]] || null) : null;
-        const yFmt = resultFormat || (controls?.metrics?.[0] ? (this.METRIC_FORMATS[controls.metrics[0]] || null) : null);
+        const xFmt = controls?.metrics?.[1]
+            ? this.METRIC_FORMATS[controls.metrics[1]] || null
+            : null;
+        const yFmt =
+            resultFormat ||
+            (controls?.metrics?.[0]
+                ? this.METRIC_FORMATS[controls.metrics[0]] || null
+                : null);
 
         /* console.log('[ScatterPlot] controls:', controls);
         console.log('[ScatterPlot] metrics:', controls?.metrics);
@@ -1072,44 +1481,56 @@ window.dashboardRenderer = {
 
         const formatPoint = (v, fmt, axis) => {
             if (!fmt) {
-                const r = v.toLocaleString('en-US', {maximumFractionDigits: 2});
+                const r = v.toLocaleString("en-US", {
+                    maximumFractionDigits: 2,
+                });
                 /* if (v === 0 || (v > 0 && v < 1)) console.log(`[formatPoint][${axis}] v=${v}, fmt=null →`, r); */
                 return r;
             }
             let val = fmt.multiply ? v * fmt.multiply : v;
             let r;
-            if (fmt.format === 'currency') r = '$' + val.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-            else if (fmt.format === 'percentage') r = val.toFixed(1) + '%';
-            else r = val.toLocaleString('en-US', {maximumFractionDigits: 2});
+            if (fmt.format === "currency")
+                r =
+                    "$" +
+                    val.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    });
+            else if (fmt.format === "percentage") r = val.toFixed(1) + "%";
+            else r = val.toLocaleString("en-US", { maximumFractionDigits: 2 });
             /* console.log(`[formatPoint][${axis}] v=${v}, fmt=${JSON.stringify(fmt)}, val=${val} →`, r); */
             return r;
         };
 
         const formatUnit = (fmt) => {
-            if (!fmt) return '';
-            if (fmt.format === 'percentage') return '%';
-            if (fmt.format === 'currency') return fmt.prefix || '$';
+            if (!fmt) return "";
+            if (fmt.format === "percentage") return "%";
+            if (fmt.format === "currency") return fmt.prefix || "$";
             if (fmt.suffix) return fmt.suffix;
-            return '';
+            return "";
         };
         const yUnit = formatUnit(yFmt);
         const xUnit = formatUnit(xFmt);
-        const yAxisLabel = (yFmt?.label || 'Value') + (yUnit ? ' (' + yUnit + ')' : '');
-        const xAxisLabel = (xFmt?.label || (controls?.metrics?.[1] || 'X')) + (xUnit ? ' (' + xUnit + ')' : '');
+        const yAxisLabel =
+            (yFmt?.label || "Value") + (yUnit ? " (" + yUnit + ")" : "");
+        const xAxisLabel =
+            (xFmt?.label || controls?.metrics?.[1] || "X") +
+            (xUnit ? " (" + xUnit + ")" : "");
 
-        const scatterDataset = data.datasets.find(d => d.type === 'scatter');
-        if (scatterDataset && scatterDataset.data && scatterDataset.data.length > 0) {
-            const yValues = scatterDataset.data.map(p => p.y);
+        const scatterDataset = data.datasets.find((d) => d.type === "scatter");
+        if (
+            scatterDataset &&
+            scatterDataset.data &&
+            scatterDataset.data.length > 0
+        ) {
+            const yValues = scatterDataset.data.map((p) => p.y);
             const minY = Math.min(...yValues);
             const maxY = Math.max(...yValues);
 
             const bgColors = [];
             const borderColors = [];
 
-            scatterDataset.data.forEach(p => {
+            scatterDataset.data.forEach((p) => {
                 let t = 0.5;
                 if (maxY > minY) {
                     t = (p.y - minY) / (maxY - minY);
@@ -1128,39 +1549,54 @@ window.dashboardRenderer = {
         }
 
         const yScaleOpts = {
-            type: 'linear',
-            title: {display: true, text: yAxisLabel},
+            type: "linear",
+            title: { display: true, text: yAxisLabel },
             reverse: reverseYAxis,
-            ticks: {callback: (v) => formatPoint(v, yFmt, 'Y')}
+            ticks: { callback: (v) => formatPoint(v, yFmt, "Y") },
         };
 
         const xMetricName = this.getMetricName(controls?.metrics?.[1]);
         const yMetricName = this.getMetricName(controls?.metrics?.[0]);
 
         // Extract R2 (coefficient of determination) if present in payload data
-        const r2Raw = data?.r2 ?? data?.r_squared ?? data?.rSquared ?? data?.regression?.r2 ?? data?.stats?.r2 ?? data?.summary?.r2 ?? data?.datasets?.find(d => d.r2 !== undefined || d.r_squared !== undefined)?.r2 ?? data?.datasets?.find(d => d.r2 !== undefined || d.r_squared !== undefined)?.r_squared;
-        const r2 = (r2Raw !== null && r2Raw !== undefined && !isNaN(Number(r2Raw))) ? Number(r2Raw) : null;
+        const r2Raw =
+            data?.r2 ??
+            data?.r_squared ??
+            data?.rSquared ??
+            data?.regression?.r2 ??
+            data?.stats?.r2 ??
+            data?.summary?.r2 ??
+            data?.datasets?.find(
+                (d) => d.r2 !== undefined || d.r_squared !== undefined,
+            )?.r2 ??
+            data?.datasets?.find(
+                (d) => d.r2 !== undefined || d.r_squared !== undefined,
+            )?.r_squared;
+        const r2 =
+            r2Raw !== null && r2Raw !== undefined && !isNaN(Number(r2Raw))
+                ? Number(r2Raw)
+                : null;
 
-        let r2Color = '#3B82F6'; // Default Blue
-        let fitRating = 'Moderate Fit';
-        
+        let r2Color = "#3B82F6"; // Default Blue
+        let fitRating = "Moderate Fit";
+
         if (r2 !== null) {
-            if (r2 >= 0.70) {
-                r2Color = '#10B981'; // Green / High Explanatory Power
-                fitRating = 'Strong Fit';
-            } else if (r2 >= 0.40) {
-                r2Color = '#F59E0B'; // Amber / Moderate Explanatory Power
-                fitRating = 'Moderate Fit';
+            if (r2 >= 0.7) {
+                r2Color = "#10B981"; // Green / High Explanatory Power
+                fitRating = "Strong Fit";
+            } else if (r2 >= 0.4) {
+                r2Color = "#F59E0B"; // Amber / Moderate Explanatory Power
+                fitRating = "Moderate Fit";
             } else {
-                r2Color = '#EF4444'; // Red / Low Explanatory Power
-                fitRating = 'Weak Fit';
+                r2Color = "#EF4444"; // Red / Low Explanatory Power
+                fitRating = "Weak Fit";
             }
         }
 
         const mappedData = JSON.parse(JSON.stringify(data));
         if (mappedData.datasets) {
-            mappedData.datasets = mappedData.datasets.map(ds => {
-                if (ds.type === 'line') {
+            mappedData.datasets = mappedData.datasets.map((ds) => {
+                if (ds.type === "line") {
                     return {
                         ...ds,
                         borderColor: r2Color,
@@ -1182,45 +1618,80 @@ window.dashboardRenderer = {
         }
 
         const config = {
-            type: 'scatter',
+            type: "scatter",
             data: mappedData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 onHover(e) {
-                    const found = e.chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
-                    e.native.target.style.cursor = found.length ? 'pointer' : 'default';
+                    const found = e.chart.getElementsAtEventForMode(
+                        e,
+                        "nearest",
+                        { intersect: true },
+                        false,
+                    );
+                    e.native.target.style.cursor = found.length
+                        ? "pointer"
+                        : "default";
                 },
                 scales: {
                     x: {
-                        type: 'linear',
-                        position: 'bottom',
-                        title: {display: true, text: xAxisLabel},
+                        type: "linear",
+                        position: "bottom",
+                        title: { display: true, text: xAxisLabel },
                         reverse: reverseXAxis,
                         ticks: {
-                            callback: (v) => formatPoint(v, xFmt, 'X'),
+                            callback: (v) => formatPoint(v, xFmt, "X"),
                         },
                     },
                     y: yScaleOpts,
                 },
                 plugins: {
-                    legend: {display: false},
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
                                 const ds = ctx.dataset;
-                                if (ds.type === 'line') {
+                                if (ds.type === "line") {
                                     const point = ctx.raw;
-                                    const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
-                                    const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
-                                    const r2Label = r2 !== null ? ` — R² = ${r2.toFixed(3)} (${fitRating})` : '';
+                                    const valX = this.formatMetricValue(
+                                        point.x,
+                                        controls?.metrics?.[1],
+                                    );
+                                    const valY = this.formatMetricValue(
+                                        point.y,
+                                        controls?.metrics?.[0],
+                                    );
+                                    const r2Label =
+                                        r2 !== null
+                                            ? ` — R² = ${r2.toFixed(3)} (${fitRating})`
+                                            : "";
                                     return `Trendline: (${valX} ${xMetricName}, ${valY} ${yMetricName})${r2Label}`;
                                 }
                                 const point = ctx.raw;
-                                const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
-                                const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
-                                const baseLabel = point.label ? (point.label + ' — ') : '';
-                                return baseLabel + '(' + valX + ' ' + xMetricName + ', ' + valY + ' ' + yMetricName + ')';
+                                const valX = this.formatMetricValue(
+                                    point.x,
+                                    controls?.metrics?.[1],
+                                );
+                                const valY = this.formatMetricValue(
+                                    point.y,
+                                    controls?.metrics?.[0],
+                                );
+                                const baseLabel = point.label
+                                    ? point.label + " — "
+                                    : "";
+                                return (
+                                    baseLabel +
+                                    "(" +
+                                    valX +
+                                    " " +
+                                    xMetricName +
+                                    ", " +
+                                    valY +
+                                    " " +
+                                    yMetricName +
+                                    ")"
+                                );
                             },
                         },
                     },
@@ -1229,14 +1700,17 @@ window.dashboardRenderer = {
         };
 
         // Prepare header badge HTML if R2 exists
-        let badgeHtml = '';
+        let badgeHtml = "";
         if (r2 !== null) {
             const badgePct = (r2 * 100).toFixed(1);
-            let pillClasses = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/50';
-            if (fitRating === 'Moderate Fit') {
-                pillClasses = 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/50';
-            } else if (fitRating === 'Weak Fit') {
-                pillClasses = 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700/50';
+            let pillClasses =
+                "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/50";
+            if (fitRating === "Moderate Fit") {
+                pillClasses =
+                    "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/50";
+            } else if (fitRating === "Weak Fit") {
+                pillClasses =
+                    "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700/50";
             }
 
             badgeHtml = `
@@ -1249,38 +1723,40 @@ window.dashboardRenderer = {
                 </div>`;
         }
 
-        containerEl.style.display = 'flex';
-        containerEl.style.flexDirection = 'column';
-        containerEl.style.width = '100%';
-        containerEl.style.height = '100%';
-        containerEl.style.overflow = 'hidden';
-        containerEl.innerHTML = badgeHtml + '<div class="chart-canvas-wrap flex-1 min-h-0 relative w-full h-full"></div>';
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.width = "100%";
+        containerEl.style.height = "100%";
+        containerEl.style.overflow = "hidden";
+        containerEl.innerHTML =
+            badgeHtml +
+            '<div class="chart-canvas-wrap flex-1 min-h-0 relative w-full h-full"></div>';
 
-        const canvasWrap = containerEl.querySelector('.chart-canvas-wrap');
-        this.renderChart(canvasWrap, config);
-        const hasLineDs = mappedData.datasets.some(ds => ds.type === 'line');
+        const hasLineDs = mappedData.datasets.some((ds) => ds.type === "line");
         if (hasLineDs) {
             config.options = config.options || {};
             config.options.animation = {
                 x: {
-                    type: 'number',
-                    easing: 'easeOutQuart',
+                    type: "number",
+                    easing: "easeOutQuart",
                     duration: 1000,
                     from(ctx) {
-                        if (ctx.type !== 'data' || ctx.mode !== 'default') return undefined;
+                        if (ctx.type !== "data" || ctx.mode !== "default")
+                            return undefined;
                         const ds = ctx.chart.data.datasets[ctx.datasetIndex];
-                        if (ds?.type === 'line') return NaN;
+                        if (ds?.type === "line") return NaN;
                         return ctx.raw?.x;
                     },
                 },
                 y: {
-                    type: 'number',
-                    easing: 'easeOutQuart',
+                    type: "number",
+                    easing: "easeOutQuart",
                     duration: 1000,
                     from(ctx) {
-                        if (ctx.type !== 'data' || ctx.mode !== 'default') return undefined;
+                        if (ctx.type !== "data" || ctx.mode !== "default")
+                            return undefined;
                         const ds = ctx.chart.data.datasets[ctx.datasetIndex];
-                        if (ds?.type === 'line') return 0;
+                        if (ds?.type === "line") return 0;
                         return ctx.raw?.y;
                     },
                 },
@@ -1290,14 +1766,20 @@ window.dashboardRenderer = {
         // Constrain axes to scatter data only (ignore trend line endpoints),
         // with 10 % breathing room so edge points aren't clipped by the grid border.
         // Remove ticks and grid lines in the grace area via afterBuildTicks.
-        let scatterPoints = mappedData.datasets?.find(d => d.type === 'scatter')?.data;
+        let scatterPoints = mappedData.datasets?.find(
+            (d) => d.type === "scatter",
+        )?.data;
         if (scatterPoints && scatterPoints.length > 0) {
-            const xs = scatterPoints.map(p => p.x);
-            const ys = scatterPoints.map(p => p.y);
-            const dataMinX = Math.min(...xs), dataMaxX = Math.max(...xs);
-            const dataMinY = Math.min(...ys), dataMaxY = Math.max(...ys);
-            let xMin = dataMinX, xMax = dataMaxX;
-            let yMin = dataMinY, yMax = dataMaxY;
+            const xs = scatterPoints.map((p) => p.x);
+            const ys = scatterPoints.map((p) => p.y);
+            const dataMinX = Math.min(...xs),
+                dataMaxX = Math.max(...xs);
+            const dataMinY = Math.min(...ys),
+                dataMaxY = Math.max(...ys);
+            let xMin = dataMinX,
+                xMax = dataMaxX;
+            let yMin = dataMinY,
+                yMax = dataMaxY;
             const xRange = xMax - xMin || 1;
             const yRange = yMax - yMin || 1;
             xMin -= xRange * 0.1;
@@ -1308,14 +1790,20 @@ window.dashboardRenderer = {
             config.options.scales.x.max = xMax;
             config.options.scales.x.afterBuildTicks = (axis) => {
                 // When zoomed (axis range differs from initial), let Chart.js auto-generate ticks
-                if (Math.abs(axis.min - xMin) > 0.001 || Math.abs(axis.max - xMax) > 0.001) return;
-                const filtered = axis.ticks.filter(t => t.value >= dataMinX && t.value <= dataMaxX);
-                const values = filtered.map(t => t.value);
+                if (
+                    Math.abs(axis.min - xMin) > 0.001 ||
+                    Math.abs(axis.max - xMax) > 0.001
+                )
+                    return;
+                const filtered = axis.ticks.filter(
+                    (t) => t.value >= dataMinX && t.value <= dataMaxX,
+                );
+                const values = filtered.map((t) => t.value);
                 if (values.length > 0) {
                     const maxVal = Math.max(...values);
-                    if (maxVal < dataMaxX) filtered.push({value: dataMaxX});
+                    if (maxVal < dataMaxX) filtered.push({ value: dataMaxX });
                     const minVal = Math.min(...values);
-                    if (minVal > dataMinX) filtered.push({value: dataMinX});
+                    if (minVal > dataMinX) filtered.push({ value: dataMinX });
                 }
                 axis.ticks = filtered;
             };
@@ -1323,38 +1811,46 @@ window.dashboardRenderer = {
             config.options.scales.y.max = yMax;
             config.options.scales.y.afterBuildTicks = (axis) => {
                 // When zoomed (axis range differs from initial), let Chart.js auto-generate ticks
-                if (Math.abs(axis.min - yMin) > 0.001 || Math.abs(axis.max - yMax) > 0.001) return;
-                const filtered = axis.ticks.filter(t => t.value >= dataMinY && t.value <= dataMaxY);
-                const values = filtered.map(t => t.value);
+                if (
+                    Math.abs(axis.min - yMin) > 0.001 ||
+                    Math.abs(axis.max - yMax) > 0.001
+                )
+                    return;
+                const filtered = axis.ticks.filter(
+                    (t) => t.value >= dataMinY && t.value <= dataMaxY,
+                );
+                const values = filtered.map((t) => t.value);
                 // Keep the 0 reference tick if it falls within the visible axis range (Bug 1 fix)
                 if (0 >= yMin && 0 <= yMax && !values.includes(0)) {
-                    filtered.push({value: 0});
+                    filtered.push({ value: 0 });
                     values.push(0);
                 }
                 if (values.length > 0) {
                     const maxVal = Math.max(...values);
-                    if (maxVal < dataMaxY) filtered.push({value: dataMaxY});
+                    if (maxVal < dataMaxY) filtered.push({ value: dataMaxY });
                     const minVal = Math.min(...values);
-                    if (minVal > dataMinY) filtered.push({value: dataMinY});
+                    if (minVal > dataMinY) filtered.push({ value: dataMinY });
                 }
                 axis.ticks = filtered;
             };
         }
 
         // Split cluster point ([[[others]]]) into its own hidden dataset for show/hide toggle
-        const mainScatterDs = mappedData.datasets?.find(d => d.type === 'scatter');
+        const mainScatterDs = mappedData.datasets?.find(
+            (d) => d.type === "scatter",
+        );
         let clusterPoint = null;
         if (mainScatterDs) {
-            const ci = mainScatterDs.data.findIndex(p => p._isCluster);
+            const ci = mainScatterDs.data.findIndex((p) => p._isCluster);
             if (ci >= 0) {
                 clusterPoint = mainScatterDs.data.splice(ci, 1)[0];
                 delete clusterPoint._isCluster;
                 mappedData.datasets.push({
-                    type: 'scatter',
-                    label: 'Clustered',
+                    type: "scatter",
+                    label: "Clustered",
                     data: [clusterPoint],
-                    backgroundColor: 'rgba(107, 114, 128, 0.5)',
-                    borderColor: 'rgba(107, 114, 128, 1)',
+                    backgroundColor: "rgba(107, 114, 128, 0.5)",
+                    borderColor: "rgba(107, 114, 128, 1)",
                     borderWidth: 2,
                     pointRadius: 8,
                     pointHoverRadius: 14,
@@ -1362,73 +1858,385 @@ window.dashboardRenderer = {
             }
         }
 
+        const canvasWrap = containerEl.querySelector(".chart-canvas-wrap");
+        this.renderChart(canvasWrap, config);
+
         // Add show/hide toggle for the cluster point
         if (clusterPoint && mainScatterDs) {
-            const toggleId = 'cluster-toggle-' + (containerEl._clusterToggleCount = (containerEl._clusterToggleCount || 0) + 1);
-            const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;';
-            wrapper.innerHTML = '<label for="' + toggleId + '" style="font-size:11px;color:#9ca3af;cursor:pointer;user-select:none;">Show clustered</label>';
-            const input = document.createElement('input');
-            input.type = 'checkbox';
+            const toggleId =
+                "cluster-toggle-" +
+                (containerEl._clusterToggleCount =
+                    (containerEl._clusterToggleCount || 0) + 1);
+            const wrapper = document.createElement("div");
+            wrapper.style.cssText =
+                "display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;";
+            wrapper.innerHTML =
+                '<label for="' +
+                toggleId +
+                '" style="font-size:11px;color:#9ca3af;cursor:pointer;user-select:none;">Show clustered</label>';
+            const input = document.createElement("input");
+            input.type = "checkbox";
             input.id = toggleId;
             input.checked = true;
-            input.style.cssText = 'cursor:pointer;accent-color:#6b7280;';
+            input.style.cssText = "cursor:pointer;accent-color:#6b7280;";
             wrapper.prepend(input);
             containerEl.appendChild(wrapper);
 
-            input.addEventListener('change', () => {
-                const chart = Chart.getChart(containerEl.querySelector('canvas'));
+            input.addEventListener("change", () => {
+                const chart = Chart.getChart(
+                    containerEl.querySelector("canvas"),
+                );
                 if (!chart || !chart.data || !chart.data.datasets) return;
-                const ds = chart.data.datasets.find(d => d.type === 'scatter' && d.label === 'Clustered');
+                const ds = chart.data.datasets.find(
+                    (d) => d.type === "scatter" && d.label === "Clustered",
+                );
                 if (!ds) return;
-                const meta = chart.getDatasetMeta(chart.data.datasets.indexOf(ds));
+                const meta = chart.getDatasetMeta(
+                    chart.data.datasets.indexOf(ds),
+                );
                 meta.hidden = !input.checked;
                 chart.update();
             });
         }
     },
 
-    // ─── Combo Chart (MACD) ───
+    // ─── Combo Chart (Multi-Metric / Multi-Series & MACD) ───
 
     renderComboChart(containerEl, data, controls) {
         if (!data || !data.datasets || !data.datasets.length) {
-            containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
 
         const resultFormat = this.getKpiResultFormat(controls);
+        const comboConfig =
+            controls?.combo_chart_config || controls?.combo_series_config || {};
 
-        const mappedDatasets = data.datasets.map(ds => ({
-            ...ds,
-            currency: ds.currency ?? (resultFormat?.format === 'currency' ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === 'percentage' ? true : undefined),
-        }));
+        // Rate, ratio, and percentage metric keys that default to Line on secondary axis (y1)
+        const rateMetricKeywords = [
+            "roas",
+            "cpc",
+            "cpm",
+            "ctr",
+            "rate",
+            "aov",
+            "frequency",
+            "cost_per",
+            "percentage",
+            "ratio",
+            "bounce",
+        ];
+
+        let hasLeftAxis = false;
+        let hasRightAxis = false;
+        let leftAxisUnit = "";
+        let rightAxisUnit = "";
+
+        const mappedDatasets = data.datasets.map((ds, idx) => {
+            const labelLower = (ds.label || "").toLowerCase();
+            let metricKey = ds.metric || ds.metric_key || "";
+            let seriesIdx = ds.series_index;
+
+            if (!metricKey && ds.key) {
+                const mMatch = String(ds.key).match(/^series_(\d+)_(.+)$/);
+                if (mMatch) {
+                    if (seriesIdx === undefined || seriesIdx === null)
+                        seriesIdx = parseInt(mMatch[1], 10);
+                    metricKey = mMatch[2];
+                } else {
+                    metricKey = ds.key;
+                }
+            }
+            if (seriesIdx === undefined || seriesIdx === null) {
+                seriesIdx = idx;
+            }
+
+            const keyLower = String(metricKey).toLowerCase();
+
+            // 1. Determine if this dataset is a rate / ratio or volume metric
+            const isRateOrPercentage =
+                ds.percentage ||
+                resultFormat?.format === "percentage" ||
+                rateMetricKeywords.some(
+                    (kw) => labelLower.includes(kw) || keyLower.includes(kw),
+                );
+
+            const isCurrency =
+                ds.currency ??
+                (resultFormat?.format === "currency" ||
+                    ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                        (kw) =>
+                            labelLower.includes(kw) || keyLower.includes(kw),
+                    ));
+
+            // 2. Determine Chart Type (User override > Dataset default > Heuristic)
+            const comboEntry =
+                comboConfig[seriesIdx + "_" + metricKey] ||
+                comboConfig[seriesIdx + "_" + keyLower] ||
+                comboConfig[idx + "_" + metricKey] ||
+                comboConfig[idx + "_" + keyLower] ||
+                comboConfig[metricKey] ||
+                comboConfig[keyLower] ||
+                comboConfig[idx] ||
+                comboConfig[ds.label] ||
+                comboConfig[ds.key];
+
+            let chartType = comboEntry?.type || null;
+
+            if (!chartType) {
+                if (ds.type) {
+                    chartType = ds.type;
+                } else {
+                    const hasSpendOrCurrency = data.datasets.some((d) => {
+                        const l = (d.label || "").toLowerCase();
+                        const m = (
+                            d.metric ||
+                            d.metric_key ||
+                            ""
+                        ).toLowerCase();
+                        return (
+                            d.currency ||
+                            ["spend", "cost", "revenue"].some(
+                                (kw) => l.includes(kw) || m.includes(kw),
+                            )
+                        );
+                    });
+
+                    if (hasSpendOrCurrency) {
+                        // When Spend/Cost/Revenue is present, make Spend the Bar, and non-currency counts/rates the Lines
+                        const isThisCurrency =
+                            isCurrency ||
+                            ["spend", "cost", "revenue"].some(
+                                (kw) =>
+                                    labelLower.includes(kw) ||
+                                    keyLower.includes(kw),
+                            );
+                        chartType = isThisCurrency ? "bar" : "line";
+                    } else if (
+                        isRateOrPercentage &&
+                        !data.datasets.every((d) =>
+                            rateMetricKeywords.some((kw) =>
+                                (d.label || "").toLowerCase().includes(kw),
+                            ),
+                        )
+                    ) {
+                        // If mixed volumes and rates, rates are lines
+                        chartType = "line";
+                    } else if (data.datasets.length > 1 && idx > 0) {
+                        // Fallback when no spend/currency: primary series is bar, others are lines
+                        chartType = "line";
+                    } else {
+                        chartType = "bar";
+                    }
+                }
+            }
+
+            // 3. Determine Axis Assignment (User override > Default)
+            let yAxisID = comboEntry?.axis || ds.yAxisID || null;
+            if (!yAxisID) {
+                if (comboConfig[idx]?.axis) {
+                    yAxisID = comboConfig[idx].axis;
+                } else if (comboConfig[ds.label]?.axis) {
+                    yAxisID = comboConfig[ds.label].axis;
+                } else {
+                    const hasCurrencyInAny = data.datasets.some((d) => {
+                        const l = (d.label || "").toLowerCase();
+                        const m = (
+                            d.metric ||
+                            d.metric_key ||
+                            ""
+                        ).toLowerCase();
+                        return (
+                            d.currency ||
+                            ["spend", "cost", "revenue"].some(
+                                (kw) => l.includes(kw) || m.includes(kw),
+                            )
+                        );
+                    });
+
+                    if (hasCurrencyInAny) {
+                        // Currency on left ('y'), count/rate lines on right ('y1')
+                        const isThisCurrency =
+                            isCurrency ||
+                            ["spend", "cost", "revenue"].some(
+                                (kw) =>
+                                    labelLower.includes(kw) ||
+                                    keyLower.includes(kw),
+                            );
+                        yAxisID = isThisCurrency ? "y" : "y1";
+                    } else if (chartType === "line" && isRateOrPercentage) {
+                        yAxisID = "y1";
+                    } else {
+                        yAxisID = "y";
+                    }
+                }
+            }
+
+            if (yAxisID === "y1") {
+                hasRightAxis = true;
+                if (!rightAxisUnit) {
+                    if (isRateOrPercentage) rightAxisUnit = "%";
+                    else if (isCurrency) rightAxisUnit = "$";
+                }
+            } else {
+                hasLeftAxis = true;
+                if (!leftAxisUnit) {
+                    if (isCurrency) leftAxisUnit = "$";
+                    else if (isRateOrPercentage) leftAxisUnit = "%";
+                }
+            }
+
+            return {
+                ...ds,
+                type: chartType,
+                yAxisID: yAxisID,
+                currency: isCurrency,
+                percentage: isRateOrPercentage,
+                borderWidth:
+                    chartType === "line"
+                        ? ds.borderWidth || 2.5
+                        : ds.borderWidth || 1,
+                pointRadius:
+                    chartType === "line" ? (ds.pointRadius ?? 4) : undefined,
+                pointHoverRadius:
+                    chartType === "line"
+                        ? (ds.pointHoverRadius ?? 6)
+                        : undefined,
+                pointStyle: chartType === "line" ? "line" : "rectRounded",
+                fill: ds.fill !== undefined ? ds.fill : false,
+            };
+        });
+
+        const scalesConfig = {
+            x: {
+                grid: { display: false },
+                ticks: { maxTicksLimit: 12, font: { size: 10 } },
+            },
+            y: {
+                type: "linear",
+                display: hasLeftAxis || !hasRightAxis,
+                position: "left",
+                beginAtZero: true,
+                grid: { color: "rgba(156, 163, 175, 0.15)" },
+                ticks: {
+                    font: { size: 10 },
+                    callback: (val) => {
+                        if (leftAxisUnit === "$")
+                            return this.formatCurrency(val);
+                        if (leftAxisUnit === "%") return val.toFixed(1) + "%";
+                        if (val >= 1000000)
+                            return (val / 1000000).toFixed(1) + "M";
+                        if (val >= 1000) return (val / 1000).toFixed(1) + "K";
+                        return this.formatNumber(val);
+                    },
+                },
+            },
+        };
+
+        if (hasRightAxis) {
+            scalesConfig.y1 = {
+                type: "linear",
+                display: true,
+                position: "right",
+                beginAtZero: true,
+                grid: { drawOnChartArea: false }, // Avoid duplicate gridlines
+                ticks: {
+                    font: { size: 10 },
+                    callback: (val) => {
+                        if (rightAxisUnit === "$")
+                            return this.formatCurrency(val);
+                        if (rightAxisUnit === "%") return val.toFixed(1) + "%";
+                        if (val >= 1000000)
+                            return (val / 1000000).toFixed(1) + "M";
+                        if (val >= 1000) return (val / 1000).toFixed(1) + "K";
+                        return this.formatNumber(val);
+                    },
+                },
+            };
+        }
 
         const config = {
-            type: 'bar',
-            data: {...data, datasets: mappedDatasets},
+            type: "bar",
+            data: { ...data, datasets: mappedDatasets },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: {
-                    x: {grid: {display: false}},
+                interaction: {
+                    mode: "index",
+                    intersect: false,
                 },
+                scales: scalesConfig,
                 plugins: {
-                    legend: {display: true, position: 'bottom'},
+                    legend: {
+                        display: true,
+                        position: "bottom",
+                        labels: {
+                            usePointStyle: true,
+                            pointStyleWidth: 18,
+                            font: { size: 11 },
+                            padding: 12,
+                            color: document.documentElement.classList.contains(
+                                "dark",
+                            )
+                                ? "#E4E4E7"
+                                : "#374151",
+                            generateLabels: (chart) => {
+                                const isDark =
+                                    document.documentElement.classList.contains(
+                                        "dark",
+                                    );
+                                const labelColor =
+                                    chart.options?.plugins?.legend?.labels
+                                        ?.color ||
+                                    (isDark ? "#E4E4E7" : "#374151");
+                                return (chart.data.datasets || []).map(
+                                    (ds, i) => {
+                                        const isHidden =
+                                            !chart.isDatasetVisible(i);
+                                        const isLine = ds.type === "line";
+                                        return {
+                                            text: ds.label,
+                                            fillStyle: isLine
+                                                ? ds.borderColor
+                                                : ds.backgroundColor ||
+                                                  ds.borderColor,
+                                            strokeStyle: ds.borderColor,
+                                            lineWidth: isLine ? 2.5 : 1,
+                                            fontColor: labelColor,
+                                            color: labelColor,
+                                            hidden: isHidden,
+                                            datasetIndex: i,
+                                            pointStyle: isLine
+                                                ? "line"
+                                                : "rectRounded",
+                                            pointStyleWidth: isLine ? 20 : 12,
+                                        };
+                                    },
+                                );
+                            },
+                        },
+                    },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
+                                const ds = ctx.dataset || {};
+                                const label = ds.label || "Value";
                                 let val = ctx.parsed.y;
-                                if (resultFormat?.multiply) val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency) return this.formatCurrency(val);
-                                if (ctx.dataset?.percentage) return val.toFixed(1) + '%';
-                                return this.formatNumber(val);
+                                if (resultFormat?.multiply)
+                                    val = val * resultFormat.multiply;
+                                if (ds.currency)
+                                    return `${label}: ${this.formatCurrency(val)}`;
+                                if (ds.percentage)
+                                    return `${label}: ${val.toFixed(1)}%`;
+                                return `${label}: ${this.formatNumber(val)}`;
                             },
                         },
                     },
                 },
             },
         };
+
         this._setAnimation(config, false);
         this.renderChart(containerEl, config);
     },
@@ -1440,30 +2248,38 @@ window.dashboardRenderer = {
             config.options = config.options || {};
             config.options.animation = {
                 x: {
-                    type: 'number',
-                    easing: 'linear',
+                    type: "number",
+                    easing: "linear",
                     duration: 200,
                     from: NaN,
                     delay(ctx) {
-                        if (ctx.type !== 'data' || ctx.mode !== 'default') return 0;
-                        const count = ctx.chart.data.datasets[ctx.datasetIndex]?.data?.length || 1;
-                        return ((1000 - 200) / (count - 1 || 1)) * ctx.dataIndex;
+                        if (ctx.type !== "data" || ctx.mode !== "default")
+                            return 0;
+                        const count =
+                            ctx.chart.data.datasets[ctx.datasetIndex]?.data
+                                ?.length || 1;
+                        return (
+                            ((1000 - 200) / (count - 1 || 1)) * ctx.dataIndex
+                        );
                     },
                 },
                 y: {
-                    type: 'number',
-                    easing: 'easeOutQuart',
+                    type: "number",
+                    easing: "easeOutQuart",
                     duration: 200,
-                    from: (ctx) => ctx.type === 'data' && ctx.mode === 'default' ? 0 : undefined,
+                    from: (ctx) =>
+                        ctx.type === "data" && ctx.mode === "default"
+                            ? 0
+                            : undefined,
                 },
             };
         } else {
             config.options = config.options || {};
             config.options.animation = {
                 duration: 200,
-                easing: 'easeOutQuart',
+                easing: "easeOutQuart",
                 delay(ctx) {
-                    if (ctx.type !== 'data' || ctx.mode !== 'default') return 0;
+                    if (ctx.type !== "data" || ctx.mode !== "default") return 0;
                     const count = ctx.chart.data.labels?.length || 1;
                     return ((1000 - 200) / (count - 1 || 1)) * ctx.dataIndex;
                 },
@@ -1473,19 +2289,26 @@ window.dashboardRenderer = {
 
     _chartJsPromise: null,
     _ensureChartJs(callback) {
-        if (typeof window.Chart !== 'undefined') {
+        if (typeof window.Chart !== "undefined") {
             callback();
             return;
         }
         if (!this._chartJsPromise) {
             this._chartJsPromise = new Promise((resolve) => {
-                const existing = document.querySelector('script[src*="chart.umd.min.js"]');
+                const existing = document.querySelector(
+                    'script[src*="chart.umd.min.js"]',
+                );
                 if (existing) {
-                    existing.addEventListener('load', () => resolve(), {once: true});
-                    existing.addEventListener('error', () => resolve(), {once: true});
+                    existing.addEventListener("load", () => resolve(), {
+                        once: true,
+                    });
+                    existing.addEventListener("error", () => resolve(), {
+                        once: true,
+                    });
                 } else {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js';
+                    const script = document.createElement("script");
+                    script.src =
+                        "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js";
                     script.onload = () => resolve();
                     script.onerror = () => resolve();
                     document.head.appendChild(script);
@@ -1498,23 +2321,34 @@ window.dashboardRenderer = {
     _zoomPluginPromise: null,
     _ensureZoomPlugin(callback) {
         this._ensureChartJs(() => {
-            if (typeof window.Chart === 'undefined') {
+            if (typeof window.Chart === "undefined") {
                 callback();
                 return;
             }
-            if (window.Chart.registry && window.Chart.registry.plugins && window.Chart.registry.plugins.get('zoom')) {
+            if (
+                window.Chart.registry &&
+                window.Chart.registry.plugins &&
+                window.Chart.registry.plugins.get("zoom")
+            ) {
                 callback();
                 return;
             }
             if (!this._zoomPluginPromise) {
                 this._zoomPluginPromise = new Promise((resolve) => {
-                    const existing = document.querySelector('script[src*="chartjs-plugin-zoom"]');
+                    const existing = document.querySelector(
+                        'script[src*="chartjs-plugin-zoom"]',
+                    );
                     if (existing) {
-                        existing.addEventListener('load', () => resolve(), {once: true});
-                        existing.addEventListener('error', () => resolve(), {once: true});
+                        existing.addEventListener("load", () => resolve(), {
+                            once: true,
+                        });
+                        existing.addEventListener("error", () => resolve(), {
+                            once: true,
+                        });
                     } else {
-                        const script = document.createElement('script');
-                        script.src = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js';
+                        const script = document.createElement("script");
+                        script.src =
+                            "https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js";
                         script.onload = () => resolve();
                         script.onerror = () => resolve();
                         document.head.appendChild(script);
@@ -1525,43 +2359,97 @@ window.dashboardRenderer = {
         });
     },
 
+    _themeObserverInitialized: false,
+    _initThemeObserver() {
+        if (this._themeObserverInitialized || typeof window === "undefined")
+            return;
+        this._themeObserverInitialized = true;
+
+        const observer = new MutationObserver((mutations) => {
+            for (const m of mutations) {
+                if (m.type === "attributes" && m.attributeName === "class") {
+                    this.updateTheme();
+                    break;
+                }
+            }
+        });
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
+        });
+        window.addEventListener("theme-changed", () => this.updateTheme());
+    },
+
+    updateTheme() {
+        const isDark = document.documentElement.classList.contains("dark");
+        const legendColor = isDark ? "#E4E4E7" : "#374151";
+        const tickColor = isDark ? "#A1A1AA" : "#71717A";
+        const gridColor = isDark
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(0,0,0,0.06)";
+
+        this._chartInstances.forEach((chart) => {
+            if (!chart || !chart.options) return;
+            if (chart.options.scales) {
+                for (const axis of Object.values(chart.options.scales)) {
+                    if (axis.ticks) axis.ticks.color = tickColor;
+                    if (axis.grid) axis.grid.color = gridColor;
+                }
+            }
+            if (chart.options.plugins?.legend?.labels) {
+                chart.options.plugins.legend.labels.color = legendColor;
+            }
+            try {
+                chart.update("none");
+            } catch (e) {
+                // Ignore transient update errors during navigation
+            }
+        });
+    },
+
     renderChart(containerEl, config) {
+        this._initThemeObserver();
         this._pinnedTooltips.delete(containerEl);
-        const isDark = document.documentElement.classList.contains('dark');
+        const isDark = document.documentElement.classList.contains("dark");
         if (config.options && config.options.scales) {
             for (const axis of Object.values(config.options.scales)) {
                 if (axis.ticks) {
-                    axis.ticks.color = isDark ? '#A1A1AA' : '#71717A';
+                    axis.ticks.color = isDark ? "#A1A1AA" : "#71717A";
                 }
                 if (axis.grid) {
-                    axis.grid.color = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+                    axis.grid.color = isDark
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(0,0,0,0.06)";
                 }
             }
         }
         if (config.options?.plugins?.legend?.labels) {
-            config.options.plugins.legend.labels.color = isDark ? '#D4D4D8' : '#52525B';
+            config.options.plugins.legend.labels.color = isDark
+                ? "#E4E4E7"
+                : "#374151";
         }
 
         config.options = config.options || {};
         config.options.plugins = config.options.plugins || {};
         config.options.plugins.tooltip = config.options.plugins.tooltip || {};
         config.options.plugins.tooltip.enabled = false;
-        config.options.plugins.tooltip.external = (ctx) => this._externalTooltipHandler(ctx);
+        config.options.plugins.tooltip.external = (ctx) =>
+            this._externalTooltipHandler(ctx);
         config.options.plugins.zoom = {
             zoom: {
-                wheel: {enabled: true, speed: 0.05, modifierKey: 'ctrl'},
-                pinch: {enabled: true},
-                mode: 'xy',
+                wheel: { enabled: true, speed: 0.05, modifierKey: "ctrl" },
+                pinch: { enabled: true },
+                mode: "xy",
             },
             pan: {
                 enabled: true,
-                mode: 'xy',
+                mode: "xy",
                 threshold: 10,
             },
         };
 
-        const canvas = document.createElement('canvas');
-        const existingCanvas = containerEl.querySelector('canvas');
+        const canvas = document.createElement("canvas");
+        const existingCanvas = containerEl.querySelector("canvas");
         if (existingCanvas) existingCanvas.remove();
         containerEl.appendChild(canvas);
 
@@ -1569,7 +2457,7 @@ window.dashboardRenderer = {
             const chart = new Chart(canvas, config);
             this._chartInstances.set(containerEl, chart);
             this._attachTooltipPin(chart, canvas, containerEl);
-            canvas.addEventListener('dblclick', () => {
+            canvas.addEventListener("dblclick", () => {
                 if (chart.options?.plugins?.zoom) chart.resetZoom();
             });
         };
@@ -1578,21 +2466,26 @@ window.dashboardRenderer = {
     },
 
     _attachTooltipPin(chart, canvas, containerEl) {
-        canvas.addEventListener('click', (e) => {
+        canvas.addEventListener("click", (e) => {
             // Resolve container from canvas current parent — handles popOut/popIn
             const container = canvas.parentNode || containerEl;
             const pinned = this._pinnedTooltips.get(container);
             if (pinned) {
                 this._pinnedTooltips.delete(container);
-                const tooltipEl = container.querySelector('.chart-tooltip');
+                const tooltipEl = container.querySelector(".chart-tooltip");
                 if (tooltipEl) {
-                    tooltipEl.style.pointerEvents = 'none';
-                    tooltipEl.style.opacity = '0';
-                    tooltipEl.innerHTML = '';
+                    tooltipEl.style.pointerEvents = "none";
+                    tooltipEl.style.opacity = "0";
+                    tooltipEl.innerHTML = "";
                 }
                 return;
             }
-            const elements = chart.getElementsAtEventForMode(e, 'nearest', {intersect: true}, false);
+            const elements = chart.getElementsAtEventForMode(
+                e,
+                "nearest",
+                { intersect: true },
+                false,
+            );
             if (elements.length === 0) return;
             const widgetJson = this._widgetData.get(container);
             const controls = widgetJson?.controls;
@@ -1602,48 +2495,77 @@ window.dashboardRenderer = {
             const yMetricName = this.getMetricName(controls?.metrics?.[0]);
 
             const anomalyDates = widgetJson?.data?.anomaly_dates ?? [];
-            const anomalySet = anomalyDates.length ? new Set(anomalyDates) : null;
+            const anomalySet = anomalyDates.length
+                ? new Set(anomalyDates)
+                : null;
 
-            let html = '';
+            let html = "";
             elements.forEach((el) => {
                 const ds = chart.data.datasets[el.datasetIndex];
                 const raw = ds.data[el.index];
                 let val;
-                if (chartType === 'scatter') {
+                if (chartType === "scatter") {
                     const point = raw;
-                    const valX = this.formatMetricValue(point.x, controls?.metrics?.[1]);
-                    const valY = this.formatMetricValue(point.y, controls?.metrics?.[0]);
-                    const baseLabel = point.label ? (point.label + ' — ') : '';
-                    val = baseLabel + '(' + valX + ' ' + xMetricName + ', ' + valY + ' ' + yMetricName + ')';
-                    } else {
-                    const label = chart.data.labels?.[el.index] || '';
-                    let v = typeof raw === 'object' ? (raw.y ?? 0) : raw;
+                    const valX = this.formatMetricValue(
+                        point.x,
+                        controls?.metrics?.[1],
+                    );
+                    const valY = this.formatMetricValue(
+                        point.y,
+                        controls?.metrics?.[0],
+                    );
+                    const baseLabel = point.label ? point.label + " — " : "";
+                    val =
+                        baseLabel +
+                        "(" +
+                        valX +
+                        " " +
+                        xMetricName +
+                        ", " +
+                        valY +
+                        " " +
+                        yMetricName +
+                        ")";
+                } else {
+                    const label = chart.data.labels?.[el.index] || "";
+                    let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
                     if (resultFormat?.multiply) v = v * resultFormat.multiply;
-                    if (ds.currency || resultFormat?.format === 'currency') {
+                    if (ds.currency || resultFormat?.format === "currency") {
                         val = this.formatCurrency(v);
-                    } else if (ds.percentage || resultFormat?.format === 'percentage') {
-                        val = v.toFixed(1) + '%';
+                    } else if (
+                        ds.percentage ||
+                        resultFormat?.format === "percentage"
+                    ) {
+                        val = v.toFixed(1) + "%";
                     } else {
                         val = this.formatNumber(v);
                     }
                     const dsLabel = ds.label || yMetricName;
-                    val = (label ? label + ' — ' : '') + val + ' ' + dsLabel;
+                    val = (label ? label + " — " : "") + val + " " + dsLabel;
                 }
-                const isLine = ds.type === 'line';
-                const color = ds.borderColor || ds.backgroundColor || '#3B82F6';
+                const isLine = ds.type === "line";
+                const color = ds.borderColor || ds.backgroundColor || "#3B82F6";
                 const colorStr = Array.isArray(color) ? color[el.index] : color;
-                html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
-                    '<span style="width:8px;height:8px;border-radius:50%;background:' + colorStr + ';flex-shrink:0;"></span>' +
-                    (isLine ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
-                    '<span style="font-weight:600;">' + val + '</span>' +
-                    '</div>';
+                html +=
+                    '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
+                    '<span style="width:8px;height:8px;border-radius:50%;background:' +
+                    colorStr +
+                    ';flex-shrink:0;"></span>' +
+                    (isLine
+                        ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
+                        : "") +
+                    '<span style="font-weight:600;">' +
+                    val +
+                    "</span>" +
+                    "</div>";
 
                 if (anomalySet) {
                     const dateLabel = chart.data.labels?.[el.index];
                     if (dateLabel && anomalySet.has(dateLabel)) {
-                        html += '<div style="display:flex;align-items:center;gap:4px;padding:1px 0;margin-top:2px;">' +
+                        html +=
+                            '<div style="display:flex;align-items:center;gap:4px;padding:1px 0;margin-top:2px;">' +
                             '<span style="color:#EF4444;font-weight:600;font-size:11px;">⚠ Anomaly detected</span>' +
-                            '</div>';
+                            "</div>";
                     }
                 }
             });
@@ -1671,19 +2593,22 @@ window.dashboardRenderer = {
         // Transfer widget data and pinned tooltip to the modal container
         this._widgetData.set(targetEl, json);
         if (this._pinnedTooltips.has(containerEl)) {
-            this._pinnedTooltips.set(targetEl, this._pinnedTooltips.get(containerEl));
+            this._pinnedTooltips.set(
+                targetEl,
+                this._pinnedTooltips.get(containerEl),
+            );
             this._pinnedTooltips.delete(containerEl);
         }
 
-        const canvas = containerEl.querySelector('canvas');
+        const canvas = containerEl.querySelector("canvas");
         if (canvas) {
-            targetEl.style.display = 'flex';
-            targetEl.style.flexDirection = 'column';
-            targetEl.style.width = '100%';
-            targetEl.style.height = '100%';
-            targetEl.style.overflow = 'hidden';
-            targetEl.innerHTML = '';
-            
+            targetEl.style.display = "flex";
+            targetEl.style.flexDirection = "column";
+            targetEl.style.width = "100%";
+            targetEl.style.height = "100%";
+            targetEl.style.overflow = "hidden";
+            targetEl.innerHTML = "";
+
             // Move entire child tree (canvasWrap + r2 badge + tooltip + toggles) into modal
             while (containerEl.children.length > 0) {
                 targetEl.appendChild(containerEl.children[0]);
@@ -1708,10 +2633,10 @@ window.dashboardRenderer = {
         targetEl.innerHTML = containerEl.innerHTML;
 
         // Re-attach scroll sync for table widgets (blocked first column)
-        const scrollWrap = targetEl.querySelector('.table-scroll-wrap');
-        const fixedWrap = targetEl.querySelector('.fixed-col-wrap');
+        const scrollWrap = targetEl.querySelector(".table-scroll-wrap");
+        const fixedWrap = targetEl.querySelector(".fixed-col-wrap");
         if (scrollWrap && fixedWrap) {
-            scrollWrap.addEventListener('scroll', () => {
+            scrollWrap.addEventListener("scroll", () => {
                 fixedWrap.scrollTop = scrollWrap.scrollTop;
             });
         }
@@ -1726,9 +2651,9 @@ window.dashboardRenderer = {
             this._popOutObserver.disconnect();
             this._popOutObserver = null;
         }
-        const canvas = targetEl.querySelector('canvas');
+        const canvas = targetEl.querySelector("canvas");
         if (canvas) {
-            const existingCanvas = containerEl.querySelector('canvas');
+            const existingCanvas = containerEl.querySelector("canvas");
             if (existingCanvas) {
                 // Grid was reloaded while popped out — discard modal's stale chart
                 const chart = this._chartInstances.get(targetEl);
@@ -1736,15 +2661,15 @@ window.dashboardRenderer = {
                     chart.destroy();
                     this._chartInstances.delete(targetEl);
                 }
-                targetEl.innerHTML = '';
+                targetEl.innerHTML = "";
                 return;
             }
-            containerEl.style.display = 'flex';
-            containerEl.style.flexDirection = 'column';
-            containerEl.style.width = '100%';
-            containerEl.style.height = '100%';
-            containerEl.style.overflow = 'hidden';
-            containerEl.innerHTML = '';
+            containerEl.style.display = "flex";
+            containerEl.style.flexDirection = "column";
+            containerEl.style.width = "100%";
+            containerEl.style.height = "100%";
+            containerEl.style.overflow = "hidden";
+            containerEl.innerHTML = "";
 
             // Move entire child tree back into widget container
             while (targetEl.children.length > 0) {
@@ -1752,11 +2677,17 @@ window.dashboardRenderer = {
             }
             // Transfer widget data and pinned tooltip back to original container
             if (this._widgetData.has(targetEl)) {
-                this._widgetData.set(containerEl, this._widgetData.get(targetEl));
+                this._widgetData.set(
+                    containerEl,
+                    this._widgetData.get(targetEl),
+                );
                 this._widgetData.delete(targetEl);
             }
             if (this._pinnedTooltips.has(targetEl)) {
-                this._pinnedTooltips.set(containerEl, this._pinnedTooltips.get(targetEl));
+                this._pinnedTooltips.set(
+                    containerEl,
+                    this._pinnedTooltips.get(targetEl),
+                );
                 this._pinnedTooltips.delete(targetEl);
             }
             const chart = this._chartInstances.get(targetEl);
@@ -1771,67 +2702,80 @@ window.dashboardRenderer = {
             return;
         }
         // HTML widget — content was cloned, not moved. Just clear the modal.
-        targetEl.innerHTML = '';
+        targetEl.innerHTML = "";
     },
 
     _renderWidget(widget_type, containerEl, data, controls) {
-        containerEl.style.padding = '';
-        containerEl.style.overflow = '';
+        containerEl.style.padding = "";
+        containerEl.style.overflow = "";
         switch (widget_type) {
-            case 'tile':
+            case "tile":
                 this.renderTile(containerEl, data, controls);
                 break;
-            case 'line_chart':
+            case "line_chart":
                 this.renderLineChart(containerEl, data, controls);
                 break;
-            case 'bar_chart':
+            case "bar_chart":
                 this.renderBarChart(containerEl, data, controls);
                 break;
-            case 'table':
+            case "table":
                 this.renderTable(containerEl, data, controls);
                 break;
-            case 'gauge':
+            case "gauge":
                 this.renderGauge(containerEl, data, controls);
                 break;
-            case 'sparkline':
+            case "sparkline":
                 this.renderSparkline(containerEl, data, controls);
                 break;
-            case 'anomaly_list':
+            case "anomaly_list":
                 this.renderAnomalyList(containerEl, data);
                 break;
-            case 'anomaly_chart':
+            case "anomaly_chart":
                 this.renderAnomalyChart(containerEl, data, controls);
                 break;
-            case 'scatter_plot':
+            case "scatter_plot":
                 this.renderScatterPlot(containerEl, data, controls);
                 break;
-            case 'combo_chart':
+            case "combo_chart":
                 this.renderComboChart(containerEl, data, controls);
                 break;
             default:
-                containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' + widget_type + '</div>';
+                containerEl.innerHTML =
+                    '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' +
+                    widget_type +
+                    "</div>";
         }
     },
 
     // ─── Formatters ───
 
     formatNumber(n) {
-        if (typeof n === 'string' && n.includes(':')) return n;
-        if (n == null || isNaN(n)) return '—';
-        return Number(n).toLocaleString('en-US', {maximumFractionDigits: 1});
+        if (typeof n === "string" && n.includes(":")) return n;
+        if (n == null || isNaN(n)) return "—";
+        return Number(n).toLocaleString("en-US", { maximumFractionDigits: 1 });
     },
 
     _formatTableNumber(n) {
-        if (typeof n === 'string' && n.includes(':')) return n;
-        if (n == null || isNaN(n)) return '—';
+        if (typeof n === "string" && n.includes(":")) return n;
+        if (n == null || isNaN(n)) return "—";
         const num = Number(n);
-        if (Number.isInteger(num)) return num.toLocaleString('en-US', {maximumFractionDigits: 0});
-        return num.toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4});
+        if (Number.isInteger(num))
+            return num.toLocaleString("en-US", { maximumFractionDigits: 0 });
+        return num.toLocaleString("en-US", {
+            minimumFractionDigits: 4,
+            maximumFractionDigits: 4,
+        });
     },
 
     formatCurrency(n) {
-        if (n == null || isNaN(n)) return '—';
-        return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        if (n == null || isNaN(n)) return "—";
+        return (
+            "$" +
+            Number(n).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            })
+        );
     },
 
     // ─── Metric Display Helpers ───
@@ -1841,29 +2785,30 @@ window.dashboardRenderer = {
         if (!fmt) return this.formatNumber(value);
         let v = value;
         if (fmt.multiply) v = v * fmt.multiply;
-        if (fmt.format === 'currency') return (fmt.prefix || '$') + this.formatNumber(v);
-        if (fmt.format === 'percentage') return v.toFixed(1) + '%';
+        if (fmt.format === "currency")
+            return (fmt.prefix || "$") + this.formatNumber(v);
+        if (fmt.format === "percentage") return v.toFixed(1) + "%";
         return this.formatNumber(v);
     },
 
     getMetricName(metricKey) {
         const fmt = this.METRIC_FORMATS[metricKey];
-        return fmt?.label || metricKey || 'Value';
+        return fmt?.label || metricKey || "Value";
     },
 
     // ─── External HTML Tooltip ───
 
     _setupTooltip(chart, containerEl) {
-        let tooltipEl = containerEl.querySelector('.chart-tooltip');
+        let tooltipEl = containerEl.querySelector(".chart-tooltip");
         if (!tooltipEl) {
-            tooltipEl = document.createElement('div');
-            tooltipEl.className = 'chart-tooltip';
-            tooltipEl.style.position = 'absolute';
-            tooltipEl.style.pointerEvents = 'none';
-            tooltipEl.style.opacity = '0';
-            tooltipEl.style.transition = 'opacity 0.15s ease';
-            tooltipEl.style.zIndex = '100';
-            tooltipEl.style.whiteSpace = 'nowrap';
+            tooltipEl = document.createElement("div");
+            tooltipEl.className = "chart-tooltip";
+            tooltipEl.style.position = "absolute";
+            tooltipEl.style.pointerEvents = "none";
+            tooltipEl.style.opacity = "0";
+            tooltipEl.style.transition = "opacity 0.15s ease";
+            tooltipEl.style.zIndex = "100";
+            tooltipEl.style.whiteSpace = "nowrap";
             containerEl.appendChild(tooltipEl);
         }
         return tooltipEl;
@@ -1871,7 +2816,7 @@ window.dashboardRenderer = {
 
     _positionTooltip(tooltipEl, containerEl, caretX, caretY) {
         const containerRect = containerEl.getBoundingClientRect();
-        const canvas = containerEl.querySelector('canvas');
+        const canvas = containerEl.querySelector("canvas");
         if (!canvas) return;
         const chartRect = canvas.getBoundingClientRect();
         const offsetLeft = chartRect.left - containerRect.left;
@@ -1885,7 +2830,7 @@ window.dashboardRenderer = {
         const ch = containerRect.height;
 
         // Dynamic max-width: fit inside container with 16px margin
-        tooltipEl.style.maxWidth = Math.max(160, cw - 32) + 'px';
+        tooltipEl.style.maxWidth = Math.max(160, cw - 32) + "px";
 
         // Re-check width after maxWidth constraint
         const finalTw = tooltipEl.offsetWidth;
@@ -1919,13 +2864,13 @@ window.dashboardRenderer = {
         // Clamp vertical
         top = Math.max(gap, Math.min(top, ch - th - gap));
 
-        tooltipEl.style.left = Math.round(left) + 'px';
-        tooltipEl.style.top = Math.round(top) + 'px';
+        tooltipEl.style.left = Math.round(left) + "px";
+        tooltipEl.style.top = Math.round(top) + "px";
     },
 
     _externalTooltipHandler(context) {
         try {
-            const {chart, tooltip} = context;
+            const { chart, tooltip } = context;
             if (!chart || !chart.canvas) return;
             const container = chart.canvas.parentNode;
             if (!container) return;
@@ -1939,26 +2884,28 @@ window.dashboardRenderer = {
             }
 
             if (!tooltip || tooltip.opacity < 0.01) {
-                tooltipEl.style.opacity = '0';
-                tooltipEl.innerHTML = '';
-                tooltipEl.style.pointerEvents = 'none';
+                tooltipEl.style.opacity = "0";
+                tooltipEl.innerHTML = "";
+                tooltipEl.style.pointerEvents = "none";
                 return;
             }
 
-            const isDark = document.documentElement.classList.contains('dark');
-            const bg = isDark ? '#1F2937' : '#FFF';
-            const textColor = isDark ? '#F3F4F6' : '#111827';
-            const borderColor = isDark ? '#374151' : '#E5E7EB';
+            const isDark = document.documentElement.classList.contains("dark");
+            const bg = isDark ? "#1F2937" : "#FFF";
+            const textColor = isDark ? "#F3F4F6" : "#111827";
+            const borderColor = isDark ? "#374151" : "#E5E7EB";
 
             tooltipEl.style.background = bg;
             tooltipEl.style.color = textColor;
-            tooltipEl.style.border = '1px solid ' + borderColor;
-            tooltipEl.style.borderRadius = '8px';
-            tooltipEl.style.padding = '8px 12px';
-            tooltipEl.style.fontSize = '12px';
-            tooltipEl.style.lineHeight = '1.5';
-            tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
-            tooltipEl.style.fontFamily = 'inherit';
+            tooltipEl.style.border = "1px solid " + borderColor;
+            tooltipEl.style.borderRadius = "8px";
+            tooltipEl.style.padding = "8px 12px";
+            tooltipEl.style.fontSize = "12px";
+            tooltipEl.style.lineHeight = "1.5";
+            tooltipEl.style.boxShadow = isDark
+                ? "0 4px 16px rgba(0,0,0,0.4)"
+                : "0 4px 16px rgba(0,0,0,0.12)";
+            tooltipEl.style.fontFamily = "inherit";
 
             const widgetJson = this._widgetData.get(container);
             const ctrl = widgetJson?.controls;
@@ -1968,88 +2915,141 @@ window.dashboardRenderer = {
             const yMN = this.getMetricName(ctrl?.metrics?.[0]);
 
             const anomalyDates = widgetJson?.data?.anomaly_dates ?? [];
-            const anomalySet = anomalyDates.length ? new Set(anomalyDates) : null;
+            const anomalySet = anomalyDates.length
+                ? new Set(anomalyDates)
+                : null;
 
-            let html = '';
+            let html = "";
 
             if (tooltip.body?.length) {
                 tooltip.body.forEach((body, i) => {
                     const dp = tooltip.dataPoints?.[i];
                     if (!dp) return;
                     let val;
-                    if (chartType === 'scatter') {
+                    if (chartType === "scatter") {
                         const point = dp.raw;
-                        const vX = this.formatMetricValue(point.x, ctrl?.metrics?.[1]);
-                        const vY = this.formatMetricValue(point.y, ctrl?.metrics?.[0]);
-                        const baseLabel = point.label ? (point.label + ' — ') : '';
-                        val = baseLabel + '(' + vX + ' ' + xMN + ', ' + vY + ' ' + yMN + ')';
+                        const vX = this.formatMetricValue(
+                            point.x,
+                            ctrl?.metrics?.[1],
+                        );
+                        const vY = this.formatMetricValue(
+                            point.y,
+                            ctrl?.metrics?.[0],
+                        );
+                        const baseLabel = point.label
+                            ? point.label + " — "
+                            : "";
+                        val =
+                            baseLabel +
+                            "(" +
+                            vX +
+                            " " +
+                            xMN +
+                            ", " +
+                            vY +
+                            " " +
+                            yMN +
+                            ")";
                     } else {
-                        const label = chart.data.labels?.[dp.dataIndex] || '';
-                        let v = typeof dp.raw === 'object' ? (dp.raw.y ?? 0) : dp.raw;
+                        const label = chart.data.labels?.[dp.dataIndex] || "";
+                        let v =
+                            typeof dp.raw === "object"
+                                ? (dp.raw.y ?? 0)
+                                : dp.raw;
                         if (rFmt?.multiply) v = v * rFmt.multiply;
-                        if (dp.dataset.currency || rFmt?.format === 'currency') {
+                        if (
+                            dp.dataset.currency ||
+                            rFmt?.format === "currency"
+                        ) {
                             val = this.formatCurrency(v);
-                        } else if (dp.dataset.percentage || rFmt?.format === 'percentage') {
-                            val = v.toFixed(1) + '%';
+                        } else if (
+                            dp.dataset.percentage ||
+                            rFmt?.format === "percentage"
+                        ) {
+                            val = v.toFixed(1) + "%";
                         } else {
                             val = this.formatNumber(v);
                         }
                         const dsLabel = dp.dataset.label || yMN;
-                        val = (label ? label + ' — ' : '') + val + ' ' + dsLabel;
+                        val =
+                            (label ? label + " — " : "") + val + " " + dsLabel;
                     }
-                    const isLine = dp.dataset.type === 'line';
-                    const color = dp.dataset.borderColor || dp.dataset.backgroundColor || '#3B82F6';
-                    html += '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
-                        '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>' +
-                        (isLine ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>' : '') +
-                        '<span style="font-weight:600;">' + val + '</span>' +
-                        '</div>';
+                    const isLine = dp.dataset.type === "line";
+                    const color =
+                        dp.dataset.borderColor ||
+                        dp.dataset.backgroundColor ||
+                        "#3B82F6";
+                    html +=
+                        '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
+                        '<span style="width:8px;height:8px;border-radius:50%;background:' +
+                        color +
+                        ';flex-shrink:0;"></span>' +
+                        (isLine
+                            ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
+                            : "") +
+                        '<span style="font-weight:600;">' +
+                        val +
+                        "</span>" +
+                        "</div>";
 
                     if (anomalySet) {
                         const dateLabel = chart.data.labels?.[dp.dataIndex];
                         if (dateLabel && anomalySet.has(dateLabel)) {
-                            html += '<div style="display:flex;align-items:center;gap:4px;padding:1px 0;margin-top:2px;">' +
+                            html +=
+                                '<div style="display:flex;align-items:center;gap:4px;padding:1px 0;margin-top:2px;">' +
                                 '<span style="color:#EF4444;font-weight:600;font-size:11px;">⚠ Anomaly detected</span>' +
-                                '</div>';
+                                "</div>";
                         }
                     }
                 });
             }
 
             tooltipEl.innerHTML = html;
-            tooltipEl.style.pointerEvents = 'none';
+            tooltipEl.style.pointerEvents = "none";
 
-            this._positionTooltip(tooltipEl, container, tooltip.caretX, tooltip.caretY);
-            tooltipEl.style.opacity = '1';
+            this._positionTooltip(
+                tooltipEl,
+                container,
+                tooltip.caretX,
+                tooltip.caretY,
+            );
+            tooltipEl.style.opacity = "1";
         } catch (e) {
-            console.warn('[Tooltip]', e);
+            console.warn("[Tooltip]", e);
         }
     },
 
     _renderPinnedTooltip(container) {
         const pinned = this._pinnedTooltips.get(container);
         if (!pinned) return;
-        const tooltipEl = container.querySelector('.chart-tooltip');
+        const tooltipEl = container.querySelector(".chart-tooltip");
         if (!tooltipEl) return;
 
-        const isDark = document.documentElement.classList.contains('dark');
-        const bg = isDark ? '#1F2937' : '#FFF';
-        const textColor = isDark ? '#F3F4F6' : '#111827';
-        const borderColor = isDark ? '#374151' : '#E5E7EB';
+        const isDark = document.documentElement.classList.contains("dark");
+        const bg = isDark ? "#1F2937" : "#FFF";
+        const textColor = isDark ? "#F3F4F6" : "#111827";
+        const borderColor = isDark ? "#374151" : "#E5E7EB";
 
         tooltipEl.style.background = bg;
         tooltipEl.style.color = textColor;
-        tooltipEl.style.border = '1px solid ' + borderColor;
-        tooltipEl.style.borderRadius = '8px';
-        tooltipEl.style.padding = '8px 12px';
-        tooltipEl.style.fontSize = '12px';
-        tooltipEl.style.lineHeight = '1.5';
-        tooltipEl.style.boxShadow = isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.12)';
-        tooltipEl.style.fontFamily = 'inherit';
-        tooltipEl.style.pointerEvents = 'auto';
+        tooltipEl.style.border = "1px solid " + borderColor;
+        tooltipEl.style.borderRadius = "8px";
+        tooltipEl.style.padding = "8px 12px";
+        tooltipEl.style.fontSize = "12px";
+        tooltipEl.style.lineHeight = "1.5";
+        tooltipEl.style.boxShadow = isDark
+            ? "0 4px 16px rgba(0,0,0,0.4)"
+            : "0 4px 16px rgba(0,0,0,0.12)";
+        tooltipEl.style.fontFamily = "inherit";
+        tooltipEl.style.pointerEvents = "auto";
         tooltipEl.innerHTML = pinned.html;
 
-        this._positionTooltip(tooltipEl, container, pinned.caretX, pinned.caretY);
-        tooltipEl.style.opacity = '1';
+        this._positionTooltip(
+            tooltipEl,
+            container,
+            pinned.caretX,
+            pinned.caretY,
+        );
+        tooltipEl.style.opacity = "1";
     },
 };

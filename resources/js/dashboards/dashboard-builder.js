@@ -1,12 +1,661 @@
 export function dashboardBuilder(config = {}) {
     const dashboardControls = config.dashboardControls || {};
     return {
+        tenant: config.tenant || (window.location.pathname.match(/\/app\/([^\/]+)/)?.[1]) || '',
+
         // ─── Unsaved Layout State ───
         isDirty: false,
         _isInitializingGrid: true,
         showUnsavedNavModal: false,
         pendingNavUrl: null,
         pendingNavReload: false,
+
+        // ─── Unsaved Widget Controls State ───
+        showUnsavedWidgetControlsModal: false,
+        widgetControlsSnapshot: null,
+        hasUserInteractedWithWidgetControls: false,
+
+        // ─── Ephemeral Sandbox Testing State ───
+        showSandboxModal: false,
+        sandboxTargetWidget: null,
+        sandboxForm: {
+            date_start: '',
+            date_end: '',
+            granularity: '',
+            zero_handling: '',
+            edge_case_weighted: true,
+            edge_case_grouping: '',
+            max_ratio: null,
+            remove_unknown: true,
+            block_first_col: true,
+            channel: '',
+            metrics: [],
+            series_assets: {},
+            series_asset_groups: {},
+            series_dependencies: {},
+            combo_chart_config: {}
+        },
+        sandboxVariables: {},
+        sandboxSearchQueries: {},
+        activeSandboxMobileTab: 'controls',
+        canScrollSandboxSeriesLeft: false,
+        canScrollSandboxSeriesRight: false,
+        ephemeralOverrides: {},
+
+        openSandboxModal(widget) {
+            this.sandboxTargetWidget = widget;
+            const current = {
+                ...this.resolveWidgetControls(widget),
+                ...(this.ephemeralOverrides[widget.id] || {})
+            };
+            this.sandboxForm = {
+                date_start: current.date_start || '',
+                date_end: current.date_end || '',
+                granularity: current.granularity || 'daily',
+                zero_handling: current.zero_handling || 'keep',
+                edge_case_weighted: current.edge_case_weighted !== undefined ? current.edge_case_weighted : true,
+                edge_case_grouping: current.edge_case_grouping || 'none',
+                max_ratio: current.max_ratio ?? null,
+                remove_unknown: current.remove_unknown !== undefined ? current.remove_unknown : true,
+                block_first_col: current.block_first_col !== undefined ? current.block_first_col : true,
+                channel: current.channel || '',
+                metrics: Array.isArray(current.metrics) ? [...current.metrics] : (current.metrics ? Object.values(current.metrics) : []),
+                series_assets: current.series_assets ? JSON.parse(JSON.stringify(current.series_assets)) : {},
+                series_asset_groups: current.series_asset_groups ? JSON.parse(JSON.stringify(current.series_asset_groups)) : {},
+                series_dependencies: current.series_dependencies ? JSON.parse(JSON.stringify(current.series_dependencies)) : {},
+                combo_chart_config: current.combo_chart_config ? JSON.parse(JSON.stringify(current.combo_chart_config)) : {},
+            };
+
+            this.sandboxVariables = {};
+            this.sandboxSearchQueries = {};
+
+            const ensureChannelLoaded = (ch) => {
+                if (!ch || !this.$wire) return;
+                if (!this.allChannelAssets[ch]) {
+                    this.$wire.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
+                }
+                if (!this.allChannelAssetGroups[ch]) {
+                    this.$wire.getAssetGroupsForChannel(ch).then(groups => { this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups }; });
+                }
+                if (!this.allChannelDependencies[ch]) {
+                    this.$wire.getDependenciesForChannel(ch).then(deps => { this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps }; });
+                }
+                if (!this.allChannelMetrics[ch]) {
+                    this.$wire.getMetricsForChannel(ch).then(metrics => {
+                        this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        if (this.sandboxVariables) {
+                            Object.values(this.sandboxVariables).forEach(v => {
+                                if (v.channel === ch && !this.sandboxForm.metrics[v.index]) {
+                                    const mKeys = Object.keys(metrics || {});
+                                    if (mKeys.length > 0) this.sandboxForm.metrics[v.index] = mKeys[0];
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+
+            if (widget.source_type === 'kpi') {
+                const kpiId = widget.source_config?.custom_kpi_id;
+                const setupKpiVariables = (config) => {
+                    const uiState = config?.filters?._ui_state || config || {};
+                    const vars = {};
+                    let indIndex = 1;
+
+                    // 1. Dependent Variable
+                    const depDmId = uiState.dependent_dm_id || (uiState.dependent_source_type === 'derived_metric' ? uiState.dependent_dm_id : null);
+                    const depDm = depDmId ? (this.derivedMetrics?.[depDmId] || this.derivedMetrics?.[String(depDmId)]) : null;
+
+                    if (depDm && Array.isArray(depDm.source_series) && depDm.source_series.length > 0) {
+                        depDm.source_series.forEach((s, sIdx) => {
+                            const key = 'dep_dm_' + sIdx;
+                            const ch = s.channel || '';
+                            ensureChannelLoaded(ch);
+                            const dmAllowed = (current.series_allowed_assets && current.series_allowed_assets[key])
+                                ? current.series_allowed_assets[key]
+                                : (s.allowed_assets || s.asset_filter || s.asset_ids || (current.series_assets && current.series_assets[key] ? current.series_assets[key] : []));
+                            vars[key] = {
+                                index: 0,
+                                channel: ch,
+                                channel_name: ch,
+                                selected_metric: s.metric || '',
+                                dm_id: depDmId,
+                                dm_name: depDm.name || '',
+                                dm_source_label: s.label || ('Series ' + (sIdx + 1)),
+                                is_dm_source: true,
+                                allowed_assets: Array.isArray(dmAllowed) ? dmAllowed.map(String) : [],
+                            };
+                            this.sandboxSearchQueries[key] = '';
+                            if (!this.sandboxForm.series_assets[key]) {
+                                const defaultAssets = (current.series_assets && current.series_assets[key]) ? current.series_assets[key] : (s.asset_filter || s.asset_ids || (current.assets && current.assets.length > 0 ? current.assets : []));
+                                this.sandboxForm.series_assets[key] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                            }
+                            if (s.dependency && !this.sandboxForm.series_dependencies[key]) {
+                                this.sandboxForm.series_dependencies[key] = s.dependency;
+                            }
+                        });
+                    } else {
+                        const depChannel = uiState.dependent_channel || current.channel || this.dashboardControls.channel || 'facebook_marketing';
+                        ensureChannelLoaded(depChannel);
+                        const depAllowed = (current.series_allowed_assets && current.series_allowed_assets['dependent'])
+                            ? current.series_allowed_assets['dependent']
+                            : (uiState.dependent_allowed_assets || uiState.dependent_asset_filter || (current.series_assets && current.series_assets['dependent'] ? current.series_assets['dependent'] : []));
+                        vars['dependent'] = {
+                            index: 0,
+                            channel: depChannel,
+                            channel_name: depChannel,
+                            selected_metric: uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : ''),
+                            dm_id: depDmId || null,
+                            dm_name: depDm?.name || null,
+                            allowed_assets: Array.isArray(depAllowed) ? depAllowed.map(String) : [],
+                        };
+                        this.sandboxSearchQueries['dependent'] = '';
+                        if (!this.sandboxForm.series_assets['dependent']) {
+                            const defaultAssets = (current.series_assets && current.series_assets['dependent']) ? current.series_assets['dependent'] : (uiState.dependent_asset_filter || (current.assets && current.assets.length > 0 ? current.assets : []));
+                            this.sandboxForm.series_assets['dependent'] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                        }
+                        const defaultMetric = uiState.dependent_metric || (current.metrics && current.metrics.length > 0 ? current.metrics[0] : null);
+                        if (defaultMetric && (!this.sandboxForm.metrics || this.sandboxForm.metrics.length === 0 || !this.sandboxForm.metrics[0])) {
+                            this.sandboxForm.metrics[0] = defaultMetric;
+                        } else if (!this.sandboxForm.metrics[0] && this.allChannelMetrics[depChannel]) {
+                            const mKeys = Object.keys(this.allChannelMetrics[depChannel]);
+                            if (mKeys.length > 0) this.sandboxForm.metrics[0] = mKeys[0];
+                        }
+                        if (uiState.dependent_dependency && !this.sandboxForm.series_dependencies['dependent']) {
+                            this.sandboxForm.series_dependencies['dependent'] = uiState.dependent_dependency;
+                        }
+                    }
+
+                    // 2. Independent Variables
+                    if (uiState.independent_variables) {
+                        for (let k in uiState.independent_variables) {
+                            const iv = uiState.independent_variables[k];
+                            const varKey = 'independent_' + k;
+                            const indDmId = iv.independent_dm_id || (iv.independent_source_type === 'derived_metric' ? iv.independent_dm_id : null);
+                            const indDm = indDmId ? (this.derivedMetrics?.[indDmId] || this.derivedMetrics?.[String(indDmId)]) : null;
+
+                            if (indDm && Array.isArray(indDm.source_series) && indDm.source_series.length > 0) {
+                                indDm.source_series.forEach((s, sIdx) => {
+                                    const key = 'ind_' + k + '_dm_' + sIdx;
+                                    const ch = s.channel || '';
+                                    ensureChannelLoaded(ch);
+                                    const dmAllowed = (current.series_allowed_assets && current.series_allowed_assets[key])
+                                        ? current.series_allowed_assets[key]
+                                        : (s.allowed_assets || s.asset_filter || s.asset_ids || (current.series_assets && current.series_assets[key] ? current.series_assets[key] : []));
+                                    vars[key] = {
+                                        index: indIndex,
+                                        channel: ch,
+                                        channel_name: ch,
+                                        selected_metric: s.metric || '',
+                                        dm_id: indDmId,
+                                        dm_name: indDm.name || '',
+                                        dm_source_label: s.label || ('Series ' + (sIdx + 1)),
+                                        is_dm_source: true,
+                                        allowed_assets: Array.isArray(dmAllowed) ? dmAllowed.map(String) : [],
+                                    };
+                                    this.sandboxSearchQueries[key] = '';
+                                    if (!this.sandboxForm.series_assets[key]) {
+                                        const defaultAssets = (current.series_assets && current.series_assets[key]) ? current.series_assets[key] : (s.asset_filter || s.asset_ids || []);
+                                        this.sandboxForm.series_assets[key] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                                    }
+                                    if (s.dependency && !this.sandboxForm.series_dependencies[key]) {
+                                        this.sandboxForm.series_dependencies[key] = s.dependency;
+                                    }
+                                });
+                            } else {
+                                if (iv.independent_channel) {
+                                    ensureChannelLoaded(iv.independent_channel);
+                                }
+                                const indAllowed = (current.series_allowed_assets && current.series_allowed_assets[varKey])
+                                    ? current.series_allowed_assets[varKey]
+                                    : (iv.independent_allowed_assets || iv.independent_asset_filter || (current.series_assets && current.series_assets[varKey] ? current.series_assets[varKey] : []));
+                                vars[varKey] = {
+                                    index: indIndex,
+                                    channel: iv.independent_channel || '',
+                                    channel_name: iv.independent_channel || '',
+                                    selected_metric: iv.independent_metric || '',
+                                    dm_id: indDmId || null,
+                                    dm_name: indDm?.name || null,
+                                    allowed_assets: Array.isArray(indAllowed) ? indAllowed.map(String) : [],
+                                };
+                                this.sandboxSearchQueries[varKey] = '';
+                                if (!this.sandboxForm.series_assets[varKey]) {
+                                    const defaultAssets = (current.series_assets && current.series_assets[varKey]) ? current.series_assets[varKey] : (iv.independent_asset_filter || []);
+                                    this.sandboxForm.series_assets[varKey] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                                }
+                                if (!this.sandboxForm.metrics[indIndex]) {
+                                    if (iv.independent_metric) {
+                                        this.sandboxForm.metrics[indIndex] = iv.independent_metric;
+                                    } else if (this.allChannelMetrics[iv.independent_channel]) {
+                                        const mKeys = Object.keys(this.allChannelMetrics[iv.independent_channel]);
+                                        if (mKeys.length > 0) this.sandboxForm.metrics[indIndex] = mKeys[0];
+                                    }
+                                }
+                                if (iv.independent_dependency && !this.sandboxForm.series_dependencies[varKey]) {
+                                    this.sandboxForm.series_dependencies[varKey] = iv.independent_dependency;
+                                }
+                            }
+                            indIndex++;
+                        }
+                    }
+                    this.sandboxVariables = vars;
+                };
+
+                if (kpiId && this.$wire) {
+                    this.$wire.getKpiConfiguration(kpiId).then(cfg => {
+                        setupKpiVariables(cfg);
+                    }).catch(() => {
+                        setupKpiVariables(this.widgetKpiConfig || {});
+                    });
+                } else {
+                    setupKpiVariables(this.widgetKpiConfig || {});
+                }
+            } else if (widget.source_type === 'derived_metric') {
+                const dmId = widget.source_config?.derived_metric_id;
+                const dm = dmId ? (this.derivedMetrics?.[dmId] || this.derivedMetrics?.[String(dmId)]) : null;
+                const sourceSeries = dm?.source_series || [];
+                const vars = {};
+                sourceSeries.forEach((s, idx) => {
+                    const key = 'dm_' + idx;
+                    ensureChannelLoaded(s.channel);
+                    vars[key] = {
+                        index: idx,
+                        channel: s.channel || '',
+                        channel_name: s.channel || '',
+                        selected_metric: s.metric || '',
+                        dm_name: dm?.name || '',
+                        dm_source_label: s.label || ('Series ' + (idx + 1)),
+                    };
+                    this.sandboxSearchQueries[key] = '';
+                    if (!this.sandboxForm.series_assets[key]) {
+                        const defaultAssets = s.asset_ids || [];
+                        this.sandboxForm.series_assets[key] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                    }
+                });
+                this.sandboxVariables = vars;
+            } else {
+                const rawSeries = current.raw_series || widget.controls?.raw_series || [];
+                const vars = {};
+                if (rawSeries.length > 0) {
+                    rawSeries.forEach((s, idx) => {
+                        const key = String(idx);
+                        ensureChannelLoaded(s.channel);
+                        vars[key] = {
+                            index: idx,
+                            type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                            dm_id: s.dm_id || null,
+                            dm_name: s.dm_name || null,
+                            channel: s.channel || '',
+                            channel_name: s.channel || '',
+                            allowed_metrics: Array.isArray(s.allowed_metrics) ? s.allowed_metrics : (Array.isArray(s.metrics) ? s.metrics : []),
+                            allowed_assets: Array.isArray(s.allowed_assets) ? s.allowed_assets : (Array.isArray(s.assets) ? s.assets : []),
+                            selected_metric: '',
+                        };
+                        this.sandboxSearchQueries[key] = '';
+                        if (!this.sandboxForm.series_assets[key]) {
+                            const defaultAssets = s.assets || [];
+                            this.sandboxForm.series_assets[key] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                        }
+                    });
+                } else {
+                    const ch = current.channel || this.dashboardControls.channel || '';
+                    ensureChannelLoaded(ch);
+                    vars['0'] = {
+                        index: 0,
+                        type: 'metric',
+                        channel: ch,
+                        channel_name: ch,
+                        allowed_metrics: [],
+                        selected_metric: '',
+                    };
+                    this.sandboxSearchQueries['0'] = '';
+                    if (!this.sandboxForm.series_assets['0']) {
+                        const defaultAssets = current.assets || [];
+                        this.sandboxForm.series_assets['0'] = Array.isArray(defaultAssets) ? [...defaultAssets].map(String) : [];
+                    }
+                }
+                this.sandboxVariables = vars;
+            }
+
+            this.showSandboxModal = true;
+            this.$nextTick(() => {
+                this.updateSandboxSeriesScrollState();
+            });
+        },
+
+        sandboxToggleMetric(vKey, metricKey) {
+            if (this.sandboxTargetWidget?.source_type === 'kpi') {
+                const idx = this.sandboxVariables[vKey]?.index ?? 0;
+                this.sandboxForm.metrics[idx] = metricKey;
+            } else {
+                if (!Array.isArray(this.sandboxForm.metrics)) {
+                    this.sandboxForm.metrics = [];
+                }
+                if (this.sandboxForm.metrics.includes(metricKey)) {
+                    this.sandboxForm.metrics = this.sandboxForm.metrics.filter(m => m !== metricKey);
+                } else {
+                    this.sandboxForm.metrics = [...this.sandboxForm.metrics, metricKey];
+                }
+            }
+        },
+
+        _scopedMetricsCache: {},
+        _fetchingScopedMetrics: {},
+
+        getSandboxMetricsForSeries(vKey, vConfig) {
+            const ch = vConfig?.channel;
+            if (!ch) return {};
+            const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
+            const cacheKey = ch + '::' + dep;
+            if (this._scopedMetricsCache && this._scopedMetricsCache[cacheKey]) {
+                return this._scopedMetricsCache[cacheKey];
+            }
+            if (this.$wire && (!this._fetchingScopedMetrics || !this._fetchingScopedMetrics[cacheKey])) {
+                if (!this._fetchingScopedMetrics) this._fetchingScopedMetrics = {};
+                this._fetchingScopedMetrics[cacheKey] = true;
+                this.$wire.getMetricsForChannel(ch, this.sandboxForm?.granularity || null, dep || null).then(metrics => {
+                    if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
+                    this._scopedMetricsCache[cacheKey] = metrics || {};
+                    delete this._fetchingScopedMetrics[cacheKey];
+                });
+            }
+            return this._scopedMetricsCache?.[cacheKey] || this.allChannelMetrics[ch] || {};
+        },
+
+        getSandboxAssetsForSeries(vKey, vConfig) {
+            const ch = vConfig?.channel;
+            if (!ch || !this.allChannelAssets[ch]) return {};
+            const all = this.allChannelAssets[ch];
+
+            let allowed = vConfig?.allowed_assets;
+            if (!allowed || allowed.length === 0) {
+                // If allowed_assets wasn't explicitly populated on vConfig, check sandboxForm series_assets / widget series_assets
+                const widget = this.sandboxTargetWidget;
+                const controls = this.resolveWidgetControls(widget);
+                if (controls.series_allowed_assets?.[vKey]) {
+                    allowed = controls.series_allowed_assets[vKey];
+                } else if (controls.series_assets?.[vKey]) {
+                    allowed = controls.series_assets[vKey];
+                } else if (widget?.source_type !== 'kpi' && controls.assets) {
+                    allowed = controls.assets;
+                }
+            }
+
+            const allowedStrs = Array.isArray(allowed) && allowed.length > 0 ? allowed.map(String) : null;
+            const res = {};
+
+            for (const [id, name] of Object.entries(all)) {
+                const strId = String(id);
+                if (allowedStrs && !allowedStrs.includes(strId)) {
+                    continue;
+                }
+                if (!this.isAssetAllowedByGroups(vKey, ch, strId)) {
+                    continue;
+                }
+                res[id] = name;
+            }
+
+            return res;
+        },
+
+        onSandboxDependencyChange(vKey, vConfig) {
+            const ch = vConfig?.channel;
+            const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
+            if (!ch || !this.$wire) return;
+            const cacheKey = ch + '::' + dep;
+            this.$wire.getMetricsForChannel(ch, this.sandboxForm?.granularity || null, dep || null).then(metrics => {
+                if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
+                this._scopedMetricsCache[cacheKey] = metrics || {};
+                const availableKeys = Object.keys(metrics || {});
+                if (availableKeys.length > 0 && vConfig?.index !== undefined) {
+                    const currentM = this.sandboxForm.metrics[vConfig.index];
+                    if (!currentM || !availableKeys.includes(currentM)) {
+                        this.sandboxForm.metrics[vConfig.index] = availableKeys[0];
+                    }
+                }
+            });
+        },
+
+        sandboxIsMetricSelected(vKey, metricKey) {
+            if (this.sandboxTargetWidget?.source_type === 'kpi') {
+                const idx = this.sandboxVariables[vKey]?.index ?? 0;
+                return this.sandboxForm.metrics[idx] === metricKey;
+            }
+            return (this.sandboxForm.metrics || []).includes(metricKey);
+        },
+
+        sandboxSelectAllMetrics(vKey) {
+            const vConfig = this.sandboxVariables[vKey];
+            const ch = vConfig?.channel;
+            const scopedMetrics = this.getSandboxMetricsForSeries(vKey, vConfig);
+            const available = vConfig?.allowed_metrics && vConfig.allowed_metrics.length > 0
+                ? vConfig.allowed_metrics.filter(m => Object.keys(scopedMetrics).includes(m))
+                : Object.keys(scopedMetrics);
+            this.sandboxForm.metrics = [...new Set([...(this.sandboxForm.metrics || []), ...available])];
+        },
+
+        sandboxToggleAsset(vKey, assetId) {
+            const strId = String(assetId);
+            const current = this.sandboxForm.series_assets[vKey] || [];
+            if (current.includes(strId)) {
+                this.sandboxForm.series_assets[vKey] = current.filter(a => a !== strId);
+            } else {
+                this.sandboxForm.series_assets[vKey] = [...current, strId];
+            }
+        },
+
+        sandboxIsAssetSelected(vKey, assetId) {
+            return ((this.sandboxForm.series_assets || {})[vKey] || []).includes(String(assetId));
+        },
+
+        sandboxSelectAllAssets(vKey) {
+            const vConfig = this.sandboxVariables[vKey];
+            const ch = vConfig?.channel;
+            const assets = this.allChannelAssets[ch] || {};
+            let validIds = Object.keys(assets).map(String);
+            const globalGroup = this.dashboardControls?.asset_group;
+            if (globalGroup && this.allChannelAssetGroups[ch]?.[globalGroup]) {
+                const groupAssets = this.allChannelAssetGroups[ch][globalGroup].assets.map(String);
+                validIds = validIds.filter(id => groupAssets.includes(id));
+            }
+            this.sandboxForm.series_assets[vKey] = validIds;
+        },
+
+        sandboxToggleComboType(index, metricKey) {
+            if (!this.sandboxForm.combo_chart_config) {
+                this.sandboxForm.combo_chart_config = {};
+            }
+            const cfgKey = index + '_' + metricKey;
+            const current = this.sandboxForm.combo_chart_config[cfgKey]?.type || (index === 0 ? 'bar' : 'line');
+            const nextType = current === 'bar' ? 'line' : 'bar';
+            this.sandboxForm.combo_chart_config = {
+                ...this.sandboxForm.combo_chart_config,
+                [cfgKey]: {
+                    ...(this.sandboxForm.combo_chart_config[cfgKey] || {}),
+                    type: nextType
+                }
+            };
+        },
+
+        sandboxGetComboType(index, metricKey) {
+            const cfgKey = index + '_' + metricKey;
+            return this.sandboxForm?.combo_chart_config?.[cfgKey]?.type || (index === 0 ? 'bar' : 'line');
+        },
+
+        updateSandboxSeriesScrollState() {
+            const el = this.$refs.sandboxSeriesScrollContainer;
+            if (!el) return;
+            this.canScrollSandboxSeriesLeft = el.scrollLeft > 5;
+            this.canScrollSandboxSeriesRight = Math.ceil(el.scrollLeft + el.clientWidth) < el.scrollWidth - 5;
+        },
+
+        scrollSandboxSeriesByStep(direction = 1) {
+            const el = this.$refs.sandboxSeriesScrollContainer;
+            if (!el) return;
+            const firstCard = el.querySelector('.snap-start');
+            const step = firstCard ? (firstCard.offsetWidth + 24) : ((el.clientWidth / 2) + 12);
+            el.scrollBy({ left: direction * step, behavior: 'smooth' });
+            setTimeout(() => {
+                this.updateSandboxSeriesScrollState();
+            }, 350);
+        },
+
+        applySandboxControls() {
+            if (!this.sandboxTargetWidget) return;
+            const id = this.sandboxTargetWidget.id;
+            this.ephemeralOverrides[id] = JSON.parse(JSON.stringify(this.sandboxForm));
+            this.showSandboxModal = false;
+            this.$nextTick(() => {
+                this.renderWidget(id);
+            });
+        },
+
+        resetSandboxControls() {
+            if (!this.sandboxTargetWidget) return;
+            const id = this.sandboxTargetWidget.id;
+            delete this.ephemeralOverrides[id];
+            this.showSandboxModal = false;
+            this.$nextTick(() => {
+                this.renderWidget(id);
+            });
+        },
+
+        hasSandboxOverrides(widgetId) {
+            return !!(this.ephemeralOverrides[widgetId] && Object.keys(this.ephemeralOverrides[widgetId]).length > 0);
+        },
+
+        renderWidget(widgetId, el) {
+            const widget = (this.widgets || []).find(w => String(w.id) === String(widgetId));
+            if (!widget) return;
+            const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
+            if (!targetEl) return;
+            if (!window.dashboardRenderer) {
+                const checkReady = (retries = 0) => {
+                    if (window.dashboardRenderer) {
+                        this.renderWidget(widgetId, el);
+                    } else if (retries < 50) {
+                        setTimeout(() => checkReady(retries + 1), 100);
+                    }
+                };
+                checkReady();
+                return;
+            }
+            targetEl.innerHTML = '';
+            const effectiveControls = {
+                ...this.resolveWidgetControls(widget),
+                ...(this.ephemeralOverrides[widget.id] || {})
+            };
+            window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
+        },
+
+        renderAllWidgets() {
+            (this.widgets || []).forEach(w => {
+                this.renderWidget(w.id);
+            });
+        },
+
+        renderWidgetPreview(widgetId, el) {
+            this.renderWidget(widgetId, el);
+        },
+
+        getWidgetControlsSignature() {
+            if (!this.widgetControlsForm) return '';
+            const f = this.widgetControlsForm;
+            return JSON.stringify({
+                titles: f.titles || {},
+                descriptions: f.descriptions || {},
+                widget_type: f.widget_type || '',
+                date_inherit: !!f.date_inherit,
+                date_start: f.date_inherit ? '' : (f.date_start || ''),
+                date_end: f.date_inherit ? '' : (f.date_end || ''),
+                zero_inherit: !!f.zero_inherit,
+                zero_handling: f.zero_inherit ? '' : (f.zero_handling || ''),
+                granularity_inherit: !!f.granularity_inherit,
+                granularity: f.granularity_inherit ? '' : (f.granularity || ''),
+                edge_case_inherit: !!f.edge_case_inherit,
+                edge_case_weighted: f.edge_case_inherit ? null : f.edge_case_weighted,
+                edge_case_grouping: f.edge_case_inherit ? '' : (f.edge_case_grouping || ''),
+                max_ratio_inherit: !!f.max_ratio_inherit,
+                max_ratio: f.max_ratio_inherit ? null : f.max_ratio,
+                combo_chart_config: f.combo_chart_config || {},
+                series_assets: f.series_assets || {},
+                series_asset_groups: f.series_asset_groups || {},
+                series_dependencies: f.series_dependencies || {},
+                channel: f.channel || '',
+                assets: Array.isArray(f.assets) ? [...f.assets].sort() : [],
+                metrics: Array.isArray(f.metrics) ? [...f.metrics].sort() : [],
+                dependency: f.dependency || '',
+                raw_series: (f.raw_series || []).map(s => ({
+                    type: s.type || '',
+                    dm_id: s.dm_id ? String(s.dm_id) : '',
+                    channel: s.channel || '',
+                    dependency: s.dependency || '',
+                    metrics: Array.isArray(s.metrics) ? [...s.metrics].sort() : [],
+                    assets: Array.isArray(s.assets) ? [...s.assets].sort() : []
+                }))
+            });
+        },
+
+        captureWidgetControlsSnapshot() {
+            this.widgetControlsSnapshot = this.getWidgetControlsSignature();
+        },
+
+        markWidgetControlsDirty() {
+            this.hasUserInteractedWithWidgetControls = true;
+        },
+
+        isWidgetControlsDirty() {
+            if (!this.hasUserInteractedWithWidgetControls) return false;
+            if (!this.widgetControlsSnapshot || !this.widgetControlsForm) return false;
+            return this.getWidgetControlsSignature() !== this.widgetControlsSnapshot;
+        },
+
+        attemptCloseWidgetControls() {
+            if (this.isWidgetControlsDirty()) {
+                this.showUnsavedWidgetControlsModal = true;
+            } else {
+                this.showWidgetControls = false;
+                this.hasUserInteractedWithWidgetControls = false;
+                this.widgetControlsSnapshot = null;
+            }
+        },
+
+        confirmSaveAndCloseWidgetControls() {
+            this.confirmWidgetControls();
+            this.showUnsavedWidgetControlsModal = false;
+        },
+
+        confirmDiscardAndCloseWidgetControls() {
+            this.showUnsavedWidgetControlsModal = false;
+            this.showWidgetControls = false;
+            this.hasUserInteractedWithWidgetControls = false;
+            this.widgetControlsSnapshot = null;
+        },
+
+        cancelUnsavedWidgetControlsModal() {
+            this.showUnsavedWidgetControlsModal = false;
+        },
+
+        resolveWidgetControls(widget) {
+            const wc = widget.controls || {};
+            const dc = this.dashboardControls || {};
+            const resolved = { ...wc };
+
+            if (!resolved.date_start && dc.date_start) resolved.date_start = dc.date_start;
+            if (!resolved.date_end && dc.date_end) resolved.date_end = dc.date_end;
+            if (!resolved.zero_handling && dc.zero_handling) resolved.zero_handling = dc.zero_handling;
+            if (!resolved.granularity && dc.granularity) resolved.granularity = dc.granularity;
+            if (resolved.edge_case_weighted === undefined && dc.edge_case_weighted !== undefined) {
+                resolved.edge_case_weighted = dc.edge_case_weighted;
+            }
+            if (!resolved.edge_case_grouping && dc.edge_case_grouping) {
+                resolved.edge_case_grouping = dc.edge_case_grouping;
+            }
+            if (dc.asset_group) {
+                resolved.asset_group = dc.asset_group;
+            }
+            return resolved;
+        },
 
         // ─── Delete Confirmation Modal State ───
         deleteConfirmOpen: false,
@@ -112,6 +761,7 @@ export function dashboardBuilder(config = {}) {
         allChannelAssets: {},
         allChannelAssetGroups: {},
         allChannelMetrics: {},
+        allChannelDependencies: {},
         dashboardAssets: {},
         dashboardMetrics: {},
         availableDependencies: {},
@@ -145,6 +795,7 @@ export function dashboardBuilder(config = {}) {
             metrics: [],
             series_assets: {},
             series_asset_groups: {},
+            series_dependencies: {},
             dm_assets: {},
         },
         widgetKpiConfig: {},
@@ -157,6 +808,11 @@ export function dashboardBuilder(config = {}) {
         showAddSeriesTypeModal: false,
         addSeriesSourceType: 'metric',
         addSeriesDerivedMetricId: '',
+
+        // ─── Remove DM Series Group Confirmation Modal ──
+        showRemoveDmSeriesModal: false,
+        pendingRemoveDmId: '',
+        pendingRemoveDmName: '',
 
         // ─── Share ──
         showShareDialog: false,
@@ -175,6 +831,9 @@ export function dashboardBuilder(config = {}) {
         customKpiId: '',
         derivedMetricId: '',
         widgetName: '',
+        targetGridX: null,
+        targetGridY: null,
+        pendingDragSourceType: null,
 
         get addWidgetForm() {
             return {
@@ -195,9 +854,9 @@ export function dashboardBuilder(config = {}) {
             this.widgetName = val.name || '';
         },
 
-        openAddWidgetModal() {
-            console.log('[DB][openAddWidgetModal] ENTER');
-            this.selectedSourceType = '';
+        openAddWidgetModal(preselectedSourceType = null) {
+            console.log('[DB][openAddWidgetModal] ENTER', { preselectedSourceType });
+            this.selectedSourceType = preselectedSourceType || '';
             this.selectedWidgetType = '';
             this.customKpiId = '';
             this.derivedMetricId = '';
@@ -265,7 +924,7 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -292,7 +951,7 @@ export function dashboardBuilder(config = {}) {
             } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
-                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'table'];
+                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -324,7 +983,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -340,7 +999,7 @@ export function dashboardBuilder(config = {}) {
                     typeMap = allTypes;
                 }
             } else if (target.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || [];
+                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -453,6 +1112,7 @@ export function dashboardBuilder(config = {}) {
                     this.initGrid();
                 }
                 this.initAllAssets();
+                this.renderAllWidgets();
             });
 
             window.addEventListener('beforeunload', (e) => {
@@ -613,29 +1273,55 @@ export function dashboardBuilder(config = {}) {
         updateSeriesMetrics() {
             if (!this.$wire) return;
             const gran = this.widgetControlsForm.granularity;
-            const dep = this.widgetControlsForm.dependency;
-            const mainCh = (this.widgetControlsTarget?.source_type === 'kpi')
-                ? (this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel)
-                : (this.widgetControlsForm.raw_series?.[0]?.channel || this.widgetControlsForm.channel);
+            const targetType = this.widgetControlsTarget?.source_type;
 
-            if (mainCh) {
-                this.$wire.getMetricsForChannel(mainCh, gran, dep).then(metrics => {
-                    const metricsCopy = { ...this.allChannelMetrics };
-                    metricsCopy[mainCh] = metrics;
-                    this.allChannelMetrics = metricsCopy;
-                });
-            }
-
-            (this.widgetControlsForm.raw_series || []).forEach((series, idx) => {
-                const ch = series.channel;
-                if (ch && ch !== mainCh) {
-                    this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
-                        const metricsCopy = { ...this.allChannelMetrics };
-                        metricsCopy[ch] = metrics;
-                        this.allChannelMetrics = metricsCopy;
+            if (targetType === 'kpi') {
+                const mainCh = this.widgetKpiConfig?.dependent_channel || this.widgetControlsForm.channel;
+                const dep = this.widgetControlsForm.dependency;
+                if (mainCh) {
+                    this.$wire.getMetricsForChannel(mainCh, gran, dep).then(metrics => {
+                        this.allChannelMetrics = { ...this.allChannelMetrics, [mainCh]: metrics };
                     });
                 }
-            });
+            } else {
+                (this.widgetControlsForm.raw_series || []).forEach((series, idx) => {
+                    const ch = series.channel;
+                    const dep = series.dependency || null;
+                    if (ch) {
+                        this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
+                            if (!this.widgetControlsForm.series_metrics_map) {
+                                this.widgetControlsForm.series_metrics_map = {};
+                            }
+                            this.widgetControlsForm.series_metrics_map = {
+                                ...this.widgetControlsForm.series_metrics_map,
+                                [idx]: metrics
+                            };
+                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        });
+                    }
+                });
+            }
+        },
+
+        onWidgetRawSeriesDependencyChange(index) {
+            if (!this.widgetControlsForm.raw_series || !this.widgetControlsForm.raw_series[index] || !this.$wire) return;
+            const series = this.widgetControlsForm.raw_series[index];
+            const ch = series.channel;
+            const dep = series.dependency || null;
+            const gran = this.widgetControlsForm.granularity;
+
+            if (ch) {
+                this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
+                    if (!this.widgetControlsForm.series_metrics_map) {
+                        this.widgetControlsForm.series_metrics_map = {};
+                    }
+                    this.widgetControlsForm.series_metrics_map = {
+                        ...this.widgetControlsForm.series_metrics_map,
+                        [index]: metrics
+                    };
+                    this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                });
+            }
         },
 
         initGridItem(el, widget) {
@@ -725,6 +1411,10 @@ export function dashboardBuilder(config = {}) {
                 if (typeof this.grid.resizable === 'function') {
                     this.grid.resizable(el, true);
                 }
+
+                this.$nextTick(() => {
+                    this.renderWidget(widget.id);
+                });
             };
 
             registerNode();
@@ -756,10 +1446,12 @@ export function dashboardBuilder(config = {}) {
             if (!dm) return;
 
             const dmName = dm.name || ('DM #' + dmId);
-            const sourceSeries = Array.isArray(dm.source_series) ? dm.source_series : [];
+            const rawSourceSeries = Array.isArray(dm.source_series)
+                ? dm.source_series
+                : (typeof dm.source_series === 'object' && dm.source_series !== null ? Object.values(dm.source_series) : []);
             const list = [...(this.widgetControlsForm.raw_series || [])];
 
-            if (sourceSeries.length === 0) {
+            if (rawSourceSeries.length === 0) {
                 list.push({
                     type: 'derived_metric',
                     dm_id: String(dmId),
@@ -769,14 +1461,15 @@ export function dashboardBuilder(config = {}) {
                     assets: []
                 });
             } else {
-                sourceSeries.forEach((ss, idx) => {
+                rawSourceSeries.forEach((ss, idx) => {
                     const ch = ss.channel || '';
-                    const metric = ss.metric || ss.metric_key || '';
+                    const metric = ss.metric || ss.metric_key || ss.metric_name || '';
                     const seriesObj = {
                         type: 'derived_metric',
                         dm_id: String(dmId),
                         dm_name: dmName,
                         dm_series_index: idx,
+                        label: ss.label || '',
                         channel: ch,
                         metrics: metric ? [metric] : [],
                         assets: Array.isArray(ss.assets) ? [...ss.assets] : []
@@ -804,6 +1497,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         addSeriesCard() {
+            this.markWidgetControlsDirty();
             const list = [...(this.widgetControlsForm.raw_series || [])];
             list.push({
                 type: 'metric',
@@ -822,14 +1516,53 @@ export function dashboardBuilder(config = {}) {
         },
 
         removeSeriesCard(index) {
-            if (this.widgetControlsForm.raw_series && index >= 0) {
-                const list = [...this.widgetControlsForm.raw_series];
-                list.splice(index, 1);
-                this.widgetControlsForm.raw_series = list;
-                this.$nextTick(() => {
-                    this.updateSeriesScrollState();
+            if (!this.widgetControlsForm.raw_series || index < 0 || !this.widgetControlsForm.raw_series[index]) return;
+
+            const targetSeries = this.widgetControlsForm.raw_series[index];
+            if (targetSeries.type === 'derived_metric' && targetSeries.dm_id) {
+                this.pendingRemoveDmId = String(targetSeries.dm_id);
+                this.pendingRemoveDmName = targetSeries.dm_name || ('DM #' + targetSeries.dm_id);
+                this.showRemoveDmSeriesModal = true;
+                return;
+            }
+
+            this.markWidgetControlsDirty();
+            const list = [...this.widgetControlsForm.raw_series];
+            list.splice(index, 1);
+            this.widgetControlsForm.raw_series = list;
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+            });
+        },
+
+        confirmRemoveDmSeriesGroup() {
+            if (!this.pendingRemoveDmId) {
+                this.showRemoveDmSeriesModal = false;
+                return;
+            }
+
+            this.markWidgetControlsDirty();
+            const targetDmId = String(this.pendingRemoveDmId);
+            const currentList = this.widgetControlsForm.raw_series || [];
+            const filteredList = currentList.filter(s => !(s.type === 'derived_metric' && String(s.dm_id) === targetDmId));
+
+            if (filteredList.length === 0) {
+                filteredList.push({
+                    type: 'metric',
+                    channel: this.dashboardControls.channel || '',
+                    metrics: [],
+                    assets: []
                 });
             }
+
+            this.widgetControlsForm.raw_series = filteredList;
+            this.pendingRemoveDmId = '';
+            this.pendingRemoveDmName = '';
+            this.showRemoveDmSeriesModal = false;
+
+            this.$nextTick(() => {
+                this.updateSeriesScrollState();
+            });
         },
 
         updateSeriesScrollState() {
@@ -851,6 +1584,192 @@ export function dashboardBuilder(config = {}) {
         },
 
         // ─── Grid ──
+        _initPaletteDragIntoGrid() {
+            const grid = this.grid;
+            if (!grid) return;
+            const palette = document.querySelector('.bd-palette-left');
+            if (!palette) return;
+
+            palette.querySelectorAll('.bd-palette-cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cat = btn.getAttribute('data-size-category');
+                    const panel = palette.querySelector('.bd-sizes-' + cat);
+                    if (!panel) return;
+                    const wasHidden = panel.style.display === 'none';
+                    palette.querySelectorAll('.bd-palette-sizes-panel').forEach(p => p.style.display = 'none');
+                    palette.querySelectorAll('.bd-palette-cat-btn').forEach(b => b.classList.remove('active'));
+                    if (wasHidden) {
+                        const btnRect = btn.getBoundingClientRect();
+                        panel.style.left = (btnRect.right + 8) + 'px';
+                        panel.style.top = btnRect.top + 'px';
+                        panel.style.display = '';
+                        btn.classList.add('active');
+                        const panelRect = panel.getBoundingClientRect();
+                        if (panelRect.bottom > window.innerHeight - 8) {
+                            panel.style.top = Math.max(8, window.innerHeight - panelRect.height - 8) + 'px';
+                        }
+                    }
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!palette.contains(e.target)) {
+                    palette.querySelectorAll('.bd-palette-sizes-panel').forEach(p => p.style.display = 'none');
+                    palette.querySelectorAll('.bd-palette-cat-btn').forEach(b => b.classList.remove('active'));
+                }
+            });
+
+            const GHOST_ID = '__palette_ghost__';
+            const COLUMNS = 12;
+
+            let activeSource = null;
+            let activeW = 4, activeH = 3;
+            let startX = 0, startY = 0;
+            let dragging = false;
+            let ghostEl = null;
+            let savedFloat = null;
+            let lastCellKey = null;
+            let savedPositions = {};
+
+            const cellFromPoint = (cx, cy) => {
+                const rect = grid.el.getBoundingClientRect();
+                const colW = rect.width / COLUMNS;
+                const cellH = parseInt(grid.opts.cellHeight, 10) || 100;
+                const scrollY = grid.el.scrollTop || 0;
+                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - activeW));
+                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / cellH));
+                return { x, y };
+            };
+
+            const removeGhost = () => {
+                if (ghostEl) {
+                    try { grid.removeWidget(ghostEl); } catch (_) {}
+                    ghostEl = null;
+                }
+                if (savedFloat !== null) {
+                    grid.float(savedFloat);
+                    savedFloat = null;
+                }
+                Object.keys(savedPositions).forEach(id => {
+                    const node = grid.engine.nodes.find(n => String(n.id) === String(id));
+                    if (node && node.el) {
+                        const sp = savedPositions[id];
+                        if (node.x !== sp.x || node.y !== sp.y || node.w !== sp.w || node.h !== sp.h) {
+                            grid.update(node.el, sp);
+                        }
+                    }
+                });
+                grid.compact();
+            };
+
+            const onPointerDown = (e) => {
+                if (e.button !== 0) return;
+                const el = e.target.closest('.grid-stack-drag-in');
+                if (!el) return;
+                e.preventDefault();
+                activeSource = el.getAttribute('data-source-type') || 'metric';
+                activeW = parseInt(el.getAttribute('data-grid-w'), 10) || 4;
+                activeH = parseInt(el.getAttribute('data-grid-h'), 10) || 3;
+                startX = e.clientX;
+                startY = e.clientY;
+                dragging = false;
+                lastCellKey = null;
+                document.addEventListener('pointermove', onPointerMove, { capture: true });
+                document.addEventListener('pointerup', onPointerUp, { capture: true });
+            };
+
+            const onPointerMove = (e) => {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                    dragging = true;
+                    savedFloat = grid.float();
+                    grid.float(false);
+
+                    savedPositions = {};
+                    (grid.engine.nodes || []).forEach(node => {
+                        const id = node.id || (node.el ? node.el.getAttribute('gs-id') : null);
+                        if (id && id !== GHOST_ID) {
+                            savedPositions[id] = { x: node.x, y: node.y, w: node.w, h: node.h };
+                        }
+                    });
+
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    ghostEl = grid.addWidget({
+                        id: GHOST_ID,
+                        x: pos.x, y: pos.y,
+                        w: activeW, h: activeH,
+                        minW: activeW, minH: activeH,
+                        noMove: true,
+                        noResize: true,
+                    });
+                    if (ghostEl) {
+                        const inner = ghostEl.querySelector('.grid-stack-item-content') || ghostEl;
+                        inner.innerHTML = '';
+                        inner.style.cssText = 'display:flex;align-items:center;justify-content:center;border:2px dashed var(--primary-400,#818cf8);background:var(--primary-50,rgba(99,102,241,.06));border-radius:8px;';
+                        const span = document.createElement('span');
+                        span.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary-500,#6366f1);text-transform:uppercase;letter-spacing:.5px;opacity:.7;pointer-events:none;';
+                        span.textContent = activeH + '×' + activeW;
+                        inner.appendChild(span);
+                    }
+                }
+
+                if (dragging && ghostEl) {
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    const cellKey = `${pos.x},${pos.y}`;
+                    if (cellKey !== lastCellKey) {
+                        lastCellKey = cellKey;
+                        Object.keys(savedPositions).forEach(id => {
+                            const node = grid.engine.nodes.find(n => String(n.id) === String(id));
+                            if (node && node.el) {
+                                const sp = savedPositions[id];
+                                if (node.x !== sp.x || node.y !== sp.y || node.w !== sp.w || node.h !== sp.h) {
+                                    grid.update(node.el, sp);
+                                }
+                            }
+                        });
+                        grid.update(ghostEl, { x: pos.x, y: pos.y });
+                    }
+                }
+            };
+
+            const onPointerUp = (e) => {
+                document.removeEventListener('pointermove', onPointerMove, { capture: true });
+                document.removeEventListener('pointerup', onPointerUp, { capture: true });
+
+                const wasDragging = dragging;
+                dragging = false;
+
+                if (!wasDragging || !activeSource) {
+                    activeSource = null;
+                    removeGhost();
+                    return;
+                }
+
+                const rect = grid.el.getBoundingClientRect();
+                const overGrid = e.clientX >= rect.left && e.clientX <= rect.right
+                               && e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+                if (overGrid) {
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    this.targetGridX = pos.x;
+                    this.targetGridY = pos.y;
+                    this.targetGridW = activeW;
+                    this.targetGridH = activeH;
+                    this.pendingDragSourceType = activeSource;
+                    removeGhost();
+                    this.openAddWidgetModal(activeSource);
+                } else {
+                    removeGhost();
+                }
+
+                activeSource = null;
+            };
+
+            palette.addEventListener('pointerdown', onPointerDown);
+        },
+
         initGrid() {
             if (typeof GridStack === 'undefined') {
                 setTimeout(() => this.initGrid(), 50);
@@ -879,6 +1798,9 @@ export function dashboardBuilder(config = {}) {
                     scroll: false
                 },
             });
+
+            // ── Palette drag-in: insert temporary GridStack widget on drag ──
+            this._initPaletteDragIntoGrid();
 
             let autoScrollTimer = null;
             let multiDragStartPositions = null;
@@ -998,6 +1920,18 @@ export function dashboardBuilder(config = {}) {
                 this.isDirty = (currentSignature !== this._initialLayoutSignature);
             });
 
+            this.grid.on('resizestop', (event, el) => {
+                if (!el) return;
+                const contentEl = el.querySelector('.widget-content');
+                if (contentEl && window.dashboardRenderer?._chartInstances?.has(contentEl)) {
+                    const chart = window.dashboardRenderer._chartInstances.get(contentEl);
+                    if (chart && typeof chart.resize === 'function') {
+                        chart.resize();
+                    }
+                }
+                window.dispatchEvent(new Event('resize'));
+            });
+
             this.registerGridItemsObserver();
             this.syncExistingGridItems();
 
@@ -1046,6 +1980,7 @@ export function dashboardBuilder(config = {}) {
                     if (mutation.type !== 'childList') return;
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType !== 1 || !node.classList || !node.classList.contains('grid-stack-item')) return;
+                        if (node.getAttribute('gs-id') === '__palette_ghost__') return;
                         if (node.gridstackNode) return;
                         const rawId = node.getAttribute('gs-id') || node.getAttribute('data-id');
                         if (rawId === null || rawId === undefined) return;
@@ -1068,6 +2003,35 @@ export function dashboardBuilder(config = {}) {
 
             this._gridItemsObserver.observe(container, { childList: true });
             console.log('[DB][observer] registered on #grid-stack');
+
+            this.positionPalette();
+            this._paletteRAF = null;
+            this._onPaletteReposition = () => {
+                if (this._paletteRAF) return;
+                this._paletteRAF = requestAnimationFrame(() => {
+                    this._paletteRAF = null;
+                    this.positionPalette();
+                });
+            };
+            window.addEventListener('resize', this._onPaletteReposition, { passive: true });
+            window.addEventListener('scroll', this._onPaletteReposition, { passive: true });
+
+            const paletteEl = document.querySelector('.bd-palette-left');
+            if (paletteEl) {
+                const observePalette = () => {
+                    const el = document.querySelector('.bd-palette-left');
+                    if (!el) return;
+                    if (this._paletteObserver) this._paletteObserver.disconnect();
+                    this._paletteObserver = new MutationObserver(() => {
+                        if (!this._repositioningPalette) this.positionPalette();
+                    });
+                    this._paletteObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+                };
+                observePalette();
+                if (paletteEl.parentElement) {
+                    new MutationObserver(observePalette).observe(paletteEl.parentElement, { childList: true, subtree: true });
+                }
+            }
         },
 
         saveLayout() {
@@ -1169,6 +2133,11 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Dashboard Controls ──
         openDashboardControls() {
+            if (!this.dashboardControls.asset_group) {
+                this.dashboardControls.asset_group = [];
+            } else if (!Array.isArray(this.dashboardControls.asset_group)) {
+                this.dashboardControls.asset_group = [String(this.dashboardControls.asset_group)];
+            }
             this.showDashboardControls = true;
         },
 
@@ -1207,6 +2176,9 @@ export function dashboardBuilder(config = {}) {
                 alert("Warning: " + adjustedWidgets + " widget(s) did not comply with the new dashboard date range and were automatically adjusted.");
             }
 
+            const rawGroup = c.asset_group;
+            const assetGroupArray = Array.isArray(rawGroup) ? rawGroup.map(String) : (rawGroup ? [String(rawGroup)] : []);
+
             const payload = {
                 date_start: c.date_start || '',
                 date_end: c.date_end || '',
@@ -1214,8 +2186,10 @@ export function dashboardBuilder(config = {}) {
                 granularity: c.granularity || 'daily',
                 edge_case_weighted: c.edge_case_weighted !== undefined ? !!c.edge_case_weighted : true,
                 edge_case_grouping: c.edge_case_grouping || 'none',
-                asset_group: c.asset_group || '',
+                asset_group: assetGroupArray,
                 show_asset_group_selector: c.show_asset_group_selector === true,
+                allow_pdf_export: c.allow_pdf_export === true,
+                pdf_export_roles: Array.isArray(c.pdf_export_roles) ? c.pdf_export_roles : [],
             };
             if (this.$wire) {
                 this.$wire.saveDashboardControls(payload).then(() => {
@@ -1268,6 +2242,7 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.widgetControlsTarget = widget;
+            this.hasUserInteractedWithWidgetControls = false;
 
             const hasDate = wc.date_start !== undefined || wc.date_end !== undefined;
             const hasZero = wc.zero_handling !== undefined;
@@ -1347,6 +2322,7 @@ export function dashboardBuilder(config = {}) {
                 metrics: wc.metrics || [],
                 series_assets: wc.series_assets || {},
                 series_asset_groups: wc.series_asset_groups || {},
+                series_dependencies: wc.series_dependencies ? { ...wc.series_dependencies } : {},
                 edge_case_inherit: wc.edge_case_weighted === undefined && wc.edge_case_grouping === undefined,
                 edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : (this.dashboardControls.edge_case_weighted ?? true),
                 edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : (this.dashboardControls.edge_case_grouping || 'none'),
@@ -1355,19 +2331,38 @@ export function dashboardBuilder(config = {}) {
                 block_first_col: wc.block_first_col !== undefined ? !!wc.block_first_col : true,
                 raw_series: [],
                 dm_assets: wc.dm_assets || {},
+                combo_chart_config: wc.combo_chart_config ? JSON.parse(JSON.stringify(wc.combo_chart_config)) : {},
             };
 
             if (widget.source_type !== 'kpi') {
                 if (wc.raw_series && Array.isArray(wc.raw_series) && wc.raw_series.length > 0) {
-                    this.widgetControlsForm.raw_series = wc.raw_series.map(s => ({
-                        channel: s.channel || '',
-                        metrics: Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []),
-                        assets: Array.isArray(s.assets) ? [...s.assets] : []
-                    }));
+                    this.widgetControlsForm.raw_series = wc.raw_series.map((s, sIdx) => {
+                        const rawAllowed = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : (Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []));
+                        const rawSelected = Array.isArray(s.metrics) ? [...s.metrics] : (s.metric ? [s.metric] : []);
+                        const rawAllowedAssets = Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []);
+                        const rawSelectedAssets = Array.isArray(s.assets) ? [...s.assets] : [];
+                        let rawDep = s.dependency || (wc.series_dependencies && (wc.series_dependencies[sIdx] || wc.series_dependencies[String(sIdx)])) || '';
+                        if (!rawDep && s.channel === (wc.channel || this.dashboardControls?.channel)) {
+                            rawDep = wc.dependency || '';
+                        }
+                        return {
+                            type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                            dm_id: s.dm_id ? String(s.dm_id) : undefined,
+                            dm_name: s.dm_name || undefined,
+                            dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
+                            label: s.label || '',
+                            channel: s.channel || '',
+                            dependency: rawDep,
+                            allowed_metrics: rawAllowed,
+                            metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
+                            allowed_assets: rawAllowedAssets,
+                            assets: rawSelectedAssets.length > 0 ? rawSelectedAssets : [...rawAllowedAssets]
+                        };
+                    });
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
                     const seriesKeys = Object.keys(wc.series_channels);
                     const groupedSeries = [];
-                    seriesKeys.forEach((key) => {
+                    seriesKeys.forEach((key, sIdx) => {
                         const channel = wc.series_channels[key] || wc.channel || '';
                         const assets = (wc.series_assets && wc.series_assets[key]) ? [...wc.series_assets[key]] : (wc.assets ? [...wc.assets] : []);
                         let metrics = [];
@@ -1384,19 +2379,32 @@ export function dashboardBuilder(config = {}) {
                         } else if (wc.metrics && typeof wc.metrics === 'object') {
                             metrics = Array.isArray(wc.metrics[key]) ? [...wc.metrics[key]] : (wc.metrics[key] ? [wc.metrics[key]] : []);
                         }
-                        groupedSeries.push({ channel, metrics, assets });
+                        const allowed = (wc.series_allowed_metrics && wc.series_allowed_metrics[key]) ? [...wc.series_allowed_metrics[key]] : [...metrics];
+                        let rawDep = (wc.series_dependencies && (wc.series_dependencies[key] || wc.series_dependencies[sIdx])) || '';
+                        if (!rawDep && channel === (wc.channel || this.dashboardControls?.channel)) {
+                            rawDep = wc.dependency || '';
+                        }
+                        groupedSeries.push({
+                            channel,
+                            dependency: rawDep,
+                            allowed_metrics: allowed,
+                            metrics,
+                            assets
+                        });
                     });
                     this.widgetControlsForm.raw_series = groupedSeries;
                 } else if (wc.metrics && Array.isArray(wc.metrics) && wc.metrics.length > 0) {
                     this.widgetControlsForm.raw_series = [{
                         channel: wc.channel || '',
+                        dependency: (wc.series_dependencies && (wc.series_dependencies[0] || wc.series_dependencies['0'])) || wc.dependency || '',
+                        allowed_metrics: [...wc.metrics],
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : []
                     }];
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', metrics: [], assets: wc.assets || [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [] });
                 }
 
                 if (this.$wire) {
@@ -1408,10 +2416,39 @@ export function dashboardBuilder(config = {}) {
                         if (ch && !this.allChannelAssetGroups[ch]) {
                             this.$wire.getAssetGroupsForChannel(ch).then(groups => { this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups }; });
                         }
-                        if (ch && !this.allChannelMetrics[ch]) {
-                            this.$wire.getMetricsForChannel(ch).then(metrics => {
-                                this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                        if (ch && !this.allChannelDependencies[ch]) {
+                            this.$wire.getDependenciesForChannel(ch).then(deps => {
+                                this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
+                                if (deps && Object.keys(deps).length > 0 && !series.dependency) {
+                                    series.dependency = Object.keys(deps)[0];
+                                }
+                                this.$wire.getMetricsForChannel(ch, wc.granularity, series.dependency).then(metrics => {
+                                    if (!this.widgetControlsForm.series_metrics_map) {
+                                        this.widgetControlsForm.series_metrics_map = {};
+                                    }
+                                    this.widgetControlsForm.series_metrics_map = {
+                                        ...this.widgetControlsForm.series_metrics_map,
+                                        [idx]: metrics
+                                    };
+                                    this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                });
                             });
+                        } else {
+                            if (ch && this.allChannelDependencies[ch] && Object.keys(this.allChannelDependencies[ch]).length > 0 && !series.dependency) {
+                                series.dependency = Object.keys(this.allChannelDependencies[ch])[0];
+                            }
+                            if (ch) {
+                                this.$wire.getMetricsForChannel(ch, wc.granularity, series.dependency).then(metrics => {
+                                    if (!this.widgetControlsForm.series_metrics_map) {
+                                        this.widgetControlsForm.series_metrics_map = {};
+                                    }
+                                    this.widgetControlsForm.series_metrics_map = {
+                                        ...this.widgetControlsForm.series_metrics_map,
+                                        [idx]: metrics
+                                    };
+                                    this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                });
+                            }
                         }
                     });
                 }
@@ -1474,15 +2511,47 @@ export function dashboardBuilder(config = {}) {
                         this.widgetControlsForm.max_ratio = config?.max_ratio !== undefined ? config.max_ratio : null;
                     }
 
-                    if (!this.widgetControlsForm.series_assets.dependent) this.widgetControlsForm.series_assets.dependent = [];
-                    if (!this.widgetControlsForm.series_asset_groups.dependent) this.widgetControlsForm.series_asset_groups.dependent = '';
+                    if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+                    if (!this.widgetControlsForm.series_assets.dependent) {
+                        this.widgetControlsForm.series_assets.dependent = (wc.series_assets && wc.series_assets.dependent)
+                            ? [...wc.series_assets.dependent]
+                            : (uiState.dependent_asset_filter ? (Array.isArray(uiState.dependent_asset_filter) ? [...uiState.dependent_asset_filter] : [uiState.dependent_asset_filter]) : []);
+                    }
+                    if (!this.widgetControlsForm.series_allowed_assets.dependent) {
+                        this.widgetControlsForm.series_allowed_assets.dependent = (wc.series_allowed_assets && wc.series_allowed_assets.dependent)
+                            ? [...wc.series_allowed_assets.dependent]
+                            : [...(this.widgetControlsForm.series_assets.dependent || [])];
+                    }
+                    if (this.widgetControlsForm.series_asset_groups.dependent === undefined) {
+                        this.widgetControlsForm.series_asset_groups.dependent = (wc.series_asset_groups && wc.series_asset_groups.dependent !== undefined)
+                            ? wc.series_asset_groups.dependent
+                            : ((wc.series_assets && wc.series_assets.dependent) ? '' : (uiState.dependent_asset_group || ''));
+                    }
+                    if (!this.widgetControlsForm.series_dependencies) this.widgetControlsForm.series_dependencies = {};
+                    if (!this.widgetControlsForm.series_dependencies.dependent && uiState.dependent_dependency) {
+                        this.widgetControlsForm.series_dependencies.dependent = uiState.dependent_dependency;
+                    }
                     if (this.widgetKpiConfig.independent_variables) {
                         for (let key in this.widgetKpiConfig.independent_variables) {
-                            if (!this.widgetControlsForm.series_assets['independent_' + key]) {
-                                this.widgetControlsForm.series_assets['independent_' + key] = [];
+                            const indKey = 'independent_' + key;
+                            if (!this.widgetControlsForm.series_assets[indKey]) {
+                                const ivFilter = this.widgetKpiConfig.independent_variables[key]?.independent_asset_filter;
+                                this.widgetControlsForm.series_assets[indKey] = (wc.series_assets && wc.series_assets[indKey])
+                                    ? [...wc.series_assets[indKey]]
+                                    : (ivFilter ? (Array.isArray(ivFilter) ? [...ivFilter] : [ivFilter]) : []);
                             }
-                            if (!this.widgetControlsForm.series_asset_groups['independent_' + key]) {
-                                this.widgetControlsForm.series_asset_groups['independent_' + key] = '';
+                            if (!this.widgetControlsForm.series_allowed_assets[indKey]) {
+                                this.widgetControlsForm.series_allowed_assets[indKey] = (wc.series_allowed_assets && wc.series_allowed_assets[indKey])
+                                    ? [...wc.series_allowed_assets[indKey]]
+                                    : [...(this.widgetControlsForm.series_assets[indKey] || [])];
+                            }
+                            if (this.widgetControlsForm.series_asset_groups[indKey] === undefined) {
+                                this.widgetControlsForm.series_asset_groups[indKey] = (wc.series_asset_groups && wc.series_asset_groups[indKey] !== undefined)
+                                    ? wc.series_asset_groups[indKey]
+                                    : ((wc.series_assets && wc.series_assets[indKey]) ? '' : (this.widgetKpiConfig.independent_variables[key]?.independent_asset_group || ''));
+                            }
+                            if (!this.widgetControlsForm.series_dependencies[indKey] && this.widgetKpiConfig.independent_variables[key]?.independent_dependency) {
+                                this.widgetControlsForm.series_dependencies[indKey] = this.widgetKpiConfig.independent_variables[key].independent_dependency;
                             }
                         }
                     }
@@ -1493,7 +2562,14 @@ export function dashboardBuilder(config = {}) {
                             dm.source_series.forEach((_, sIdx) => {
                                 const k = prefix + '_dm_' + sIdx;
                                 if (!this.widgetControlsForm.series_assets[k]) {
-                                    this.widgetControlsForm.series_assets[k] = [];
+                                    this.widgetControlsForm.series_assets[k] = (wc.series_assets && wc.series_assets[k])
+                                        ? [...wc.series_assets[k]]
+                                        : [];
+                                }
+                                if (!this.widgetControlsForm.series_allowed_assets[k]) {
+                                    this.widgetControlsForm.series_allowed_assets[k] = (wc.series_allowed_assets && wc.series_allowed_assets[k])
+                                        ? [...wc.series_allowed_assets[k]]
+                                        : [...(this.widgetControlsForm.series_assets[k] || [])];
                                 }
                             });
                         }
@@ -1551,19 +2627,29 @@ export function dashboardBuilder(config = {}) {
                                 this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                             });
                         }
+                        if (!this.allChannelDependencies[ch]) {
+                            this.$wire.getDependenciesForChannel(ch).then(deps => {
+                                this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
+                            });
+                        }
                         if (!this.allChannelMetrics[ch]) {
                             this.$wire.getMetricsForChannel(ch).then(metrics => {
                                 this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                                 if (this.widgetKpiConfig.dependent_channel === ch && !this.widgetKpiConfig.dependent_metric && metrics && Object.keys(metrics).length > 0) {
-                                    const firstMetric = Object.keys(metrics)[0];
-                                    this.widgetControlsForm.metrics[0] = firstMetric;
+                                    if (!this.widgetControlsForm.metrics[0]) {
+                                        const firstMetric = Object.keys(metrics)[0];
+                                        this.widgetControlsForm.metrics[0] = firstMetric;
+                                    }
                                 }
                                 if (this.widgetKpiConfig.independent_variables) {
                                     for (let key in this.widgetKpiConfig.independent_variables) {
                                         const v = this.widgetKpiConfig.independent_variables[key];
+                                        const targetIdx = parseInt(key) + 1;
                                         if (v.independent_channel === ch && !v.independent_metric && metrics && Object.keys(metrics).length > 0) {
-                                            const firstMetric = Object.keys(metrics)[0];
-                                            this.widgetControlsForm.metrics[parseInt(key) + 1] = firstMetric;
+                                            if (!this.widgetControlsForm.metrics[targetIdx]) {
+                                                const firstMetric = Object.keys(metrics)[0];
+                                                this.widgetControlsForm.metrics[targetIdx] = firstMetric;
+                                            }
                                         }
                                     }
                                 }
@@ -1589,7 +2675,9 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.captureWidgetControlsSnapshot();
                     this.$nextTick(() => {
+                        this.captureWidgetControlsSnapshot();
                         const el = this.$refs.seriesScrollContainer;
                         if (el) el.scrollLeft = 0;
                         this.updateSeriesScrollState();
@@ -1599,7 +2687,9 @@ export function dashboardBuilder(config = {}) {
                     this.loadWidgetMetrics(savedMetrics);
                     this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                     this.showWidgetControls = true;
+                    this.captureWidgetControlsSnapshot();
                     this.$nextTick(() => {
+                        this.captureWidgetControlsSnapshot();
                         const el = this.$refs.seriesScrollContainer;
                         if (el) el.scrollLeft = 0;
                         this.updateSeriesScrollState();
@@ -1609,7 +2699,9 @@ export function dashboardBuilder(config = {}) {
                 this.loadWidgetMetrics(savedMetrics);
                 this.updateDependenciesAndGranularities(wc.dependency, wc.granularity);
                 this.showWidgetControls = true;
+                this.captureWidgetControlsSnapshot();
                 this.$nextTick(() => {
+                    this.captureWidgetControlsSnapshot();
                     const el = this.$refs.seriesScrollContainer;
                     if (el) el.scrollLeft = 0;
                     this.updateSeriesScrollState();
@@ -1674,11 +2766,18 @@ export function dashboardBuilder(config = {}) {
         },
 
         onWidgetRawChannelChange(index) {
-            const ch = this.widgetControlsForm.raw_series[index].channel;
+            if (!this.widgetControlsForm.raw_series || !this.widgetControlsForm.raw_series[index]) return;
+            const series = this.widgetControlsForm.raw_series[index];
+            const ch = series.channel;
+
+            // Reset selected metrics, allowed metrics, dependency, and assets because channel changed
+            series.allowed_metrics = [];
+            series.metrics = [];
+            series.dependency = '';
+            series.assets = [];
 
             if (index === 0) {
                 this.widgetControlsForm.channel = ch;
-                this.updateDependenciesAndGranularities();
             }
 
             if (ch && !this.allChannelAssets[ch] && this.$wire) {
@@ -1691,25 +2790,198 @@ export function dashboardBuilder(config = {}) {
                     this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups };
                 });
             }
-            if (ch && !this.allChannelMetrics[ch] && this.$wire) {
-                this.$wire.getMetricsForChannel(ch).then(metrics => {
+            if (ch && !this.allChannelDependencies[ch] && this.$wire) {
+                this.$wire.getDependenciesForChannel(ch).then(deps => {
+                    this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
+                    if (deps && Object.keys(deps).length > 0 && !series.dependency) {
+                        series.dependency = Object.keys(deps)[0];
+                    }
+                    this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
+                        if (!this.widgetControlsForm.series_metrics_map) {
+                            this.widgetControlsForm.series_metrics_map = {};
+                        }
+                        this.widgetControlsForm.series_metrics_map = {
+                            ...this.widgetControlsForm.series_metrics_map,
+                            [index]: metrics
+                        };
+                        this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                    });
+                });
+            } else if (ch && this.allChannelDependencies[ch]) {
+                const deps = this.allChannelDependencies[ch];
+                if (deps && Object.keys(deps).length > 0 && !series.dependency) {
+                    series.dependency = Object.keys(deps)[0];
+                }
+                if (this.$wire) {
+                    this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
+                        if (!this.widgetControlsForm.series_metrics_map) {
+                            this.widgetControlsForm.series_metrics_map = {};
+                        }
+                        this.widgetControlsForm.series_metrics_map = {
+                            ...this.widgetControlsForm.series_metrics_map,
+                            [index]: metrics
+                        };
+                        this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                    });
+                }
+            } else if (ch && this.$wire) {
+                this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
+                    if (!this.widgetControlsForm.series_metrics_map) {
+                        this.widgetControlsForm.series_metrics_map = {};
+                    }
+                    this.widgetControlsForm.series_metrics_map = {
+                        ...this.widgetControlsForm.series_metrics_map,
+                        [index]: metrics
+                    };
                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                 });
             }
         },
 
-        toggleRawAsset(index, id) {
-            const current = this.widgetControlsForm.raw_series[index].assets || [];
-            const strId = String(id);
-            if (current.includes(strId)) {
-                if (current.length <= 1) return;
-                this.widgetControlsForm.raw_series[index].assets = current.filter(a => a !== strId);
+        toggleRawMetricIncluded(index, metricKey) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
+            if (!Array.isArray(series.metrics)) series.metrics = [];
+
+            if (series.allowed_metrics.includes(metricKey)) {
+                // Remove from allowed and active
+                series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
+                series.metrics = series.metrics.filter(m => m !== metricKey);
             } else {
-                this.widgetControlsForm.raw_series[index].assets = [...current, strId];
+                // Add to allowed and by default mark as active
+                series.allowed_metrics = [...series.allowed_metrics, metricKey];
+                if (!series.metrics.includes(metricKey)) {
+                    series.metrics = [...series.metrics, metricKey];
+                }
             }
         },
 
+        toggleRawMetricDefaultActive(index, metricKey) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
+            if (!Array.isArray(series.metrics)) series.metrics = [];
+
+            // If not included yet, include it first
+            if (!series.allowed_metrics.includes(metricKey)) {
+                series.allowed_metrics = [...series.allowed_metrics, metricKey];
+                series.metrics = [...series.metrics, metricKey];
+                return;
+            }
+
+            // Toggle active state
+            if (series.metrics.includes(metricKey)) {
+                series.metrics = series.metrics.filter(m => m !== metricKey);
+            } else {
+                series.metrics = [...series.metrics, metricKey];
+            }
+        },
+
+        selectAllRawMetrics(index) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series || !series.channel) return;
+            const availableKeys = Object.keys(this.allChannelMetrics[series.channel] || {});
+            series.allowed_metrics = [...availableKeys];
+            series.metrics = [...availableKeys];
+        },
+
+        toggleRawMetricComboType(index, metricKey) {
+            this.markWidgetControlsDirty();
+            if (!this.widgetControlsForm.combo_chart_config) {
+                this.widgetControlsForm.combo_chart_config = {};
+            }
+            const cfgKey = index + '_' + metricKey;
+            const current = this.widgetControlsForm.combo_chart_config[cfgKey]?.type || this.getRawMetricDefaultComboType(index, metricKey);
+            const nextType = current === 'bar' ? 'line' : 'bar';
+            
+            this.widgetControlsForm.combo_chart_config = {
+                ...this.widgetControlsForm.combo_chart_config,
+                [cfgKey]: {
+                    ...(this.widgetControlsForm.combo_chart_config[cfgKey] || {}),
+                    type: nextType
+                }
+            };
+        },
+
+        getRawMetricComboType(index, metricKey) {
+            const cfgKey = index + '_' + metricKey;
+            return this.widgetControlsForm?.combo_chart_config?.[cfgKey]?.type || this.getRawMetricDefaultComboType(index, metricKey);
+        },
+
+        getRawMetricDefaultComboType(index, metricKey) {
+            const m = String(metricKey || '').toLowerCase();
+            const rateKeywords = ['roas', 'cpc', 'cpm', 'ctr', 'rate', 'aov', 'frequency', 'cost_per', 'percentage', 'ratio', 'bounce'];
+            if (rateKeywords.some(kw => m.includes(kw))) return 'line';
+            if (['spend', 'cost', 'revenue'].some(kw => m.includes(kw))) return 'bar';
+            return index === 0 ? 'bar' : 'line';
+        },
+
+        clearAllRawMetrics(index) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            series.allowed_metrics = [];
+            series.metrics = [];
+        },
+
+        toggleRawAssetIncluded(index, assetId) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            const strId = String(assetId);
+            if (!Array.isArray(series.allowed_assets)) {
+                series.allowed_assets = Array.isArray(series.assets) ? [...series.assets] : [];
+            }
+            if (!Array.isArray(series.assets)) series.assets = [];
+
+            if (series.allowed_assets.includes(strId)) {
+                // Remove from allowed and active
+                series.allowed_assets = series.allowed_assets.filter(a => a !== strId);
+                series.assets = series.assets.filter(a => a !== strId);
+            } else {
+                // Add to allowed and mark as active by default
+                series.allowed_assets = [...series.allowed_assets, strId];
+                if (!series.assets.includes(strId)) {
+                    series.assets = [...series.assets, strId];
+                }
+            }
+        },
+
+        toggleRawAssetDefaultActive(index, assetId) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            const strId = String(assetId);
+            if (!Array.isArray(series.allowed_assets)) {
+                series.allowed_assets = Array.isArray(series.assets) ? [...series.assets] : [];
+            }
+            if (!Array.isArray(series.assets)) series.assets = [];
+
+            // If not included yet, include it first
+            if (!series.allowed_assets.includes(strId)) {
+                series.allowed_assets = [...series.allowed_assets, strId];
+                series.assets = [...series.assets, strId];
+                return;
+            }
+
+            // Toggle active state
+            if (series.assets.includes(strId)) {
+                series.assets = series.assets.filter(a => a !== strId);
+            } else {
+                series.assets = [...series.assets, strId];
+            }
+        },
+
+        toggleRawAsset(index, id) {
+            this.toggleRawAssetIncluded(index, id);
+        },
+
         selectAllRawAssets(index) {
+            this.markWidgetControlsDirty();
             const ch = this.widgetControlsForm.raw_series[index].channel;
             const assets = this.allChannelAssets[ch] || {};
             let validIds = Object.keys(assets).map(String);
@@ -1718,45 +2990,81 @@ export function dashboardBuilder(config = {}) {
                 const groupAssets = this.allChannelAssetGroups[ch][globalGroup].assets.map(String);
                 validIds = validIds.filter(id => groupAssets.includes(id));
             }
-            this.widgetControlsForm.raw_series[index].assets = validIds;
+            this.widgetControlsForm.raw_series[index].allowed_assets = [...validIds];
+            this.widgetControlsForm.raw_series[index].assets = [...validIds];
         },
 
-        selectAllKpiAssets(seriesKey, channel, kpiGroup = null) {
+        selectAllKpiAssets(seriesKey, channel) {
+            this.markWidgetControlsDirty();
             const assets = this.allChannelAssets[channel] || {};
             let validIds = Object.keys(assets).map(String);
-            if (kpiGroup && this.allChannelAssetGroups[channel] && this.allChannelAssetGroups[channel][kpiGroup]) {
-                const groupAssets = this.allChannelAssetGroups[channel][kpiGroup].assets.map(String);
+            const globalGroup = this.dashboardControls?.asset_group;
+            if (globalGroup && this.allChannelAssetGroups[channel]?.[globalGroup]) {
+                const groupAssets = this.allChannelAssetGroups[channel][globalGroup].assets.map(String);
                 validIds = validIds.filter(id => groupAssets.includes(id));
             }
-            const widgetGroup = this.widgetControlsForm?.series_asset_groups?.[seriesKey];
-            if (!widgetGroup && !kpiGroup) {
-                const globalGroup = this.dashboardControls?.asset_group;
-                if (globalGroup && this.allChannelAssetGroups[channel]?.[globalGroup]) {
-                    const groupAssets = this.allChannelAssetGroups[channel][globalGroup].assets.map(String);
-                    validIds = validIds.filter(id => groupAssets.includes(id));
-                }
-            }
-            this.widgetControlsForm.series_assets[seriesKey] = validIds;
+            if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+            if (!this.widgetControlsForm.series_assets) this.widgetControlsForm.series_assets = {};
+            this.widgetControlsForm.series_allowed_assets[seriesKey] = [...validIds];
+            this.widgetControlsForm.series_assets[seriesKey] = [...validIds];
         },
 
-        toggleKpiAsset(seriesKey, id) {
-            const current = this.widgetControlsForm.series_assets[seriesKey] || [];
+        toggleKpiAssetIncluded(seriesKey, id) {
+            this.markWidgetControlsDirty();
+            if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+            if (!this.widgetControlsForm.series_assets) this.widgetControlsForm.series_assets = {};
+
+            const allowed = Array.isArray(this.widgetControlsForm.series_allowed_assets[seriesKey])
+                ? this.widgetControlsForm.series_allowed_assets[seriesKey]
+                : (Array.isArray(this.widgetControlsForm.series_assets[seriesKey]) ? [...this.widgetControlsForm.series_assets[seriesKey]] : []);
+            const active = Array.isArray(this.widgetControlsForm.series_assets[seriesKey])
+                ? this.widgetControlsForm.series_assets[seriesKey]
+                : [];
             const strId = String(id);
 
-            if (this.kpiSeriesAssetMode === 'single') {
-                this.widgetControlsForm.series_assets[seriesKey] = [strId];
+            if (allowed.includes(strId)) {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = allowed.filter(a => a !== strId);
+                this.widgetControlsForm.series_assets[seriesKey] = active.filter(a => a !== strId);
+            } else {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = [...allowed, strId];
+                if (!active.includes(strId)) {
+                    this.widgetControlsForm.series_assets[seriesKey] = [...active, strId];
+                }
+            }
+        },
+
+        toggleKpiAssetDefaultActive(seriesKey, id) {
+            this.markWidgetControlsDirty();
+            if (!this.widgetControlsForm.series_allowed_assets) this.widgetControlsForm.series_allowed_assets = {};
+            if (!this.widgetControlsForm.series_assets) this.widgetControlsForm.series_assets = {};
+
+            const allowed = Array.isArray(this.widgetControlsForm.series_allowed_assets[seriesKey])
+                ? this.widgetControlsForm.series_allowed_assets[seriesKey]
+                : (Array.isArray(this.widgetControlsForm.series_assets[seriesKey]) ? [...this.widgetControlsForm.series_assets[seriesKey]] : []);
+            const active = Array.isArray(this.widgetControlsForm.series_assets[seriesKey])
+                ? this.widgetControlsForm.series_assets[seriesKey]
+                : [];
+            const strId = String(id);
+
+            if (!allowed.includes(strId)) {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = [...allowed, strId];
+                this.widgetControlsForm.series_assets[seriesKey] = [...active, strId];
                 return;
             }
 
-            if (current.includes(strId)) {
-                if (current.length <= 1) return;
-                this.widgetControlsForm.series_assets[seriesKey] = current.filter(a => a !== strId);
+            if (active.includes(strId)) {
+                this.widgetControlsForm.series_assets[seriesKey] = active.filter(a => a !== strId);
             } else {
-                this.widgetControlsForm.series_assets[seriesKey] = [...current, strId];
+                this.widgetControlsForm.series_assets[seriesKey] = [...active, strId];
             }
         },
 
+        toggleKpiAsset(seriesKey, id) {
+            this.toggleKpiAssetIncluded(seriesKey, id);
+        },
+
         toggleDmAsset(index, id) {
+            this.markWidgetControlsDirty();
             const current = this.widgetControlsForm.dm_assets[index] || [];
             const strId = String(id);
             if (current.includes(strId)) {
@@ -1767,6 +3075,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         selectAllDmAssets(index) {
+            this.markWidgetControlsDirty();
             const series = this.widgetControlsTarget.dmSourceSeries[index];
             const ch = series.channel;
             const assets = this.allChannelAssets[ch] || {};
@@ -1780,31 +3089,28 @@ export function dashboardBuilder(config = {}) {
         },
 
         clearAllRawAssets(index) {
-            this.widgetControlsForm.raw_series[index].assets = [];
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            series.allowed_assets = [];
+            series.assets = [];
         },
 
         clearAllDmAssets(index) {
+            this.markWidgetControlsDirty();
             this.widgetControlsForm.dm_assets[index] = [];
         },
 
         clearAllKpiAssets(seriesKey) {
+            this.markWidgetControlsDirty();
+            if (this.widgetControlsForm.series_allowed_assets) {
+                this.widgetControlsForm.series_allowed_assets[seriesKey] = [];
+            }
             this.widgetControlsForm.series_assets[seriesKey] = [];
         },
 
         // ─── Asset Group Helpers ───
         getEffectiveGroup(seriesKey, channel) {
-            const widgetGroup = this.widgetControlsForm?.series_asset_groups?.[seriesKey];
-            if (widgetGroup) return widgetGroup;
-
-            if (seriesKey === 'dependent' && this.widgetKpiConfig?.dependent_asset_group) {
-                return this.widgetKpiConfig.dependent_asset_group;
-            }
-            if (seriesKey && seriesKey.startsWith('independent_')) {
-                const idx = seriesKey.replace('independent_', '');
-                const kpiGroup = this.widgetKpiConfig?.independent_variables?.[idx]?.independent_asset_group;
-                if (kpiGroup) return kpiGroup;
-            }
-
             if (this.dashboardControls?.asset_group) {
                 return this.dashboardControls.asset_group;
             }
@@ -1839,6 +3145,7 @@ export function dashboardBuilder(config = {}) {
         },
 
         resetWidgetControls() {
+            this.markWidgetControlsDirty();
             this.widgetControlsForm = {
                 date_inherit: true,
                 date_start: '',
@@ -1933,10 +3240,15 @@ export function dashboardBuilder(config = {}) {
                 payload.assets = [];
                 payload.metrics = [];
                 payload.series_assets = {};
+                payload.series_allowed_assets = {};
                 payload.series_channels = {};
+                payload.series_dependencies = {};
+                payload.series_allowed_metrics = {};
 
                 c.raw_series.forEach((s, sIdx) => {
-                    const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0) ? s.metrics : [''];
+                    const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0)
+                        ? s.metrics.filter(m => m !== '')
+                        : [];
 
                     metricsToSave.forEach(m => {
                         payload.metrics.push(m);
@@ -1944,16 +3256,29 @@ export function dashboardBuilder(config = {}) {
 
                     let channelAssets = this.allChannelAssets[s.channel] || {};
                     let validAssets = [...(s.assets || [])];
+                    let validAllowedAssets = Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : [...validAssets];
                     if (Object.keys(channelAssets).length > 0) {
                         validAssets = validAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
+                        validAllowedAssets = validAllowedAssets.filter(id => channelAssets[id] !== undefined || channelAssets[String(id)] !== undefined);
                     }
 
                     payload.series_assets[sIdx] = validAssets;
+                    payload.series_allowed_assets[sIdx] = validAllowedAssets;
                     payload.series_channels[sIdx] = s.channel || '';
+                    payload.series_dependencies[sIdx] = s.dependency || '';
+                    payload.series_allowed_metrics[sIdx] = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [];
                 });
                 payload.raw_series = c.raw_series.map(s => ({
+                    type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
+                    dm_id: s.dm_id ? String(s.dm_id) : undefined,
+                    dm_name: s.dm_name || undefined,
+                    dm_series_index: s.dm_series_index !== undefined ? s.dm_series_index : undefined,
+                    label: s.label || '',
                     channel: s.channel || '',
+                    dependency: s.dependency || '',
+                    allowed_metrics: Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [],
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
+                    allowed_assets: Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []),
                     assets: Array.isArray(s.assets) ? [...s.assets] : []
                 }));
                 if (payload.series_channels['0']) {
@@ -1963,8 +3288,14 @@ export function dashboardBuilder(config = {}) {
                 payload.channel = c.channel;
                 payload.assets = c.assets;
                 payload.metrics = c.metrics;
-                payload.series_assets = c.series_assets;
-                payload.series_asset_groups = c.series_asset_groups;
+                payload.series_assets = c.series_assets || {};
+                payload.series_allowed_assets = c.series_allowed_assets || {};
+                payload.series_asset_groups = c.series_asset_groups || {};
+                payload.series_dependencies = c.series_dependencies || {};
+            }
+
+            if (c.combo_chart_config && Object.keys(c.combo_chart_config).length > 0) {
+                payload.combo_chart_config = c.combo_chart_config;
             }
 
             const titles = c.titles || {};
@@ -1991,7 +3322,8 @@ export function dashboardBuilder(config = {}) {
             }
 
             this.showWidgetControls = false;
-            this.reloadGrid();
+            this.hasUserInteractedWithWidgetControls = false;
+            this.widgetControlsSnapshot = null;
 
             const idx = this.widgets.findIndex(w => w.id === this.widgetControlsTarget.id);
             if (idx !== -1) {
@@ -2002,11 +3334,15 @@ export function dashboardBuilder(config = {}) {
                 this.widgets[idx].description = fallbackDesc;
                 this.widgets[idx].widget_type = c.widget_type;
             }
+
+            this.$nextTick(() => {
+                this.renderWidget(this.widgetControlsTarget.id);
+            });
         },
 
         // ─── Add Widget ──
-        openAddWidgetModal() {
-            this.addWidgetForm = { source_type: '', custom_kpi_id: '', derived_metric_id: '', widget_type: '', name: '' };
+        openAddWidgetModal(preselectedSourceType = null) {
+            this.addWidgetForm = { source_type: preselectedSourceType || '', custom_kpi_id: '', derived_metric_id: '', widget_type: '', name: '' };
             this.showAddWidgetModal = true;
         },
 
@@ -2018,35 +3354,138 @@ export function dashboardBuilder(config = {}) {
             return true;
         },
 
+        cancelAddWidget() {
+            if (this.targetGridX !== null && this.targetGridY !== null && this.grid) {
+                const nodes = this.grid.engine?.nodes || [];
+                const orphan = nodes.find(n => {
+                    if (!n || n.id) return false;
+                    return n.x === this.targetGridX && n.y === this.targetGridY;
+                });
+                if (orphan && orphan.el) {
+                    this.grid.removeWidget(orphan.el, false);
+                }
+            }
+            this.targetGridX = null;
+            this.targetGridY = null;
+            this.targetGridW = null;
+            this.targetGridH = null;
+            this.pendingDragSourceType = null;
+            this.showAddWidgetModal = false;
+        },
+
+        positionPalette() {
+            const palette = document.querySelector('.bd-palette-left');
+            if (!palette) return;
+            const container = palette.closest('[x-data]') || palette.offsetParent;
+            if (!container) return;
+            const containerTop = container.getBoundingClientRect().top;
+            const top = (window.innerHeight / 2) - containerTop - (palette.offsetHeight / 2);
+            this._repositioningPalette = true;
+            palette.style.setProperty('top', `${Math.max(0, top)}px`, 'important');
+            this._repositioningPalette = false;
+        },
+
         confirmAddWidget() {
             if (!this.canAddWidget() || !this.$wire) return;
 
             const form = this.addWidgetForm;
+            let sourceType = form.source_type;
+            let sourceConfig = {};
+            let controls = {};
+
+            if (form.source_type === 'kpi') {
+                sourceConfig = { custom_kpi_id: form.custom_kpi_id };
+            } else if (form.source_type === 'derived_metric') {
+                sourceType = 'metric';
+                const dmId = String(form.derived_metric_id);
+                const dmInfo = this.derivedMetrics[dmId] || {};
+                const dmName = dmInfo.name || ('DM #' + dmId);
+                const rawSourceSeries = Array.isArray(dmInfo.source_series) ? dmInfo.source_series : [];
+
+                const rawSeries = [];
+                const seriesAssets = {};
+                const seriesChannels = {};
+                const seriesDependencies = {};
+
+                rawSourceSeries.forEach((ss, idx) => {
+                    const ch = ss.channel || '';
+                    const metric = ss.metric || ss.metric_key || ss.metric_name || '';
+                    let defaultDep = '';
+                    if (ch === 'facebook_marketing') defaultDep = 'ad_level';
+                    else if (ch === 'facebook_organic') defaultDep = 'instagram_account';
+                    else if (ch === 'google_search_console') defaultDep = 'non-searchAppearance';
+                    else if (ch === 'google_analytics') defaultDep = 'traffic_matrix';
+                    const dep = ss.dependency || defaultDep || '';
+                    const assets = Array.isArray(ss.assets) ? [...ss.assets] : [];
+
+                    rawSeries.push({
+                        type: 'derived_metric',
+                        dm_id: dmId,
+                        dm_name: dmName,
+                        dm_series_index: idx,
+                        label: ss.label || '',
+                        channel: ch,
+                        dependency: dep,
+                        metrics: metric ? [metric] : [],
+                        assets: assets
+                    });
+
+                    seriesAssets[idx] = assets;
+                    seriesChannels[idx] = ch;
+                    seriesDependencies[idx] = dep;
+
+                    if (ch && !this.allChannelAssets[ch] && this.$wire) {
+                        this.$wire.getAssetsForChannel(ch).then(a => {
+                            this.allChannelAssets = { ...this.allChannelAssets, [ch]: a };
+                        });
+                    }
+                    if (ch && !this.allChannelMetrics[ch] && this.$wire) {
+                        this.$wire.getMetricsForChannel(ch).then(m => {
+                            this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: m };
+                        });
+                    }
+                });
+
+                sourceConfig = {
+                    derived_metric_id: form.derived_metric_id,
+                    raw_series: rawSeries,
+                    granularity: dmInfo.output_granularity || 'daily'
+                };
+                controls = {
+                    granularity: dmInfo.output_granularity || 'daily',
+                    raw_series: rawSeries,
+                    series_assets: seriesAssets,
+                    series_channels: seriesChannels,
+                    series_dependencies: seriesDependencies
+                };
+            }
+
             const data = {
                 name: form.name || form.widget_type,
                 title: form.name || form.widget_type,
-                source_type: form.source_type,
+                source_type: sourceType,
                 custom_kpi_id: form.source_type === 'kpi' ? form.custom_kpi_id : null,
                 derived_metric_id: form.source_type === 'derived_metric' ? form.derived_metric_id : null,
-                source_config: form.source_type === 'kpi'
-                    ? { custom_kpi_id: form.custom_kpi_id }
-                    : form.source_type === 'derived_metric'
-                        ? { derived_metric_id: form.derived_metric_id }
-                        : {},
+                source_config: sourceConfig,
                 widget_type: form.widget_type,
-                controls: {},
-                grid_x: null,
-                grid_y: null,
-                grid_w: 4,
-                grid_h: 3,
+                controls: controls,
+                grid_x: this.targetGridX ?? null,
+                grid_y: this.targetGridY ?? null,
+                grid_w: this.targetGridW ?? 4,
+                grid_h: this.targetGridH ?? 3,
             };
 
             this.$wire.addWidget(data).then(widget => {
                 widget._isNew = true;
-                widget.grid_x = null;
-                widget.grid_y = null;
+                widget.grid_x = this.targetGridX;
+                widget.grid_y = this.targetGridY;
                 this.widgets.push(widget);
                 this.showAddWidgetModal = false;
+                this.targetGridX = null;
+                this.targetGridY = null;
+                this.targetGridW = null;
+                this.targetGridH = null;
+                this.pendingDragSourceType = null;
 
                 this.$nextTick(() => {
                     setTimeout(() => {

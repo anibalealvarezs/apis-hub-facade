@@ -21,6 +21,6 @@
        title="{{ __('PDF Export is available on Pro, Ultra, and Enterprise plans. Click to upgrade.') }}">
         <x-heroicon-m-lock-closed class="w-4 h-4 mr-1.5 text-amber-500 group-hover:text-amber-400 shrink-0"/>
         <span>{{ __('Export PDF') }}</span>
-        <span class="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold uppercase rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">{{ __('PRO') }}</span>
+        <span class="ml-1.5 px-1.5 py-0.5 bd-text-2xs font-bold uppercase rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">{{ __('PRO') }}</span>
     </a>
 @endif

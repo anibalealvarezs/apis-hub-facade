@@ -28,7 +28,7 @@
 
 <div class="flex justify-center mt-1">
     <span
-        class="inline-flex justify-center items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] uppercase tracking-widest font-bold {{ $tierColorClass }} shadow-sm ring-1 ring-inset"
+        class="inline-flex justify-center items-center gap-1.5 px-2.5 py-1 rounded-md bd-text-2xs uppercase tracking-widest font-bold {{ $tierColorClass }} shadow-sm ring-1 ring-inset"
         :class="{ 'w-full': $store.sidebar.isOpen, 'w-auto px-1.5': !$store.sidebar.isOpen }"
         title="{{ $tierLabel }}">
         <x-filament::icon :icon="$tierIcon" class="w-4 h-4"/>

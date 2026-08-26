@@ -117,6 +117,10 @@ class GranularityAggregationService
 
     public function periodStartDate(string $date, string $granularity): string
     {
+        if ($granularity === 'lifetime') {
+            return 'Lifetime';
+        }
+
         $dt = \Carbon\Carbon::parse($date);
         switch ($granularity) {
             case 'weekly':
@@ -134,6 +138,8 @@ class GranularityAggregationService
             case 'annually':
                 $dt->startOfYear();
                 break;
+            default:
+                return $date;
         }
         return $dt->format('Y-m-d');
     }

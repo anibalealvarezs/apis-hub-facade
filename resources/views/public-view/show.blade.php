@@ -43,7 +43,7 @@
             }
         }
     </script>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
+    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}" />
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

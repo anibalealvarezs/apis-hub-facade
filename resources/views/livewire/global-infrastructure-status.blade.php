@@ -71,6 +71,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
         <span x-text="timeStr" class="font-bold tracking-tight"></span>
-        <span class="topbar-clock-tz hidden lg:inline text-[10px] text-gray-500 dark:text-gray-400 font-semibold uppercase" x-text="tzStr"></span>
+        <span class="topbar-clock-tz hidden lg:inline bd-text-2xs text-gray-500 dark:text-gray-400 font-semibold uppercase" x-text="tzStr"></span>
     </div>
 </div>

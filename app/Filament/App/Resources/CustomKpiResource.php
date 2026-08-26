@@ -117,19 +117,6 @@
                         }),
                     Tables\Filters\SelectFilter::make('calculation_type')
                         ->options(\App\Services\Analytics\KpiFormBuilder::getCalculationTypeOptions()),
-                    Tables\Filters\SelectFilter::make('asset_group')
-                        ->label(__('Asset Group'))
-                        ->options(fn () => \App\Models\AssetGroup::pluck('name', 'id')->toArray())
-                        ->query(function (Builder $query, array $data) {
-                            if (!empty($data['value'])) {
-                                $val = $data['value'];
-                                $query->where(function ($q) use ($val) {
-                                    $q->where('filters', 'like', '%"global_asset_group":"' . $val . '"%')
-                                      ->orWhere('filters', 'like', '%"dependent_asset_group":"' . $val . '"%')
-                                      ->orWhere('filters', 'like', '%"independent_asset_group":"' . $val . '"%');
-                                });
-                            }
-                        }),
                     Tables\Filters\SelectFilter::make('metric')
                         ->label(__('Metric'))
                         ->options(\App\Services\Analytics\KpiFormBuilder::getAllMetricOptions())

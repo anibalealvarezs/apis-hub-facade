@@ -593,31 +593,27 @@ class KpiFormBuilder
                                 ? ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-amber-500 [&_.fi-input-wrapper]:!bg-amber-50 dark:[&_.fi-input-wrapper]:!bg-amber-900/20 [&_.fi-input-wrapper_*]:!text-amber-900 dark:[&_.fi-input-wrapper_*]:!text-amber-100']
                                 : ['class' => '[&_.fi-input-wrapper]:!ring-2 [&_.fi-input-wrapper]:!ring-green-500 [&_.fi-input-wrapper]:!bg-green-50 dark:[&_.fi-input-wrapper]:!bg-green-900/20 [&_.fi-input-wrapper_*]:!text-green-900 dark:[&_.fi-input-wrapper_*]:!text-green-100'];
                         }),
+                    Select::make($name . '_dependency')
+                        ->label(__('Data Scope / Matrix'))
+                        ->options(fn (Get $get) => filled($get($name . '_channel'))
+                            ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($get($name . '_channel'))
+                            : []
+                        )
+                        ->placeholder(__('Default Scope'))
+                        ->live()
+                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel' && filled($get($name . '_channel')) && ! empty(\App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($get($name . '_channel')))),
                     Select::make($name . '_metric')
                         ->label(__('Metric'))
                         ->options(fn (Get $get) => static::getMetricOptionsForChannel(
                             $get($name . '_channel'),
                             $get('granularity'),
-                            $get($name . '_dependency') ?? $get('channel_dependency') ?? $get('account_type')
+                            $get($name . '_dependency') ?? $get('channel_dependency')
                         ))
                         ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel'),
                     Select::make($name . '_dm_id')
                         ->label(__('Derived Metric'))
                         ->options(fn () => static::getDerivedMetricOptions())
                         ->visible(fn (Get $get) => $get($name . '_source_type') === 'derived_metric')
-                        ->live(),
-                    Select::make($name . '_asset_group')
-                        ->label(__('Asset Group (keep empty for runtime)'))
-                        ->options(fn () => static::getAssetGroupOptions())
-                        ->disabled(fn (Get $get) => filled($get($name . '_asset_filter')))
-                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
-                        ->live(),
-                    Select::make($name . '_asset_filter')
-                        ->label(__('Asset Filter (keep empty for runtime)'))
-                        ->multiple()
-                        ->options(fn (Get $get) => static::getAssetOptionsForChannel($get($name . '_channel')))
-                        ->disabled(fn (Get $get) => filled($get($name . '_asset_group')))
-                        ->visible(fn (Get $get) => $get($name . '_source_type') === 'channel')
                         ->live(),
                 ])->columns(1),
         ];
@@ -738,7 +734,7 @@ class KpiFormBuilder
                                     ->label(__('Next'))
                                     ->action(function (Set $set, Get $get) use ($forwardAction) {
                                         if ($get('_intent') === 'template') {
-                                            $forwardAction($set, $get, '1a1_asset_group');
+                                            $forwardAction($set, $get, '1a2_template');
                                         } elseif ($get('_intent') === 'scratch') {
                                             $forwardAction($set, $get, '21_calculation');
                                         }
@@ -747,52 +743,6 @@ class KpiFormBuilder
                             ]),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '1_intent'),
-
-                    // Step 1.A.1: Asset Group Focus
-                    Section::make(__('1.A.1. Focus on specific assets?'))
-                        ->schema([
-                            Radio::make('_focus_assets')
-                                ->label(__('Do you want to focus in a specific group of assets?'))
-                                ->options([
-                                    'group' => __('Select an asset group'),
-                                    'all' => __('All assets'),
-                                ])
-                                ->descriptions([
-                                    'group' => __('Analyze a specific segment or campaign group.'),
-                                    'all' => __('Analyze across the entire organization.'),
-                                ])
-                                ->view('filament.forms.components.playbook-radio')
-                                ->live()
-                                ->afterStateUpdated(function (Set $set, $state) {
-                                    if ($state === 'all') {
-                                        $set('global_asset_group', null);
-                                    }
-                                    $set('category_filter', []);
-                                    $set('template', null);
-                                }),
-                            Select::make('global_asset_group')
-                                ->label(__('Global Asset Group (optional)'))
-                                ->options(fn () => static::getAssetGroupOptions())
-                                ->visible(fn (Get $get) => $get('_focus_assets') === 'group')
-                                ->live()
-                                ->afterStateUpdated(function (Set $set) {
-                                    $set('category_filter', []);
-                                    $set('template', null);
-                                }),
-                            Actions::make([
-                                Actions\Action::make('back_focus')
-                                    ->label(__('Back'))
-                                    ->color('gray')
-                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
-                                Actions\Action::make('next_focus')
-                                    ->label(__('Assign & Next'))
-                                    ->action(function (Set $set, Get $get) use ($forwardAction) {
-                                        $forwardAction($set, $get, '1a2_template');
-                                    })
-                                    ->disabled(fn (Get $get) => empty($get('_focus_assets')) || ($get('_focus_assets') === 'group' && empty($get('global_asset_group')))),
-                            ]),
-                        ])
-                        ->visible(fn (Get $get) => $get('_builder_step') === '1a1_asset_group'),
 
                     // Step 1.A.2: Template Selection
                     Section::make(__('1.A.2. Select Template'))
@@ -803,14 +753,14 @@ class KpiFormBuilder
                                         Select::make('category_filter')
                                             ->label(__('Filter by category'))
                                             ->multiple()
-                                            ->options(fn (Get $get) => self::getCategoryOptions($get('global_asset_group')))
+                                            ->options(fn (Get $get) => self::getCategoryOptions())
                                             ->live(),
 
                                         Select::make('template')
                                             ->label(__('Quick Start Template'))
                                             ->allowHtml()
                                             ->searchable()
-                                            ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? [], $get('global_asset_group')))
+                                            ->options(fn (Get $get) => self::getTemplateOptions($get('category_filter') ?? []))
                                             ->live()
                                             ->afterStateUpdated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, $state) {
                                                 if (! $state) {
@@ -834,50 +784,34 @@ class KpiFormBuilder
                                                 if (!empty($kpi['default_zero_handling'])) {
                                                     $set('zero_handling', $kpi['default_zero_handling']);
                                                 }
-                                                if (!empty($kpi['default_edge_case_handling']['weighted'])) {
-                                                    $set('edge_case_weighted', $kpi['default_edge_case_handling']['weighted']);
-                                                }
-                                                if (!empty($kpi['default_edge_case_handling']['grouping'])) {
-                                                    $set('edge_case_grouping', $kpi['default_edge_case_handling']['grouping']);
-                                                }
-                                                if (isset($kpi['default_max_ratio'])) {
-                                                    $set('max_ratio', $kpi['default_max_ratio']);
-                                                }
 
-                                                $activeChannels = array_keys(self::getActiveChannels());
-                                                $registryTags = ChannelCapabilityRegistry::getTags();
-                                                $globalGroup = $get('global_asset_group');
+                                                $resolveChannel = function ($channelPlaceholder) use ($get) {
+                                                    if (empty($channelPlaceholder)) {
+                                                        return null;
+                                                    }
+                                                    if (! str_starts_with($channelPlaceholder, '__')) {
+                                                        return $channelPlaceholder;
+                                                    }
 
-                                                $resolveChannel = function ($placeholder) use ($activeChannels, $registryTags, $globalGroup) {
-                                                    preg_match('/__([A-Z_]+)_CHANNEL_(\d+)__/', $placeholder, $matches);
-                                                    if (empty($matches[1])) {
+                                                    preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $channelPlaceholder, $matches);
+                                                    $tag = isset($matches[1]) ? strtolower($matches[1]) : null;
+                                                    if (! $tag) {
                                                         return null;
                                                     }
 
-                                                    $requiredTag = strtolower($matches[1]);
-                                                    $index = (int)($matches[2] ?? 1) - 1;
-
-                                                    $allowedChannels = $activeChannels;
-                                                    if ($globalGroup) {
-                                                        $group = \App\Models\AssetGroup::find($globalGroup);
-                                                        if ($group) {
-                                                            $allowedChannels = array_intersect($allowedChannels, $group->active_items->pluck('channel')->unique()->toArray());
+                                                    $activeChannels = self::getActiveChannels();
+                                                    $registryTags = \App\Services\Analytics\ChannelCapabilityRegistry::getTags();
+                                                    foreach ($activeChannels as $key => $label) {
+                                                        if (in_array($tag, $registryTags[$key] ?? [])) {
+                                                            return $key;
                                                         }
                                                     }
 
-                                                    $matchingChannels = [];
-                                                    foreach ($allowedChannels as $channel) {
-                                                        $tags = $registryTags[$channel] ?? [];
-                                                        if (in_array($requiredTag, $tags)) {
-                                                            $matchingChannels[] = $channel;
-                                                        }
-                                                    }
-
-                                                    return $matchingChannels[$index] ?? null;
+                                                    return null;
                                                 };
 
                                                 $extractTag = function ($placeholder) {
-                                                    if (! $placeholder) {
+                                                    if (empty($placeholder) || ! str_starts_with($placeholder, '__')) {
                                                         return null;
                                                     }
                                                     preg_match('/__([A-Z_]+)_CHANNEL_\d+__/', $placeholder, $matches);
@@ -891,12 +825,9 @@ class KpiFormBuilder
                                                 if (in_array($kpi['calculation_type'], ['calculate_autocorrelation', 'calculate_anomaly']) || $isUnivariateAst) {
                                                     if (isset($ast['channel'])) {
                                                         $set('dependent_channel', $resolveChannel($ast['channel']));
+                                                        $set('dependent_dependency', $ast['dependency'] ?? null);
                                                         $set('dependent_metric', $ast['metric'] ?? '');
                                                         $set('_required_tag', $extractTag($ast['channel']));
-                                                        if ($globalGroup) {
-                                                            $set('dependent_asset_group', $globalGroup);
-                                                            $set('dependent_asset_filter', null);
-                                                        }
                                                     }
                                                     $set('independent_variables', []);
 
@@ -905,12 +836,9 @@ class KpiFormBuilder
 
                                                 if (isset($ast['left']['channel'])) {
                                                     $set('dependent_channel', $resolveChannel($ast['left']['channel']));
+                                                    $set('dependent_dependency', $ast['left']['dependency'] ?? null);
                                                     $set('dependent_metric', $ast['left']['metric'] ?? '');
                                                     $set('_required_tag', $extractTag($ast['left']['channel']));
-                                                    if ($globalGroup) {
-                                                        $set('dependent_asset_group', $globalGroup);
-                                                        $set('dependent_asset_filter', null);
-                                                    }
                                                     $set('dependent_additional_variables', []);
                                                 } elseif (($ast['left']['type'] ?? '') === 'operator' && ($ast['left']['operator'] ?? '') === '+') {
                                                     $numeratorVars = [];
@@ -920,6 +848,7 @@ class KpiFormBuilder
                                                             if ($channel) {
                                                                 $numeratorVars[] = [
                                                                     'dependent_channel' => $channel,
+                                                                    'dependent_dependency' => $node['dependency'] ?? null,
                                                                     'dependent_metric' => $node['metric'] ?? '',
                                                                 ];
                                                             }
@@ -932,6 +861,7 @@ class KpiFormBuilder
                                                     if (!empty($numeratorVars)) {
                                                         $first = array_shift($numeratorVars);
                                                         $set('dependent_channel', $first['dependent_channel']);
+                                                        $set('dependent_dependency', $first['dependent_dependency'] ?? null);
                                                         $set('dependent_metric', $first['dependent_metric']);
                                                         $findFirstChannel = function ($node) use (&$findFirstChannel) {
                                                             if (isset($node['channel'])) {
@@ -943,10 +873,6 @@ class KpiFormBuilder
                                                             return null;
                                                         };
                                                         $set('_required_tag', $extractTag($findFirstChannel($ast['left'])));
-                                                        if ($globalGroup) {
-                                                            $set('dependent_asset_group', $globalGroup);
-                                                            $set('dependent_asset_filter', null);
-                                                        }
                                                         $set('dependent_additional_variables', array_values($numeratorVars));
                                                     }
                                                 }
@@ -954,14 +880,13 @@ class KpiFormBuilder
                                                 if (isset($ast['right'])) {
                                                     $independents = [];
 
-                                                    $unpackIndependents = function ($node) use (&$unpackIndependents, $resolveChannel, $extractTag, &$independents, $globalGroup) {
+                                                    $unpackIndependents = function ($node) use (&$unpackIndependents, $resolveChannel, $extractTag, &$independents) {
                                                         if (($node['type'] ?? '') === 'metric') {
                                                             $independents[] = [
                                                                 'independent_channel' => $resolveChannel($node['channel']),
+                                                                'independent_dependency' => $node['dependency'] ?? null,
                                                                 'independent_metric' => $node['metric'] ?? '',
                                                                 '_required_tag' => $extractTag($node['channel']),
-                                                                'independent_asset_group' => $globalGroup,
-                                                                'independent_asset_filter' => null,
                                                             ];
                                                         } elseif (($node['type'] ?? '') === 'operator' && $node['operator'] === '+') {
                                                             $unpackIndependents($node['left']);
@@ -974,67 +899,71 @@ class KpiFormBuilder
                                                     if (! empty($independents)) {
                                                         $repeaterData = [];
                                                         foreach ($independents as $idx => $ind) {
-                                                            $repeaterData[\Illuminate\Support\Str::uuid()->toString()] = $ind;
+                                                            $repeaterData[] = [
+                                                                'independent_channel' => $ind['independent_channel'] ?? null,
+                                                                'independent_dependency' => $ind['independent_dependency'] ?? null,
+                                                                'independent_metric' => $ind['independent_metric'] ?? null,
+                                                                '_required_tag' => $ind['_required_tag'] ?? null,
+                                                            ];
                                                         }
                                                         $set('independent_variables', $repeaterData);
                                                     }
                                                 }
                                             }),
-                            ])->columnSpan(1)->extraAttributes(['class' => __('relative z-50')]),
+                                    ]),
 
-                            Group::make([
-                                            \Filament\Forms\Components\Placeholder::make('template_details')
-                                                ->hiddenLabel()
-                                                ->content(function (Get $get) {
-                                                    $templateId = $get('template');
-                                                    if (! $templateId) {
-                                                        return new \Illuminate\Support\HtmlString('<div class="h-full flex items-center justify-center p-6 text-gray-500 italic bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">Select a template to view its details.</div>');
-                                                    }
+                                    // Template Preview Card
+                                    Group::make([
+                                        Placeholder::make('_template_preview')
+                                            ->hiddenLabel()
+                                            ->content(function (Get $get) {
+                                                $templateKey = $get('template');
+                                                if (! $templateKey) {
+                                                    return new HtmlString('<div class="p-6 bg-gray-50 dark:bg-white/5 rounded-xl border border-dashed border-gray-200 dark:border-white/10 text-center text-sm text-gray-500">Select a template to view details</div>');
+                                                }
 
-                                                    $kpis = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
-                                                    $kpi = $kpis[$templateId] ?? null;
+                                                $kpi = PredefinedKpiRegistry::getPredefinedKpis()[$templateKey] ?? null;
+                                                if (! $kpi) {
+                                                    return new HtmlString('');
+                                                }
 
-                                                    if (! $kpi) {
-                                                        return new \Illuminate\Support\HtmlString('<div class="text-danger-600 dark:text-danger-400 p-4 bg-danger-50 dark:bg-danger-400/10 rounded-xl ring-1 ring-danger-600/10 dark:ring-danger-400/20">Template details not found.</div>');
-                                                    }
+                                                $calcLabels = [
+                                                    'calculate_regression' => 'Multiple Linear Regression',
+                                                    'calculate_elasticity' => 'Elasticity',
+                                                    'calculate_autocorrelation' => 'Autocorrelation',
+                                                    'calculate_granger' => 'Granger Causality',
+                                                    'calculate_macd' => 'MACD Momentum',
+                                                    'calculate_anomaly' => 'Anomaly Detection',
+                                                    'calculate_trend_linear' => 'Linear Trend',
+                                                    'calculate_trend_holt_winters' => 'Holt-Winters (Seasonality)',
+                                                    'calculate_trend_logarithmic' => 'Logarithmic Trend',
+                                                    'calculate_trend_ema' => 'EMA Crossover',
+                                                ];
 
-                                                    $reference = app(\App\Filament\App\Pages\KpiReference::class);
-                                                    $guidance = $reference->getGuidance($templateId);
+                                                $calcName = $calcLabels[$kpi['calculation_type']] ?? $kpi['calculation_type'];
 
-                                                    $html = '<div class="space-y-4 p-6 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl shadow-sm h-full">';
-                                                    $html .= '<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">' . e(__($kpi['name'])) . '</h3>';
-                                                    $html .= '<span class="inline-block mt-1 px-2 py-1 text-xs font-medium text-primary-600 bg-primary-50 dark:text-primary-400 dark:bg-primary-400/10 rounded-full">' . e(__($guidance['type_label'])) . '</span></div>';
-
-                                                    if (! empty($guidance['explanation'])) {
-                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">' . e(__('What it does')) . '</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e(__($guidance['explanation']))) . '</p></div>';
-                                                    }
-
-                                                    if (! empty($guidance['use_case'])) {
-                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">' . e(__('Golden use case')) . '</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e(__($guidance['use_case']))) . '</p></div>';
-                                                    }
-
-                                                    if (! empty($guidance['interpretation'])) {
-                                                        $html .= '<div><h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-1">' . e(__('Reading the result')) . '</h4><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . nl2br(e(__($guidance['interpretation']))) . '</p></div>';
-                                                    }
-
-                                                    $html .= '</div>';
-
-                                                    return new \Illuminate\Support\HtmlString($html);
-                                                }),
-                            ])->columnSpan(1),
-                        ]),
-                        Toggle::make('keep_template_guidance')
-                            ->label(__('Automatically show template guidance in dashboard tooltips'))
-                            ->helperText(__('When enabled, widgets using this KPI will display the template\'s theoretical guidance in their tooltips. You can change this later.')),
-                        Actions::make([
+                                                return new HtmlString(
+                                                    '<div class="space-y-4 p-6 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl shadow-sm h-full">'
+                                                    . '<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">' . e($kpi['name']) . '</h3></div>'
+                                                    . '<div><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . e($kpi['description'] ?? '') . '</p></div>'
+                                                    . '<div class="flex flex-wrap gap-2">'
+                                                    . '<span class="px-2 py-1 text-xs font-medium rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">' . e($calcName) . '</span>'
+                                                    . '<span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">' . ucfirst($kpi['category']) . '</span>'
+                                                    . '</div>'
+                                                    . '</div>'
+                                                );
+                                            }),
+                                    ]),
+                                ])->columns(2),
+                            Actions::make([
                                 Actions\Action::make('back_template')
-                                                ->label(__('Back'))
-                                                ->color('gray')
-                                                ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
+                                    ->label(__('Back'))
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_template')
-                                                ->label(__('Next'))
-                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
-                                                ->disabled(fn (Get $get) => empty($get('template'))),
+                                    ->label(__('Next'))
+                                    ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
+                                    ->disabled(fn (Get $get) => empty($get('template'))),
                             ]),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '1a2_template'),
@@ -1045,28 +974,28 @@ class KpiFormBuilder
                             Select::make('calculation_type')
                                 ->label(__('Calculation Type'))
                                 ->options([
-                                                'calculate_regression' => __('Multiple Linear Regression'),
-                                                'calculate_elasticity' => __('Elasticity'),
-                                                'calculate_autocorrelation' => __('Autocorrelation'),
-                                                'calculate_granger' => __('Granger Causality'),
-                                                'calculate_macd' => __('MACD Momentum'),
-                                                'calculate_anomaly' => __('Anomaly Detection'),
-                                                'calculate_trend_linear' => __('Linear Trend'),
-                                                'calculate_trend_holt_winters' => __('Holt-Winters (Seasonality)'),
-                                                'calculate_trend_logarithmic' => __('Logarithmic Trend'),
-                                                'calculate_trend_ema' => __('EMA Crossover'),
+                                    'calculate_regression' => __('Multiple Linear Regression'),
+                                    'calculate_elasticity' => __('Elasticity'),
+                                    'calculate_autocorrelation' => __('Autocorrelation'),
+                                    'calculate_granger' => __('Granger Causality'),
+                                    'calculate_macd' => __('MACD Momentum'),
+                                    'calculate_anomaly' => __('Anomaly Detection'),
+                                    'calculate_trend_linear' => __('Linear Trend'),
+                                    'calculate_trend_holt_winters' => __('Holt-Winters (Seasonality)'),
+                                    'calculate_trend_logarithmic' => __('Logarithmic Trend'),
+                                    'calculate_trend_ema' => __('EMA Crossover'),
                                 ])
                                 ->required()
                                 ->live(),
                             Actions::make([
                                 Actions\Action::make('back_calc')
-                                                ->label(__('Back'))
-                                                ->color('gray')
-                                                ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
+                                    ->label(__('Back'))
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)),
                                 Actions\Action::make('next_calc')
-                                                ->label(__('Next'))
-                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
-                                                ->disabled(fn (Get $get) => empty($get('calculation_type'))),
+                                    ->label(__('Next'))
+                                    ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '22_series'))
+                                    ->disabled(fn (Get $get) => empty($get('calculation_type'))),
                             ]),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '21_calculation'),
@@ -1074,84 +1003,32 @@ class KpiFormBuilder
                     // Step 2.2: Configure Series (Horizontal layout)
                     Section::make(__('2.2. Configure Series'))
                         ->schema([
-                            Grid::make(3) // Ensure max 3 cols logic if we need it
+                            Grid::make(3)
                                 ->schema([
-                                                Group::make(self::getNodeSchema('dependent', 'Dependent Variable (Y - Explained)'))
-                                                    ->columnSpan(1),
+                                    Group::make(self::getNodeSchema('dependent', 'Dependent Variable (Y - Explained)'))
+                                        ->columnSpan(1),
 
-                                                Repeater::make('independent_variables')
-                                                    ->label(__('Independent Variables (X - Explanatory)'))
-                                                    ->schema(self::getNodeSchema('independent', 'Variable'))
-                                                    ->grid(2)
-                                                    ->columnSpan(2)
-                                                    ->defaultItems(1)
-                                                    ->minItems(0)
-                                                    ->visible(fn (Get $get) => in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd'])),
+                                    Repeater::make('independent_variables')
+                                        ->label(__('Independent Variables (X - Explanatory)'))
+                                        ->schema(self::getNodeSchema('independent', 'Variable'))
+                                        ->grid(2)
+                                        ->columnSpan(2)
+                                        ->defaultItems(1)
+                                        ->minItems(0)
+                                        ->visible(fn (Get $get) => in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd'])),
                                 ])
                                 ->columns([
-                                                'sm' => 1,
-                                                'md' => 3,
+                                    'sm' => 1,
+                                    'md' => 3,
                                 ]),
                             Actions::make(array_filter([
                                 ! $isEdit ? Actions\Action::make('back_series')
-                                                ->label(__('Back'))
-                                                ->color('gray')
-                                                ->action(fn (Set $set, Get $get) => $backAction($set, $get)) : null,
+                                    ->label(__('Back'))
+                                    ->color('gray')
+                                    ->action(fn (Set $set, Get $get) => $backAction($set, $get)) : null,
                                 Actions\Action::make('next_series')
-                                                ->label(__('Next'))
-                                                ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope'))
-                                                ->modalHidden(function (Get $get) {
-                                                    $isBivariate = in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd']);
-                                                    if (! $isBivariate) {
-                                                        return true; // hide modal
-                                                    }
-
-                                                    $depSourceType = $get('dependent_source_type') ?? 'channel';
-                                                    if ($depSourceType === 'derived_metric') {
-                                                        return true; // hide modal — DMs have no asset groups
-                                                    }
-
-                                                    $depGroup = $get('dependent_asset_group');
-                                                    $independents = $get('independent_variables') ?? [];
-
-                                                    $depStr = is_array($depGroup) ? implode(',', $depGroup) : (string) ($depGroup ?? '');
-                                                    $hasAnyGroup = $depStr !== '';
-
-                                                    foreach ($independents as $item) {
-                                                        $indSourceType = $item['independent_source_type'] ?? 'channel';
-                                                        if ($indSourceType === 'derived_metric') {
-                                                            continue; // skip DM variables
-                                                        }
-                                                        $indVal = $item['independent_asset_group'] ?? '';
-                                                        $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
-                                                        if ($indStr !== '') {
-                                                            $hasAnyGroup = true;
-                                                        }
-                                                    }
-
-                                                    if (! $hasAnyGroup) {
-                                                        return true; // hide modal
-                                                    }
-
-                                                    foreach ($independents as $item) {
-                                                        $indSourceType = $item['independent_source_type'] ?? 'channel';
-                                                        if ($indSourceType === 'derived_metric') {
-                                                            continue; // skip DM variables
-                                                        }
-                                                        $indVal = $item['independent_asset_group'] ?? '';
-                                                        $indStr = is_array($indVal) ? implode(',', $indVal) : (string) $indVal;
-
-                                                        if ($indStr !== $depStr) {
-                                                            return false; // mismatch found, do NOT hide modal!
-                                                        }
-                                                    }
-
-                                                    return true; // all match, hide modal
-                                                })
-                                                ->requiresConfirmation()
-                                                ->modalHeading(__('Asset Groups Mismatch'))
-                                                ->modalDescription(__('You have selected different asset groups (or left some unassigned) across your series. This might lead to mismatched comparative data if the underlying assets are fundamentally different. Are you sure you want to proceed?'))
-                                                ->modalSubmitActionLabel(__('Yes, proceed')),
+                                    ->label(__('Next'))
+                                    ->action(fn (Set $set, Get $get) => $forwardAction($set, $get, '23_scope')),
                             ])),
                         ])
                         ->visible(fn (Get $get) => $get('_builder_step') === '22_series'),
@@ -1159,15 +1036,6 @@ class KpiFormBuilder
                     // Step 2.3: Scope / Filters
                     Section::make(__('2.3. Scope & Filters'))
                         ->schema([
-                            Select::make('account_type')
-                                ->label(__('Social / Asset Scope (Account Type)'))
-                                ->options(function (Get $get) {
-                                    $ch = $get('dependent_channel');
-                                    return $ch ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($ch) : [];
-                                })
-                                ->visible(fn (Get $get) => ($get('dependent_channel') ?? '') === 'facebook_organic')
-                                ->placeholder(__('Auto-detect from metric or dashboard tab'))
-                                ->helperText(__('Explicitly target Instagram Account or Facebook Page.')),
                             DatePicker::make('start_date')->label(__('Start Date')),
                             DatePicker::make('end_date')->label(__('End Date')),
                             Select::make('granularity')
@@ -1323,22 +1191,6 @@ class KpiFormBuilder
             $depMetric = e(Str::headline($get('dependent_metric') ?: '—'));
         }
 
-        $getAssetsText = function ($groupVal, $filterVal) {
-            if ($groupVal) {
-                $group = \App\Models\AssetGroup::find($groupVal);
-
-                return $group ? '<span class="px-2 py-0.5 rounded text-xs font-medium bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">Group: ' . e($group->name) . '</span>' : 'Group ID: ' . $groupVal;
-            } elseif ($filterVal) {
-                $count = is_array($filterVal) ? count($filterVal) : 1;
-
-                return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300">' . $count . ' selected</span>';
-            }
-
-            return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-white/5 dark:text-gray-400 italic">Runtime</span>';
-        };
-
-        $depAssets = $getAssetsText($get('dependent_asset_group'), $get('dependent_asset_filter'));
-
         // Independent variables
         $independents = $get('independent_variables') ?? [];
         $indHtml = '';
@@ -1350,13 +1202,11 @@ class KpiFormBuilder
                 $indDm = $indDmId ? \App\Models\DerivedMetric::find($indDmId) : null;
                 $ch = 'Derived Metric';
                 $me = e($indDm?->name ?? '—');
-                $ast = '—';
             } else {
                 $ch = e(Str::headline($var['independent_channel'] ?? '—'));
                 $me = e(Str::headline($var['independent_metric'] ?? '—'));
-                $ast = $getAssetsText($var['independent_asset_group'] ?? null, $var['independent_asset_filter'] ?? null);
             }
-            $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ast}</td></tr>";
+            $indHtml .= "<tr><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">X{$idx}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$ch}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$me}</td></tr>";
             $idx++;
         }
 
@@ -1379,12 +1229,6 @@ class KpiFormBuilder
         if ($templateKey) {
             $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Template</dt><dd class=\"text-gray-950 dark:text-white\">{$templateName}</dd>";
         }
-        if (($get('dependent_channel') ?? '') === 'facebook_organic') {
-            $accountTypeVal = $get('account_type');
-            $accountTypeLabels = ['instagram_account' => __('Instagram Account'), 'facebook_page' => __('Facebook Page')];
-            $accountTypeText = e($accountTypeLabels[$accountTypeVal] ?? ($accountTypeVal ? ucfirst($accountTypeVal) : __('Auto-detect')));
-            $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Account Scope</dt><dd class=\"text-gray-950 dark:text-white\">{$accountTypeText}</dd>";
-        }
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Granularity</dt><dd class=\"text-gray-950 dark:text-white\">{$granularity}</dd>";
         $html .= "<dt class=\"text-gray-500 dark:text-gray-400\">Zero handling</dt><dd class=\"text-gray-950 dark:text-white\">{$zero}</dd>";
         $groupLabels = ['none' => 'No grouping', 'histogram' => 'Histogram-elbow', 'percentile' => 'Bottom percentile'];
@@ -1399,8 +1243,8 @@ class KpiFormBuilder
         // Series section
         $html .= '<div class="p-4 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl">';
         $html .= '<h4 class="text-sm font-semibold text-gray-950 dark:text-white mb-3">Series</h4>';
-        $html .= '<table class="w-full text-left"><thead><tr class="border-b border-gray-200 dark:border-white/10"><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Role</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Channel</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Metric</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Assets</th></tr></thead><tbody>';
-        $html .= "<tr class=\"border-b border-gray-100 dark:border-white/5\"><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">Y (Dependent)</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depChannel}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depMetric}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depAssets}</td></tr>";
+        $html .= '<table class="w-full text-left"><thead><tr class="border-b border-gray-200 dark:border-white/10"><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Role</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Channel</th><th class="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">Metric</th></tr></thead><tbody>';
+        $html .= "<tr class=\"border-b border-gray-100 dark:border-white/5\"><td class=\"px-3 py-2 text-sm text-gray-500 dark:text-gray-400\">Y (Dependent)</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depChannel}</td><td class=\"px-3 py-2 text-sm text-gray-950 dark:text-white\">{$depMetric}</td></tr>";
         $html .= $indHtml;
         $html .= '</tbody></table></div>';
 

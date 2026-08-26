@@ -21,7 +21,14 @@ class DashboardWidgetDataController extends Controller
 
     public function show(Request $request, DashboardWidget $widget): JsonResponse
     {
-        $locale = $request->query('lang') ?? $request->cookie('pv_lang') ?? session('locale') ?? app()->getLocale();
+        $user = $request->user();
+        $locale = $request->query('lang') 
+            ?? $request->input('lang')
+            ?? ($user?->locale)
+            ?? session('locale') 
+            ?? $request->cookie('pv_lang') 
+            ?? app()->getLocale();
+
         if (in_array($locale, ['en', 'es'])) {
             app()->setLocale($locale);
         }
@@ -76,6 +83,15 @@ class DashboardWidgetDataController extends Controller
             if (array_key_exists('granularity', $validated['controls']) && empty($validated['controls']['granularity'])) {
                 unset($validated['controls']['granularity']);
             }
+            if (array_key_exists('date_start', $validated['controls']) && empty($validated['controls']['date_start'])) {
+                unset($validated['controls']['date_start']);
+            }
+            if (array_key_exists('date_end', $validated['controls']) && empty($validated['controls']['date_end'])) {
+                unset($validated['controls']['date_end']);
+            }
+            if (array_key_exists('channel', $validated['controls']) && empty($validated['controls']['channel'])) {
+                unset($validated['controls']['channel']);
+            }
             foreach ($validated['controls'] as $k => $v) {
                 $resolvedControls[$k] = $v;
             }
@@ -128,29 +144,61 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if ($pv && ! empty($pv->asset_group_ids) && (! empty($resolvedControls['channel']) || ! empty($widget->source_config['channel']))) {
+        if ($pv) {
             $assetGroups = $pv->assetGroups();
             if ($assetGroups->isNotEmpty()) {
-                $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
-                if (! empty($channel)) {
-                    // Union of allowed assets across all groups
-                    $allowedAssets = $assetGroups->flatMap(function ($group) use ($channel) {
-                        return $group->items()->where('channel', $channel)->pluck('asset_id');
-                    })->unique()->values()->toArray();
-
-                    if (empty($allowedAssets)) {
-                        return response()->json([
-                            'success' => false,
-                            'error' => 'access_restricted',
-                            'message' => 'You do not have access to any asset for this public view.',
-                        ], 403, [], JSON_UNESCAPED_UNICODE);
+                // Build a map of channel => allowed asset IDs for this public view
+                $pvAllowedByChannel = [];
+                foreach ($assetGroups as $group) {
+                    foreach ($group->items as $item) {
+                        $pvAllowedByChannel[$item->channel][] = (string) $item->asset_id;
                     }
+                }
+                foreach ($pvAllowedByChannel as $ch => $ids) {
+                    $pvAllowedByChannel[$ch] = array_values(array_unique($ids));
+                }
 
+                // 1. Filter series_assets
+                if (! empty($resolvedControls['series_assets']) && is_array($resolvedControls['series_assets'])) {
+                    foreach ($resolvedControls['series_assets'] as $sKey => $sAssets) {
+                        if (! is_array($sAssets)) continue;
+                        $sChannel = null;
+                        if ($widget->source_type === 'kpi' && $widget->customKpi) {
+                            $uiState = $widget->customKpi->filters['_ui_state'] ?? [];
+                            if ($sKey === 'dependent') {
+                                $sChannel = $uiState['dependent_channel'] ?? $resolvedControls['channel'] ?? null;
+                            } elseif (str_starts_with($sKey, 'independent_')) {
+                                $idx = substr($sKey, strlen('independent_'));
+                                $sChannel = $uiState['independent_variables'][$idx]['independent_channel'] ?? null;
+                            }
+                        }
+                        if (empty($sChannel)) {
+                            $sChannel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
+                        }
+
+                        if (! empty($sChannel) && isset($pvAllowedByChannel[$sChannel])) {
+                            $allowed = $pvAllowedByChannel[$sChannel];
+                            $filtered = array_values(array_intersect(array_map('String', $sAssets), $allowed));
+                            if (empty($filtered)) {
+                                return response()->json([
+                                    'success' => false,
+                                    'error' => 'access_restricted',
+                                    'message' => 'You do not have access to the selected asset for this public view.',
+                                ], 403, [], JSON_UNESCAPED_UNICODE);
+                            }
+                            $resolvedControls['series_assets'][$sKey] = $filtered;
+                        }
+                    }
+                }
+
+                // 2. Filter root channel assets
+                $channel = $resolvedControls['channel'] ?? $widget->source_config['channel'] ?? null;
+                if (! empty($channel) && isset($pvAllowedByChannel[$channel])) {
+                    $allowedAssets = $pvAllowedByChannel[$channel];
                     $assetList = $this->widgetDataService->getResolvedAssetList($widget, $resolvedControls);
 
                     if (! empty($assetList)) {
-                        $filtered = array_values(array_intersect($assetList, $allowedAssets));
-
+                        $filtered = array_values(array_intersect(array_map('String', $assetList), $allowedAssets));
                         if (empty($filtered)) {
                             return response()->json([
                                 'success' => false,
@@ -158,7 +206,6 @@ class DashboardWidgetDataController extends Controller
                                 'message' => 'You do not have access to the selected asset for this public view.',
                             ], 403, [], JSON_UNESCAPED_UNICODE);
                         }
-
                         $resolvedControls['assets'] = $filtered;
                     } else {
                         $resolvedControls['assets'] = array_values($allowedAssets);
@@ -1080,8 +1127,15 @@ class DashboardWidgetDataController extends Controller
 
                             $color = $palette[$idx % count($palette)];
 
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $isCurrency = in_array($cleanKey, $currencyMetrics);
+
                             $dataset = [
                                 'label' => $isRatio ? $label . ' (%)' : $label,
+                                'key' => $key,
+                                'series_index' => 0,
+                                'metric' => $cleanKey,
+                                'metric_key' => $key,
                                 'data' => $values,
                                 'borderColor' => $color,
                                 'backgroundColor' => $color . '1a',
@@ -1089,6 +1143,8 @@ class DashboardWidgetDataController extends Controller
                                 'pointRadius' => 2,
                                 'yAxisID' => 'y-' . $cleanKey,
                                 'fill' => false,
+                                'currency' => $isCurrency,
+                                'percentage' => $isRatio,
                             ];
 
                             if ($effectiveWidgetType === 'bar_chart') {
@@ -1271,11 +1327,38 @@ class DashboardWidgetDataController extends Controller
             ]);
             report($e);
 
+            $sanitizedMessage = $this->sanitizeErrorMessage($e, $widget);
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
-            ], 500, [], JSON_UNESCAPED_UNICODE);
+                'error' => $sanitizedMessage,
+            ], 200, [], JSON_UNESCAPED_UNICODE);
         }
+    }
+
+    protected function sanitizeErrorMessage(\Throwable $e, DashboardWidget $widget): string
+    {
+        $msg = $e->getMessage();
+
+        if ($msg === 'access_restricted') {
+            return 'access_restricted';
+        }
+
+        if (str_contains($msg, '___EMPTY_GROUP___') || str_contains($msg, 'no assets') || str_contains($msg, 'No assets found') || str_contains($msg, 'no available assets')) {
+            return 'No assets are selected or available for this widget.';
+        }
+
+        if ($widget->source_type === 'kpi') {
+            if (str_contains($msg, 'SQLSTATE') || str_contains($msg, 'syntax error') || str_contains($msg, 'compute-kpi') || str_contains($msg, 'KPI computation failed') || str_contains($msg, 'Server error:')) {
+                return 'Unable to compute KPI data. Please verify the widget and KPI metrics/asset configuration.';
+            }
+        }
+
+        if (str_contains($msg, 'SQLSTATE') || str_contains($msg, 'Server error:') || str_contains($msg, 'cURL error') || str_contains($msg, 'Connection refused')) {
+            return 'Unable to load widget data at this time. Please check your data source configuration.';
+        }
+
+        return $msg;
     }
 
     /**
@@ -1435,13 +1518,13 @@ class DashboardWidgetDataController extends Controller
             }
         }
 
-        if (isset($controls['series_assets']['dependent']) && ! empty($controls['series_assets']['dependent'])) {
-            $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
-            $controlsToMerge['dependent_asset_group'] = null;
-        }
         if (! empty($controls['series_asset_groups']['dependent'])) {
             $controlsToMerge['dependent_asset_group'] = $controls['series_asset_groups']['dependent'];
             $controlsToMerge['dependent_asset_filter'] = null;
+        }
+        if (isset($controls['series_assets']['dependent']) && ! empty($controls['series_assets']['dependent'])) {
+            $controlsToMerge['dependent_asset_filter'] = $controls['series_assets']['dependent'];
+            $controlsToMerge['dependent_asset_group'] = null;
         }
 
         if (! empty($controls['date_start'])) {
@@ -1503,28 +1586,32 @@ class DashboardWidgetDataController extends Controller
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['assets'];
                 }
 
-                if (isset($controls['series_assets']["independent_{$key}"]) && ! empty($controls['series_assets']["independent_{$key}"])) {
-                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
-                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } elseif (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"]) && ! empty($controls['series_assets']["independent_{$var['key']}"])) {
-                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$var['key']}"];
-                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-                } elseif (! empty($controls['series_assets']) && is_array($controls['series_assets'])) {
-                    // Match independent_UUID or independent_0 keys
-                    foreach ($controls['series_assets'] as $sKey => $sAssets) {
-                        if (str_starts_with($sKey, 'independent_') && ! empty($sAssets)) {
-                            $uiState['independent_variables'][$key]['independent_asset_filter'] = $sAssets;
-                            $uiState['independent_variables'][$key]['independent_asset_group'] = null;
-
-                            break;
-                        }
-                    }
-                }
                 if (! empty($controls['series_asset_groups']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_asset_group'] = $controls['series_asset_groups']["independent_{$key}"];
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = null;
                 }
+                if (isset($controls['series_assets']["independent_{$key}"])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$key}"];
+                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                } elseif (isset($var['key']) && isset($controls['series_assets']["independent_{$var['key']}"])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets']["independent_{$var['key']}"];
+                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                } elseif (is_numeric($key) && isset($controls['series_assets'][(string)($key + 1)])) {
+                    $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets'][(string)($key + 1)];
+                    $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                }
+                if (! empty($controls['series_dependencies']["independent_{$key}"])) {
+                    $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies']["independent_{$key}"];
+                } elseif (is_numeric($key) && ! empty($controls['series_dependencies'][(string)($key + 1)])) {
+                    $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies'][(string)($key + 1)];
+                }
             }
+        }
+
+        if (! empty($controls['series_dependencies']['dependent'])) {
+            $uiState['dependent_dependency'] = $controls['series_dependencies']['dependent'];
+        } elseif (! empty($controls['series_dependencies']['0'])) {
+            $uiState['dependent_dependency'] = $controls['series_dependencies']['0'];
         }
 
         // Hydrate metrics from runtime controls ONLY if not already defined in KPI _ui_state
@@ -1541,7 +1628,10 @@ class DashboardWidgetDataController extends Controller
             ])->values()->toArray(),
         ]);
 
-        if (empty($uiState['dependent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
+        // Only allow runtime override for variables that were NOT hardcoded/predefined in the original KPI configuration
+        $kpiOriginalUiState = $kpi->filters['_ui_state'] ?? [];
+
+        if (empty($kpiOriginalUiState['dependent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
             $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
         }
         $metricIndex++;
@@ -1549,7 +1639,8 @@ class DashboardWidgetDataController extends Controller
         if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
             foreach ($uiState['independent_variables'] as $key => $var) {
                 $indSourceType = $var['independent_source_type'] ?? 'channel';
-                if ($indSourceType === 'channel' && empty($uiState['independent_variables'][$key]['independent_metric']) && ! empty($runtimeMetrics[$metricIndex])) {
+                $origIndMetric = $kpiOriginalUiState['independent_variables'][$key]['independent_metric'] ?? null;
+                if ($indSourceType === 'channel' && empty($origIndMetric) && ! empty($runtimeMetrics[$metricIndex])) {
                     $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                 }
                 $metricIndex++;
@@ -1690,18 +1781,67 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         if (empty($mergedState['dependent_metric']) && empty($mergedState['dependent_dm_id'])) {
-            $channelMetrics = ! empty($uiState['dependent_channel'])
-                ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($uiState['dependent_channel'])
-                : [];
+            $depChannel = ! empty($mergedState['dependent_channel'])
+                ? $mergedState['dependent_channel']
+                : (! empty($uiState['dependent_channel'])
+                    ? $uiState['dependent_channel']
+                    : (! empty($controls['channel'])
+                        ? $controls['channel']
+                        : (! empty($widget->source_config['channel'])
+                            ? $widget->source_config['channel']
+                            : (! empty($dashboard->controls['channel'])
+                                ? $dashboard->controls['channel']
+                                : 'facebook_marketing'))));
+
+            $mergedState['dependent_channel'] = $depChannel;
+            $channelMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depChannel);
 
             if (! empty($channelMetrics)) {
                 $metricKeys = array_keys($channelMetrics);
                 $mergedState['dependent_metric'] = $metricKeys[0];
             } else {
-                throw new \RuntimeException("This KPI is incomplete. It requires a 'Dependent Metric', but none was configured, no runtime metric was provided, and no default metrics are available for the channel.");
+                $mergedState['dependent_metric'] = 'reach';
             }
         } elseif (! empty($mergedState['dependent_dm_id'])) {
             $mergedState['dependent_source_type'] = 'derived_metric';
+        }
+        if (! empty($mergedState['independent_variables']) && is_array($mergedState['independent_variables'])) {
+            $cleanedIndependents = [];
+            foreach ($mergedState['independent_variables'] as $key => $var) {
+                if (! empty($var['independent_dm_id'])) {
+                    $cleanedIndependents[$key] = $var;
+                } elseif (! empty($var['independent_metric']) && ! empty($var['independent_channel'])) {
+                    $cleanedIndependents[$key] = $var;
+                } else {
+                    $ch = $var['independent_channel'] ?? $mergedState['dependent_channel'] ?? null;
+                    $chMetrics = $ch ? \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($ch) : [];
+                    if (! empty($chMetrics)) {
+                        $var['independent_channel'] = $ch;
+                        $var['independent_metric'] = array_key_first($chMetrics);
+                        $cleanedIndependents[$key] = $var;
+                    }
+                }
+            }
+            $mergedState['independent_variables'] = $cleanedIndependents;
+        }
+        $bivariateStats = ['calculate_regression', 'calculate_elasticity', 'calculate_granger'];
+        if (in_array($kpi->calculation_type, $bivariateStats, true) && empty($mergedState['independent_variables'])) {
+            $depCh = $mergedState['dependent_channel'] ?? 'facebook_marketing';
+            $chMetrics = \App\Services\Analytics\KpiFormBuilder::getMetricOptionsForChannel($depCh);
+            $fallbackMetric = 'spend';
+            if (! empty($chMetrics)) {
+                $keys = array_keys($chMetrics);
+                $diff = array_diff($keys, [$mergedState['dependent_metric'] ?? '']);
+                $fallbackMetric = ! empty($diff) ? array_values($diff)[0] : $keys[0];
+            }
+            $mergedState['independent_variables'] = [
+                '0' => [
+                    'independent_source_type' => 'channel',
+                    'independent_channel' => $depCh,
+                    'independent_metric' => $fallbackMetric,
+                    'independent_asset_filter' => $mergedState['dependent_asset_filter'] ?? $controls['assets'] ?? [],
+                ],
+            ];
         }
 
         $payload = KpiPayloadBuilder::build(
@@ -1949,6 +2089,19 @@ class DashboardWidgetDataController extends Controller
     {
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
         $config = $widget->source_config ?? [];
+
+        // Check if widget has multiple series configured via raw_series
+        $rawSeries = $controls['raw_series'] ?? $config['raw_series'] ?? null;
+        $hasMultiSeries = false;
+        if (is_array($rawSeries) && count($rawSeries) > 0) {
+            // It's multi-series if there is more than 1 series, or any series is a derived_metric, or raw_series is explicitly defined
+            $hasMultiSeries = count($rawSeries) > 1 || (! empty($rawSeries[0]['type']) && $rawSeries[0]['type'] === 'derived_metric');
+        }
+
+        if ($hasMultiSeries) {
+            return $this->handleMultiSeriesSource($project, $widget, $controls, $rawSeries);
+        }
+
         $channel = $controls['channel'] ?? $config['channel'] ?? '';
         $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
 
@@ -2028,6 +2181,353 @@ class DashboardWidgetDataController extends Controller
         }
 
         return $this->forwardToChannelEndpoint($channel, $action, $payload);
+    }
+
+    protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
+    {
+        \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
+        $dateStart = ! empty($controls['date_start']) ? $controls['date_start'] : now()->subDays(30)->format('Y-m-d');
+        $dateEnd = ! empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
+        $granularity = $controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily';
+        $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+        $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
+
+        $seriesCurves = [];
+        $dmGroups = [];
+
+        // 1. Separate Raw Metric series and group Derived Metric series
+        foreach ($rawSeries as $sIdx => $series) {
+            $type = $series['type'] ?? 'metric';
+            $dmId = $series['dm_id'] ?? null;
+
+            if ($type === 'derived_metric' && ! empty($dmId)) {
+                $dmGroups[$dmId][] = [
+                    'series_index' => $sIdx,
+                    'series' => $series,
+                ];
+            } else {
+                $channel = $series['channel'] ?? '';
+                $metrics = $controls['series_metrics'][$sIdx] ?? $series['metrics'] ?? [];
+                if (empty($channel) || empty($metrics)) {
+                    continue;
+                }
+
+                // Check per-series asset override
+                $seriesAssetOverride = $controls['series_assets'][$sIdx] ?? $series['assets'] ?? null;
+                $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetOverride);
+                if ($assetFilter === '___EMPTY_GROUP___') {
+                    continue;
+                }
+                $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+
+                $payload = [
+                    'tenant' => $project->id,
+                    'account' => $assetFilter,
+                    'dateStart' => $dateStart,
+                    'dateEnd' => $dateEnd,
+                    'granularity' => $granularity,
+                    'metrics' => $metrics,
+                ];
+
+                $seriesDependency = $series['dependency'] ?? $controls['series_dependencies'][$sIdx] ?? $controls['dependency'] ?? null;
+                if (! empty($seriesDependency)) {
+                    $payload['dependency'] = $seriesDependency;
+                }
+
+                if ($channel === 'facebook_organic') {
+                    if ($granularity === 'ig_post' || ($seriesDependency ?? '') === 'instagram_account') {
+                        $payload['activeTab'] = 'instagram';
+                    } else {
+                        $payload['activeTab'] = 'facebook';
+                    }
+                }
+
+                $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
+
+                foreach ($metrics as $metric) {
+                    $timeSeries = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
+                    $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
+                    $isRatio = in_array($cleanMetric, $ratioMetrics);
+
+                    if ($granularity !== 'daily' && ! empty($timeSeries)) {
+                        $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                        $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
+                    }
+
+                    $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
+                    $cLabel = $this->getSimplifiedChannelName($channel, $seriesDependency ?? null);
+                    $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
+
+                    if ($isRatio) {
+                        $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
+                    }
+
+                    $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                    $isCurrency = in_array($cleanMetric, $currencyMetrics);
+
+                    $seriesCurves[] = [
+                        'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
+                        'key' => 'series_' . $sIdx . '_' . $metric,
+                        'series_index' => $sIdx,
+                        'metric' => $cleanMetric,
+                        'raw_metric' => $metric,
+                        'axis_key' => $cleanMetric,
+                        'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
+                        'currency' => $isCurrency,
+                        'percentage' => $isRatio,
+                        'data' => $timeSeries,
+                    ];
+                }
+            }
+        }
+
+        // 2. Process Derived Metric Groups
+        foreach ($dmGroups as $dmId => $items) {
+            $derivedMetric = \App\Models\DerivedMetric::find($dmId);
+            if (! $derivedMetric) {
+                continue;
+            }
+
+            $sourceSeries = $derivedMetric->source_series ?? [];
+            $ast = $derivedMetric->ast ?? [];
+            if (empty($sourceSeries) || empty($ast)) {
+                continue;
+            }
+
+            $effectiveGranularity = $controls['granularity'] ?? $derivedMetric->output_granularity ?? 'daily';
+            $fetchedSeries = [];
+
+            // Map each source series in DM to its corresponding card's asset filter
+            foreach ($sourceSeries as $ssIdx => $ss) {
+                $ssKey = $ss['key'];
+                $ssChannel = $ss['channel'] ?? '';
+                $ssMetric = $ss['metric'] ?? '';
+
+                if (! $ssChannel || ! $ssMetric) {
+                    $fetchedSeries[$ssKey] = [];
+                    continue;
+                }
+
+                // Find matching item in $items by dm_series_index or $ssIdx
+                $matchingItem = null;
+                foreach ($items as $item) {
+                    if (isset($item['series']['dm_series_index']) && (int) $item['series']['dm_series_index'] === $ssIdx) {
+                        $matchingItem = $item;
+                        break;
+                    }
+                }
+                if (! $matchingItem && isset($items[$ssIdx])) {
+                    $matchingItem = $items[$ssIdx];
+                }
+
+                $seriesAssetFilter = $ss['asset_filter'] ?? null;
+                $cardAssetOverride = null;
+                if ($matchingItem) {
+                    $cardIdx = $matchingItem['series_index'];
+                    $cardAssetOverride = $controls['series_assets'][$cardIdx]
+                        ?? $controls['series_assets'][(string)$cardIdx]
+                        ?? $controls['series_assets']['dm_' . $ssIdx]
+                        ?? $controls['series_assets'][$ssKey]
+                        ?? $matchingItem['series']['assets']
+                        ?? null;
+                } else {
+                    $cardAssetOverride = $controls['series_assets']['dm_' . $ssIdx]
+                        ?? $controls['series_assets'][$ssIdx]
+                        ?? $controls['series_assets'][$ssKey]
+                        ?? null;
+                }
+                if (! empty($cardAssetOverride)) {
+                    $mergedFilter = (! empty($seriesAssetFilter) && is_array($seriesAssetFilter))
+                        ? array_values(array_intersect($seriesAssetFilter, $cardAssetOverride))
+                        : $cardAssetOverride;
+                    $seriesAssetFilter = $mergedFilter;
+                } elseif (is_array($cardAssetOverride) && empty($cardAssetOverride)) {
+                    // Card asset override is explicitly empty array [] ("All assets")
+                    $seriesAssetFilter = ! empty($seriesAssetFilter) ? $seriesAssetFilter : [];
+                }
+
+                $assetFilter = $this->extractAssetFilter($controls, $project, $ssChannel, $seriesAssetFilter);
+                if ($assetFilter === null || $assetFilter === '___EMPTY_GROUP___') {
+                    // Fallback to all valid assets for this channel
+                    $validAssets = $this->getValidAssetsForChannel($project, $ssChannel);
+                    if (! empty($validAssets)) {
+                        $allowsMultiple = in_array($ssChannel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                        $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
+                    }
+                }
+                if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
+                    $fetchedSeries[$ssKey] = [];
+                    continue;
+                }
+
+                $assetFilter = $this->resolveChanneledAccountId($project, $ssChannel, $assetFilter);
+
+                $ssDependency = $ss['dependency']
+                    ?? ($matchingItem && ! empty($matchingItem['series']['dependency']) ? $matchingItem['series']['dependency'] : null)
+                    ?? ($matchingItem && isset($matchingItem['series_index']) && ! empty($controls['series_dependencies'][$matchingItem['series_index']]) ? $controls['series_dependencies'][$matchingItem['series_index']] : null)
+                    ?? ($controls['series_dependencies']['dm_' . $ssIdx] ?? null)
+                    ?? ($controls['series_dependencies'][$ssKey] ?? null);
+
+                // Only fall back to global controls['dependency'] if the DM source series channel matches the widget channel
+                if ($ssDependency === null && ($controls['channel'] ?? '') === $ssChannel && ! empty($controls['dependency'])) {
+                    $ssDependency = $controls['dependency'];
+                }
+
+                $payload = [
+                    'tenant' => $project->id,
+                    'account' => $assetFilter,
+                    'dateStart' => $dateStart,
+                    'dateEnd' => $dateEnd,
+                    'granularity' => 'daily',
+                    'metrics' => [$ssMetric],
+                ];
+
+                if (! empty($ssDependency)) {
+                    $payload['dependency'] = $ssDependency;
+                }
+
+                if ($ssChannel === 'facebook_organic') {
+                    if (($ssDependency ?? '') === 'instagram_account') {
+                        $payload['activeTab'] = 'instagram';
+                    } else {
+                        $payload['activeTab'] = 'facebook';
+                    }
+                }
+
+                $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
+                $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
+
+                if ($effectiveGranularity !== 'daily' && ! empty($seriesData)) {
+                    $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                    $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
+                }
+
+                $fetchedSeries[$ssKey] = $seriesData;
+            }
+
+            $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
+            $computePayload = [
+                'ast' => $ast,
+                'filters' => [
+                    'startDate' => $dateStart,
+                    'endDate' => $dateEnd,
+                    'period' => $effectiveGranularity,
+                    'groupBy' => [$effectiveGranularity],
+                ],
+                'series_data' => $fetchedSeries,
+                'derived_metrics' => $derivedResults,
+            ];
+
+            $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+            $data = $result['data'] ?? $result;
+
+            $dmTimeSeries = [];
+            if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
+                foreach ($data['dates'] as $i => $d) {
+                    $dmTimeSeries[$d] = (float) ($data['values'][$i] ?? 0);
+                }
+            } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
+                foreach ($data as $d => $v) {
+                    $dmTimeSeries[$d] = (float) $v;
+                }
+            } elseif (is_array($data) && isset($data['chart'])) {
+                foreach ($data['chart'] as $point) {
+                    $d = $point['date'] ?? $point['label'] ?? null;
+                    $v = $point['value'] ?? $point['y'] ?? reset($point);
+                    if ($d !== null && is_numeric($v)) {
+                        $dmTimeSeries[$d] = (float) $v;
+                    }
+                }
+            }
+
+            if ($derivedMetric->format === 'percentage') {
+                $dmTimeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $dmTimeSeries);
+            }
+
+            $dmLabel = $derivedMetric->name;
+            if ($derivedMetric->format === 'percentage') {
+                $dmLabel .= ' (%)';
+            } elseif ($derivedMetric->format === 'currency') {
+                $dmLabel = '$ ' . $dmLabel;
+            }
+
+            $firstItemIndex = ! empty($items) ? ($items[0]['series_index'] ?? 0) : 0;
+            $seriesCurves[] = [
+                'label' => $dmLabel,
+                'key' => 'dm_' . $dmId,
+                'series_index' => $firstItemIndex,
+                'metric' => 'dm',
+                'raw_metric' => 'dm',
+                'axis_key' => 'dm_' . $dmId,
+                'axis_title' => $dmLabel,
+                'currency' => $derivedMetric->format === 'currency',
+                'percentage' => $derivedMetric->format === 'percentage',
+                'data' => $dmTimeSeries,
+            ];
+        }
+
+        // 3. Align all series across unified sorted dates
+        $allDates = [];
+        foreach ($seriesCurves as $curve) {
+            $allDates = array_merge($allDates, array_keys($curve['data']));
+        }
+        $allDates = array_values(array_unique($allDates));
+        sort($allDates);
+
+        $datasets = [];
+        $scales = [];
+
+        foreach ($seriesCurves as $idx => $curve) {
+            $color = $palette[$idx % count($palette)];
+            $alignedValues = array_map(fn ($d) => (float) ($curve['data'][$d] ?? 0), $allDates);
+
+            $dataset = [
+                'label' => $curve['label'],
+                'key' => $curve['key'],
+                'series_index' => $curve['series_index'] ?? null,
+                'metric' => $curve['metric'] ?? null,
+                'metric_key' => $curve['raw_metric'] ?? $curve['metric'] ?? null,
+                'data' => $alignedValues,
+                'borderColor' => $color,
+                'backgroundColor' => $color . '1a',
+                'tension' => 0.3,
+                'pointRadius' => 2,
+                'yAxisID' => 'y-' . $curve['axis_key'],
+                'fill' => false,
+                'currency' => ! empty($curve['currency']),
+                'percentage' => ! empty($curve['percentage']),
+            ];
+
+            if ($widget->widget_type === 'bar_chart') {
+                $dataset['type'] = 'bar';
+                $dataset['backgroundColor'] = $color . '80';
+            }
+
+            $datasets[] = $dataset;
+
+            $axisId = 'y-' . $curve['axis_key'];
+            if (! isset($scales[$axisId])) {
+                $scales[$axisId] = [
+                    'type' => 'linear',
+                    'display' => true,
+                    'position' => count($scales) % 2 === 0 ? 'left' : 'right',
+                    'title' => [
+                        'display' => true,
+                        'text' => $curve['axis_title'],
+                    ],
+                    'grid' => [
+                        'drawOnChartArea' => count($scales) === 0,
+                    ],
+                ];
+            }
+        }
+
+        return [
+            'labels' => $allDates,
+            'datasets' => $datasets,
+            'scales' => $scales,
+        ];
     }
 
     protected function handleEntitySource(Project $project, DashboardWidget $widget, array $controls): array
@@ -2122,8 +2622,22 @@ class DashboardWidgetDataController extends Controller
             return $constrain($asset);
         }
 
+        if ($seriesAssetFilter !== null) {
+            if (! empty($seriesAssetFilter)) {
+                $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                $filtered = array_intersect($seriesAssetFilter, $validForChannel);
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
+                $filtered = array_values($filtered);
+
+                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+            }
+            // If seriesAssetFilter is explicitly empty array [], it means "all assets for this channel"
+        }
+
         $seriesAssets = $controls['series_assets'] ?? null;
-        if (is_array($seriesAssets) && ! empty($seriesAssets)) {
+        if ($seriesAssetFilter === null && is_array($seriesAssets) && ! empty($seriesAssets)) {
             $flat = [];
             array_walk_recursive($seriesAssets, function ($v) use (&$flat) {
                 if ($v !== null && $v !== '') {
@@ -2134,40 +2648,32 @@ class DashboardWidgetDataController extends Controller
             if (! empty($flat)) {
                 $validForChannel = $this->getValidAssetsForChannel($project, $channel);
                 $filtered = array_intersect($flat, $validForChannel);
-                if (empty($filtered)) {
-                    return '___EMPTY_GROUP___';
-                }
-                $filtered = array_values($filtered);
-
-                if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
-                    $filtered = array_intersect($filtered, $seriesAssetFilter);
-                    if (empty($filtered)) {
-                        return '___EMPTY_GROUP___';
-                    }
+                if (! empty($filtered)) {
                     $filtered = array_values($filtered);
+                    return $constrain($allowsMultiple ? $filtered : $filtered[0]);
                 }
-
-                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
             }
         }
 
         $requestedAssets = [];
-        if (! empty($controls['assets']) && is_array($controls['assets'])) {
-            $requestedAssets = $controls['assets'];
-        } elseif (! empty($controls['asset_group'])) {
-            $group = $this->resolveGroupForUser($project, $controls['asset_group']);
+        if ($seriesAssetFilter === null) {
+            if (! empty($controls['assets']) && is_array($controls['assets'])) {
+                $requestedAssets = $controls['assets'];
+            } elseif (! empty($controls['asset_group'])) {
+                $group = $this->resolveGroupForUser($project, $controls['asset_group']);
 
-            if (! $group) {
-                return '___EMPTY_GROUP___';
-            }
+                if (! $group) {
+                    return '___EMPTY_GROUP___';
+                }
 
-            $requestedAssets = $group->items()
-                ->where('channel', $channel)
-                ->pluck('asset_id')
-                ->toArray();
+                $requestedAssets = $group->items()
+                    ->where('channel', $channel)
+                    ->pluck('asset_id')
+                    ->toArray();
 
-            if (empty($requestedAssets)) {
-                return '___EMPTY_GROUP___';
+                if (empty($requestedAssets)) {
+                    return '___EMPTY_GROUP___';
+                }
             }
         }
 
@@ -2180,14 +2686,6 @@ class DashboardWidgetDataController extends Controller
             }
 
             $filtered = array_values($filtered);
-
-            if ($seriesAssetFilter !== null && ! empty($seriesAssetFilter)) {
-                $filtered = array_intersect($filtered, $seriesAssetFilter);
-                if (empty($filtered)) {
-                    return '___EMPTY_GROUP___';
-                }
-                $filtered = array_values($filtered);
-            }
 
             return $constrain($allowsMultiple ? $filtered : $filtered[0]);
         }
@@ -2210,6 +2708,35 @@ class DashboardWidgetDataController extends Controller
         }
 
         return null;
+    }
+
+    public function getSimplifiedChannelName(string $channel, ?string $dependency = null): string
+    {
+        if ($channel === 'facebook_organic') {
+            return $dependency === 'instagram_account' ? 'IG' : 'FB';
+        }
+
+        $shortNames = [
+            'facebook_marketing' => 'FB Ads',
+            'facebook_organic' => 'FB',
+            'google_analytics_4' => 'GA4',
+            'google_ads' => 'GAds',
+            'google_search_console' => 'GSC',
+            'google_business_profile' => 'GBP',
+            'shopify' => 'Shopify',
+            'klaviyo' => 'Klaviyo',
+            'mailchimp' => 'Mailchimp',
+            'tiktok' => 'TikTok',
+            'pinterest' => 'Pinterest',
+            'linkedin' => 'LinkedIn',
+            'netsuite' => 'NetSuite',
+            'amazon' => 'Amazon',
+            'triple_whale' => 'TripleWhale',
+            'bigcommerce' => 'BigCommerce',
+            'x' => 'X',
+        ];
+
+        return $shortNames[$channel] ?? \Illuminate\Support\Str::headline($channel);
     }
 
     public function getValidAssetsForChannel(Project $project, string $channel): array
@@ -2468,7 +2995,7 @@ class DashboardWidgetDataController extends Controller
 
             if ($channel === 'facebook_organic' && ! empty($payload['account'])) {
                 $project = Project::find($payload['tenant']);
-                $activeTab = $payload['activeTab'] ?? 'facebook';
+                $activeTab = $payload['activeTab'] ?? (($payload['dependency'] ?? '') === 'instagram_account' ? 'instagram' : 'facebook');
                 $pages = $project
                     ? ($project->sync_config['facebook_organic']['assets']['pages']
                         ?? $project->sync_config['facebook_organic']['pages']
@@ -2656,22 +3183,47 @@ class DashboardWidgetDataController extends Controller
             // Per-series asset override from widget controls (series_assets['dm_N'] from view, dm_assets[N] from builder) merged with DM-level asset_filter
             $seriesAssetFilter = $series['asset_filter'] ?? null;
             $seriesAssetKey = 'dm_' . $index;
-            $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey] ?? $dmAssets[$index] ?? null;
+            $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey]
+                ?? $controls['series_assets'][$index]
+                ?? $controls['series_assets'][$key]
+                ?? $dmAssets[$index]
+                ?? null;
+
             if (! empty($widgetAssetOverride)) {
-                $mergedFilter = is_array($seriesAssetFilter)
+                $mergedFilter = (! empty($seriesAssetFilter) && is_array($seriesAssetFilter))
                     ? array_values(array_intersect($seriesAssetFilter, $widgetAssetOverride))
                     : $widgetAssetOverride;
                 $seriesAssetFilter = $mergedFilter;
+            } elseif (is_array($widgetAssetOverride) && empty($widgetAssetOverride)) {
+                $seriesAssetFilter = ! empty($seriesAssetFilter) ? $seriesAssetFilter : [];
             }
+
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetFilter);
 
-            if ($assetFilter === '___EMPTY_GROUP___') {
+            if ($assetFilter === null || $assetFilter === '___EMPTY_GROUP___') {
+                $validAssets = $this->getValidAssetsForChannel($project, $channel);
+                if (! empty($validAssets)) {
+                    $allowsMultiple = in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                    $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
+                }
+            }
+
+            if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
                 \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for {$key} channel={$channel} seriesAssetFilter=" . json_encode($seriesAssetFilter));
                 $fetchedSeries[$key] = [];
                 continue;
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+
+            $ssDependency = $series['dependency']
+                ?? ($controls['series_dependencies'][$seriesAssetKey] ?? null)
+                ?? ($controls['series_dependencies'][$index] ?? null)
+                ?? ($controls['series_dependencies'][$key] ?? null);
+
+            if ($ssDependency === null && ($controls['channel'] ?? '') === $channel && ! empty($controls['dependency'])) {
+                $ssDependency = $controls['dependency'];
+            }
 
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] source series {$key} channel={$channel} metric={$metric} assetFilter=" . json_encode($assetFilter));
 
@@ -2689,6 +3241,18 @@ class DashboardWidgetDataController extends Controller
                 'granularity' => 'daily',
                 'metrics' => [$metric],
             ];
+
+            if (! empty($ssDependency)) {
+                $payload['dependency'] = $ssDependency;
+            }
+
+            if ($channel === 'facebook_organic') {
+                if (($ssDependency ?? '') === 'instagram_account') {
+                    $payload['activeTab'] = 'instagram';
+                } else {
+                    $payload['activeTab'] = 'facebook';
+                }
+            }
 
             $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
 

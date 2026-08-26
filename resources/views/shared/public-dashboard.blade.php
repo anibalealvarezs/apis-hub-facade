@@ -76,7 +76,7 @@
                                             <button @click="openFilters = !openFilters; $el.closest('.grid-stack-item').style.zIndex = openFilters ? 50 : ''" @click.away="openFilters = false; $el.closest('.grid-stack-item').style.zIndex = ''" class="text-xs rounded border border-gray-300 bg-white text-gray-700 py-1 px-2 hover:bg-gray-50 flex items-center gap-1 shadow-sm">
                                                 <svg class="w-3 h-3 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
                                                 <span class="font-medium">Filters</span>
-                                                <span x-show="getActiveFilterCount() > 0" class="ml-1 bg-primary-100 text-primary-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full" x-text="getActiveFilterCount()"></span>
+                                                <span x-show="getActiveFilterCount() > 0" class="ml-1 bg-primary-100 text-primary-700 bd-text-2xs font-bold px-1.5 py-0.5 rounded-full" x-text="getActiveFilterCount()"></span>
                                             </button>
                                             
                                             <div x-show="openFilters" x-transition x-cloak class="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50 flex flex-col overflow-hidden">
@@ -86,15 +86,15 @@
                                                             <div class="flex items-center justify-between">
                                                                 <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider" x-text="seriesData.label"></label>
                                                                 <div class="flex gap-2">
-                                                                    <button x-show="(seriesData.mode || 'multiple') === 'multiple'" @click="selectAll(seriesKey)" class="text-[10px] font-medium text-primary-600 hover:underline">All</button>
-                                                                    <button @click="clearAll(seriesKey)" class="text-[10px] font-medium text-gray-500 hover:underline">Clear</button>
+                                                                    <button x-show="(seriesData.mode || 'multiple') === 'multiple'" @click="selectAll(seriesKey)" class="bd-text-2xs font-medium text-primary-600 hover:underline">All</button>
+                                                                    <button @click="clearAll(seriesKey)" class="bd-text-2xs font-medium text-gray-500 hover:underline">Clear</button>
                                                                 </div>
                                                             </div>
                                                             <div class="relative">
                                                                 <div class="absolute inset-y-0 left-0 w-8 flex items-center justify-center pointer-events-none">
                                                                     <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                                                 </div>
-                                                                <input type="text" x-model="searchQueries[seriesKey]" placeholder="Search..." class="bg-gray-50 border border-gray-300 text-gray-900 text-[11px] rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-1.5">
+                                                                <input type="text" x-model="searchQueries[seriesKey]" placeholder="Search..." class="bg-gray-50 border border-gray-300 text-gray-900 bd-text-xs-plus rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-8 p-1.5">
                                                             </div>
                                                             <div class="flex flex-col gap-1 max-h-40 overflow-y-auto pr-1">
                                                                 <template x-for="[assetId, assetName] in Object.entries(seriesData.options)" :key="assetId">

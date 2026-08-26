@@ -31,9 +31,15 @@ trait LoadsDashboardViewData
             ->getAllowedAssetGroupQuery($project, auth()->user()?->getAuthIdentifier())
             ->get();
 
+        $dcAssetGroups = (array) ($this->dashboard->controls['asset_group'] ?? []);
+        $dcAssetGroups = array_values(array_filter(array_map('strval', $dcAssetGroups)));
+
         $result = [];
         foreach ($groups as $group) {
-            $result[$group->id] = $group->name;
+            if (!empty($dcAssetGroups) && !in_array((string) $group->id, $dcAssetGroups, true)) {
+                continue;
+            }
+            $result[(string) $group->id] = $group->name;
         }
         return $result;
     }
@@ -48,8 +54,14 @@ trait LoadsDashboardViewData
             ->with('items')
             ->get();
 
+        $dcAssetGroups = (array) ($this->dashboard->controls['asset_group'] ?? []);
+        $dcAssetGroups = array_values(array_filter(array_map('strval', $dcAssetGroups)));
+
         $map = [];
         foreach ($groups as $group) {
+            if (!empty($dcAssetGroups) && !in_array((string) $group->id, $dcAssetGroups, true)) {
+                continue;
+            }
             $activeAssets = $group->active_items;
             foreach ($activeAssets->groupBy('channel') as $channel => $items) {
                 if (!isset($map[$channel])) {
@@ -71,12 +83,69 @@ trait LoadsDashboardViewData
         \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData getActiveChannels done', ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         $t1 = microtime(true);
-        $this->widgets = $this->dashboard->widgets()
+        $rawWidgets = $this->dashboard->widgets()
             ->orderBy('grid_y')
             ->orderBy('grid_x')
             ->get()
             ->toArray();
-        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData widgets loaded', ['count' => count($this->widgets), 'ms' => round((microtime(true) - $t1) * 1000, 1)]);
+        \Illuminate\Support\Facades\Log::debug('[DM_DEBUG] loadDashboardViewData widgets loaded', ['count' => count($rawWidgets), 'ms' => round((microtime(true) - $t1) * 1000, 1)]);
+
+        $this->widgets = $rawWidgets;
+
+        // Group widgets into sections bounded by clean cut-lines (where no widget crosses vertically)
+        $cutCandidates = collect($this->widgets)
+            ->map(fn ($w) => ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1))
+            ->unique()
+            ->sort()
+            ->values()
+            ->toArray();
+
+        $validCuts = [0];
+        foreach ($cutCandidates as $cutY) {
+            $crosses = collect($this->widgets)->contains(function ($w) use ($cutY) {
+                $startY = $w['grid_y'] ?? 0;
+                $endY = $startY + ($w['grid_h'] ?? 1);
+                return $startY < $cutY && $endY > $cutY;
+            });
+
+            if (! $crosses && ! in_array($cutY, $validCuts, true)) {
+                $validCuts[] = $cutY;
+            }
+        }
+        sort($validCuts);
+
+        $this->sections = [];
+        $secIndex = 0;
+        for ($i = 0; $i < count($validCuts) - 1; $i++) {
+            $secStart = $validCuts[$i];
+            $secEnd = $validCuts[$i + 1];
+            $secWidgets = collect($this->widgets)->filter(function ($w) use ($secStart, $secEnd) {
+                $y = $w['grid_y'] ?? 0;
+                return $y >= $secStart && $y < $secEnd;
+            });
+
+            if ($secWidgets->isNotEmpty()) {
+                $this->sections[] = [
+                    'index' => $secIndex++,
+                    'grid_y_start' => $secStart,
+                    'grid_y_end' => $secEnd,
+                    'height' => $secEnd - $secStart,
+                ];
+            }
+        }
+
+        // Map section index back to each widget
+        foreach ($this->widgets as &$w) {
+            $wY = $w['grid_y'] ?? 0;
+            $w['section_index'] = 0;
+            foreach ($this->sections as $sec) {
+                if ($wY >= $sec['grid_y_start'] && $wY < $sec['grid_y_end']) {
+                    $w['section_index'] = $sec['index'];
+                    break;
+                }
+            }
+        }
+        unset($w);
 
         $service = app(WidgetDataService::class);
         $wi = 0;
@@ -141,35 +210,34 @@ trait LoadsDashboardViewData
             };
 
             // Always provide asset filter options when a channel with assets is available
-            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode, &$resolved) {
+            $provideAssetFilters = function (string $channel, string $key, ?string $label = null, ?array $allowedIds = null, ?array $availableAssets = null) use (&$widgetArray, $getAssetsForChannel, $kpiAssetMode, &$resolved) {
                 $allAssets = $getAssetsForChannel($channel);
                 if (empty($allAssets)) {
                     $allAssets = [];
                 }
 
                 // Determine default selection from allowed IDs (KPI group / widget config).
-                // Options list always shows ALL channel assets — group filtering happens
-                // client-side via isViewAssetInGroup so switching asset groups works.
-                $defaultAssets = $allAssets;
-                if (!empty($allowedIds)) {
+                // Options list shows channel assets (filtered to availableAssets whitelist if configured)
+                if (isset($resolved['series_assets'][$key]) && is_array($resolved['series_assets'][$key])) {
+                    // Already explicitly resolved or empty selection
+                } elseif (is_array($allowedIds) && !empty($allowedIds)) {
                     $filtered = [];
                     foreach ($allowedIds as $id) {
-                        if (isset($allAssets[$id])) {
-                            $filtered[$id] = $allAssets[$id];
+                        if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                            $filtered[] = strval($id);
                         }
                     }
-                    if (!empty($filtered)) {
-                        $defaultAssets = $filtered;
-                    }
-                    // If all filtered out (e.g. channel changed), keep default as all assets
-                }
-
-                // Default selection: single asset
-                if (!empty($defaultAssets)) {
-                    reset($defaultAssets);
-                    $resolved['series_assets'][$key] = [strval(key($defaultAssets))];
+                    $resolved['series_assets'][$key] = $filtered;
+                } elseif (!empty($allAssets)) {
+                    reset($allAssets);
+                    $resolved['series_assets'][$key] = [strval(key($allAssets))];
                 } else {
                     $resolved['series_assets'][$key] = [];
+                }
+
+                $optionsList = $allAssets;
+                if (!empty($availableAssets) && is_array($availableAssets)) {
+                    $optionsList = array_intersect_key($allAssets, array_flip($availableAssets));
                 }
 
                 $computedMode = $kpiAssetMode;
@@ -179,14 +247,16 @@ trait LoadsDashboardViewData
 
                 $widgetArray['series_assets_options'][$key] = [
                     'label' => $label ?? Str::headline($channel),
-                    'options' => (object) $allAssets,
+                    'options' => (object) $optionsList,
                     'mode' => $computedMode,
                 ];
             };
 
             if (! empty($uiState['dependent_channel'])) {
                 $depAssetIds = null;
-                $configuredGroup = $uiState['global_asset_group'] ?? $uiState['dependent_asset_group'] ?? $resolved['series_asset_groups']['dependent'] ?? null;
+                $configuredGroup = array_key_exists('dependent', $resolved['series_asset_groups'] ?? [])
+                    ? $resolved['series_asset_groups']['dependent']
+                    : ($uiState['dependent_asset_group'] ?? $uiState['global_asset_group'] ?? null);
                 if (!empty($configuredGroup)) {
                     $group = $access->getAllowedAssetGroupQuery($project, $user?->getAuthIdentifier())->find($configuredGroup);
                     if ($group) {
@@ -207,7 +277,8 @@ trait LoadsDashboardViewData
                         $depAssetIds = array_intersect($depAssetIds, $resolved['series_assets']['dependent']);
                     }
                 }
-                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . Str::headline($uiState['dependent_channel']) . ')', $depAssetIds);
+                $depAllowedAssetIds = $resolved['series_allowed_assets']['dependent'] ?? $depAssetIds;
+                $provideAssetFilters($uiState['dependent_channel'], 'dependent', 'Dep (' . Str::headline($uiState['dependent_channel']) . ')', $depAssetIds, $depAllowedAssetIds);
             }
 
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
@@ -215,7 +286,9 @@ trait LoadsDashboardViewData
                     if (! empty($var['independent_channel'])) {
                         $idxKey = 'independent_' . $key;
                         $indAssetIds = null;
-                        $configuredGroup = $uiState['global_asset_group'] ?? $var['independent_asset_group'] ?? $resolved['series_asset_groups'][$idxKey] ?? null;
+                        $configuredGroup = array_key_exists($idxKey, $resolved['series_asset_groups'] ?? [])
+                            ? $resolved['series_asset_groups'][$idxKey]
+                            : ($var['independent_asset_group'] ?? $uiState['global_asset_group'] ?? null);
                         if (!empty($configuredGroup)) {
                             $group = $access->getAllowedAssetGroupQuery($project, $user?->getAuthIdentifier())->find($configuredGroup);
                             if ($group) {
@@ -236,7 +309,8 @@ trait LoadsDashboardViewData
                                 $indAssetIds = array_intersect($indAssetIds, $resolved['series_assets'][$idxKey]);
                             }
                         }
-                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . Str::headline($var['independent_channel']) . ')', $indAssetIds);
+                        $indAllowedAssetIds = $resolved['series_allowed_assets'][$idxKey] ?? $indAssetIds;
+                        $provideAssetFilters($var['independent_channel'], $idxKey, 'Ind ' . $key . ' (' . Str::headline($var['independent_channel']) . ')', $indAssetIds, $indAllowedAssetIds);
                     }
                 }
             }
@@ -260,32 +334,33 @@ trait LoadsDashboardViewData
                                 $key = 'dep_dm_' . $sIdx;
                                 $alreadySaved = isset($resolved['series_assets'][$key]);
                                 $allAssets = $getAssetsForChannel($channel);
+                                $allowedAssetsList = $allAssets ?: [];
+                                if (! empty($resolved['series_allowed_assets'][$key]) && is_array($resolved['series_allowed_assets'][$key])) {
+                                    $allowedKeys = array_flip(array_map('strval', $resolved['series_allowed_assets'][$key]));
+                                    $allowedAssetsList = array_intersect_key($allowedAssetsList, $allowedKeys);
+                                }
                                 $computedMode = $kpiAssetMode;
                                 if (! \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
                                     $computedMode = 'single';
                                 }
                                 $widgetArray['series_assets_options'][$key] = [
                                     'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
-                                    'options' => (object) ($allAssets ?: []),
+                                    'options' => (object) $allowedAssetsList,
                                     'mode' => $computedMode,
                                 ];
                                 if (! $alreadySaved) {
                                     $allowedIds = $series['asset_filter'] ?? null;
-                                    $defaultAssets = $allAssets;
                                     if (is_array($allowedIds) && ! empty($allowedIds)) {
                                         $filtered = [];
                                         foreach ($allowedIds as $id) {
-                                            if (isset($allAssets[$id])) {
-                                                $filtered[$id] = $allAssets[$id];
+                                            if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                                                $filtered[] = strval($id);
                                             }
                                         }
-                                        if (! empty($filtered)) {
-                                            $defaultAssets = $filtered;
-                                        }
-                                    }
-                                    if (! empty($defaultAssets)) {
-                                        reset($defaultAssets);
-                                        $resolved['series_assets'][$key] = [strval(key($defaultAssets))];
+                                        $resolved['series_assets'][$key] = $filtered;
+                                    } elseif (! empty($allAssets)) {
+                                        reset($allAssets);
+                                        $resolved['series_assets'][$key] = [strval(key($allAssets))];
                                     } else {
                                         $resolved['series_assets'][$key] = [];
                                     }
@@ -312,32 +387,33 @@ trait LoadsDashboardViewData
                                         $assetKey = 'ind_' . $key . '_dm_' . $sIdx;
                                         $alreadySaved = isset($resolved['series_assets'][$assetKey]);
                                         $allAssets = $getAssetsForChannel($channel);
+                                        $allowedAssetsList = $allAssets ?: [];
+                                        if (! empty($resolved['series_allowed_assets'][$assetKey]) && is_array($resolved['series_allowed_assets'][$assetKey])) {
+                                            $allowedKeys = array_flip(array_map('strval', $resolved['series_allowed_assets'][$assetKey]));
+                                            $allowedAssetsList = array_intersect_key($allowedAssetsList, $allowedKeys);
+                                        }
                                         $computedMode = $kpiAssetMode;
                                         if (! \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)) {
                                             $computedMode = 'single';
                                         }
                                         $widgetArray['series_assets_options'][$assetKey] = [
                                             'label' => $series['label'] ?? ('Series ' . chr(97 + $sIdx)),
-                                            'options' => (object) ($allAssets ?: []),
+                                            'options' => (object) $allowedAssetsList,
                                             'mode' => $computedMode,
                                         ];
                                         if (! $alreadySaved) {
                                             $allowedIds = $series['asset_filter'] ?? null;
-                                            $defaultAssets = $allAssets;
                                             if (is_array($allowedIds) && ! empty($allowedIds)) {
                                                 $filtered = [];
                                                 foreach ($allowedIds as $id) {
-                                                    if (isset($allAssets[$id])) {
-                                                        $filtered[$id] = $allAssets[$id];
+                                                    if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                                                        $filtered[] = strval($id);
                                                     }
                                                 }
-                                                if (! empty($filtered)) {
-                                                    $defaultAssets = $filtered;
-                                                }
-                                            }
-                                            if (! empty($defaultAssets)) {
-                                                reset($defaultAssets);
-                                                $resolved['series_assets'][$assetKey] = [strval(key($defaultAssets))];
+                                                $resolved['series_assets'][$assetKey] = $filtered;
+                                            } elseif (! empty($allAssets)) {
+                                                reset($allAssets);
+                                                $resolved['series_assets'][$assetKey] = [strval(key($allAssets))];
                                             } else {
                                                 $resolved['series_assets'][$assetKey] = [];
                                             }
@@ -377,21 +453,17 @@ trait LoadsDashboardViewData
                                 // Preserve view-saved selection; fallback to builder dm_assets or definition asset_filter
                                 if (!$alreadySaved) {
                                     $allowedIds = $resolved['dm_assets'][$sIdx] ?? $series['asset_filter'] ?? null;
-                                    $defaultAssets = $allAssets;
                                     if (is_array($allowedIds) && !empty($allowedIds)) {
                                         $filtered = [];
                                         foreach ($allowedIds as $id) {
-                                            if (isset($allAssets[$id])) {
-                                                $filtered[$id] = $allAssets[$id];
+                                            if (isset($allAssets[$id]) || isset($allAssets[strval($id)])) {
+                                                $filtered[] = strval($id);
                                             }
                                         }
-                                        if (!empty($filtered)) {
-                                            $defaultAssets = $filtered;
-                                        }
-                                    }
-                                    if (!empty($defaultAssets)) {
-                                        reset($defaultAssets);
-                                        $resolved['series_assets'][$dmAssetKey] = [strval(key($defaultAssets))];
+                                        $resolved['series_assets'][$dmAssetKey] = $filtered;
+                                    } elseif (!empty($allAssets)) {
+                                        reset($allAssets);
+                                        $resolved['series_assets'][$dmAssetKey] = [strval(key($allAssets))];
                                     } else {
                                         $resolved['series_assets'][$dmAssetKey] = [];
                                     }
@@ -402,34 +474,64 @@ trait LoadsDashboardViewData
                 }
             }
 
-            // Fallback for non-KPI widgets with a channel
+            // Fallback for non-KPI widgets with a channel / multiple series
             if (empty($widgetArray['series_assets_options'])) {
-                $primaryChannel = $resolved['channel'] ?? null;
-                if (empty($primaryChannel) && !empty($resolved['series_channels'])) {
-                    $primaryChannel = reset($resolved['series_channels']);
-                }
-                if (empty($primaryChannel) && !empty($this->allChannels)) {
-                    $primaryChannel = array_key_first($this->allChannels);
+                if (!empty($resolved['raw_series']) && is_array($resolved['raw_series'])) {
+                    foreach ($resolved['raw_series'] as $sIdx => $s) {
+                        $sChannel = $s['channel'] ?? $resolved['series_channels'][$sIdx] ?? $resolved['channel'] ?? null;
+                        if (!empty($sChannel)) {
+                            $rawAssetIds = $resolved['series_assets'][$sIdx] ?? $s['assets'] ?? null;
+                            $allowedAssetIds = $s['allowed_assets'] ?? $resolved['series_allowed_assets'][$sIdx] ?? null;
+                            $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
+                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds, $allowedAssetIds);
+                        }
+                    }
+                } elseif (!empty($resolved['series_channels']) && is_array($resolved['series_channels'])) {
+                    foreach ($resolved['series_channels'] as $sIdx => $sChannel) {
+                        if (!empty($sChannel)) {
+                            $rawAssetIds = $resolved['series_assets'][$sIdx] ?? null;
+                            $allowedAssetIds = $resolved['series_allowed_assets'][$sIdx] ?? null;
+                            $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
+                            $provideAssetFilters($sChannel, (string)$sIdx, $sLabel, $rawAssetIds, $allowedAssetIds);
+                        }
+                    }
                 }
 
-                if (!empty($primaryChannel)) {
-                    $rawAssetIds = null;
-                    if (!empty($resolved['assets'])) {
-                        $rawAssetIds = $resolved['assets'];
-                    } elseif (!empty($resolved['series_assets']['0'])) {
-                        $rawAssetIds = $resolved['series_assets']['0'];
-                    } elseif (!empty($resolved['raw_series'][0]['assets'])) {
-                        $rawAssetIds = $resolved['raw_series'][0]['assets'];
+                if (empty($widgetArray['series_assets_options'])) {
+                    $primaryChannel = $resolved['channel'] ?? null;
+                    if (empty($primaryChannel) && !empty($this->allChannels)) {
+                        $primaryChannel = array_key_first($this->allChannels);
                     }
-                    $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds);
+
+                    if (!empty($primaryChannel)) {
+                        $rawAssetIds = null;
+                        if (!empty($resolved['assets'])) {
+                            $rawAssetIds = $resolved['assets'];
+                        } elseif (!empty($resolved['series_assets']['0'])) {
+                            $rawAssetIds = $resolved['series_assets']['0'];
+                        } elseif (!empty($resolved['raw_series'][0]['assets'])) {
+                            $rawAssetIds = $resolved['raw_series'][0]['assets'];
+                        }
+                        $allowedAssetIds = $resolved['series_allowed_assets']['0'] ?? $resolved['raw_series'][0]['allowed_assets'] ?? null;
+                        $provideAssetFilters($primaryChannel, '0', null, $rawAssetIds, $allowedAssetIds);
+                    }
                 }
             }
 
             // Apply dashboard-level asset group filter to resolved series assets.
             // This prevents JS applyAssetGroup() from detecting changes and
             // triggering an unnecessary widget reload on page init.
-            $dashboardAssetGroup = $this->dashboard->controls['asset_group'] ?? null;
-            if ($dashboardAssetGroup && method_exists($this, 'getChannelAssetGroupMap')) {
+            $rawDashGroups = $this->dashboard->controls['asset_group'] ?? [];
+            if (!is_array($rawDashGroups)) {
+                $rawDashGroups = $rawDashGroups !== '' ? [(string) $rawDashGroups] : [];
+            }
+            if (empty($rawDashGroups) && method_exists($this, 'getAllAssetGroups')) {
+                $allGroups = $this->getAllAssetGroups();
+                if (!empty($allGroups)) {
+                    $rawDashGroups = array_map('strval', array_keys($allGroups));
+                }
+            }
+            if (!empty($rawDashGroups) && method_exists($this, 'getChannelAssetGroupMap')) {
                 $channelGroupMap = $this->getChannelAssetGroupMap();
                 if (!empty($channelGroupMap)) {
                     foreach ($resolved['series_assets'] ?? [] as $assetKey => $assetIds) {
@@ -460,13 +562,31 @@ trait LoadsDashboardViewData
                                 $channel = $resolved['series_channels'][$idx] ?? $resolved['channel'] ?? null;
                             }
                         }
-                        if ($channel && isset($channelGroupMap[$channel][$dashboardAssetGroup])) {
-                            $allowedAssets = $channelGroupMap[$channel][$dashboardAssetGroup];
-                            $validAssets = array_intersect($assetIds, $allowedAssets);
-                            if (!empty($validAssets)) {
-                                $resolved['series_assets'][$assetKey] = array_values($validAssets);
-                            } elseif (!empty($allowedAssets)) {
-                                $resolved['series_assets'][$assetKey] = [reset($allowedAssets)];
+                        if ($channel) {
+                            $allowedAssets = [];
+                            foreach ($rawDashGroups as $gId) {
+                                if (isset($channelGroupMap[$channel][(string) $gId])) {
+                                    $allowedAssets = array_merge($allowedAssets, $channelGroupMap[$channel][(string) $gId]);
+                                }
+                            }
+                            $allowedAssets = array_values(array_unique($allowedAssets));
+
+                            if (!empty($allowedAssets)) {
+                                $validAssets = array_intersect($assetIds, $allowedAssets);
+                                if (!empty($validAssets)) {
+                                    $resolved['series_assets'][$assetKey] = array_values($validAssets);
+                                } else {
+                                    // If previously configured asset is not in these groups, autoselect from allowed assets
+                                    $whitelist = $resolved['series_allowed_assets'][$assetKey] ?? null;
+                                    if (!empty($whitelist) && is_array($whitelist)) {
+                                        $whitelisted = array_intersect($whitelist, $allowedAssets);
+                                        $resolved['series_assets'][$assetKey] = !empty($whitelisted) ? array_values($whitelisted) : array_values($allowedAssets);
+                                    } else {
+                                        $resolved['series_assets'][$assetKey] = array_values($allowedAssets);
+                                    }
+                                }
+                            } else {
+                                $resolved['series_assets'][$assetKey] = ['___EMPTY_GROUP___'];
                             }
                         }
                     }
@@ -525,13 +645,24 @@ trait LoadsDashboardViewData
 
             if ($widgetArray['source_type'] === 'kpi') {
                 $depChannel = $uiState['dependent_channel'] ?? $resolved['channel'] ?? '';
+                $depDependency = $resolved['series_dependencies']['dependent']
+                    ?? $resolved['series_dependencies']['0']
+                    ?? $uiState['dependent_dependency']
+                    ?? $uiState['dependency']
+                    ?? $resolved['dependency']
+                    ?? null;
+                $depDependencies = ! empty($depChannel)
+                    ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($depChannel)
+                    : [];
                 $depMetrics = ! empty($depChannel)
-                    ? KpiFormBuilder::getMetricOptionsForChannel($depChannel)
+                    ? KpiFormBuilder::getMetricOptionsForChannel($depChannel, null, $depDependency)
                     : [];
                 $variables['dependent'] = [
                     'index' => $varIndex++,
                     'channel' => $depChannel,
                     'channel_name' => !empty($depChannel) ? KpiFormBuilder::getChannelDisplayName($depChannel) : '',
+                    'dependency' => $depDependency,
+                    'dependencies' => $depDependencies,
                     'metrics' => $depMetrics,
                     'selected_metric' => $uiState['dependent_metric'] ?? '',
                 ];
@@ -539,13 +670,25 @@ trait LoadsDashboardViewData
                 if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                     foreach ($uiState['independent_variables'] as $key => $var) {
                         $indChannel = $var['independent_channel'] ?? '';
+                        $indDependency = $resolved['series_dependencies']['independent_' . $key]
+                            ?? (is_numeric($key) ? ($resolved['series_dependencies'][(string)($key + 1)] ?? null) : null)
+                            ?? $var['independent_dependency']
+                            ?? $var['dependency']
+                            ?? $uiState['dependency']
+                            ?? $resolved['dependency']
+                            ?? null;
+                        $indDependencies = ! empty($indChannel)
+                            ? \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($indChannel)
+                            : [];
                         $indMetrics = ! empty($indChannel)
-                            ? KpiFormBuilder::getMetricOptionsForChannel($indChannel)
+                            ? KpiFormBuilder::getMetricOptionsForChannel($indChannel, null, $indDependency)
                             : [];
                         $variables['independent_' . $key] = [
                             'index' => $varIndex++,
                             'channel' => $indChannel,
                             'channel_name' => !empty($indChannel) ? KpiFormBuilder::getChannelDisplayName($indChannel) : '',
+                            'dependency' => $indDependency,
+                            'dependencies' => $indDependencies,
                             'metrics' => $indMetrics,
                             'selected_metric' => $var['independent_metric'] ?? '',
                         ];
@@ -587,51 +730,178 @@ trait LoadsDashboardViewData
                     }
                 }
             } else {
-                // Raw metrics variables mapping - enforce single series for non-KPI widgets
-                $primaryChannel = $resolved['channel'] ?? null;
-                if (empty($primaryChannel) && !empty($resolved['series_channels'])) {
-                    $primaryChannel = reset($resolved['series_channels']);
+                // Raw metrics variables mapping - support multi-series cards
+                if (!empty($resolved['raw_series']) && is_array($resolved['raw_series'])) {
+                    foreach ($resolved['raw_series'] as $sIdx => $s) {
+                        $sChannel = $s['channel'] ?? $resolved['series_channels'][$sIdx] ?? $resolved['channel'] ?? null;
+                        if (!empty($sChannel)) {
+                            $granularity = $resolved['granularity'] ?? null;
+                            $dependency  = $s['dependency'] ?? $resolved['series_dependencies'][$sIdx] ?? $resolved['dependency'] ?? null;
+                            $isDmType    = ($s['type'] ?? 'metric') === 'derived_metric';
+
+                            if ($isDmType && !empty($s['metrics'])) {
+                                $dmMetricKey = is_array($s['metrics']) ? reset($s['metrics']) : $s['metrics'];
+                                $metricOptions = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                                $metricLabel = $metricOptions[$dmMetricKey] ?? ucfirst($dmMetricKey);
+                                $metrics = [$dmMetricKey => $metricLabel];
+                            } else {
+                                $allChannelMetrics = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                                
+                                // Whitelist to allowed_metrics if defined
+                                $allowed = $s['allowed_metrics'] ?? $resolved['series_allowed_metrics'][$sIdx] ?? [];
+                                if (!empty($allowed) && is_array($allowed)) {
+                                    $metrics = array_intersect_key($allChannelMetrics, array_flip($allowed));
+                                } else {
+                                    $metrics = $allChannelMetrics;
+                                }
+                            }
+
+                            $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
+                            $variables[(string)$sIdx] = [
+                                'index' => $sIdx,
+                                'channel' => $sChannel,
+                                'channel_name' => $sLabel ?? KpiFormBuilder::getChannelDisplayName($sChannel),
+                                'dependency' => $dependency,
+                                'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($sChannel),
+                                'metrics' => $metrics,
+                                'type' => $s['type'] ?? 'metric',
+                                'dm_name' => $s['dm_name'] ?? null,
+                                'selected_metric' => $isDmType && !empty($s['metrics']) ? (is_array($s['metrics']) ? reset($s['metrics']) : $s['metrics']) : null,
+                            ];
+                        }
+                    }
+                } elseif (!empty($resolved['series_channels']) && is_array($resolved['series_channels'])) {
+                    foreach ($resolved['series_channels'] as $sIdx => $sChannel) {
+                        if (!empty($sChannel)) {
+                            $granularity = $resolved['granularity'] ?? null;
+                            $dependency  = $resolved['series_dependencies'][$sIdx] ?? $resolved['dependency'] ?? null;
+                            $allChannelMetrics = KpiFormBuilder::getMetricOptionsForChannel($sChannel, $granularity, $dependency);
+                            
+                            // Whitelist to allowed_metrics if defined
+                            $allowed = $resolved['series_allowed_metrics'][$sIdx] ?? [];
+                            if (!empty($allowed) && is_array($allowed)) {
+                                $metrics = array_intersect_key($allChannelMetrics, array_flip($allowed));
+                            } else {
+                                $metrics = $allChannelMetrics;
+                            }
+
+                            $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
+                            $variables[(string)$sIdx] = [
+                                'index' => (int)$sIdx,
+                                'channel' => $sChannel,
+                                'channel_name' => $sLabel ?? KpiFormBuilder::getChannelDisplayName($sChannel),
+                                'dependency' => $dependency,
+                                'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($sChannel),
+                                'metrics' => $metrics,
+                            ];
+                        }
+                    }
                 }
-                
-                if (!empty($primaryChannel)) {
-                    $granularity = $resolved['granularity'] ?? null;
-                    $dependency  = $resolved['dependency'] ?? null;
-                    $metrics     = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel, $granularity, $dependency);
-                    $variables['0'] = [
-                        'index' => $varIndex++,
-                        'channel' => $primaryChannel,
-                        'channel_name' => KpiFormBuilder::getChannelDisplayName($primaryChannel),
-                        'metrics' => $metrics,
-                    ];
+
+                if (empty($variables)) {
+                    $primaryChannel = $resolved['channel'] ?? null;
+                    if (empty($primaryChannel) && !empty($this->allChannels)) {
+                        $primaryChannel = array_key_first($this->allChannels);
+                    }
+                    
+                    if (!empty($primaryChannel)) {
+                        $granularity = $resolved['granularity'] ?? null;
+                        $dependency  = $resolved['dependency'] ?? null;
+                        $metrics     = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel, $granularity, $dependency);
+                        $variables['0'] = [
+                            'index' => 0,
+                            'channel' => $primaryChannel,
+                            'channel_name' => KpiFormBuilder::getChannelDisplayName($primaryChannel),
+                            'dependency' => $dependency,
+                            'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($primaryChannel),
+                            'metrics' => $metrics,
+                        ];
+                    }
                 }
             }
 
             if (!isset($resolved['metrics']) || !is_array($resolved['metrics'])) {
                 $resolved['metrics'] = [];
             }
-            \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] BEFORE padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | variables count: ' . count($variables) . ' | resolved metrics: ' . json_encode($resolved['metrics']));
-            // First pad the array with empty strings up to the number of variables
-            for ($i = 0; $i < count($variables); $i++) {
-                if (!isset($resolved['metrics'][$i])) {
-                    $resolved['metrics'][$i] = '';
+
+            if (!isset($resolved['series_metrics']) || !is_array($resolved['series_metrics'])) {
+                $resolved['series_metrics'] = [];
+            }
+
+            if ($widgetArray['source_type'] !== 'kpi' && $widgetArray['source_type'] !== 'derived_metric') {
+                if (!empty($resolved['raw_series']) && is_array($resolved['raw_series'])) {
+                    // Populate series_metrics from raw_series or resolved series_metrics
+                    foreach ($resolved['raw_series'] as $sIdx => &$s) {
+                        $sKey = (string)$sIdx;
+                        $varMetrics = $variables[$sKey]['metrics'] ?? [];
+                        $validKeys = !empty($varMetrics) ? array_keys($varMetrics) : [];
+
+                        $sMetrics = $resolved['series_metrics'][$sKey] ?? $s['metrics'] ?? [];
+                        if (!is_array($sMetrics)) {
+                            $sMetrics = !empty($sMetrics) ? [$sMetrics] : [];
+                        }
+
+                        if (!empty($validKeys)) {
+                            $sMetrics = array_values(array_intersect($sMetrics, $validKeys));
+                            if (empty($sMetrics)) {
+                                $sMetrics = [reset($validKeys)];
+                            }
+                        }
+
+                        $resolved['series_metrics'][$sKey] = $sMetrics;
+                        $s['metrics'] = $sMetrics;
+                    }
+                    unset($s);
+
+                    // Sync flat metrics list from all series
+                    $flatMetrics = [];
+                    foreach ($resolved['series_metrics'] as $sm) {
+                        if (is_array($sm)) {
+                            $flatMetrics = array_merge($flatMetrics, $sm);
+                        }
+                    }
+                    $resolved['metrics'] = array_values(array_unique($flatMetrics));
+                } else {
+                    // Single series fallback
+                    $allValidMetrics = [];
+                    foreach ($variables as $vKey => $vConfig) {
+                        if (!empty($vConfig['metrics']) && is_array($vConfig['metrics'])) {
+                            $allValidMetrics = array_merge($allValidMetrics, array_keys($vConfig['metrics']));
+                        }
+                    }
+                    if (!empty($allValidMetrics)) {
+                        $resolved['metrics'] = array_values(array_intersect($resolved['metrics'] ?? [], $allValidMetrics));
+                    }
+                    if (empty($resolved['metrics']) && !empty($variables)) {
+                        $firstVar = reset($variables);
+                        if (!empty($firstVar['metrics'])) {
+                            $resolved['metrics'] = [array_key_first($firstVar['metrics'])];
+                        }
+                    }
+                    $resolved['series_metrics']['0'] = $resolved['metrics'];
                 }
-            }
-            \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] AFTER padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | resolved metrics: ' . json_encode($resolved['metrics']));
-            foreach ($variables as $vConfig) {
-                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] Variable loop | Widget: ' . ($widgetArray['id'] ?? '?') . ' | index: ' . ($vConfig['index'] ?? '?') . ' | selected_metric: ' . ($vConfig['selected_metric'] ?? '__NONE__') . ' | metrics keys: ' . json_encode(array_keys($vConfig['metrics'] ?? [])));
-            }
-            foreach ($variables as $vConfig) {
-                $idx = $vConfig['index'];
-                $hasMetricInControl = !empty($resolved['metrics'][$idx]);
-                $hasMetricInKpi = !empty($vConfig['selected_metric']) && $widgetArray['source_type'] === 'kpi';
-                
-                if (!$hasMetricInControl && !$hasMetricInKpi) {
-                    if (!empty($vConfig['metrics'])) {
-                        $resolved['metrics'][$idx] = array_key_first($vConfig['metrics']);
+            } else {
+                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] BEFORE padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | variables count: ' . count($variables) . ' | resolved metrics: ' . json_encode($resolved['metrics']));
+                // First pad the array with empty strings up to the number of variables
+                for ($i = 0; $i < count($variables); $i++) {
+                    if (!isset($resolved['metrics'][$i])) {
+                        $resolved['metrics'][$i] = '';
                     }
                 }
+                \Illuminate\Support\Facades\Log::debug('[LoadsDashboardViewData] AFTER padding | Widget: ' . ($widgetArray['id'] ?? '?') . ' | resolved metrics: ' . json_encode($resolved['metrics']));
+                foreach ($variables as $vConfig) {
+                    $idx = $vConfig['index'];
+                    $hasMetricInControl = !empty($resolved['metrics'][$idx]);
+                    $hasMetricInKpi = !empty($vConfig['selected_metric']) && $widgetArray['source_type'] === 'kpi';
+                    
+                    if (!$hasMetricInControl && !$hasMetricInKpi) {
+                        if (!empty($vConfig['metrics'])) {
+                            $resolved['metrics'][$idx] = array_key_first($vConfig['metrics']);
+                        }
+                    }
+                }
+                ksort($resolved['metrics']);
             }
-            ksort($resolved['metrics']);
 
             $widgetArray['variables'] = (object) $variables;
             // Keep flat metric_options for backward compatibility

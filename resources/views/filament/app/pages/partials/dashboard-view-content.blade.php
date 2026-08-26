@@ -1,12 +1,61 @@
-<link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}"/>
+<link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
+<script src="{{ asset('js/dashboard-renderer.js') }}?v={{ file_exists(public_path('js/dashboard-renderer.js')) ? filemtime(public_path('js/dashboard-renderer.js')) : time() }}"></script>
 @php
     $viewObj = $viewObj ?? $viewModel ?? null;
     $dc = $viewObj->dashboard->controls ?? [];
-    $dcAssetGroup = (string) ($dc['asset_group'] ?? '');
-    $dashboardGroup = $dcAssetGroup !== '' && array_key_exists($dcAssetGroup, $viewObj->getAllAssetGroups())
-        ? $dcAssetGroup
-        : '';
+    $allGroups = $viewObj->getAllAssetGroups();
+    $rawDcGroups = (array) ($dc['asset_group'] ?? []);
+    $rawDcGroups = array_values(array_filter(array_map('strval', $rawDcGroups)));
+
+    $dashboardGroup = '';
+    if (!empty($rawDcGroups)) {
+        foreach ($rawDcGroups as $gId) {
+            if (array_key_exists($gId, $allGroups)) {
+                $dashboardGroup = (string) $gId;
+                break;
+            }
+        }
+    }
+    if ($dashboardGroup === '' && !empty($allGroups)) {
+        $dashboardGroup = (string) array_key_first($allGroups);
+    }
     $yesterdayDate = date('Y-m-d', strtotime('-1 day'));
+
+    // Determine if PDF Export / Print is allowed for this view context:
+    $canExportPdf = false;
+    if ($viewObj instanceof \App\Http\Controllers\PublicDashboardViewModel) {
+        // Public View level:
+        $canExportPdf = !empty($viewObj->pv?->allow_pdf_export);
+    } else {
+        // Internal / Dashboard level:
+        $dashAllowPdf = !empty($dc['allow_pdf_export']);
+        if ($dashAllowPdf) {
+            $user = auth()->user();
+            if ($user) {
+                $project = \Filament\Facades\Filament::getTenant() ?? ($viewObj->project ?? null) ?? ($viewObj->dashboard->project ?? null);
+                if ($project) {
+                    $userRoles = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                        ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                        ->where('model_has_roles.model_id', $user->id)
+                        ->where('model_has_roles.project_id', $project->id)
+                        ->pluck('roles.name')
+                        ->toArray();
+
+                    // Owner and Editor can always print if dashboard PDF export is enabled
+                    if (in_array('project_owner', $userRoles) || in_array('project_editor', $userRoles)) {
+                        $canExportPdf = true;
+                    } else {
+                        $configuredRoles = (array) ($dc['pdf_export_roles'] ?? []);
+                        if (!empty(array_intersect($userRoles, $configuredRoles))) {
+                            $canExportPdf = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
 @endphp
 
 <div x-data="dashboardView({
@@ -30,14 +79,14 @@
      @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)"
      @open-pop-out.window="openPopOut($event.detail.widgetId)">
     {{-- Header --}}
-    <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4">
+    <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4 no-print">
         <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $viewObj->dashboard->name }}</h1>
             @if ($viewObj->dashboard->description)
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $viewObj->dashboard->description }}</p>
             @endif
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 no-print">
             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
             </span>
@@ -48,6 +97,48 @@
                 </svg>
                 <span>{{ __('Refresh all') }}</span>
             </button>
+            {{-- Full Width Toggle --}}
+            <button x-on:click="toggleFullWidth()"
+                    :title="isFullWidth ? '{{ __('Switch to contained view') }}' : '{{ __('Switch to full width view') }}'"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    :class="isFullWidth ? 'ring-2 ring-primary-500' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5" :class="isFullWidth ? 'text-primary-500' : 'text-gray-500 dark:text-gray-400'">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                </svg>
+                <span x-text="isFullWidth ? '{{ __('Contained') }}' : '{{ __('Full Width') }}'"></span>
+            </button>
+            @if ($canExportPdf)
+                <button x-on:click="exportPdf()"
+                        title="{{ __('Export to PDF / Print') }}"
+                        class="dashboard-export-pdf-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+                    </svg>
+                    <span>{{ __('Export PDF') }}</span>
+                </button>
+            @endif
+        </div>
+    </div>
+
+    {{-- Print-Only Summary Header --}}
+    <div class="print-only-header hidden">
+        <div class="flex items-center justify-between gap-4 border-b pb-3 mb-4 border-gray-300 dark:border-gray-700">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $viewObj->dashboard->name }}</h1>
+                @if ($viewObj->dashboard->description)
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $viewObj->dashboard->description }}</p>
+                @endif
+            </div>
+            <div class="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
+                <div x-show="dashboardOverrides.date_start || dashboardOverrides.date_end">
+                    <span class="font-semibold text-gray-500 dark:text-gray-400">{{ __('Date Range:') }}</span>
+                    <span x-text="(dashboardOverrides.date_start || '...') + ' → ' + (dashboardOverrides.date_end || '...')"></span>
+                </div>
+                <div x-show="selectedAssetGroup">
+                    <span class="font-semibold text-gray-500 dark:text-gray-400">{{ __('Asset Group:') }}</span>
+                    <span x-text="assetGroups[selectedAssetGroup] || selectedAssetGroup"></span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -70,8 +161,40 @@
     </div>
 
     {{-- Grid --}}
-    <div id="view-grid-stack" class="grid-stack" wire:ignore>
-        @foreach ($viewObj->widgets as $widget)
+    <div id="view-grid-stack" class="grid-stack relative" wire:ignore>
+        @php
+            // 1. Find all natural boundaries where no widget is crossed vertically
+            $cutCandidates = collect($viewObj->widgets)->map(fn($w) => ($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1))->unique()->sort()->values();
+            $naturalCuts = [];
+            foreach ($cutCandidates as $cutY) {
+                $crosses = collect($viewObj->widgets)->contains(fn($w) => ($w['grid_y'] ?? 0) < $cutY && (($w['grid_y'] ?? 0) + ($w['grid_h'] ?? 1)) > $cutY);
+                if (!$crosses) {
+                    $naturalCuts[] = $cutY;
+                }
+            }
+
+            // 2. Filter empty lines using the 7-row budget (6 for page 1) so only true page breaks between widgets are generated
+            $emptyCutLines = [];
+            $currentPageStart = 0;
+            $isFirstPage = true;
+
+            for ($i = 0; $i < count($naturalCuts) - 1; $i++) {
+                $currentCut = $naturalCuts[$i];
+                $nextCut = $naturalCuts[$i + 1];
+                $maxAllowedRows = $isFirstPage ? 6 : 7;
+
+                // Check if the next segment would exceed the page row budget from the current page start
+                if (($nextCut - $currentPageStart) > $maxAllowedRows) {
+                    $emptyCutLines[] = $currentCut;
+                    $currentPageStart = $currentCut;
+                    $isFirstPage = false;
+                }
+            }
+
+            $insertedCuts = [];
+        @endphp
+
+        @foreach ($viewObj->widgets as $wIndex => $widget)
             <div class="grid-stack-item"
                  gs-id="{{ $widget['id'] }}"
                  gs-x="{{ $widget['grid_x'] }}"
@@ -131,9 +254,9 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1">
                                                         <div
-                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ __($widget['kpi_theory']['name']) }}</div>
+                                                            class="bd-text-xs-plus font-semibold text-indigo-400 uppercase tracking-wider">{{ __($widget['kpi_theory']['name']) }}</div>
                                                         <div
-                                                            class="text-[10px] text-gray-500 mt-0.5">{{ __($widget['kpi_theory']['type_label']) }}</div>
+                                                            class="bd-text-2xs text-gray-500 mt-0.5">{{ __($widget['kpi_theory']['type_label']) }}</div>
                                                     </div>
                                                 </div>
 
@@ -147,7 +270,7 @@
                                                             <div
                                                                 class="w-1 h-4 rounded-full bg-emerald-500/60 flex-shrink-0"></div>
                                                             <span
-                                                                class="font-semibold text-emerald-400 text-[11px] uppercase tracking-wider">{{ __('Use Case') }}</span>
+                                                                class="font-semibold text-emerald-400 bd-text-xs-plus uppercase tracking-wider">{{ __('Use Case') }}</span>
                                                         </div>
                                                         <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ __($widget['kpi_theory']['use_case']) }}</p>
                                                     </div>
@@ -160,7 +283,7 @@
                                                             <div
                                                                 class="w-1 h-4 rounded-full bg-amber-500/60 flex-shrink-0"></div>
                                                             <span
-                                                                class="font-semibold text-amber-400 text-[11px] uppercase tracking-wider">{{ __('Interpretation') }}</span>
+                                                                class="font-semibold text-amber-400 bd-text-xs-plus uppercase tracking-wider">{{ __('Interpretation') }}</span>
                                                         </div>
                                                         <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ __($widget['kpi_theory']['interpretation']) }}</p>
                                                     </div>
@@ -223,7 +346,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                                         </svg>
                                         @if (!empty($widget['associated_alerts_count']))
-                                            <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white shadow-sm">
+                                            <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 bd-text-3xs font-bold text-white shadow-sm">
                                                 {{ $widget['associated_alerts_count'] }}
                                             </span>
                                         @endif
@@ -254,10 +377,26 @@
                     </div>
                     <div class="widget-content flex-grow p-4 relative overflow-y-auto"
                          data-widget-id="{{ $widget['id'] }}"
+                         data-raw-controls="{{ json_encode($widget['resolved_controls']) }}"
                          x-init="renderWidget({{ $widget['id'] }}, $el, {{ json_encode($widget['resolved_controls']) }})">
                     </div>
                 </div>
             </div>
+
+            @php
+                $nextWidget = $viewObj->widgets[$wIndex + 1] ?? null;
+                $currentEndY = ($widget['grid_y'] ?? 0) + ($widget['grid_h'] ?? 1);
+                $nextStartY = $nextWidget ? ($nextWidget['grid_y'] ?? 0) : null;
+            @endphp
+
+            @foreach ($emptyCutLines as $cutY)
+                @if (!in_array($cutY, $insertedCuts, true) && $currentEndY <= $cutY && ($nextStartY === null || $nextStartY >= $cutY))
+                    @php $insertedCuts[] = $cutY; @endphp
+                    <div class="dashboard-empty-line"
+                         data-cut-y="{{ $cutY }}"
+                         style="top: calc({{ $cutY }} * (100px + 12px));"></div>
+                @endif
+            @endforeach
         @endforeach
     </div>
 
@@ -318,20 +457,58 @@
              x-trap.noscroll="openSettings">
             <div @click="closeSettings()"
                  class="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"></div>
-
-            <div
+<div
                 class="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl mx-auto my-4 sm:my-6 flex flex-col ring-1 ring-gray-900/5 dark:ring-white/10 bd-modal-panel"
                 @click.away="closeSettings()">
-                <div
-                    class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 rounded-t-xl">
                     <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ __('Widget Settings') }}</h3>
-                    <button @click="closeSettings()"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                             stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        {{-- Series Stepped Navigation Arrows (Visible when > 2 series) --}}
+                        <div
+                            x-show="Object.keys(settingsVariables || {}).filter(k => shouldShowSeries(k)).length > 2"
+                            class="hidden md:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <span class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
+                                <span x-text="Object.keys(settingsVariables || {}).filter(k => shouldShowSeries(k)).length"></span> {{ __('Series') }}
+                            </span>
+                            <button
+                                type="button"
+                                @click="scrollSettingsSeriesByStep(-1)"
+                                :disabled="!canSettingsScrollSeriesLeft"
+                                :title="'{{ __('Scroll left') }}'"
+                                class="p-1 rounded-md transition-all"
+                                :class="canSettingsScrollSeriesLeft
+                                    ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-xs cursor-pointer'
+                                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-40'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                @click="scrollSettingsSeriesByStep(1)"
+                                :disabled="!canSettingsScrollSeriesRight"
+                                :title="'{{ __('Scroll right') }}'"
+                                class="p-1 rounded-md transition-all"
+                                :class="canSettingsScrollSeriesRight
+                                    ? 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 shadow-xs cursor-pointer'
+                                    : 'text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-40'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <button
+                            type="button"
+                            @click="closeSettings()"
+                            class="bd-modal-header-close"
+                            :title="'{{ __('Close') }}'">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                 stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-auto desktop-overflow-hidden relative flex flex-col">
@@ -418,7 +595,6 @@
                                             <x-ui.select-input x-model="settingsControls.granularity" class="w-full">
                                                 <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
                                                     <optgroup label="{{ __('Time Granularities') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                                        <x-ui.select-option value="">{{ __('Dashboard Default') }}</x-ui.select-option>
                                                         <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
                                                         <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
                                                         <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
@@ -518,17 +694,15 @@
 
                         {{-- Right Column: Variables Configuration --}}
                         <div
+                            x-ref="settingsSeriesScrollContainer"
+                            @scroll.passive="updateSettingsSeriesScrollState()"
                             class="min-w-0 min-h-0 flex overflow-x-auto gap-6 custom-scrollbar pb-2 items-stretch snap-x snap-mandatory bd-canvas-col"
                             :class="{ 'hidden md:flex': activeSettingsMobileTab !== 'series' }">
                             
                             <template x-for="(vConfig, vKey, vIdx) in settingsVariables" :key="vKey">
                                 <template x-if="vConfig && shouldShowSeries(vKey)">
                                     <div
-                                        class="flex-none w-full h-full min-h-0 flex flex-col snap-start"
-                                        :class="{
-                                            'md:w-full': Object.keys(settingsVariables || {}).length === 1,
-                                            'sm:w-[calc(50%-0.75rem)]': Object.keys(settingsVariables || {}).length >= 2
-                                        }">
+                                        class="flex-none shrink-0 h-full min-h-0 flex flex-col snap-start bd-series-card">
                                         <div
                                             class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex flex-col h-full min-h-0">
                                             <div
@@ -544,52 +718,65 @@
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                         x-text="vConfig.dm_name ? (settingsSourceType === 'kpi' ? vConfig.dm_name + ' ' + (vConfig.dm_source_label || '') : vConfig.dm_name) : (vKey === 'dependent' ? 'Dependent Series' : (settingsSourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1)))"></span>
                                                     <template x-if="vConfig.dm_name">
-                                                        <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
+                                                        <span class="bd-text-2xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
                                                     </template>
                                                 </div>
                                                 <div class="flex flex-col items-end gap-1">
                                                     <template x-if="vConfig.channel">
                                                         <span
-                                                            class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                            class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                             x-text="vConfig.channel_name || vConfig.channel"></span>
                                                     </template>
                                                     <template
-                                                         x-if="(settingsSourceType === 'kpi' || settingsSourceType === 'derived_metric') && vConfig.selected_metric">
+                                                         x-if="vConfig.selected_metric">
                                                         <span
-                                                            class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                            class="bd-text-2xs font-medium text-gray-500 dark:text-gray-400"
                                                             x-text="(vConfig.metrics || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
                                                     </template>
                                                 </div>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-6 min-h-0">
+                                                {{-- Data Scope / Dependency selector --}}
+                                                <template x-if="vConfig.dependencies && Object.keys(vConfig.dependencies).length > 0">
+                                                    <div class="my-2">
+                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
+                                                        <select x-model="settingsControls.series_dependencies[vKey]"
+                                                                class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
+                                                            <template x-for="(label, key) in vConfig.dependencies" :key="key">
+                                                                <option :value="key" x-text="label" :selected="settingsControls.series_dependencies[vKey] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                                            </template>
+                                                        </select>
+                                                    </div>
+                                                </template>
+
                                                 {{-- Metric selector (KPI Widgets) --}}
                                                 <template x-if="settingsSourceType === 'kpi' && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metric</label>
-                                                        <x-ui.select-input x-model="settingsControls.metrics[vConfig.index]" class="w-full">
-                                                            <x-ui.select-option value="" x-text="vKey === 'dependent' ? 'Select dependent metric...' : 'Select independent metric...'"></x-ui.select-option>
-                                                            <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                                <x-ui.select-option x-bind:value="key" x-text="label" x-bind:selected="settingsControls.metrics[vConfig.index] == key"></x-ui.select-option>
+                                                        <select x-model="settingsControls.metrics[vConfig.index]"
+                                                                class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block cursor-pointer w-full">
+                                                            <template x-for="(label, key) in (vConfig.metrics || {})" :key="key">
+                                                                <option :value="key" x-text="label" :selected="settingsControls.metrics[vConfig.index] === key" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                                             </template>
-                                                        </x-ui.select-input>
+                                                        </select>
                                                     </div>
                                                 </template>
 
                                                 {{-- Metric selector (Metric Widgets) --}}
-                                                <template x-if="settingsSourceType !== 'kpi' && settingsSourceType !== 'derived_metric' && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
+                                                <template x-if="settingsSourceType !== 'kpi' && settingsSourceType !== 'derived_metric' && vConfig.type !== 'derived_metric' && !vConfig.selected_metric && vConfig.metrics && Object.keys(vConfig.metrics).length > 0">
                                                     <div class="my-2">
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Metrics (Ctrl/Cmd to multi-select)</label>
                                                         <div class="flex-1 relative min-h-0 h-32 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
                                                             <div class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
                                                                 <template x-for="(label, key) in vConfig.metrics" :key="key">
-                                                                    <div @click="if ((settingsControls.metrics || []).includes(key)) { settingsControls.metrics = settingsControls.metrics.filter(m => m !== key); } else { settingsControls.metrics = [...(settingsControls.metrics || []), key]; }"
+                                                                    <div @click="settingsToggleMetric(vKey, key)"
                                                                          class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-200 rounded-md cursor-pointer transition-colors border border-transparent"
-                                                                         :class="(settingsControls.metrics || []).includes(key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                         :class="settingsIsMetricSelected(vKey, key) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-100 dark:border-primary-900/50' : 'hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                         <div
                                                                             class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                            :class="(settingsControls.metrics || []).includes(key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                            :class="settingsIsMetricSelected(vKey, key) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                             <svg
-                                                                                x-show="(settingsControls.metrics || []).includes(key)"
+                                                                                x-show="settingsIsMetricSelected(vKey, key)"
                                                                                 class="w-3 h-3 text-white" fill="none"
                                                                                 viewBox="0 0 24 24" stroke-width="3"
                                                                                 stroke="currentColor">
@@ -598,7 +785,7 @@
                                                                                       d="m4.5 12.75 6 6 9-13.5"/>
                                                                             </svg>
                                                                         </div>
-                                                                        <span class="truncate font-medium" :class="(settingsControls.metrics || []).includes(key) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="label"></span>
+                                                                        <span class="truncate font-medium" :class="settingsIsMetricSelected(vKey, key) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="label"></span>
                                                                     </div>
                                                                 </template>
                                                                 <template x-if="!vConfig.metrics || Object.keys(vConfig.metrics).length === 0">
@@ -620,7 +807,7 @@
                                                                 x-if="(settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'multiple'">
                                                                 <div class="flex gap-3">
                                                                     <button @click="settingsSelectAll(vKey)"
-                                                                            class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                                                                            class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
                                                                         Select All
                                                                     </button>
                                                                 </div>
@@ -706,9 +893,3 @@
         </div>
     </template>
 </div>
-
-@push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
-    <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ filemtime(public_path('js/dashboard-renderer.js')) }}"></script>
-@endpush

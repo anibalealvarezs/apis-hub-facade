@@ -159,7 +159,7 @@
                                         <h4 class="text-sm font-bold text-gray-900 dark:text-white leading-snug">
                                             {{ $tour['name'] }}
                                         </h4>
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full bd-text-2xs font-bold uppercase tracking-wider bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10">
                                             {{ $tour['badge'] }}
                                         </span>
                                     </div>

@@ -35,13 +35,28 @@ class PublicViewsRelationManager extends RelationManager
                     ->maxLength(255),
                 Forms\Components\Select::make('asset_group_ids')
                     ->label(__('Locked Asset Groups'))
-                    ->options(fn () => AssetGroup::where('project_id', $projectId)->pluck('name', 'id'))
+                    ->options(function () use ($dashboard, $projectId) {
+                        $query = AssetGroup::where('project_id', $projectId);
+                        $dashAllowed = (array) ($dashboard->controls['asset_group'] ?? []);
+                        $dashAllowed = array_values(array_filter(array_map('strval', $dashAllowed)));
+                        if (!empty($dashAllowed)) {
+                            $query->whereIn('id', $dashAllowed);
+                        }
+                        return $query->pluck('name', 'id');
+                    })
                     ->multiple()
                     ->searchable()
-                    ->helperText(__('Select one or more asset groups to restrict the public view data. Leave empty for all project assets.')),
-                Forms\Components\Toggle::make('is_active')
-                    ->label(__('Active'))
-                    ->default(true),
+                    ->helperText(__('Select one or more asset groups to restrict the public view data. Leave empty to allow all asset groups permitted by the dashboard.')),
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\Toggle::make('is_active')
+                            ->label(__('Active'))
+                            ->default(true),
+                        Forms\Components\Toggle::make('allow_pdf_export')
+                            ->label(__('Allow PDF Export'))
+                            ->helperText(__('Enable printing / PDF export in this public view'))
+                            ->default(false),
+                    ]),
             ]);
     }
 
@@ -72,6 +87,10 @@ class PublicViewsRelationManager extends RelationManager
                     ->copyMessage(__('Public URL copied to clipboard')),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label(__('Active'))
+                    ->boolean()
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('allow_pdf_export')
+                    ->label(__('PDF Export'))
                     ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
