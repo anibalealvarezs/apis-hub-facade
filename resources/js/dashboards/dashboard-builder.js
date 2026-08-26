@@ -3194,7 +3194,7 @@ export function dashboardBuilder(config = {}) {
             if (!palette) return;
             const topbar = document.querySelector('.fi-topbar');
             const topbarHeight = topbar ? topbar.offsetHeight : 0;
-            const top = (window.innerHeight / 2) - topbarHeight - (palette.offsetHeight / 2);
+            const top = (window.innerHeight / 2) - topbarHeight - (palette.offsetHeight / 2) + window.scrollY;
             palette.style.setProperty('top', `${Math.max(0, top)}px`, 'important');
         },
 
