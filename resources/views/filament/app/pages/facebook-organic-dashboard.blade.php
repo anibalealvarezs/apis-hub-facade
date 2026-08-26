@@ -98,7 +98,7 @@
                     <template x-for="val in (activeFilters[tab.value] || [])" :key="tab.value + '_' + val">
                         <span
                             class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                            <span class="opacity-70 uppercase text-[10px] mr-1" x-text="tab.label + ':'"></span>
+                            <span class="opacity-70 uppercase bd-text-2xs mr-1" x-text="tab.label + ':'"></span>
                             <span x-text="val"></span>
                             <button @click.stop="toggleFilter(tab.value, val)"
                                     class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
@@ -276,7 +276,7 @@
                                     </div>
                                 </template>
                                 <div x-show="selectedPostData && selectedPostData.data && selectedPostData.data.media_type"
-                                     class="absolute top-2 left-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-1 rounded backdrop-blur-sm"
+                                     class="absolute top-2 left-2 bg-black/60 text-white bd-text-2xs uppercase font-bold px-2 py-1 rounded backdrop-blur-sm"
                                      x-text="selectedPostData && selectedPostData.data ? selectedPostData.data.media_type : ''"></div>
                             </div>
 

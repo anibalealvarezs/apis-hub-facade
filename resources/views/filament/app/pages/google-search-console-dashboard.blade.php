@@ -171,7 +171,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="val in values" :key="val">
                         <span
                             class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                            <span class="opacity-70 uppercase text-[10px] mr-1" x-text="tab + ':'"></span>
+                            <span class="opacity-70 uppercase bd-text-2xs mr-1" x-text="tab + ':'"></span>
                             <span x-text="val" class="max-w-xs truncate" :title="val"></span>
                             <button @click.stop="toggleFilter(tab, val)"
                                     class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">

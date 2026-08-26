@@ -810,5 +810,29 @@ input[type="datetime-local"] {
     }
 }
 
-
+/* ─── Global text-size utilities (sizes below Tailwind's `text-xs` floor) ─── */
+.bd-text-6xs {
+    font-size: 6px;
+    line-height: 1;
+}
+.bd-text-5xs {
+    font-size: 7px;
+    line-height: 1;
+}
+.bd-text-4xs {
+    font-size: 8px;
+    line-height: 1;
+}
+.bd-text-3xs {
+    font-size: 9px;
+    line-height: 1;
+}
+.bd-text-2xs {
+    font-size: 10px;
+    line-height: 1.25;
+}
+.bd-text-xs-plus {
+    font-size: 11px;
+    line-height: 1.25;
+}
 

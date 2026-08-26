@@ -41,7 +41,7 @@
                                 </svg>
                                 <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider" x-text="channelData.name"></span>
                             </div>
-                            <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="Object.entries(channelData.assets).filter(([id, a]) => a.enabled || (state[channelKey] || []).includes(String(id))).length + ' Assets'"></span>
+                            <span class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full" x-text="Object.entries(channelData.assets).filter(([id, a]) => a.enabled || (state[channelKey] || []).includes(String(id))).length + ' Assets'"></span>
                         </div>
                         
                         <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
@@ -49,8 +49,8 @@
                                 <div class="flex items-center justify-between">
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">Assets</label>
                                     <div class="flex gap-3">
-                                        <button type="button" @click.prevent="selectAll(channelKey)" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
-                                        <button type="button" @click.prevent="clearAll(channelKey)" class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
+                                        <button type="button" @click.prevent="selectAll(channelKey)" class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">Select All</button>
+                                        <button type="button" @click.prevent="clearAll(channelKey)" class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">Clear</button>
                                     </div>
                                 </div>
                                 <div class="relative flex-shrink-0">
@@ -76,7 +76,7 @@
                                                 </div>
                                                 <div class="flex-1 min-w-0 flex items-center gap-2">
                                                     <span class="truncate font-medium" :class="(state[channelKey] || []).includes(String(assetId)) ? 'text-primary-800 dark:text-primary-200' : ''" x-text="assetObj.name"></span>
-                                                    <span x-show="!assetObj.enabled" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/30 whitespace-nowrap">Disabled</span>
+                                                    <span x-show="!assetObj.enabled" class="inline-flex items-center px-2 py-0.5 rounded bd-text-2xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/30 whitespace-nowrap">Disabled</span>
                                                 </div>
                                             </div>
                                         </template>

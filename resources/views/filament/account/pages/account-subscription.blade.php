@@ -37,7 +37,7 @@
         <!-- Current Profile Status Card -->
         <div class="mb-8 p-6 rounded-2xl shadow-sm border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-                <span class="text-[10px] font-extrabold uppercase tracking-widest bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 px-2.5 py-1 rounded-full">
+                <span class="bd-text-2xs font-extrabold uppercase tracking-widest bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 px-2.5 py-1 rounded-full">
                     {{ __('Active Profile') }}
                 </span>
                 <h3 class="text-2xl font-bold mt-2 text-gray-900 dark:text-white">{{ $profile->display_name }}</h3>
@@ -72,7 +72,7 @@
                         class="px-6 py-2 rounded-lg text-sm transition-all duration-200 flex items-center gap-2">
                     Annual
                     <span
-                        class="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 text-[10px] px-2 py-0.5 rounded-full font-extrabold tracking-wider">{{ __('2 Months Free') }}</span>
+                        class="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 bd-text-2xs px-2 py-0.5 rounded-full font-extrabold tracking-wider">{{ __('2 Months Free') }}</span>
                 </button>
             </div>
         </div>

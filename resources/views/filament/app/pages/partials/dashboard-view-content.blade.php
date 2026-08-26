@@ -254,9 +254,9 @@
                                                     </div>
                                                     <div class="min-w-0 flex-1">
                                                         <div
-                                                            class="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider">{{ __($widget['kpi_theory']['name']) }}</div>
+                                                            class="bd-text-xs-plus font-semibold text-indigo-400 uppercase tracking-wider">{{ __($widget['kpi_theory']['name']) }}</div>
                                                         <div
-                                                            class="text-[10px] text-gray-500 mt-0.5">{{ __($widget['kpi_theory']['type_label']) }}</div>
+                                                            class="bd-text-2xs text-gray-500 mt-0.5">{{ __($widget['kpi_theory']['type_label']) }}</div>
                                                     </div>
                                                 </div>
 
@@ -270,7 +270,7 @@
                                                             <div
                                                                 class="w-1 h-4 rounded-full bg-emerald-500/60 flex-shrink-0"></div>
                                                             <span
-                                                                class="font-semibold text-emerald-400 text-[11px] uppercase tracking-wider">{{ __('Use Case') }}</span>
+                                                                class="font-semibold text-emerald-400 bd-text-xs-plus uppercase tracking-wider">{{ __('Use Case') }}</span>
                                                         </div>
                                                         <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ __($widget['kpi_theory']['use_case']) }}</p>
                                                     </div>
@@ -283,7 +283,7 @@
                                                             <div
                                                                 class="w-1 h-4 rounded-full bg-amber-500/60 flex-shrink-0"></div>
                                                             <span
-                                                                class="font-semibold text-amber-400 text-[11px] uppercase tracking-wider">{{ __('Interpretation') }}</span>
+                                                                class="font-semibold text-amber-400 bd-text-xs-plus uppercase tracking-wider">{{ __('Interpretation') }}</span>
                                                         </div>
                                                         <p class="text-xs text-gray-300 leading-relaxed pl-3">{{ __($widget['kpi_theory']['interpretation']) }}</p>
                                                     </div>
@@ -346,7 +346,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                                         </svg>
                                         @if (!empty($widget['associated_alerts_count']))
-                                            <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white shadow-sm">
+                                            <span class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 bd-text-3xs font-bold text-white shadow-sm">
                                                 {{ $widget['associated_alerts_count'] }}
                                             </span>
                                         @endif
@@ -467,7 +467,7 @@
                         <div
                             x-show="Object.keys(settingsVariables || {}).filter(k => shouldShowSeries(k)).length > 2"
                             class="hidden md:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
+                            <span class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
                                 <span x-text="Object.keys(settingsVariables || {}).filter(k => shouldShowSeries(k)).length"></span> {{ __('Series') }}
                             </span>
                             <button
@@ -718,19 +718,19 @@
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                         x-text="vConfig.dm_name ? (settingsSourceType === 'kpi' ? vConfig.dm_name + ' ' + (vConfig.dm_source_label || '') : vConfig.dm_name) : (vKey === 'dependent' ? 'Dependent Series' : (settingsSourceType === 'kpi' ? 'Independent Variable ' + (vConfig.index) : 'Series ' + (vConfig.index + 1)))"></span>
                                                     <template x-if="vConfig.dm_name">
-                                                        <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
+                                                        <span class="bd-text-2xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
                                                     </template>
                                                 </div>
                                                 <div class="flex flex-col items-end gap-1">
                                                     <template x-if="vConfig.channel">
                                                         <span
-                                                            class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                            class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                             x-text="vConfig.channel_name || vConfig.channel"></span>
                                                     </template>
                                                     <template
                                                          x-if="vConfig.selected_metric">
                                                         <span
-                                                            class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                            class="bd-text-2xs font-medium text-gray-500 dark:text-gray-400"
                                                             x-text="(vConfig.metrics || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
                                                     </template>
                                                 </div>
@@ -807,7 +807,7 @@
                                                                 x-if="(settingsSeriesOptions[vKey] && settingsSeriesOptions[vKey].mode ? settingsSeriesOptions[vKey].mode : 'multiple') === 'multiple'">
                                                                 <div class="flex gap-3">
                                                                     <button @click="settingsSelectAll(vKey)"
-                                                                            class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                                                                            class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
                                                                         Select All
                                                                     </button>
                                                                 </div>

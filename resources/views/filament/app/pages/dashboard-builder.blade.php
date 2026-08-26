@@ -499,7 +499,7 @@
                         <div
                             x-show="(widgetControlsForm.raw_series || []).length > 2 && widgetControlsTarget.source_type !== 'kpi' && widgetControlsTarget.source_type !== 'derived_metric'"
                             class="hidden md:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
+                            <span class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
                                 <span x-text="(widgetControlsForm.raw_series || []).length"></span> {{ __('Series') }}
                             </span>
                             <button
@@ -655,7 +655,7 @@
                                                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'">
                                                 <div class="w-10 h-7" x-html="getWidgetSvg(option.type)"></div>
                                                 <span
-                                                    class="text-[11px] font-semibold text-gray-700 dark:text-gray-300 leading-tight"
+                                                    class="bd-text-xs-plus font-semibold text-gray-700 dark:text-gray-300 leading-tight"
                                                     x-text="option.label"></span>
                                             </button>
                                         </template>
@@ -685,7 +685,7 @@
                                         <div
                                             class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                                         <span
-                                            class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
+                                            class="ml-2 bd-text-2xs uppercase font-bold text-gray-500 dark:text-gray-400"
                                             x-text="widgetControlsForm.date_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                     </label>
                                 </div>
@@ -732,7 +732,7 @@
                                         <div
                                             class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                                         <span
-                                            class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
+                                            class="ml-2 bd-text-2xs uppercase font-bold text-gray-500 dark:text-gray-400"
                                             x-text="widgetControlsForm.zero_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                     </label>
                                 </div>
@@ -776,7 +776,7 @@
                                         <div
                                             class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                                         <span
-                                            class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
+                                            class="ml-2 bd-text-2xs uppercase font-bold text-gray-500 dark:text-gray-400"
                                             x-text="widgetControlsForm.granularity_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                     </label>
                                 </div>
@@ -852,7 +852,7 @@
                                             <div
                                                 class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                                             <span
-                                                class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
+                                                class="ml-2 bd-text-2xs uppercase font-bold text-gray-500 dark:text-gray-400"
                                                 x-text="widgetControlsForm.edge_case_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                         </label>
                                     </div>
@@ -917,7 +917,7 @@
                                             <div
                                                 class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                                             <span
-                                                class="ml-2 text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400"
+                                                class="ml-2 bd-text-2xs uppercase font-bold text-gray-500 dark:text-gray-400"
                                                 x-text="widgetControlsForm.max_ratio_inherit ? '{{ __('Inherit') }}' : '{{ __('Custom') }}'"></span>
                                         </label>
                                     </div>
@@ -1005,7 +1005,7 @@
                                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                             x-text="'{{ __('Series') }} ' + (index + 1)"></span>
                                                         <span
-                                                            class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                                            class="bd-text-2xs font-semibold px-2 py-0.5 rounded-full"
                                                             :class="series.type === 'derived_metric'
                                                                 ? 'text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60'
                                                                 : 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60'"
@@ -1038,7 +1038,7 @@
                                                                         <button type="button"
                                                                                 @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
                                                                                 :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                class="bd-badge-combo text-[10px] font-bold py-0.5 rounded-md transition-all border shadow-xs"
+                                                                                class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
                                                                                 :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
                                                                                     ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                     : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
@@ -1097,9 +1097,9 @@
                                                                     <template x-if="series.channel">
                                                                         <div class="flex gap-3">
                                                                             <button @click="selectAllRawMetrics(index)"
-                                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                                    class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                                             <button @click="clearAllRawMetrics(index)"
-                                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                                    class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                                         </div>
                                                                     </template>
                                                                 </div>
@@ -1141,7 +1141,7 @@
                                                                                              <button type="button"
                                                                                                      @click.stop="toggleRawMetricComboType(index, key)"
                                                                                                      :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                                     class="bd-badge-combo text-[10px] font-bold py-0.5 rounded-md transition-all border shadow-xs"
+                                                                                                     class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
                                                                                                      :class="getRawMetricComboType(index, key) === 'bar'
                                                                                                          ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                                                                                                          : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
@@ -1152,7 +1152,7 @@
                                                                                          <button type="button"
                                                                                                 @click.stop="toggleRawMetricDefaultActive(index, key)"
                                                                                                 :title="(series.metrics || []).includes(key) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                                class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                                class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
                                                                                                 :class="(series.metrics || []).includes(key)
                                                                                                     ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
@@ -1179,9 +1179,9 @@
                                                             <template x-if="series.channel">
                                                                 <div class="flex gap-3">
                                                                     <button @click="selectAllRawAssets(index)"
-                                                                            class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                            class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                                     <button @click="clearAllRawAssets(index)"
-                                                                            class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                            class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                                 </div>
                                                             </template>
                                                         </div>
@@ -1235,7 +1235,7 @@
                                                                                 <button type="button"
                                                                                         @click.stop="toggleRawAssetDefaultActive(index, id)"
                                                                                         :title="(series.assets || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                        class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                        class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
                                                                                         :class="(series.assets || []).includes(String(id))
                                                                                             ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
@@ -1272,20 +1272,20 @@
                                                 <span
                                                     class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Dependent Series') }}</span>
                                                 <span
-                                                    class="text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
+                                                    class="bd-text-2xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
                                             </div>
                                             <div class="flex flex-col items-end gap-1">
                                                     <span
-                                                        class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                        class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                         x-text="channels[widgetKpiConfig.dependent_channel]"></span>
                                                 <template x-if="widgetKpiConfig.dependent_metric">
                                                         <span
-                                                            class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                            class="bd-text-2xs font-medium text-gray-500 dark:text-gray-400"
                                                             x-text="(allChannelMetrics[widgetKpiConfig.dependent_channel] || {})[widgetKpiConfig.dependent_metric] || widgetKpiConfig.dependent_metric"></span>
                                                 </template>
                                                 <template x-if="!widgetKpiConfig.dependent_metric">
                                                         <span
-                                                            class="text-[10px] font-semibold text-amber-600 dark:amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
+                                                            class="bd-text-2xs font-semibold text-amber-600 dark:amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
                                                 </template>
                                             </div>
                                         </div>
@@ -1328,9 +1328,9 @@
                                                     <div class="flex gap-3">
                                                         <button
                                                             @click="selectAllKpiAssets('dependent', widgetKpiConfig.dependent_channel)"
-                                                            class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                            class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                         <button @click="clearAllKpiAssets('dependent')"
-                                                                class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                     </div>
                                                 </div>
                                                 <div class="relative">
@@ -1383,7 +1383,7 @@
                                                                         <button type="button"
                                                                                 @click.stop="toggleKpiAssetDefaultActive('dependent', id)"
                                                                                 :title="(widgetControlsForm.series_assets.dependent || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
                                                                                 :class="(widgetControlsForm.series_assets.dependent || []).includes(String(id))
                                                                                     ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
@@ -1422,15 +1422,15 @@
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                         x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
                                                     <span
-                                                        class="text-[10px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
+                                                        class="bd-text-2xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
                                                     <template x-if="derivedMetrics[widgetKpiConfig.dependent_dm_id]">
                                                         <span
-                                                            class="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]"
+                                                            class="bd-text-2xs font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]"
                                                             x-text="derivedMetrics[widgetKpiConfig.dependent_dm_id].name"></span>
                                                     </template>
                                                 </div>
                                                 <span
-                                                    class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                    class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                     x-text="channels[series.channel] || series.channel"></span>
                                             </div>
                                             <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
@@ -1449,9 +1449,9 @@
                                                         <div class="flex gap-3">
                                                             <button
                                                                 @click="selectAllKpiAssets('dep_dm_' + sIdx, series.channel)"
-                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                             <button @click="clearAllKpiAssets('dep_dm_' + sIdx)"
-                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                    class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                         </div>
                                                     </div>
                                                     <div class="relative">
@@ -1505,7 +1505,7 @@
                                                                             <button type="button"
                                                                                     @click.stop="toggleKpiAssetDefaultActive('dep_dm_' + sIdx, id)"
                                                                                     :title="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                    class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                    class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
                                                                                     :class="(widgetControlsForm.series_assets['dep_dm_' + sIdx] || []).includes(String(id))
                                                                                         ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
@@ -1553,15 +1553,15 @@
                                                                             class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                                             x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + sIdx))"></span>
                                                                         <span
-                                                                            class="text-[10px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
+                                                                            class="bd-text-2xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
                                                                         <template x-if="derivedMetrics[varCfg.independent_dm_id]">
                                                                             <span
-                                                                                class="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]"
+                                                                                class="bd-text-2xs font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[130px]"
                                                                                 x-text="derivedMetrics[varCfg.independent_dm_id].name"></span>
                                                                         </template>
                                                                     </div>
                                                                     <span
-                                                                        class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                                        class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                                         x-text="channels[series.channel] || series.channel"></span>
                                                                 </div>
                                                                 <div class="p-6 flex-1 flex flex-col gap-5 min-h-0">
@@ -1580,10 +1580,10 @@
                                                                             <div class="flex gap-3">
                                                                                 <button
                                                                                     @click="selectAllKpiAssets('ind_' + idx + '_dm_' + sIdx, series.channel)"
-                                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                                    class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                                                 <button
                                                                                     @click="clearAllKpiAssets('ind_' + idx + '_dm_' + sIdx)"
-                                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                                    class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                                             </div>
                                                                         </div>
                                                                         <div class="relative">
@@ -1641,7 +1641,7 @@
                                                                                                 <button type="button"
                                                                                                         @click.stop="toggleKpiAssetDefaultActive('ind_' + idx + '_dm_' + sIdx, id)"
                                                                                                         :title="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                                        class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                                        class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
                                                                                                         :class="(widgetControlsForm.series_assets['ind_' + idx + '_dm_' + sIdx] || []).includes(String(id))
                                                                                                             ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
@@ -1680,20 +1680,20 @@
                                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                                         x-text="varCfg.label || '{{ __('Independent Series') }}'"></span>
                                                                     <span
-                                                                        class="text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
+                                                                        class="bd-text-2xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/60 px-2 py-0.5 rounded-full">KPI</span>
                                                                 </div>
                                                                 <div class="flex flex-col items-end gap-1">
                                                                 <span
-                                                                    class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
+                                                                    class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full"
                                                                     x-text="channels[varCfg.independent_channel]"></span>
                                                                     <template x-if="varCfg.independent_metric">
                                                                     <span
-                                                                        class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                                        class="bd-text-2xs font-medium text-gray-500 dark:text-gray-400"
                                                                         x-text="(allChannelMetrics[varCfg.independent_channel] || {})[varCfg.independent_metric] || varCfg.independent_metric"></span>
                                                                     </template>
                                                                     <template x-if="!varCfg.independent_metric">
                                                                     <span
-                                                                        class="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
+                                                                        class="bd-text-2xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2.5 py-1 rounded-full">{{ __('Dynamic Metric') }}</span>
                                                                     </template>
                                                                 </div>
                                                             </div>
@@ -1741,10 +1741,10 @@
                                                                             <div class="flex gap-3">
                                                                                 <button
                                                                                     @click="selectAllKpiAssets('independent_' + idx, varCfg.independent_channel)"
-                                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                                    class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                                                 <button
                                                                                     @click="clearAllKpiAssets('independent_' + idx)"
-                                                                                    class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                                    class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                                             </div>
                                                                         </div>
                                                                         <div class="relative">
@@ -1804,7 +1804,7 @@
                                                                                                 <button type="button"
                                                                                                         @click.stop="toggleKpiAssetDefaultActive('independent_' + idx, id)"
                                                                                                         :title="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                                        class="bd-badge-active text-[10px] font-semibold py-0.5 rounded-full transition-all"
+                                                                                                        class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
                                                                                                         :class="(widgetControlsForm.series_assets['independent_' + idx] || []).includes(String(id))
                                                                                                             ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
                                                                                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
@@ -1857,10 +1857,10 @@
                                                         class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                         x-text="series.label || ('{{ __('Source') }} ' + String.fromCharCode(97 + index))"></span>
                                                     <span
-                                                        class="text-[10px] font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
+                                                        class="bd-text-2xs font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 px-2 py-0.5 rounded-full">DM</span>
                                                     <template x-if="widgetControlsTarget.source_config && widgetControlsTarget.source_config.derived_metric_id && derivedMetrics[widgetControlsTarget.source_config.derived_metric_id]">
                                                         <span
-                                                            class="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[140px]"
+                                                            class="bd-text-2xs font-medium text-teal-700 dark:text-teal-300 bg-teal-100/60 dark:bg-teal-900/40 px-2 py-0.5 rounded-md truncate max-w-[140px]"
                                                             x-text="derivedMetrics[widgetControlsTarget.source_config.derived_metric_id].name"></span>
                                                     </template>
                                                 </div>
@@ -1885,9 +1885,9 @@
                                                             class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Asset Override') }}
                                                             ({{ __('leave empty for DM default') }})</label>
                                                         <button @click="selectAllDmAssets(index)"
-                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
                                                         <button @click="clearAllDmAssets(index)"
-                                                                class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                     </div>
                                                     <div class="relative">
                                                         <div
@@ -2154,11 +2154,11 @@
                                                         x-text="item.label"></span>
                                                     <template x-if="optimalWidgetTypes.includes(item.type)">
                                                         <span
-                                                            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">{{ __('Recommended') }}</span>
+                                                            class="inline-flex items-center px-1.5 py-0.5 rounded bd-text-2xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 shrink-0">{{ __('Recommended') }}</span>
                                                     </template>
                                                 </div>
                                                 <span
-                                                    class="block text-[11px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5 bd-line-clamp-2"
+                                                    class="block bd-text-xs-plus text-gray-500 dark:text-gray-400 leading-tight mt-0.5 bd-line-clamp-2"
                                                     x-text="item.description"></span>
                                             </div>
                                         </button>
@@ -2316,7 +2316,7 @@
                         <div
                             x-show="Object.keys(sandboxVariables || {}).length > 2"
                             class="hidden md:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
-                            <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
+                            <span class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 px-2 select-none">
                                 <span x-text="Object.keys(sandboxVariables || {}).length"></span> {{ __('Series') }}
                             </span>
                             <button
@@ -2381,7 +2381,7 @@
                                 class="flex-1 py-3 px-4 text-center text-xs font-bold uppercase tracking-wider transition-colors border-b-2 flex items-center justify-center gap-1.5"
                                 :class="activeSandboxMobileTab === 'series' ? 'border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50/50 dark:bg-primary-950/20' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'">
                             <span>{{ __('2. Series & Assets') }}</span>
-                            <span class="px-1.5 py-0.5 text-[10px] rounded-full bg-gray-200 dark:bg-gray-700" x-text="Object.keys(sandboxVariables || {}).length"></span>
+                            <span class="px-1.5 py-0.5 bd-text-2xs rounded-full bg-gray-200 dark:bg-gray-700" x-text="Object.keys(sandboxVariables || {}).length"></span>
                         </button>
                     </div>
 
@@ -2523,16 +2523,16 @@
                                                 <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider"
                                                       x-text="vConfig.dm_name ? (sandboxTargetWidget?.source_type === 'kpi' ? vConfig.dm_name + ' ' + (vConfig.dm_source_label || '') : vConfig.dm_name) : (vKey === 'dependent' ? '{{ __('Dependent Series') }}' : (sandboxTargetWidget?.source_type === 'kpi' ? '{{ __('Independent Variable') }} ' + (vConfig.index) : '{{ __('Series') }} ' + (vConfig.index + 1)))"></span>
                                                 <template x-if="vConfig.dm_name">
-                                                    <span class="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
+                                                    <span class="bd-text-2xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2 py-1 rounded-full ml-1">DM</span>
                                                 </template>
                                             </div>
                                             <div class="flex flex-col items-end gap-1">
                                                 <template x-if="vConfig.channel">
-                                                    <span class="text-[10px] font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full uppercase"
+                                                    <span class="bd-text-2xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 px-2.5 py-1 rounded-full uppercase"
                                                           x-text="vConfig.channel_name || vConfig.channel"></span>
                                                 </template>
                                                 <template x-if="vConfig.selected_metric">
-                                                    <span class="text-[10px] font-medium text-gray-500 dark:text-gray-400"
+                                                    <span class="bd-text-2xs font-medium text-gray-500 dark:text-gray-400"
                                                           x-text="(allChannelMetrics[vConfig.channel] || {})[vConfig.selected_metric] || vConfig.selected_metric"></span>
                                                 </template>
                                             </div>
@@ -2573,7 +2573,7 @@
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Ctrl/Cmd to multi-select)') }}</label>
                                                         <button type="button"
                                                                 @click="sandboxSelectAllMetrics(vKey)"
-                                                                class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                                                                class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
                                                             {{ __('Select All') }}
                                                         </button>
                                                     </div>
@@ -2594,7 +2594,7 @@
                                                                     <template x-if="sandboxTargetWidget?.widget_type === 'combo'">
                                                                         <button type="button"
                                                                                 @click.stop="sandboxToggleComboType(vConfig.index, key)"
-                                                                                class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase border transition-colors flex-shrink-0 ml-2"
+                                                                                class="px-1.5 py-0.5 rounded bd-text-2xs font-semibold uppercase border transition-colors flex-shrink-0 ml-2"
                                                                                 :class="sandboxGetComboType(vConfig.index, key) === 'bar' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700' : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'">
                                                                             <span x-text="sandboxGetComboType(vConfig.index, key)"></span>
                                                                         </button>
@@ -2616,7 +2616,7 @@
                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Assets') }}</label>
                                                         <div class="flex gap-3">
                                                             <button @click="sandboxSelectAllAssets(vKey)"
-                                                                    class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                                                                    class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
                                                                 {{ __('Select All') }}
                                                             </button>
                                                         </div>
@@ -2676,7 +2676,7 @@
         <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
 
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="text-[7px] font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
+                <span class="bd-text-xxs font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
                         {{ __('Widget source types') }}
@@ -2690,7 +2690,7 @@
                 <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="kpi" gs-w="4" gs-h="3" title="{{ __('KPI') }}">
                     <x-heroicon-o-chart-bar class="w-5 h-5" />
-                    <span class="text-[6px] font-bold uppercase leading-none">{{ __('KPI') }}</span>
+                    <span class="bd-text-micro font-bold uppercase">{{ __('KPI') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2703,7 +2703,7 @@
                 <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="metric" gs-w="4" gs-h="3" title="{{ __('Metric') }}">
                     <x-heroicon-o-chart-bar-square class="w-5 h-5" />
-                    <span class="text-[6px] font-bold uppercase leading-none">{{ __('Metric') }}</span>
+                    <span class="bd-text-micro font-bold uppercase">{{ __('Metric') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2716,7 +2716,7 @@
                 <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="derived_metric" gs-w="4" gs-h="3" title="{{ __('Derived') }}">
                     <x-heroicon-o-calculator class="w-5 h-5" />
-                    <span class="text-[6px] font-bold uppercase leading-none">{{ __('Derived') }}</span>
+                    <span class="bd-text-micro font-bold uppercase">{{ __('Derived') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2786,7 +2786,7 @@
             {{-- Selected Badge Counter --}}
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
                 <span class="text-xs font-bold leading-none" x-text="selectedWidgetIds.length"></span>
-                <span class="text-[7px] font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
+                <span class="bd-text-xxs font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
                 <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
                         {{ __('Selected widgets') }}

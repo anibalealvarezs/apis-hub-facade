@@ -23,7 +23,7 @@
 
             <template x-for="(group, groupName) in categoryGroups" :key="groupName">
                 <div>
-                    <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 ml-0.5" x-text="groupName"></div>
+                    <div class="bd-text-2xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1.5 ml-0.5" x-text="groupName"></div>
                     <div class="flex flex-wrap gap-2">
                         <template x-for="(catLabel, catKey) in group" :key="catKey">
                             <button
