@@ -1635,10 +1635,9 @@ export function dashboardBuilder(config = {}) {
                 const rect = grid.el.getBoundingClientRect();
                 const colW = rect.width / COLUMNS;
                 const cellH = parseInt(grid.opts.cellHeight, 10) || 100;
-                const margin = typeof grid.opts.margin === 'number' ? grid.opts.margin : 12;
                 const scrollY = grid.el.scrollTop || 0;
                 const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - activeW));
-                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / (cellH + margin)));
+                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / cellH));
                 return { x, y };
             };
 

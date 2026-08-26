@@ -187,11 +187,9 @@ select option, select optgroup {
     repeating-linear-gradient(
         to bottom,
         transparent 0,
-        transparent 100px,
-        rgba(0, 0, 0, 0.04) 100px,
-        rgba(0, 0, 0, 0.04) 101px,
-        transparent 101px,
-        transparent 112px
+        transparent 99px,
+        rgba(0, 0, 0, 0.04) 99px,
+        rgba(0, 0, 0, 0.04) 100px
     ) !important;
 }
 
@@ -206,11 +204,9 @@ select option, select optgroup {
     repeating-linear-gradient(
         to bottom,
         transparent 0,
-        transparent 100px,
-        rgba(255, 255, 255, 0.04) 100px,
-        rgba(255, 255, 255, 0.04) 101px,
-        transparent 101px,
-        transparent 112px
+        transparent 99px,
+        rgba(255, 255, 255, 0.04) 99px,
+        rgba(255, 255, 255, 0.04) 100px
     ) !important;
 }
 
