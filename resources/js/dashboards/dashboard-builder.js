@@ -1629,6 +1629,7 @@ export function dashboardBuilder(config = {}) {
             let ghostEl = null;
             let savedFloat = null;
             let lastCellKey = null;
+            let savedPositions = {};
 
             const cellFromPoint = (cx, cy) => {
                 const rect = grid.el.getBoundingClientRect();
@@ -1650,6 +1651,14 @@ export function dashboardBuilder(config = {}) {
                     grid.float(savedFloat);
                     savedFloat = null;
                 }
+                grid.batchUpdate(true);
+                Object.keys(savedPositions).forEach(id => {
+                    const node = grid.engine.nodes.find(n => String(n.id) === String(id));
+                    if (node && node.el) {
+                        grid.update(node.el, savedPositions[id]);
+                    }
+                });
+                grid.batchUpdate(false);
                 grid.compact();
             };
 
@@ -1677,13 +1686,21 @@ export function dashboardBuilder(config = {}) {
                     dragging = true;
                     savedFloat = grid.float();
                     grid.float(false);
+
+                    savedPositions = {};
+                    (grid.engine.nodes || []).forEach(node => {
+                        const id = node.id || (node.el ? node.el.getAttribute('gs-id') : null);
+                        if (id && id !== GHOST_ID) {
+                            savedPositions[id] = { x: node.x, y: node.y, w: node.w, h: node.h };
+                        }
+                    });
+
                     const pos = cellFromPoint(e.clientX, e.clientY);
                     ghostEl = grid.addWidget({
                         id: GHOST_ID,
                         x: pos.x, y: pos.y,
                         w: activeW, h: activeH,
                         minW: activeW, minH: activeH,
-                        locked: true,
                         noMove: true,
                         noResize: true,
                     });
@@ -1703,8 +1720,17 @@ export function dashboardBuilder(config = {}) {
                     const cellKey = `${pos.x},${pos.y}`;
                     if (cellKey !== lastCellKey) {
                         lastCellKey = cellKey;
-                        grid.update(ghostEl, { x: pos.x, y: pos.y });
-                        grid.compact();
+                        grid.batchUpdate(true);
+                        Object.keys(savedPositions).forEach(id => {
+                            const node = grid.engine.nodes.find(n => String(n.id) === String(id));
+                            if (node && node.el) {
+                                grid.update(node.el, savedPositions[id]);
+                            }
+                        });
+                        if (ghostEl.gridstackNode) {
+                            grid.update(ghostEl, { x: pos.x, y: pos.y });
+                        }
+                        grid.batchUpdate(false);
                     }
                 }
             };
