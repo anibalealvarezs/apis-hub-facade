@@ -2676,7 +2676,7 @@
         <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl ring-1 ring-black/5 dark:ring-white/10">
 
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="bd-text-xxs font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
+                <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Palette') }}</span>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
                         {{ __('Widget source types') }}
@@ -2690,7 +2690,7 @@
                 <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="kpi" gs-w="4" gs-h="3" title="{{ __('KPI') }}">
                     <x-heroicon-o-chart-bar class="w-5 h-5" />
-                    <span class="bd-text-micro font-bold uppercase">{{ __('KPI') }}</span>
+                    <span class="bd-text-6xs font-bold uppercase">{{ __('KPI') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2703,7 +2703,7 @@
                 <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="metric" gs-w="4" gs-h="3" title="{{ __('Metric') }}">
                     <x-heroicon-o-chart-bar-square class="w-5 h-5" />
-                    <span class="bd-text-micro font-bold uppercase">{{ __('Metric') }}</span>
+                    <span class="bd-text-6xs font-bold uppercase">{{ __('Metric') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2716,7 +2716,7 @@
                 <div class="grid-stack-drag-in flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-grab active:cursor-grabbing"
                      data-source-type="derived_metric" gs-w="4" gs-h="3" title="{{ __('Derived') }}">
                     <x-heroicon-o-calculator class="w-5 h-5" />
-                    <span class="bd-text-micro font-bold uppercase">{{ __('Derived') }}</span>
+                    <span class="bd-text-6xs font-bold uppercase">{{ __('Derived') }}</span>
                 </div>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
@@ -2786,7 +2786,7 @@
             {{-- Selected Badge Counter --}}
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
                 <span class="text-xs font-bold leading-none" x-text="selectedWidgetIds.length"></span>
-                <span class="bd-text-xxs font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
+                <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80 mt-0.5" x-text="selectedWidgetIds.length === 1 ? 'item' : 'items'"></span>
                 <div class="pointer-events-none absolute right-full top-1/2 -translate-y-1/2 mr-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
                         {{ __('Selected widgets') }}
