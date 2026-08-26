@@ -2735,7 +2735,7 @@
                 <div class="bd-palette-sizes-grid">
                     @foreach($sizes as $s)
                     <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
-                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
+                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},5px);grid-template-rows:repeat({{ $s['h'] }},5px);">
                             {!! str_repeat('<div class="bd-mini-grid-cell"></div>', $s['h'] * $s['w']) !!}
                         </div>
                         <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>

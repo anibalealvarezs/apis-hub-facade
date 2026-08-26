@@ -590,7 +590,7 @@ body.pv-page .dvc-controls-bar {
 
 .floating-selection-bar.bd-palette-left {
     position: absolute !important;
-    right: calc(100% - 4.2rem) !important;
+    right: calc(100% - 3rem) !important;
     left: auto !important;
     top: auto !important;
     transform: none !important;
@@ -627,7 +627,8 @@ body.pv-page .dvc-controls-bar {
 
 .bd-palette-sizes-panel {
     position: absolute;
-    right: calc(100% + 6px);
+    left: calc(100% + 6px);
+    right: auto;
     top: 50%;
     transform: translateY(-50%);
     background: #fff;
@@ -694,8 +695,8 @@ body.pv-page .dvc-controls-bar {
     gap: 1px;
 }
 .bd-mini-grid-cell {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     background-color: var(--primary-400, #818cf8);
     border-radius: 1px;
 }
