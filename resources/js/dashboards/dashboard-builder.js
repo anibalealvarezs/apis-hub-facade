@@ -1590,6 +1590,28 @@ export function dashboardBuilder(config = {}) {
             const palette = document.querySelector('.bd-palette-left');
             if (!palette) return;
 
+            palette.querySelectorAll('.bd-palette-cat-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cat = btn.getAttribute('data-size-category');
+                    const panel = palette.querySelector('.bd-sizes-' + cat);
+                    if (!panel) return;
+                    const wasHidden = panel.style.display === 'none';
+                    palette.querySelectorAll('.bd-palette-sizes-panel').forEach(p => p.style.display = 'none');
+                    palette.querySelectorAll('.bd-palette-cat-btn').forEach(b => b.classList.remove('active'));
+                    if (wasHidden) {
+                        panel.style.display = '';
+                        btn.classList.add('active');
+                    }
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!palette.contains(e.target)) {
+                    palette.querySelectorAll('.bd-palette-sizes-panel').forEach(p => p.style.display = 'none');
+                    palette.querySelectorAll('.bd-palette-cat-btn').forEach(b => b.classList.remove('active'));
+                }
+            });
+
             const GHOST_ID = '__palette_ghost__';
             const COLUMNS = 12;
 

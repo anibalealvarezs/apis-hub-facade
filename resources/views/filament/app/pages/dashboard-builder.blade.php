@@ -2673,8 +2673,7 @@
         </div>
 
         {{-- Floating Left Widget Size Palette --}}
-        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
-             x-data="{ sizeCategory: null }">
+        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
 
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
                 <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
@@ -2689,99 +2688,62 @@
 
             {{-- Category: Portrait --}}
             <div class="relative">
-                <div class="bd-palette-cat-btn" :class="{ 'active': sizeCategory === 'portrait' }"
-                     @click="sizeCategory = sizeCategory === 'portrait' ? null : 'portrait'">
+                <div class="bd-palette-cat-btn" data-size-category="portrait">
                     <div class="bd-palette-cat-shape portrait"></div>
                 </div>
             </div>
 
             {{-- Category: Square --}}
             <div class="relative">
-                <div class="bd-palette-cat-btn" :class="{ 'active': sizeCategory === 'square' }"
-                     @click="sizeCategory = sizeCategory === 'square' ? null : 'square'">
+                <div class="bd-palette-cat-btn" data-size-category="square">
                     <div class="bd-palette-cat-shape square"></div>
                 </div>
             </div>
 
             {{-- Category: Landscape --}}
             <div class="relative">
-                <div class="bd-palette-cat-btn" :class="{ 'active': sizeCategory === 'landscape' }"
-                     @click="sizeCategory = sizeCategory === 'landscape' ? null : 'landscape'">
+                <div class="bd-palette-cat-btn" data-size-category="landscape">
                     <div class="bd-palette-cat-shape landscape"></div>
                 </div>
             </div>
 
             {{-- Sizes Panel --}}
-            <div class="bd-palette-sizes-panel" x-show="sizeCategory !== null" x-transition.opacity.duration.150ms
-                 @click.outside="sizeCategory = null"
-                 style="display:none;">
+            @php
+            $allSizes = [
+                'portrait' => [
+                    ['h'=>3,'w'=>2],['h'=>4,'w'=>2],['h'=>6,'w'=>2],['h'=>7,'w'=>2],
+                    ['h'=>4,'w'=>3],['h'=>6,'w'=>3],['h'=>7,'w'=>3],
+                    ['h'=>6,'w'=>4],['h'=>7,'w'=>4],
+                    ['h'=>7,'w'=>6],
+                ],
+                'square' => [
+                    ['h'=>2,'w'=>2],['h'=>3,'w'=>3],['h'=>4,'w'=>4],
+                    ['h'=>5,'w'=>5],['h'=>6,'w'=>6],['h'=>7,'w'=>7],
+                ],
+                'landscape' => [
+                    ['h'=>2,'w'=>3],['h'=>2,'w'=>4],['h'=>2,'w'=>6],['h'=>2,'w'=>8],['h'=>2,'w'=>12],
+                    ['h'=>3,'w'=>4],['h'=>3,'w'=>6],['h'=>3,'w'=>8],['h'=>3,'w'=>12],
+                    ['h'=>4,'w'=>6],['h'=>4,'w'=>8],['h'=>4,'w'=>12],
+                    ['h'=>6,'w'=>8],['h'=>6,'w'=>12],
+                    ['h'=>7,'w'=>12],
+                ],
+            ];
+            @endphp
 
-                {{-- Portrait --}}
-                <div class="bd-palette-sizes-grid" x-show="sizeCategory === 'portrait'">
-                    @php
-                    $portrait = [
-                        ['h'=>3,'w'=>2],['h'=>4,'w'=>2],['h'=>6,'w'=>2],['h'=>7,'w'=>2],
-                        ['h'=>4,'w'=>3],['h'=>6,'w'=>3],['h'=>7,'w'=>3],
-                        ['h'=>6,'w'=>4],['h'=>7,'w'=>4],
-                        ['h'=>7,'w'=>6],
-                    ];
-                    @endphp
-                    @foreach($portrait as $s)
+            @foreach($allSizes as $cat => $sizes)
+            <div class="bd-palette-sizes-panel bd-sizes-{{ $cat }}" style="display:none;">
+                <div class="bd-palette-sizes-grid">
+                    @foreach($sizes as $s)
                     <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
                         <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
-                            @for($i = 0; $i < $s['h'] * $s['w']; $i++)
-                                <div class="bd-mini-grid-cell"></div>
-                            @endfor
+                            {!! str_repeat('<div class="bd-mini-grid-cell"></div>', $s['h'] * $s['w']) !!}
                         </div>
                         <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>
                     </div>
                     @endforeach
                 </div>
-
-                {{-- Square --}}
-                <div class="bd-palette-sizes-grid" x-show="sizeCategory === 'square'">
-                    @php
-                    $square = [
-                        ['h'=>2,'w'=>2],['h'=>3,'w'=>3],['h'=>4,'w'=>4],
-                        ['h'=>5,'w'=>5],['h'=>6,'w'=>6],['h'=>7,'w'=>7],
-                    ];
-                    @endphp
-                    @foreach($square as $s)
-                    <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
-                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
-                            @for($i = 0; $i < $s['h'] * $s['w']; $i++)
-                                <div class="bd-mini-grid-cell"></div>
-                            @endfor
-                        </div>
-                        <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>
-                    </div>
-                    @endforeach
-                </div>
-
-                {{-- Landscape --}}
-                <div class="bd-palette-sizes-grid" x-show="sizeCategory === 'landscape'">
-                    @php
-                    $landscape = [
-                        ['h'=>2,'w'=>3],['h'=>2,'w'=>4],['h'=>2,'w'=>6],['h'=>2,'w'=>8],['h'=>2,'w'=>12],
-                        ['h'=>3,'w'=>4],['h'=>3,'w'=>6],['h'=>3,'w'=>8],['h'=>3,'w'=>12],
-                        ['h'=>4,'w'=>6],['h'=>4,'w'=>8],['h'=>4,'w'=>12],
-                        ['h'=>6,'w'=>8],['h'=>6,'w'=>12],
-                        ['h'=>7,'w'=>12],
-                    ];
-                    @endphp
-                    @foreach($landscape as $s)
-                    <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
-                        <div class="bd-mini-grid" style="grid-template-columns:repeat({{ $s['w'] }},4px);grid-template-rows:repeat({{ $s['h'] }},4px);">
-                            @for($i = 0; $i < $s['h'] * $s['w']; $i++)
-                                <div class="bd-mini-grid-cell"></div>
-                            @endfor
-                        </div>
-                        <span class="bd-size-option-label">{{ $s['h'] }}×{{ $s['w'] }}</span>
-                    </div>
-                    @endforeach
-                </div>
-
             </div>
+            @endforeach
 
         </div>
 
