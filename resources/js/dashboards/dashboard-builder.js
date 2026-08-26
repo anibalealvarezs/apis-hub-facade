@@ -1584,6 +1584,107 @@ export function dashboardBuilder(config = {}) {
         },
 
         // ─── Grid ──
+        _initPaletteDragIntoGrid() {
+            const grid = this.grid;
+            if (!grid) return;
+            const palette = document.querySelector('.bd-palette-left');
+            if (!palette) return;
+
+            const GHOST_ID = '__palette_ghost__';
+            let activeSource = null;
+            let startX = 0, startY = 0;
+            let dragging = false;
+            let ghostEl = null;
+
+            const cellFromPoint = (cx, cy) => {
+                const container = grid.el;
+                const rect = container.getBoundingClientRect();
+                const colW = rect.width / grid.getColumns();
+                const scrollY = container.scrollTop || 0;
+                const cellH = parseInt(grid.getCellHeight(), 10) || 100;
+                const margin = grid.getMargin()?.top ?? grid.getMargin() ?? 12;
+                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), grid.getColumns() - 1));
+                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / (cellH + margin)));
+                return { x, y };
+            };
+
+            const removeGhost = () => {
+                if (ghostEl) {
+                    grid.removeWidget(ghostEl, false);
+                    ghostEl = null;
+                }
+            };
+
+            const onPointerDown = (e) => {
+                if (e.button !== 0) return;
+                const el = e.target.closest('.grid-stack-drag-in');
+                if (!el) return;
+                e.preventDefault();
+                activeSource = el.getAttribute('data-source-type') || 'metric';
+                startX = e.clientX;
+                startY = e.clientY;
+                dragging = false;
+                document.addEventListener('pointermove', onPointerMove, { capture: true });
+                document.addEventListener('pointerup', onPointerUp, { capture: true });
+            };
+
+            const onPointerMove = (e) => {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                    dragging = true;
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    ghostEl = grid.addWidget({
+                        id: GHOST_ID,
+                        x: pos.x,
+                        y: pos.y,
+                        w: 4,
+                        h: 3,
+                        minW: 4,
+                        minH: 3,
+                        noMove: true,
+                        noResize: true,
+                        content: `<div class="flex items-center justify-center h-full rounded-lg border-2 border-dashed border-primary-400 dark:border-primary-500 bg-primary-50/60 dark:bg-primary-500/10 pointer-events-none">
+                            <span class="text-xs font-bold uppercase tracking-wider text-primary-500 dark:text-primary-400 opacity-70">${activeSource.replace(/_/g, ' ')}</span>
+                        </div>`,
+                    });
+                }
+
+                if (dragging && ghostEl) {
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    const node = ghostEl.gridstackNode;
+                    if (node && (node.x !== pos.x || node.y !== pos.y)) {
+                        grid.update(ghostEl, { x: pos.x, y: pos.y });
+                    }
+                }
+            };
+
+            const onPointerUp = (e) => {
+                document.removeEventListener('pointermove', onPointerMove, { capture: true });
+                document.removeEventListener('pointerup', onPointerUp, { capture: true });
+
+                if (!dragging || !activeSource) {
+                    activeSource = null;
+                    return;
+                }
+
+                const pos = ghostEl ? cellFromPoint(e.clientX, e.clientY) : null;
+                removeGhost();
+
+                if (pos) {
+                    this.targetGridX = pos.x;
+                    this.targetGridY = pos.y;
+                    this.pendingDragSourceType = activeSource;
+                    this.openAddWidgetModal(activeSource);
+                }
+
+                activeSource = null;
+            };
+
+            palette.addEventListener('pointerdown', onPointerDown);
+        },
+
         initGrid() {
             if (typeof GridStack === 'undefined') {
                 setTimeout(() => this.initGrid(), 50);
@@ -1613,32 +1714,8 @@ export function dashboardBuilder(config = {}) {
                 },
             });
 
-            // ── Palette drag-in via GridStack native HTML5 drag ──
-            GridStack.setupDragIn('.grid-stack-drag-in', { w: 4, h: 3 });
-
-            this.grid.on('dropped', (_event, _previousNode, newNode) => {
-                if (!newNode || !newNode.el) return;
-
-                const dragEl = document.querySelector('.grid-stack-drag-in[data-source-type]');
-                let sourceType = 'metric';
-
-                const allDragIns = document.querySelectorAll('.grid-stack-drag-in');
-                allDragIns.forEach((d) => {
-                    if (d.getAttribute('gs-w') == String(newNode.w) && d.getAttribute('gs-h') == String(newNode.h)) {
-                        sourceType = d.getAttribute('data-source-type') || sourceType;
-                    }
-                });
-
-                this.targetGridX = newNode.x;
-                this.targetGridY = newNode.y;
-                this.pendingDragSourceType = sourceType;
-
-                if (newNode.el && newNode.el.isConnected) {
-                    this.grid.removeWidget(newNode.el, false);
-                }
-
-                this.openAddWidgetModal(sourceType);
-            });
+            // ── Palette drag-in: insert temporary GridStack widget on drag ──
+            this._initPaletteDragIntoGrid();
 
             let autoScrollTimer = null;
             let multiDragStartPositions = null;
