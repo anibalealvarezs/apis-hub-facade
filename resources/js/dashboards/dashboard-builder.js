@@ -3192,12 +3192,10 @@ export function dashboardBuilder(config = {}) {
         positionPalette() {
             const palette = document.querySelector('.bd-palette-left');
             if (!palette) return;
-            const container = palette.offsetParent;
-            if (!container) return;
-            const containerRect = container.getBoundingClientRect();
-            const viewportCenter = window.innerHeight / 2;
-            const top = viewportCenter - containerRect.top - (palette.offsetHeight / 2);
-            palette.style.top = `${Math.max(0, top)}px`;
+            const topbar = document.querySelector('.fi-topbar');
+            const topbarHeight = topbar ? topbar.offsetHeight : 0;
+            const top = (window.innerHeight / 2) - topbarHeight - (palette.offsetHeight / 2);
+            palette.style.setProperty('top', `${Math.max(0, top)}px`, 'important');
         },
 
         confirmAddWidget() {

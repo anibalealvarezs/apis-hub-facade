@@ -586,6 +586,8 @@ body.pv-page .dvc-controls-bar {
     position: absolute !important;
     right: calc(100% - 6rem) !important;
     left: auto !important;
+    top: auto !important;
+    transform: none !important;
     z-index: 3 !important;
 }
 
