@@ -694,7 +694,9 @@ body.pv-page .dvc-controls-bar {
 .bd-mini-grid-cell {
     width: 5px;
     height: 5px;
-    border: 1px solid var(--primary-400, #818cf8) !important;
+    border-style: solid;
+    border-color: var(--primary-400, #818cf8);
+    border-width: 1px;
     background-color: var(--primary-50, #EEF2FF);
     border-radius: 1px;
 }
