@@ -1651,14 +1651,15 @@ export function dashboardBuilder(config = {}) {
                     grid.float(savedFloat);
                     savedFloat = null;
                 }
-                grid.batchUpdate(true);
                 Object.keys(savedPositions).forEach(id => {
                     const node = grid.engine.nodes.find(n => String(n.id) === String(id));
                     if (node && node.el) {
-                        grid.update(node.el, savedPositions[id]);
+                        const sp = savedPositions[id];
+                        if (node.x !== sp.x || node.y !== sp.y || node.w !== sp.w || node.h !== sp.h) {
+                            grid.update(node.el, sp);
+                        }
                     }
                 });
-                grid.batchUpdate(false);
                 grid.compact();
             };
 
@@ -1720,17 +1721,16 @@ export function dashboardBuilder(config = {}) {
                     const cellKey = `${pos.x},${pos.y}`;
                     if (cellKey !== lastCellKey) {
                         lastCellKey = cellKey;
-                        grid.batchUpdate(true);
                         Object.keys(savedPositions).forEach(id => {
                             const node = grid.engine.nodes.find(n => String(n.id) === String(id));
                             if (node && node.el) {
-                                grid.update(node.el, savedPositions[id]);
+                                const sp = savedPositions[id];
+                                if (node.x !== sp.x || node.y !== sp.y || node.w !== sp.w || node.h !== sp.h) {
+                                    grid.update(node.el, sp);
+                                }
                             }
                         });
-                        if (ghostEl.gridstackNode) {
-                            grid.update(ghostEl, { x: pos.x, y: pos.y });
-                        }
-                        grid.batchUpdate(false);
+                        grid.update(ghostEl, { x: pos.x, y: pos.y });
                     }
                 }
             };
