@@ -1596,15 +1596,17 @@ export function dashboardBuilder(config = {}) {
             let dragging = false;
             let ghostEl = null;
 
+            const COLUMNS = 12;
+            const CELL_H = parseInt(grid.opts.cellHeight, 10) || 100;
+            const MARGIN = (typeof grid.opts.margin === 'number' ? grid.opts.margin : parseInt(grid.opts.margin, 10)) || 12;
+
             const cellFromPoint = (cx, cy) => {
                 const container = grid.el;
                 const rect = container.getBoundingClientRect();
-                const colW = rect.width / grid.getColumns();
+                const colW = rect.width / COLUMNS;
                 const scrollY = container.scrollTop || 0;
-                const cellH = parseInt(grid.getCellHeight(), 10) || 100;
-                const margin = grid.getMargin()?.top ?? grid.getMargin() ?? 12;
-                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), grid.getColumns() - 1));
-                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / (cellH + margin)));
+                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - 1));
+                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / (CELL_H + MARGIN)));
                 return { x, y };
             };
 
