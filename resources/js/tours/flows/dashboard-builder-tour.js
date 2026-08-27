@@ -64,6 +64,66 @@ export const dashboardBuilderTour = {
                 side: 'left',
                 align: 'center'
             }
+        },
+        {
+            element: '#builder-view-dashboard-btn',
+            popover: {
+                title: 'View Dashboard',
+                description: 'Switch to view mode to see your dashboard exactly as your audience will — including live data, filters, and exports.',
+                side: 'bottom',
+                align: 'center'
+            }
+        },
+        {
+            element: '#builder-save-version-btn',
+            popover: {
+                title: 'Version Control',
+                description: 'Create a labeled snapshot to lock in a stable version of the dashboard. Return to any historical snapshot later.',
+                side: 'bottom',
+                align: 'center'
+            }
+        },
+        {
+            element: '#builder-version-history-btn',
+            popover: {
+                title: 'Version History',
+                description: 'Browse, restore, duplicate, or prune past versions — so you can always roll back to a stable arrangement.',
+                side: 'left',
+                align: 'center'
+            }
+        },
+        {
+            element: '.grid-stack-item:first-of-type .widget-header input[type="checkbox"]',
+            showIf: () => document.querySelector('.grid-stack-item') !== null,
+            popover: {
+                title: 'Select a Widget',
+                description: 'Tick a widget\'s selection box to enable multi-widget tools. Hold Shift+Click to select several widgets at once.',
+                side: 'bottom',
+                align: 'center'
+            },
+            onHighlighted: (el) => {
+                setTimeout(() => {
+                    const cb = document.querySelector('.grid-stack-item:first-of-type .widget-header input[type="checkbox"]');
+                    if (cb && !cb.checked) cb.click();
+                }, 350);
+            }
+        },
+        {
+            element: '#multi-select-action-bar',
+            showIf: () => document.querySelector('.grid-stack-item') !== null,
+            popover: {
+                title: 'Multi-Widget Action Bar',
+                description: 'Once widgets are selected, this bar lets you select all, clear, duplicate, or delete multiple widgets in one move.',
+                side: 'left',
+                align: 'center'
+            },
+            onHighlighted: (el) => {
+                const cb = document.querySelector('.grid-stack-item:first-of-type .widget-header input[type="checkbox"]');
+                if (cb && !cb.checked) {
+                    cb.click();
+                    if (el) el.style.display = 'flex';
+                }
+            }
         }
     ]
 };

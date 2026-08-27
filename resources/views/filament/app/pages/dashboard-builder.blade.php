@@ -2802,7 +2802,8 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-x-0 scale-100"
              x-transition:leave-end="opacity-0 translate-x-6 scale-95"
-             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-[99999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-[99999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
+             id="multi-select-action-bar">
 
             {{-- Selected Badge Counter --}}
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
