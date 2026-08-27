@@ -38,6 +38,34 @@ export const dashboardBuilderTour = {
             }
         },
         {
+            element: '.bd-palette-left',
+            popover: {
+                title: 'Size Palette — Pick a Shape',
+                description: 'Click a shape category to reveal the available widget sizes.',
+                side: 'right',
+                align: 'center'
+            },
+            onHighlighted: (el) => {
+                setTimeout(() => {
+                    const btn = el?.querySelector('.bd-palette-cat-btn');
+                    if (btn) btn.click();
+                }, 350);
+            }
+        },
+        {
+            element: '.bd-size-option',
+            popover: {
+                title: 'Drag a Size onto the Grid',
+                description: 'Click and hold a size tile, then drag it onto the canvas. A dashed preview will appear showing where the widget will land.',
+                side: 'right',
+                align: 'center'
+            },
+            onDeselected: () => {
+                document.querySelectorAll('.bd-palette-sizes-panel').forEach(p => p.style.display = 'none');
+                document.querySelectorAll('.bd-palette-cat-btn').forEach(b => b.classList.remove('active'));
+            }
+        },
+        {
             element: 'button[wire\\:click*="saveLayout"], .fi-page-header-actions button:has(.heroicon-m-check)',
             popover: {
                 title: 'Save Layout & Snapshot Versioning',
