@@ -155,6 +155,210 @@
     opacity: 0.55 !important;
 }
 
+/* ==========================================================================
+   Global Onboarding Controls
+   ========================================================================== */
+
+/* "Disable all onboardings" button inside the tooltip footer */
+.driver-popover-disable-tours-btn {
+    margin-right: auto !important;
+    background: transparent !important;
+    color: #94a3b8 !important;
+    box-shadow: none !important;
+    padding: 0.2rem 0.4rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    text-decoration: underline dotted !important;
+    text-underline-offset: 2px !important;
+}
+
+.driver-popover-disable-tours-btn:hover {
+    color: #e11d48 !important;
+    background: rgba(225, 29, 72, 0.08) !important;
+    text-decoration-color: #e11d48 !important;
+}
+
+html.dark .driver-popover-disable-tours-btn,
+.dark .driver-popover-disable-tours-btn {
+    color: #94a3b8 !important;
+}
+
+html.dark .driver-popover-disable-tours-btn:hover,
+.dark .driver-popover-disable-tours-btn:hover {
+    color: #fb7185 !important;
+    background: rgba(251, 113, 133, 0.1) !important;
+}
+
+/* Floating "?" onboarding trigger (right side) */
+.apis-hub-tour-trigger {
+    position: fixed;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9999999;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: rgba(255, 255, 255, 0.85);
+    color: #475569;
+    box-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+    font-family: 'Outfit', sans-serif !important;
+}
+
+.apis-hub-tour-trigger svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.apis-hub-tour-trigger:hover {
+    border-color: #00a7f9;
+    color: #00a7f9;
+    box-shadow: 0 6px 20px -4px rgba(0, 167, 249, 0.45);
+    transform: translateY(-50%) scale(1.05);
+}
+
+/* Tooltip on hover */
+.apis-hub-tour-trigger::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 0.6rem);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    padding: 0.35rem 0.7rem;
+    border-radius: 0.5rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.4);
+}
+
+.apis-hub-tour-trigger::before {
+    content: '';
+    position: absolute;
+    right: calc(100% + 0.25rem);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: #0f172a;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.apis-hub-tour-trigger:hover::after,
+.apis-hub-tour-trigger:focus-visible::after,
+.apis-hub-tour-trigger:hover::before,
+.apis-hub-tour-trigger:focus-visible::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+html.dark .apis-hub-tour-trigger,
+.dark .apis-hub-tour-trigger {
+    background: rgba(30, 41, 59, 0.85);
+    color: #cbd5e1;
+    border-color: rgba(100, 116, 139, 0.5);
+}
+
+html.dark .apis-hub-tour-trigger:hover,
+.dark .apis-hub-tour-trigger:hover {
+    color: #38bdf8;
+    border-color: #38bdf8;
+}
+
+/* Onboarding chooser (multiple available tours) */
+.apis-hub-tour-chooser-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999998;
+    background: rgba(15, 23, 42, 0.15);
+}
+
+.apis-hub-tour-chooser {
+    position: fixed;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9999999;
+    min-width: 15rem;
+    max-width: 20rem;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 0.875rem;
+    padding: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.18), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-family: 'Outfit', sans-serif !important;
+}
+
+.apis-hub-tour-chooser-title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    padding: 0.35rem 0.5rem 0.5rem;
+}
+
+.apis-hub-tour-chooser-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 0.625rem;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: 'Outfit', sans-serif !important;
+}
+
+.apis-hub-tour-chooser-item:hover {
+    background: rgba(0, 167, 249, 0.1);
+    color: #0079b3;
+}
+
+html.dark .apis-hub-tour-chooser,
+.dark .apis-hub-tour-chooser {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+html.dark .apis-hub-tour-chooser-title,
+.dark .apis-hub-tour-chooser-title {
+    color: #94a3b8;
+}
+
+html.dark .apis-hub-tour-chooser-item,
+.dark .apis-hub-tour-chooser-item {
+    color: #f8fafc;
+}
+
+html.dark .apis-hub-tour-chooser-item:hover,
+.dark .apis-hub-tour-chooser-item:hover {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
+}
+
 
 /* ==========================================================================
    DARK MODE OVERRIDES (html.dark)

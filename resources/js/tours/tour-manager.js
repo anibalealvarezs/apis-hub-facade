@@ -57,6 +57,198 @@ class TourManager {
     }
 
     /**
+     * Check if all onboardings are globally disabled
+     * @returns {boolean}
+     */
+    isAllToursDisabled() {
+        try {
+            return localStorage.getItem('apis_hub_disable_all_tours') === '1';
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Disable every onboarding (including the current one) and stop any active tour.
+     */
+    disableAllTours() {
+        try {
+            localStorage.setItem('apis_hub_disable_all_tours', '1');
+        } catch {
+            return;
+        }
+
+        for (const tourId of this.tours.keys()) {
+            this.markCompleted(tourId);
+        }
+
+        if (this.activeDriver) {
+            this.activeDriver.destroy();
+        }
+
+        window.dispatchEvent(new CustomEvent('tour-status-changed', {
+            detail: { disabled: true }
+        }));
+
+        this.renderTourTrigger();
+    }
+
+    /**
+     * List the tours available for the current route (global UI tour included on tenant pages).
+     * @param {string} path
+     * @returns {Array<{ id: string, config: object }>}
+     */
+    getAvailableTours(path = window.location.pathname) {
+        const available = [];
+
+        for (const [id, config] of this.tours.entries()) {
+            if (id === 'global-ui') {
+                if (this.isTenantRoute(path)) {
+                    available.push({ id, config });
+                }
+                continue;
+            }
+
+            if (!config.routePattern) {
+                continue;
+            }
+
+            const matches = typeof config.routePattern === 'string'
+                ? path.includes(config.routePattern)
+                : config.routePattern.test(path);
+
+            if (matches) {
+                available.push({ id, config });
+            }
+        }
+
+        return available;
+    }
+
+    /**
+     * Human-readable label for a tour (uses config.label, else first step title, else tour id)
+     * @param {string} id
+     * @param {object} config
+     * @returns {string}
+     */
+    getTourLabel(id, config) {
+        if (config.label) {
+            return config.label;
+        }
+
+        const firstStep = (config.steps ?? [])[0];
+        if (firstStep?.popover?.title) {
+            return firstStep.popover.title;
+        }
+
+        return id;
+    }
+
+    /**
+     * Remove the floating onboarding trigger button (if present)
+     */
+    removeTourTrigger() {
+        document.getElementById('apis-hub-tour-trigger')?.remove();
+    }
+
+    /**
+     * Remove any open tour chooser popup
+     */
+    removeTourChooser() {
+        document.getElementById('apis-hub-tour-chooser')?.remove();
+        document.querySelector('.apis-hub-tour-chooser-overlay')?.remove();
+    }
+
+    /**
+     * Fired when the floating trigger is clicked.
+     * Single available tour -> run it right away; multiple -> show the chooser.
+     * @param {Array<{ id: string, config: object }>} available
+     */
+    onTourTriggerClick(available) {
+        if (available.length === 1) {
+            const { id } = available[0];
+            this.start(id, true);
+            this.removeTourTrigger();
+            return;
+        }
+
+        this.showTourChooser(available);
+    }
+
+    /**
+     * Render a subtle floating "?" trigger (right side) on pages whose tours
+     * are already completed or globally disabled. Tooltip: "onboarding tutorial".
+     */
+    renderTourTrigger() {
+        this.removeTourTrigger();
+
+        if (this.activeDriver) {
+            return;
+        }
+
+        const available = this.getAvailableTours(window.location.pathname);
+        if (available.length === 0) {
+            return;
+        }
+
+        const allDone = available.every(({ id }) => this.isCompleted(id));
+        if (!allDone && !this.isAllToursDisabled()) {
+            return;
+        }
+
+        const btn = document.createElement('button');
+        btn.id = 'apis-hub-tour-trigger';
+        btn.type = 'button';
+        btn.dataset.tooltip = 'onboarding tutorial';
+        btn.setAttribute('aria-label', 'Onboarding tutorial');
+        btn.classList.add('apis-hub-tour-trigger');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+
+        btn.addEventListener('click', () => this.onTourTriggerClick(available));
+
+        document.body.appendChild(btn);
+    }
+
+    /**
+     * Show a popup listing the onboardings available for the current page.
+     * @param {Array<{ id: string, config: object }>} available
+     */
+    showTourChooser(available) {
+        this.removeTourChooser();
+
+        const box = document.createElement('div');
+        box.id = 'apis-hub-tour-chooser';
+        box.setAttribute('role', 'menu');
+        box.classList.add('apis-hub-tour-chooser');
+
+        const heading = document.createElement('div');
+        heading.classList.add('apis-hub-tour-chooser-title');
+        heading.textContent = 'Available onboardings';
+        box.appendChild(heading);
+
+        for (const { id, config } of available) {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.setAttribute('role', 'menuitem');
+            item.classList.add('apis-hub-tour-chooser-item');
+            item.textContent = this.getTourLabel(id, config);
+            item.addEventListener('click', () => {
+                this.removeTourChooser();
+                this.removeTourTrigger();
+                this.start(id, true);
+            });
+            box.appendChild(item);
+        }
+
+        const overlay = document.createElement('div');
+        overlay.className = 'apis-hub-tour-chooser-overlay';
+        overlay.addEventListener('click', () => this.removeTourChooser());
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(box);
+    }
+
+    /**
      * Reset/clear a completed tour state
      * @param {string} tourId
      */
@@ -139,6 +331,9 @@ class TourManager {
             this.activeDriver.destroy();
         }
 
+        this.removeTourTrigger();
+        this.removeTourChooser();
+
         this.activeDriver = driver({
             showProgress: true,
             animate: true,
@@ -149,9 +344,25 @@ class TourManager {
             doneBtnText: 'Finish ✓',
             nextBtnText: 'Next →',
             prevBtnText: '← Back',
+            onPopoverRender: (popover) => {
+                if (popover.footer.querySelector('.driver-popover-disable-tours-btn')) {
+                    return;
+                }
+
+                const disableBtn = document.createElement('button');
+                disableBtn.type = 'button';
+                disableBtn.className = 'driver-popover-footer-btn driver-popover-disable-tours-btn';
+                disableBtn.textContent = 'Disable all onboardings';
+                disableBtn.title = 'Turn off every onboarding, including this one. You can replay them anytime from the "?" help button.';
+                disableBtn.addEventListener('click', () => {
+                    this.disableAllTours();
+                });
+                popover.footer.prepend(disableBtn);
+            },
             onDestroyed: () => {
                 this.markCompleted(tourId);
                 this.activeDriver = null;
+                this.renderTourTrigger();
                 if (typeof onFinish === 'function') {
                     onFinish();
                 }
@@ -201,15 +412,18 @@ class TourManager {
         }
 
         // 1. Check if Global UI Tour needs to run on first project visit
-        if (this.isTenantRoute(path) && !this.isCompleted('global-ui') && this.tours.has('global-ui')) {
+        if (this.isTenantRoute(path) && !this.isAllToursDisabled() && !this.isCompleted('global-ui') && this.tours.has('global-ui')) {
             setTimeout(() => {
                 this.start('global-ui', false, () => {
                     // Once global tour completes, trigger the page-specific tour if applicable
                     const pageTourId = this.getPageTourForRoute(path);
                     if (pageTourId && !this.isCompleted(pageTourId)) {
                         setTimeout(() => {
-                            this.start(pageTourId, false);
+                            if (!this.isCompleted(pageTourId)) this.start(pageTourId, false);
+                            this.renderTourTrigger();
                         }, 500);
+                    } else {
+                        this.renderTourTrigger();
                     }
                 });
             }, 600);
@@ -218,10 +432,13 @@ class TourManager {
 
         // 2. Check for Page-specific tour
         const pageTourId = this.getPageTourForRoute(path);
-        if (pageTourId && !this.isCompleted(pageTourId)) {
+        if (pageTourId && !this.isCompleted(pageTourId) && !this.isAllToursDisabled()) {
             setTimeout(() => {
-                this.start(pageTourId, false);
+                if (!this.isCompleted(pageTourId)) this.start(pageTourId, false);
+                this.renderTourTrigger();
             }, 500);
+        } else {
+            this.renderTourTrigger();
         }
     }
 
@@ -253,6 +470,11 @@ class TourManager {
         // Run on Livewire SPA page transitions
         document.addEventListener('livewire:navigated', () => {
             this.autoRun();
+        });
+
+        // Refresh the floating trigger whenever tour state changes
+        document.addEventListener('tour-status-changed', () => {
+            this.renderTourTrigger();
         });
     }
 }
