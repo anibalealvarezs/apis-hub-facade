@@ -82,102 +82,104 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </div>
         </div>
 
-        <div class="metrics-grid-ga4 relative">
-            <div x-show="isSummaryLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+        <div class="dash-overview-section">
+            <div class="metrics-grid-ga4 relative">
+                <div x-show="isSummaryLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                </div>
+
+                <div class="card-stat-ga4" :class="activeMetrics.sessions ? 'active' : ''" @click="toggleMetric('sessions')"
+                     data-metric="sessions">
+                    <div class="ga4-label">{{ __('Sessions') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.sessions)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.sessions)">
+                        <span x-text="getVarianceIcon(variance.sessions)"></span>
+                        <span x-text="formatVariance(variance.sessions)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.activeUsers ? 'active' : ''" @click="toggleMetric('activeUsers')"
+                     data-metric="activeUsers">
+                    <div class="ga4-label">{{ __('Active Users') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.activeUsers)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.activeUsers)">
+                        <span x-text="getVarianceIcon(variance.activeUsers)"></span>
+                        <span x-text="formatVariance(variance.activeUsers)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.newUsers ? 'active' : ''" @click="toggleMetric('newUsers')"
+                     data-metric="newUsers">
+                    <div class="ga4-label">{{ __('New Users') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.newUsers)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.newUsers)">
+                        <span x-text="getVarianceIcon(variance.newUsers)"></span>
+                        <span x-text="formatVariance(variance.newUsers)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.screenPageViews ? 'active' : ''" @click="toggleMetric('screenPageViews')"
+                     data-metric="screenPageViews">
+                    <div class="ga4-label">{{ __('Pageviews') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.screenPageViews)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.screenPageViews)">
+                        <span x-text="getVarianceIcon(variance.screenPageViews)"></span>
+                        <span x-text="formatVariance(variance.screenPageViews)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.conversions ? 'active' : ''" @click="toggleMetric('conversions')"
+                     data-metric="conversions">
+                    <div class="ga4-label">{{ __('Conversions') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.conversions)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.conversions)">
+                        <span x-text="getVarianceIcon(variance.conversions)"></span>
+                        <span x-text="formatVariance(variance.conversions)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.averageSessionDuration ? 'active' : ''" @click="toggleMetric('averageSessionDuration')"
+                     data-metric="averageSessionDuration">
+                    <div class="ga4-label">{{ __('Avg Duration') }}</div>
+                    <div class="card-metric-value" x-text="formatDuration(summary.averageSessionDuration)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.averageSessionDuration)">
+                        <span x-text="getVarianceIcon(variance.averageSessionDuration)"></span>
+                        <span x-text="formatVariance(variance.averageSessionDuration)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.bounceRate ? 'active' : ''" @click="toggleMetric('bounceRate')"
+                     data-metric="bounceRate">
+                    <div class="ga4-label">{{ __('Bounce Rate') }}</div>
+                    <div class="card-metric-value" x-text="formatPercent(summary.bounceRate)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.bounceRate, true)">
+                        <span x-text="getVarianceIcon(variance.bounceRate, true)"></span>
+                        <span x-text="formatVariance(variance.bounceRate)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.totalUsers ? 'active' : ''" @click="toggleMetric('totalUsers')"
+                     data-metric="totalUsers">
+                    <div class="ga4-label">{{ __('Total Users') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.totalUsers)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.totalUsers)">
+                        <span x-text="getVarianceIcon(variance.totalUsers)"></span>
+                        <span x-text="formatVariance(variance.totalUsers)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-ga4" :class="activeMetrics.revenue ? 'active' : ''" @click="toggleMetric('revenue')"
+                     data-metric="revenue">
+                    <div class="ga4-label">{{ __('Revenue') }}</div>
+                    <div class="card-metric-value" x-text="'$' + formatDecimals(summary.revenue)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.revenue)">
+                        <span x-text="getVarianceIcon(variance.revenue)"></span>
+                        <span x-text="formatVariance(variance.revenue)"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="card-stat-ga4" :class="activeMetrics.sessions ? 'active' : ''" @click="toggleMetric('sessions')"
-                 data-metric="sessions">
-                <div class="ga4-label">{{ __('Sessions') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.sessions)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.sessions)">
-                    <span x-text="getVarianceIcon(variance.sessions)"></span>
-                    <span x-text="formatVariance(variance.sessions)"></span>
+            <div class="chart-container-ga4 relative w-full" wire:ignore>
+                <div x-show="isChartLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                 </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.activeUsers ? 'active' : ''" @click="toggleMetric('activeUsers')"
-                 data-metric="activeUsers">
-                <div class="ga4-label">{{ __('Active Users') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.activeUsers)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.activeUsers)">
-                    <span x-text="getVarianceIcon(variance.activeUsers)"></span>
-                    <span x-text="formatVariance(variance.activeUsers)"></span>
+                <div class="dash-chart-canvas">
+                    <canvas x-ref="canvas"></canvas>
                 </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.newUsers ? 'active' : ''" @click="toggleMetric('newUsers')"
-                 data-metric="newUsers">
-                <div class="ga4-label">{{ __('New Users') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.newUsers)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.newUsers)">
-                    <span x-text="getVarianceIcon(variance.newUsers)"></span>
-                    <span x-text="formatVariance(variance.newUsers)"></span>
-                </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.screenPageViews ? 'active' : ''" @click="toggleMetric('screenPageViews')"
-                 data-metric="screenPageViews">
-                <div class="ga4-label">{{ __('Pageviews') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.screenPageViews)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.screenPageViews)">
-                    <span x-text="getVarianceIcon(variance.screenPageViews)"></span>
-                    <span x-text="formatVariance(variance.screenPageViews)"></span>
-                </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.conversions ? 'active' : ''" @click="toggleMetric('conversions')"
-                 data-metric="conversions">
-                <div class="ga4-label">{{ __('Conversions') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.conversions)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.conversions)">
-                    <span x-text="getVarianceIcon(variance.conversions)"></span>
-                    <span x-text="formatVariance(variance.conversions)"></span>
-                </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.averageSessionDuration ? 'active' : ''" @click="toggleMetric('averageSessionDuration')"
-                 data-metric="averageSessionDuration">
-                <div class="ga4-label">{{ __('Avg Duration') }}</div>
-                <div class="card-metric-value" x-text="formatDuration(summary.averageSessionDuration)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.averageSessionDuration)">
-                    <span x-text="getVarianceIcon(variance.averageSessionDuration)"></span>
-                    <span x-text="formatVariance(variance.averageSessionDuration)"></span>
-                </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.bounceRate ? 'active' : ''" @click="toggleMetric('bounceRate')"
-                 data-metric="bounceRate">
-                <div class="ga4-label">{{ __('Bounce Rate') }}</div>
-                <div class="card-metric-value" x-text="formatPercent(summary.bounceRate)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.bounceRate, true)">
-                    <span x-text="getVarianceIcon(variance.bounceRate, true)"></span>
-                    <span x-text="formatVariance(variance.bounceRate)"></span>
-                </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.totalUsers ? 'active' : ''" @click="toggleMetric('totalUsers')"
-                 data-metric="totalUsers">
-                <div class="ga4-label">{{ __('Total Users') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.totalUsers)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.totalUsers)">
-                    <span x-text="getVarianceIcon(variance.totalUsers)"></span>
-                    <span x-text="formatVariance(variance.totalUsers)"></span>
-                </div>
-            </div>
-            <div class="card-stat-ga4" :class="activeMetrics.revenue ? 'active' : ''" @click="toggleMetric('revenue')"
-                 data-metric="revenue">
-                <div class="ga4-label">{{ __('Revenue') }}</div>
-                <div class="card-metric-value" x-text="'$' + formatDecimals(summary.revenue)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.revenue)">
-                    <span x-text="getVarianceIcon(variance.revenue)"></span>
-                    <span x-text="formatVariance(variance.revenue)"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="chart-container-ga4 relative w-full" wire:ignore>
-            <div x-show="isChartLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-            <div class="dash-chart-canvas">
-                <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 

@@ -95,63 +95,65 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </div>
         </div>
 
-        <div class="metrics-grid-gsc relative">
-            <div x-show="isSummaryLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+        <div class="dash-overview-section">
+            <div class="metrics-grid-gsc relative">
+                <div x-show="isSummaryLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                </div>
+
+                <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
+                     data-metric="clicks">
+                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
+                    <div class="gsc-label">{{ __('Total Clicks') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
+                        <span x-text="getVarianceIcon(variance.clicks)"></span>
+                        <span x-text="formatVariance(variance.clicks)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''"
+                     @click="toggleMetric('impressions')" data-metric="impressions">
+                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
+                    <div class="gsc-label">{{ __('Total Impressions') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
+                        <span x-text="getVarianceIcon(variance.impressions)"></span>
+                        <span x-text="formatVariance(variance.impressions)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-gsc" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
+                     data-metric="ctr">
+                    <div class="gsc-label">{{ __('Average CTR') }}</div>
+                    <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
+                        <span x-text="getVarianceIcon(variance.ctr)"></span>
+                        <span x-text="formatVariance(variance.ctr)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')"
+                     data-metric="position">
+                    <div class="gsc-label">{{ __('Average Position') }}</div>
+                    <div class="card-metric-value" x-text="formatDecimals(summary.position)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.position, true)">
+                        <span x-text="getVarianceIcon(variance.position, true)"></span>
+                        <span x-text="formatVariance(variance.position)"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="card-stat-gsc" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
-                 data-metric="clicks">
-                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
-                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+            <div class="chart-container-gsc relative w-full" wire:ignore>
+                <div x-show="isChartLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                 </div>
-                <div class="gsc-label">{{ __('Total Clicks') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
-                    <span x-text="getVarianceIcon(variance.clicks)"></span>
-                    <span x-text="formatVariance(variance.clicks)"></span>
+                <div class="dash-chart-canvas">
+                    <canvas x-ref="canvas"></canvas>
                 </div>
-            </div>
-            <div class="card-stat-gsc" :class="activeMetrics.impressions ? 'active' : ''"
-                 @click="toggleMetric('impressions')" data-metric="impressions">
-                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
-                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
-                </div>
-                <div class="gsc-label">{{ __('Total Impressions') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
-                    <span x-text="getVarianceIcon(variance.impressions)"></span>
-                    <span x-text="formatVariance(variance.impressions)"></span>
-                </div>
-            </div>
-            <div class="card-stat-gsc" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
-                 data-metric="ctr">
-                <div class="gsc-label">{{ __('Average CTR') }}</div>
-                <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
-                    <span x-text="getVarianceIcon(variance.ctr)"></span>
-                    <span x-text="formatVariance(variance.ctr)"></span>
-                </div>
-            </div>
-            <div class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')"
-                 data-metric="position">
-                <div class="gsc-label">{{ __('Average Position') }}</div>
-                <div class="card-metric-value" x-text="formatDecimals(summary.position)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.position, true)">
-                    <span x-text="getVarianceIcon(variance.position, true)"></span>
-                    <span x-text="formatVariance(variance.position)"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="chart-container-gsc relative w-full" wire:ignore>
-            <div x-show="isChartLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-            <div class="dash-chart-canvas">
-                <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 

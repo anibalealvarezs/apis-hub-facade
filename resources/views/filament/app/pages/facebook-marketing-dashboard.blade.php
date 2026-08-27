@@ -39,135 +39,137 @@
             </div>
         </div>
 
-        <div class="metrics-grid-fb relative">
-            <div x-show="isSummaryLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+        <div class="dash-overview-section">
+            <div class="metrics-grid-fb relative">
+                <div x-show="isSummaryLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                </div>
+
+                <div class="card-stat-fb" :class="activeMetrics.spend ? 'active' : ''" @click="toggleMetric('spend')"
+                     data-metric="spend">
+                    <div class="fb-label">{{ __('Amount Spent') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.spend)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.spend, true)">
+                        <span x-text="getVarianceIcon(variance.spend, true)"></span>
+                        <span x-text="formatVariance(variance.spend)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.impressions ? 'active' : ''"
+                     @click="toggleMetric('impressions')" data-metric="impressions">
+                    <div class="fb-label">{{ __('Impressions') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
+                        <span x-text="getVarianceIcon(variance.impressions)"></span>
+                        <span x-text="formatVariance(variance.impressions)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.reach ? 'active' : ''"
+                     @click="toggleMetric('reach')" data-metric="reach">
+                    <div class="fb-label">{{ __('Reach') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
+                        <span x-text="getVarianceIcon(variance.reach)"></span>
+                        <span x-text="formatVariance(variance.reach)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.frequency ? 'active' : ''"
+                     @click="toggleMetric('frequency')" data-metric="frequency">
+                    <div class="fb-label">{{ __('Frequency') }}</div>
+                    <div class="card-metric-value" x-text="formatDecimal(summary.frequency)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.frequency, true)">
+                        <span x-text="getVarianceIcon(variance.frequency, true)"></span>
+                        <span x-text="formatVariance(variance.frequency)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.cpm ? 'active' : ''"
+                     @click="toggleMetric('cpm')" data-metric="cpm">
+                    <div class="fb-label">{{ __('CPM') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cpm)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cpm, true)">
+                        <span x-text="getVarianceIcon(variance.cpm, true)"></span>
+                        <span x-text="formatVariance(variance.cpm)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
+                     data-metric="clicks">
+                    <div class="fb-label">{{ __('Link Clicks') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
+                        <span x-text="getVarianceIcon(variance.clicks)"></span>
+                        <span x-text="formatVariance(variance.clicks)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
+                     data-metric="ctr">
+                    <div class="fb-label">{{ __('CTR (Link)') }}</div>
+                    <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
+                        <span x-text="getVarianceIcon(variance.ctr)"></span>
+                        <span x-text="formatVariance(variance.ctr)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.cpc ? 'active' : ''" @click="toggleMetric('cpc')"
+                     data-metric="cpc">
+                    <div class="fb-label">{{ __('CPC (Link)') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cpc)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cpc, true)">
+                        <span x-text="getVarianceIcon(variance.cpc, true)"></span>
+                        <span x-text="formatVariance(variance.cpc)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.results ? 'active' : ''" @click="toggleMetric('results')"
+                     data-metric="results">
+                    <div class="fb-label">{{ __('Purchases/Results') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.results)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.results)">
+                        <span x-text="getVarianceIcon(variance.results)"></span>
+                        <span x-text="formatVariance(variance.results)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''"
+                     @click="toggleMetric('cost_per_result')" data-metric="cost_per_result">
+                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
+                    <div class="fb-label">{{ __('Cost per Result') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_result)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_result, true)">
+                        <span x-text="getVarianceIcon(variance.cost_per_result, true)"></span>
+                        <span x-text="formatVariance(variance.cost_per_result)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.result_rate ? 'active' : ''"
+                     @click="toggleMetric('result_rate')" data-metric="result_rate">
+                    <div class="fb-label">{{ __('Result Rate') }}</div>
+                    <div class="card-metric-value" x-text="formatPercent(summary.result_rate)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.result_rate)">
+                        <span x-text="getVarianceIcon(variance.result_rate)"></span>
+                        <span x-text="formatVariance(variance.result_rate)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''"
+                     @click="toggleMetric('purchase_roas')" data-metric="purchase_roas">
+                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
+                    <div class="fb-label">{{ __('ROAS') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.purchase_roas) + 'x'"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.purchase_roas)">
+                        <span x-text="getVarianceIcon(variance.purchase_roas)"></span>
+                        <span x-text="formatVariance(variance.purchase_roas)"></span>
+                    </div>
+                </div>
             </div>
 
-            <div class="card-stat-fb" :class="activeMetrics.spend ? 'active' : ''" @click="toggleMetric('spend')"
-                 data-metric="spend">
-                <div class="fb-label">{{ __('Amount Spent') }}</div>
-                <div class="card-metric-value" x-text="formatCurrency(summary.spend)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.spend, true)">
-                    <span x-text="getVarianceIcon(variance.spend, true)"></span>
-                    <span x-text="formatVariance(variance.spend)"></span>
+            <div class="chart-container-fb relative w-full" wire:ignore>
+                <div x-show="isChartLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                 </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.impressions ? 'active' : ''"
-                 @click="toggleMetric('impressions')" data-metric="impressions">
-                <div class="fb-label">{{ __('Impressions') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
-                    <span x-text="getVarianceIcon(variance.impressions)"></span>
-                    <span x-text="formatVariance(variance.impressions)"></span>
+                <div class="dash-chart-canvas">
+                    <canvas x-ref="canvas"></canvas>
                 </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.reach ? 'active' : ''"
-                 @click="toggleMetric('reach')" data-metric="reach">
-                <div class="fb-label">{{ __('Reach') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
-                    <span x-text="getVarianceIcon(variance.reach)"></span>
-                    <span x-text="formatVariance(variance.reach)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.frequency ? 'active' : ''"
-                 @click="toggleMetric('frequency')" data-metric="frequency">
-                <div class="fb-label">{{ __('Frequency') }}</div>
-                <div class="card-metric-value" x-text="formatDecimal(summary.frequency)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.frequency, true)">
-                    <span x-text="getVarianceIcon(variance.frequency, true)"></span>
-                    <span x-text="formatVariance(variance.frequency)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.cpm ? 'active' : ''"
-                 @click="toggleMetric('cpm')" data-metric="cpm">
-                <div class="fb-label">{{ __('CPM') }}</div>
-                <div class="card-metric-value" x-text="formatCurrency(summary.cpm)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.cpm, true)">
-                    <span x-text="getVarianceIcon(variance.cpm, true)"></span>
-                    <span x-text="formatVariance(variance.cpm)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
-                 data-metric="clicks">
-                <div class="fb-label">{{ __('Link Clicks') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
-                    <span x-text="getVarianceIcon(variance.clicks)"></span>
-                    <span x-text="formatVariance(variance.clicks)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
-                 data-metric="ctr">
-                <div class="fb-label">{{ __('CTR (Link)') }}</div>
-                <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
-                    <span x-text="getVarianceIcon(variance.ctr)"></span>
-                    <span x-text="formatVariance(variance.ctr)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.cpc ? 'active' : ''" @click="toggleMetric('cpc')"
-                 data-metric="cpc">
-                <div class="fb-label">{{ __('CPC (Link)') }}</div>
-                <div class="card-metric-value" x-text="formatCurrency(summary.cpc)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.cpc, true)">
-                    <span x-text="getVarianceIcon(variance.cpc, true)"></span>
-                    <span x-text="formatVariance(variance.cpc)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.results ? 'active' : ''" @click="toggleMetric('results')"
-                 data-metric="results">
-                <div class="fb-label">{{ __('Purchases/Results') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.results)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.results)">
-                    <span x-text="getVarianceIcon(variance.results)"></span>
-                    <span x-text="formatVariance(variance.results)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.cost_per_result ? 'active' : ''"
-                 @click="toggleMetric('cost_per_result')" data-metric="cost_per_result">
-                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
-                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
-                </div>
-                <div class="fb-label">{{ __('Cost per Result') }}</div>
-                <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_result)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_result, true)">
-                    <span x-text="getVarianceIcon(variance.cost_per_result, true)"></span>
-                    <span x-text="formatVariance(variance.cost_per_result)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.result_rate ? 'active' : ''"
-                 @click="toggleMetric('result_rate')" data-metric="result_rate">
-                <div class="fb-label">{{ __('Result Rate') }}</div>
-                <div class="card-metric-value" x-text="formatPercent(summary.result_rate)"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.result_rate)">
-                    <span x-text="getVarianceIcon(variance.result_rate)"></span>
-                    <span x-text="formatVariance(variance.result_rate)"></span>
-                </div>
-            </div>
-            <div class="card-stat-fb" :class="activeMetrics.purchase_roas ? 'active' : ''"
-                 @click="toggleMetric('purchase_roas')" data-metric="purchase_roas">
-                <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
-                    <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
-                </div>
-                <div class="fb-label">{{ __('ROAS') }}</div>
-                <div class="card-metric-value" x-text="formatNumber(summary.purchase_roas) + 'x'"></div>
-                <div class="card-metric-trend" :class="getVarianceClass(variance.purchase_roas)">
-                    <span x-text="getVarianceIcon(variance.purchase_roas)"></span>
-                    <span x-text="formatVariance(variance.purchase_roas)"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="chart-container-fb relative w-full" wire:ignore>
-            <div x-show="isChartLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-            <div class="dash-chart-canvas">
-                <canvas x-ref="canvas"></canvas>
             </div>
         </div>
 

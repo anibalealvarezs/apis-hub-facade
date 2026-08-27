@@ -32,8 +32,30 @@ class OnboardingSettings extends Page
         $user = auth()->user();
         $primaryProject = $user?->projects()->first();
 
+        $builderUrl = null;
+        if ($primaryProject) {
+            $default = \App\Models\Dashboard::where('project_id', $primaryProject->id)
+                ->where('is_default', true)
+                ->first();
+
+            if (! $default) {
+                $default = \App\Models\Dashboard::where('project_id', $primaryProject->id)
+                    ->orderBy('is_default', 'desc')
+                    ->orderBy('id')
+                    ->first();
+            }
+
+            if ($default) {
+                $tenantPrefix = $primaryProject->subdomain
+                    ? "/app/{$primaryProject->subdomain}"
+                    : '/app';
+                $builderUrl = "{$tenantPrefix}/dashboards/dashboards/{$default->id}/builder";
+            }
+        }
+
         return [
             'tenantSubdomain' => $primaryProject?->subdomain,
+            'dashboardBuilderUrl' => $builderUrl,
         ];
     }
 }

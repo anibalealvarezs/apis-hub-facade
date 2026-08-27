@@ -37,7 +37,7 @@
                         'name' => __('Sync Telemetry & Worker Health'),
                         'description' => __('Remote worker queue status, global backfill progress, and per-channel sync drill-downs.'),
                         'badge' => __('Monitoring'),
-                        'url' => "{$tenantPrefix}/data-sync",
+                        'url' => "{$tenantPrefix}/telemetry",
                     ],
                 ],
             ],
@@ -63,7 +63,7 @@
                         'name' => __('Dashboards & Visual Builder'),
                         'description' => __('GridStack tile customization, widget palette, and asset group selector controls.'),
                         'badge' => __('Analytics'),
-                        'url' => "{$tenantPrefix}/dashboards",
+                        'url' => $dashboardBuilderUrl ?? "{$tenantPrefix}/dashboards",
                     ],
                     [
                         'id' => 'alerts',
