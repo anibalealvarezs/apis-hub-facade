@@ -1496,12 +1496,16 @@ class DashboardWidgetDataController extends Controller
         ]);
 
         if (! empty($controls['asset_group']) && $depSourceType !== 'derived_metric') {
-            $group = $this->resolveGroupForUser($project, $controls['asset_group']);
-            $groupAssets = $group ? $group->active_items
-                ->where('channel', $activeDepChannel)
-                ->pluck('asset_id')
-                ->values()
-                ->toArray() : [];
+            $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
+            $groupAssets = [];
+            foreach ($groups as $group) {
+                $groupAssets = array_merge($groupAssets, $group->active_items
+                    ->where('channel', $activeDepChannel)
+                    ->pluck('asset_id')
+                    ->values()
+                    ->toArray());
+            }
+            $groupAssets = array_values(array_unique($groupAssets));
 
             if (empty($groupAssets)) {
                 $controlsToMerge['dependent_asset_filter'] = ['___EMPTY_GROUP___'];
@@ -1568,12 +1572,16 @@ class DashboardWidgetDataController extends Controller
                 $indSourceType = $var['independent_source_type'] ?? 'channel';
 
                 if (! empty($controls['asset_group']) && $indSourceType !== 'derived_metric' && ! empty($indChannel)) {
-                    $group = $this->resolveGroupForUser($project, $controls['asset_group']);
-                    $groupAssets = $group ? $group->active_items
-                        ->where('channel', $indChannel)
-                        ->pluck('asset_id')
-                        ->values()
-                        ->toArray() : [];
+                    $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
+                    $groupAssets = [];
+                    foreach ($groups as $group) {
+                        $groupAssets = array_merge($groupAssets, $group->active_items
+                            ->where('channel', $indChannel)
+                            ->pluck('asset_id')
+                            ->values()
+                            ->toArray());
+                    }
+                    $groupAssets = array_values(array_unique($groupAssets));
 
                     if (empty($groupAssets)) {
                         $uiState['independent_variables'][$key]['independent_asset_filter'] = ['___EMPTY_GROUP___'];
@@ -2660,16 +2668,20 @@ class DashboardWidgetDataController extends Controller
             if (! empty($controls['assets']) && is_array($controls['assets'])) {
                 $requestedAssets = $controls['assets'];
             } elseif (! empty($controls['asset_group'])) {
-                $group = $this->resolveGroupForUser($project, $controls['asset_group']);
+                $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
 
-                if (! $group) {
+                if ($groups->isEmpty()) {
                     return '___EMPTY_GROUP___';
                 }
 
-                $requestedAssets = $group->items()
-                    ->where('channel', $channel)
-                    ->pluck('asset_id')
-                    ->toArray();
+                $requestedAssets = [];
+                foreach ($groups as $group) {
+                    $requestedAssets = array_merge($requestedAssets, $group->items()
+                        ->where('channel', $channel)
+                        ->pluck('asset_id')
+                        ->toArray());
+                }
+                $requestedAssets = array_values(array_unique($requestedAssets));
 
                 if (empty($requestedAssets)) {
                     return '___EMPTY_GROUP___';
@@ -2780,31 +2792,40 @@ class DashboardWidgetDataController extends Controller
         return $assets;
     }
 
-    protected function resolveGroupForUser(Project $project, int|string $groupId): ?\App\Models\AssetGroup
+    protected function resolveGroupsForUser(Project $project, array|int|string|null $groupId): \Illuminate\Support\Collection
     {
-        $group = \App\Models\AssetGroup::where('id', $groupId)
-            ->where('project_id', $project->id)
-            ->first();
+        $ids = array_values(array_filter(
+            array_map('strval', is_array($groupId) ? $groupId : [$groupId]),
+            fn ($id) => $id !== ''
+        ));
 
-        if (! $group) {
-            return null;
+        if (empty($ids)) {
+            return collect();
+        }
+
+        $groups = \App\Models\AssetGroup::where('project_id', $project->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        if ($groups->isEmpty()) {
+            return collect();
         }
 
         $user = auth()->user();
         if (! $user) {
-            return $group;
+            return $groups;
         }
 
         $service = app(\App\Services\CollaboratorAssetAccessService::class);
         $userId = $user->getAuthIdentifier();
 
         if ($service->isUnrestricted($project, $userId)) {
-            return $group;
+            return $groups;
         }
 
-        return in_array($group->id, $service->getSharedAssetGroupIds($project, $userId), true)
-            ? $group
-            : null;
+        $sharedIds = $service->getSharedAssetGroupIds($project, $userId);
+
+        return $groups->filter(fn ($group) => in_array($group->id, $sharedIds, true))->values();
     }
 
     protected function sanitizeMergedGroupRefs(Project $project, array $mergedState): array
