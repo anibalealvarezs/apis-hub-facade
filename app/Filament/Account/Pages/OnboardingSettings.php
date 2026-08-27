@@ -38,11 +38,18 @@ class OnboardingSettings extends Page
                 ->where('is_default', true)
                 ->first();
 
+            if (! $default) {
+                $default = \App\Models\Dashboard::where('project_id', $primaryProject->id)
+                    ->orderBy('is_default', 'desc')
+                    ->orderBy('id')
+                    ->first();
+            }
+
             if ($default) {
                 $tenantPrefix = $primaryProject->subdomain
                     ? "/app/{$primaryProject->subdomain}"
                     : '/app';
-                $builderUrl = "{$tenantPrefix}/dashboards/{$default->id}/builder";
+                $builderUrl = "{$tenantPrefix}/dashboards/dashboards/{$default->id}/builder";
             }
         }
 
