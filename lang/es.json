@@ -2036,7 +2036,7 @@
     "Asset Groups": "Grupos de Recursos",
     "Cross-channel asset clustering for global dashboard filtering.": "Agrupación de recursos multicanal para filtrado global en paneles de control.",
     "Dashboards & Visual Builder": "Paneles de Control y Creador Visual",
-    "GridStack tile customization, widget palette, and asset group selector controls.": "Personalización de cuadrícula GridStack, paleta de widgets y selector de grupos de recursos.",
+    "Widget tile customization, widget palette, and asset group selector controls.": "Personalización de ordenación de widgets, paleta de widgets y selector de grupos de recursos.",
     "Automated Alerts & Anomalies": "Alertas Automatizadas y Anomalías",
     "AST calculation lines, threshold bounds, and background cron schedules.": "Líneas de cálculo AST, límites de umbral y programación cron en segundo plano.",
     "Custom KPIs (Blended AST)": "KPIs Personalizados (AST Combinado)",

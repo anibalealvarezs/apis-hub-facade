@@ -1,3 +1,13 @@
+function scrollHeaderActionIntoView(el) {
+    if (!el) return;
+    const topbar = document.querySelector('.fi-topbar');
+    const offset = (topbar ? topbar.getBoundingClientRect().height : 64) + 16;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < offset) {
+        window.scrollBy({ top: rect.top - offset, behavior: 'smooth' });
+    }
+}
+
 export const dashboardBuilderTour = {
     routePattern: '/builder',
     steps: [
@@ -22,7 +32,7 @@ export const dashboardBuilderTour = {
         {
             element: '#grid-stack',
             popover: {
-                title: 'GridStack Drag, Resize & Layout',
+                title: 'Drag, Resize & Layout',
                 description: 'Drag tiles to reposition them and drag corner handles to resize. Hold Shift+Click to multi-select and align multiple widgets.',
                 side: 'top',
                 align: 'center'
@@ -72,6 +82,9 @@ export const dashboardBuilderTour = {
                 description: 'Switch to view mode to see your dashboard exactly as your audience will — including live data, filters, and exports.',
                 side: 'bottom',
                 align: 'center'
+            },
+            onHighlighted: (el) => {
+                setTimeout(() => scrollHeaderActionIntoView(el), 50);
             }
         },
         {
@@ -81,6 +94,9 @@ export const dashboardBuilderTour = {
                 description: 'Create a labeled snapshot to lock in a stable version of the dashboard. Return to any historical snapshot later.',
                 side: 'bottom',
                 align: 'center'
+            },
+            onHighlighted: (el) => {
+                setTimeout(() => scrollHeaderActionIntoView(el), 50);
             }
         },
         {
@@ -90,6 +106,9 @@ export const dashboardBuilderTour = {
                 description: 'Browse, restore, duplicate, or prune past versions — so you can always roll back to a stable arrangement.',
                 side: 'left',
                 align: 'center'
+            },
+            onHighlighted: (el) => {
+                setTimeout(() => scrollHeaderActionIntoView(el), 50);
             }
         },
         {

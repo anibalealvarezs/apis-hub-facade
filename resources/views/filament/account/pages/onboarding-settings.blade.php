@@ -61,7 +61,7 @@
                     [
                         'id' => 'dashboards',
                         'name' => __('Dashboards & Visual Builder'),
-                        'description' => __('GridStack tile customization, widget palette, and asset group selector controls.'),
+                        'description' => __('Widget tile customization, widget palette, and asset group selector controls.'),
                         'badge' => __('Analytics'),
                         'url' => $dashboardBuilderUrl ?? "{$tenantPrefix}/dashboards",
                     ],
