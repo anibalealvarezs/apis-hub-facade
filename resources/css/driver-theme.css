@@ -189,12 +189,11 @@ html.dark .driver-popover-disable-tours-btn:hover,
     background: rgba(251, 113, 133, 0.1) !important;
 }
 
-/* Floating "?" onboarding trigger (right side) */
+/* Floating "?" onboarding trigger (bottom-right) */
 .apis-hub-tour-trigger {
     position: fixed;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 1rem;
+    bottom: 1rem;
     z-index: 9999999;
     width: 2.5rem;
     height: 2.5rem;
@@ -222,16 +221,15 @@ html.dark .driver-popover-disable-tours-btn:hover,
     border-color: #00a7f9;
     color: #00a7f9;
     box-shadow: 0 6px 20px -4px rgba(0, 167, 249, 0.45);
-    transform: translateY(-50%) scale(1.05);
+    transform: scale(1.05);
 }
 
 /* Tooltip on hover */
 .apis-hub-tour-trigger::after {
     content: attr(data-tooltip);
     position: absolute;
-    right: calc(100% + 0.6rem);
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: calc(100% + 0.75rem);
+    right: 0;
     background: #0f172a;
     color: #f8fafc;
     font-size: 0.75rem;
@@ -250,11 +248,10 @@ html.dark .driver-popover-disable-tours-btn:hover,
 .apis-hub-tour-trigger::before {
     content: '';
     position: absolute;
-    right: calc(100% + 0.25rem);
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: calc(100% + 0.25rem);
+    right: calc(50% - 0.375rem);
     border: 6px solid transparent;
-    border-left-color: #0f172a;
+    border-top-color: #0f172a;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.18s ease, visibility 0.18s ease;
@@ -291,9 +288,8 @@ html.dark .apis-hub-tour-trigger:hover,
 
 .apis-hub-tour-chooser {
     position: fixed;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 1rem;
+    bottom: 4.25rem;
     z-index: 9999999;
     min-width: 15rem;
     max-width: 20rem;
