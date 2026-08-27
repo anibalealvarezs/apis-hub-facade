@@ -33,7 +33,7 @@ export const dashboardBuilderTour = {
             element: '#grid-stack',
             popover: {
                 title: 'Drag, Resize & Layout',
-                description: 'Drag tiles to reposition them and drag corner handles to resize. Hold Shift+Click to multi-select and align multiple widgets.',
+                description: 'Drag tiles to reposition them and drag corner handles to resize. Tick the selection box on a tile to multi-select widgets and align them together.',
                 side: 'top',
                 align: 'center'
             }
@@ -116,7 +116,7 @@ export const dashboardBuilderTour = {
             showIf: () => document.querySelector('.grid-stack-item') !== null,
             popover: {
                 title: 'Select a Widget',
-                description: 'Tick a widget\'s selection box to enable multi-widget tools. Hold Shift+Click to select several widgets at once.',
+                description: 'Tick a widget\'s selection box to enable multi-widget tools. Tick several boxes to select multiple widgets at once.',
                 side: 'bottom',
                 align: 'center'
             },
