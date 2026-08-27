@@ -1786,7 +1786,7 @@ export function dashboardBuilder(config = {}) {
 
             this.grid = GridStack.init({
                 column: 12,
-                minRow: 6,
+                minRow: 7,
                 cellHeight: 100,
                 margin: 12,
                 float: true,
