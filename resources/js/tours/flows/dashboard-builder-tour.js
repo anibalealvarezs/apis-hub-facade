@@ -123,6 +123,11 @@ export const dashboardBuilderTour = {
                     cb.click();
                     if (el) el.style.display = 'flex';
                 }
+            },
+            onDeselected: () => {
+                document.querySelectorAll('.grid-stack-item .widget-header input[type="checkbox"]').forEach((cb) => {
+                    if (cb.checked) cb.click();
+                });
             }
         }
     ]
