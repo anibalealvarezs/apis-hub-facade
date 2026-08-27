@@ -43,7 +43,7 @@
             ],
             'Analytics & Insights' => [
                 'icon' => 'heroicon-o-chart-bar',
-                'tours' => [
+                'tours' => array_values(array_filter([
                     [
                         'id' => 'data-explorer',
                         'name' => __('Data Explorer'),
@@ -65,13 +65,13 @@
                         'badge' => __('Analytics'),
                         'url' => $dashboardBuilderUrl ?? "{$tenantPrefix}/dashboards",
                     ],
-                    [
+                    $alertsAvailable ?? false ? [
                         'id' => 'alerts',
                         'name' => __('Automated Alerts & Anomalies'),
                         'description' => __('AST calculation lines, threshold bounds, and background cron schedules.'),
                         'badge' => __('Proactive'),
                         'url' => "{$tenantPrefix}/alerts",
-                    ],
+                    ] : null,
                     [
                         'id' => 'custom-kpis',
                         'name' => __('Custom KPIs (Blended AST)'),
@@ -86,7 +86,7 @@
                         'badge' => __('Advanced'),
                         'url' => "{$tenantPrefix}/derived-metrics",
                     ],
-                ],
+                ])),
             ],
             'Administration & Account' => [
                 'icon' => 'heroicon-o-user-group',

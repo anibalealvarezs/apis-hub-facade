@@ -56,6 +56,7 @@ class OnboardingSettings extends Page
         return [
             'tenantSubdomain' => $primaryProject?->subdomain,
             'dashboardBuilderUrl' => $builderUrl,
+            'alertsAvailable' => $primaryProject?->supportsAlerts() ?? false,
         ];
     }
 }
