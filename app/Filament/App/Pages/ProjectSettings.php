@@ -71,6 +71,26 @@ class ProjectSettings extends Page
         $isSuspended = ! $project->is_active || $project->billing_status === 'suspended';
         $actions = [];
 
+        $isDefault = $user->default_project_id === $project->id;
+
+        $actions[] = Action::make('set_default_project')
+            ->label(fn () => $isDefault ? __('Default Project') : __('Set as Default Project'))
+            ->color($isDefault ? 'gray' : 'primary')
+            ->icon('heroicon-o-star')
+            ->disabled($isDefault || $isSuspended)
+            ->helperText(fn () => $isDefault ? __('This is the project you are redirected to after login and from onboarding links.') : null)
+            ->action(function () use ($user, $project) {
+                $user->setDefaultProject($project);
+
+                Notification::make()
+                    ->title(__('Default Project Updated'))
+                    ->body(__(':project is now your default project. You will be redirected here after login and from onboarding links.', ['project' => $project->name]))
+                    ->success()
+                    ->send();
+
+                return redirect(request()->header('Referer'));
+            });
+
         $actions[] = Action::make('unsuspend')
             ->label(__('Reactivate Project'))
             ->color('success')
@@ -501,16 +521,21 @@ class ProjectSettings extends Page
                         }),
                 ])
                 ->action(function () use ($project) {
+                    $user = auth()->user();
+
                     // Soft delete del proyecto
                     $project->delete();
 
                     // Despachar Job para suspender el contenedor/dominio en Caddy
                     \App\Jobs\SuspendProjectDomainJob::dispatch($project);
 
-                    // Redirigir a otro proyecto activo o a la pantalla de creación
-                    $nextProject = auth()->user()->projects()
-                        ->where('is_active', true)
-                        ->first();
+                    // Redirigir al proyecto predeterminado o a otro proyecto activo
+                    $nextProject = $user->preferredProject();
+                    if (! $nextProject || ! $nextProject->is_active) {
+                        $nextProject = $user->projects()
+                            ->where('is_active', true)
+                            ->first();
+                    }
 
                     Notification::make()
                         ->title(__('Project Deleted'))
