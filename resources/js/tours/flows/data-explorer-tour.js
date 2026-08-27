@@ -2,28 +2,28 @@ export const dataExplorerTour = {
     routePattern: '/data-explorer',
     steps: [
         {
-            element: '.gsc-header-row',
+            element: '.gsc-header-row, .ga4-header-row, .fb-header-row',
             popover: {
                 title: 'Controls Bar',
-                description: 'Filter data by date range and property, toggle trend overlays when available, and export the dashboard to PDF.',
+                description: 'Filter data by date range and asset, toggle trend overlays when available, and export the dashboard to PDF.',
                 side: 'bottom',
                 align: 'center'
             }
         },
         {
-            element: '.metrics-grid-gsc',
+            element: '.dash-overview-section',
             popover: {
                 title: 'Summary & Chart',
-                description: 'Get a quick, impactful overview of total clicks, impressions, CTR, and position — with a trend chart to spot patterns at a glance.',
+                description: 'Get a quick, impactful overview of your key metrics at a glance — with a trend chart to spot patterns over time.',
                 side: 'bottom',
                 align: 'center'
             }
         },
         {
-            element: '.tab-nav-gsc',
+            element: '[class*="tab-nav-"]',
             popover: {
                 title: 'Data Table Filtering',
-                description: 'Switch between Queries, Pages, Countries, Devices, and Search Appearance — then click any row to apply it as an active filter.',
+                description: 'Switch between breakdown tabs — then click any row to apply it as an active filter across the dashboard.',
                 side: 'top',
                 align: 'center'
             }

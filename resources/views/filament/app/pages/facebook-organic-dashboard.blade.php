@@ -49,36 +49,38 @@
             </div>
         </div>
 
-        <div class="metrics-grid-fb relative">
-            <div x-show="isSummaryLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
-            </div>
-
-            <template x-for="metric in dynamicMetrics" :key="metric.key">
-                <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
-                     @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
-                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
-                         x-show="(activeTab === 'facebook' && ['reach', 'interactions'].includes(metric.key)) || (activeTab === 'instagram' && ['reach', 'saves', 'shares'].includes(metric.key))">
-                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
-                    </div>
-                    <div class="fb-label" x-text="metric.label"></div>
-                    <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
-                        <span x-text="getVarianceIcon(metric.variance)"></span>
-                        <span x-text="formatVariance(metric.variance)"></span>
-                    </div>
+        <div class="dash-overview-section">
+            <div class="metrics-grid-fb relative">
+                <div x-show="isSummaryLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                 </div>
-            </template>
-        </div>
 
-        <div class="chart-container-fb relative w-full" wire:ignore>
-            <div x-show="isChartLoading"
-                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
-                <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                <template x-for="metric in dynamicMetrics" :key="metric.key">
+                    <div class="card-stat-fb" :class="activeMetrics[metric.key] ? 'active' : ''"
+                         @click="toggleMetric(metric.key)" :style="`--color: ${metric.color};`">
+                        <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}"
+                             x-show="(activeTab === 'facebook' && ['reach', 'interactions'].includes(metric.key)) || (activeTab === 'instagram' && ['reach', 'saves', 'shares'].includes(metric.key))">
+                            <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                        </div>
+                        <div class="fb-label" x-text="metric.label"></div>
+                        <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
+                        <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
+                            <span x-text="getVarianceIcon(metric.variance)"></span>
+                            <span x-text="formatVariance(metric.variance)"></span>
+                        </div>
+                    </div>
+                </template>
             </div>
-            <div class="dash-chart-canvas">
-                <canvas x-ref="canvas"></canvas>
+
+            <div class="chart-container-fb relative w-full" wire:ignore>
+                <div x-show="isChartLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                </div>
+                <div class="dash-chart-canvas">
+                    <canvas x-ref="canvas"></canvas>
+                </div>
             </div>
         </div>
 
