@@ -11,7 +11,7 @@ export const dashboardBuilderTour = {
             }
         },
         {
-            element: 'button[title="Controls"], .builder-toolbar button:first-of-type',
+            element: '#dashboard-controls-button',
             popover: {
                 title: 'Global Controls & Asset Group Selector',
                 description: 'Set global date ranges and asset group filters. Enable "Show Asset Group Selector" in dashboard settings to let viewers filter on the fly.',

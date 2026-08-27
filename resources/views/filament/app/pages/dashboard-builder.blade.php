@@ -26,6 +26,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <button
+                    id="dashboard-controls-button"
                     class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                     x-on:click="openDashboardControls()">
                     <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1"/>
