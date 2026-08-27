@@ -20,10 +20,10 @@ export const dataExplorerTour = {
             }
         },
         {
-            element: '[class*="tab-nav-"]',
+            element: '.gsc-table-container, .ga4-table-container, .fb-table-container',
             popover: {
                 title: 'Data Table Filtering',
-                description: 'Switch between breakdown tabs — then click any row to apply it as an active filter across the dashboard.',
+                description: 'Switch between breakdown tabs, search, sort — then click any row to apply it as an active filter across the dashboard.',
                 side: 'top',
                 align: 'center'
             }
