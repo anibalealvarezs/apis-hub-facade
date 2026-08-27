@@ -2,28 +2,28 @@ export const dataExplorerTour = {
     routePattern: '/data-explorer',
     steps: [
         {
-            element: '.fi-page-header, .fi-header',
+            element: '.gsc-header-row',
             popover: {
-                title: 'Data Explorer',
-                description: 'Directly inspect and validate raw normalized data streams from all connected channels before building dashboards.',
-                side: 'bottom',
-                align: 'start'
-            }
-        },
-        {
-            element: '[wire\\:model*="channel"], select[name*="channel"], .fi-fo-select, .fi-tabs',
-            popover: {
-                title: 'Choose Channel',
-                description: 'Select the channel integration whose normalized data schema you wish to inspect.',
+                title: 'Controls Bar',
+                description: 'Filter data by date range and property, toggle trend overlays when available, and export the dashboard to PDF.',
                 side: 'bottom',
                 align: 'center'
             }
         },
         {
-            element: '.fi-ta, table, .fi-section, [wire\\:key*="explorer-table"]',
+            element: '.metrics-grid-gsc',
             popover: {
-                title: 'Explore Synced Records',
-                description: 'Sort, filter by date ranges, and inspect dimensions, metrics, and currency-normalized values.',
+                title: 'Summary & Chart',
+                description: 'Get a quick, impactful overview of total clicks, impressions, CTR, and position — with a trend chart to spot patterns at a glance.',
+                side: 'bottom',
+                align: 'center'
+            }
+        },
+        {
+            element: '.tab-nav-gsc',
+            popover: {
+                title: 'Data Table Filtering',
+                description: 'Switch between Queries, Pages, Countries, Devices, and Search Appearance — then click any row to apply it as an active filter.',
                 side: 'top',
                 align: 'center'
             }
