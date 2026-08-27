@@ -37,7 +37,7 @@
                         'name' => __('Sync Telemetry & Worker Health'),
                         'description' => __('Remote worker queue status, global backfill progress, and per-channel sync drill-downs.'),
                         'badge' => __('Monitoring'),
-                        'url' => "{$tenantPrefix}/data-sync",
+                        'url' => "{$tenantPrefix}/telemetry",
                     ],
                 ],
             ],
