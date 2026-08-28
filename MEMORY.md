@@ -598,5 +598,8 @@
 - New widget `UserResource\Widgets\UserProjectsTable` (registered in `EditUser::getFooterWidgets()` after `UserBillingProfilesTable`): lists projects the user owns OR is a member of via `Project::where('user_id', $id)->orWhereHas('users', ...)`. Columns: name (link to project edit, not new tab), subdomain, Relationship badge (Owner/Member by `user_id`), Health badge, Billing badge. No searchable columns → no search box.
 - Removed `->searchable()` from `reference_name` and `owner.name` columns in `UserBillingProfilesTable` so the search box no longer appears on that card (Filament hides the search input when no columns are searchable and `table()` never called `->searchable()`).
 
+### Onboarding "Team & Collaborators" tour link fix (2026-08-27)
+- `resources/views/filament/account/pages/onboarding-settings.blade.php` "Team & Collaborators" tour pointed to `{$tenantPrefix}/collaborators` (404). Corrected to `{$tenantPrefix}/manage-collaborators` (matches the `ManageCollaborators` App panel page; Filament default slug = kebab class name).
+
 
 

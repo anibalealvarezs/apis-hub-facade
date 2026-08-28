@@ -96,7 +96,7 @@
                         'name' => __('Team & Collaborators'),
                         'description' => __('User invitations, role assignments, and granular asset group restrictions.'),
                         'badge' => __('Team'),
-                        'url' => "{$tenantPrefix}/collaborators",
+                        'url' => "{$tenantPrefix}/manage-collaborators",
                     ],
                     [
                         'id' => 'billing',
