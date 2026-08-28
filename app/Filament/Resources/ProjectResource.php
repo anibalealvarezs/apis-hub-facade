@@ -373,7 +373,7 @@ class ProjectResource extends Resource
                     ->formatStateUsing(fn (?string $state) => $state)
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.edit', ['record' => $record->billing_profile_id])),
+                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id])),
                 Tables\Columns\TextColumn::make('billingProfile.tier')
                     ->label(__('Tier'))
                     ->badge()
