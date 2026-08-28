@@ -379,32 +379,7 @@ class ProjectResource extends Resource
                             ->reorderable(false)
                             ->dehydrated(false)
                             ->itemLabel(fn (array $state): string => $state['email'] ?? $state['name'] ?? '')
-                            ->default(function (?Project $record) {
-                                if (!$record) return [];
-
-                                $rows = collect();
-                                foreach ($record->users()->withPivot('asset_access_unrestricted')->get() as $user) {
-                                    $rows->push([
-                                        'name' => $user->name,
-                                        'email' => $user->email,
-                                        'role' => ucfirst((string) ($user->getRoleNames()->first() ?? 'member')),
-                                        'access' => $user->pivot->asset_access_unrestricted ? __('Unrestricted') : __('Restricted'),
-                                        'invitation' => __('Active'),
-                                    ]);
-                                }
-
-                                foreach ($record->pendingInvitations()->where('expires_at', '>', now())->get() as $invitation) {
-                                    $rows->push([
-                                        'name' => '',
-                                        'email' => $invitation->email,
-                                        'role' => ucfirst((string) ($invitation->role ?? 'member')),
-                                        'access' => '—',
-                                        'invitation' => __('Pending Invitation'),
-                                    ]);
-                                }
-
-                                return $rows->all();
-                            }),
+                            ->default([]),
                     ]),
 
                 Forms\Components\Section::make('Settings')
@@ -465,7 +440,7 @@ class ProjectResource extends Resource
                             ->reorderable(false)
                             ->dehydrated(false)
                             ->itemLabel(fn (array $state): string => $state['channel'] ?? '')
-                            ->default(fn (?Project $record) => static::getSyncTelemetryData($record)['channels']),
+                            ->default([]),
                     ]),
             ]);
     }
@@ -527,6 +502,52 @@ class ProjectResource extends Resource
             'channels' => $channels,
             'message' => null,
         ];
+    }
+
+    public static function getCollaboratorDisplayData(Project $record): array
+    {
+        $memberIds = [];
+        $members = [];
+
+        foreach ($record->users()->withPivot('asset_access_unrestricted')->get() as $user) {
+            $memberIds[] = $user->id;
+            $members[] = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => ucfirst((string) ($user->getRoleNames()->first() ?? 'member')),
+                'access' => $user->pivot->asset_access_unrestricted ? __('Unrestricted') : __('Restricted'),
+                'invitation' => __('Active'),
+            ];
+        }
+
+        if ($owner = $record->user) {
+            if (! in_array($owner->id, $memberIds, true)) {
+                $members[] = [
+                    'name' => $owner->name,
+                    'email' => $owner->email,
+                    'role' => __('Owner'),
+                    'access' => '—',
+                    'invitation' => __('Active'),
+                ];
+            }
+        }
+
+        foreach ($record->pendingInvitations()->where('expires_at', '>', now())->get() as $invitation) {
+            $members[] = [
+                'name' => '',
+                'email' => $invitation->email,
+                'role' => ucfirst((string) ($invitation->role ?? 'member')),
+                'access' => '—',
+                'invitation' => __('Pending Invitation'),
+            ];
+        }
+
+        return $members;
+    }
+
+    public static function getSyncTelemetryChannels(Project $record): array
+    {
+        return static::getSyncTelemetryData($record)['channels'];
     }
 
     public static function table(Table $table): Table

@@ -582,5 +582,11 @@
 - Owner + Billing Profile `TextColumn`s on the Projects table got `->openUrlInNewTab()` (anchors in placeholders already use `target="_blank"`).
 - Spanish keys added in `lang/es.json`: "Overall Sync", "Accounts Fully Synced", "Assets Synced", "Per Channel", "Sync %", "Fully Synced %", "Telemetry unavailable.".
 
+### IMPORTANT Filament v3 gotcha: `->default()` is NOT applied on EditRecord pages (2026-08-27)
+- **Root cause found:** In `vendor/filament/forms/src/Concerns/HasState.php`, `Form::fill(?array $state = null)` only applies field `default()` values when `$state === null` (i.e., a CREATE page where `$hydratedDefaultState = []`). On EditRecord pages `fill($modelData)` passes a non-null array → `$hydratedDefaultState = null` → `HasState::hydrateDefaultState()` takes the `loadStateFromRelationships()` branch and NEVER evaluates `default()`. Result: Repeaters/fields populated via `->default(fn(?Project $record) => ...)` show up empty on edit, even though the identical logic works in `Placeholder` `content()` closures (which are re-evaluated on render).
+- **Fix pattern:** Prefill derived (non-model) form paths via `EditRecord::mutateFormDataBeforeFill(array $data)` — set `$data['some_path'] = [...]` (computed from `$this->record`) and return `$data`. The Repeater then renders those rows. `->default([])` is left as a harmless fallback for the create page.
+- Repeater read-only recipe that works: disabled inner fields + `->addable(false)->deletable(false)->reorderable(false)->dehydrated(false)` + rows supplied by `mutateFormDataBeforeFill`.
+- Members list now guarantees the project owner is always present: `Project::user()` (BelongsTo, `user_id`) is unioned with the `users()` belongsToMany pivot (dedup by user id), then `pendingInvitations()` rows. Owner role label = `__('Owner')`.
+
 
 

@@ -16,4 +16,14 @@ class EditProject extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        if ($this->record) {
+            $data['collaborators_display'] = ProjectResource::getCollaboratorDisplayData($this->record);
+            $data['sync_telemetry_channels'] = ProjectResource::getSyncTelemetryChannels($this->record);
+        }
+
+        return $data;
+    }
 }
