@@ -737,8 +737,11 @@ class ProjectResource extends Resource
                     ->visible(fn (Project $record) => $record->apisHubRelease !== null)
                     ->modalHeading(fn (Project $record) => "Upgrade {$record->name}")
                     ->modalDescription(fn (Project $record) => sprintf(
-                        'Current: %s. Select a newer release to upgrade to.',
-                        $record->apisHubRelease->version_tag
+                        'Current: %s. %s',
+                        $record->apisHubRelease->version_tag,
+                        is_null($record->last_deployed_at)
+                            ? 'This project has not been deployed yet. The upgrade will only update the target version.'
+                            : 'Select a newer release to upgrade to.'
                     ))
                     ->form(fn (Project $record) => [
                         Forms\Components\Select::make('target_release_id')
@@ -760,6 +763,20 @@ class ProjectResource extends Resource
                             return;
                         }
 
+                        if (is_null($record->last_deployed_at)) {
+                            // Never deployed: just update the target release. Initial deploy will pick it up.
+                            $record->update(['apis_hub_release_id' => $target->id]);
+
+                            Notification::make()
+                                ->title(__('Upgrade Saved'))
+                                ->body("Target version updated to {$target->version_tag}. The initial deployment will use this version.")
+                                ->success()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Already deployed: trigger full upgrade deployment
                         \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target);
 
                         Notification::make()
