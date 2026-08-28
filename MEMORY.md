@@ -601,5 +601,11 @@
 ### Onboarding "Team & Collaborators" tour link fix (2026-08-27)
 - `resources/views/filament/account/pages/onboarding-settings.blade.php` "Team & Collaborators" tour pointed to `{$tenantPrefix}/collaborators` (404). Corrected to `{$tenantPrefix}/manage-collaborators` (matches the `ManageCollaborators` App panel page; Filament default slug = kebab class name).
 
+### Collaborators onboarding tour adjusted (2026-08-27)
+- `tour-manager.js` `routePattern` matching uses `path.includes(pattern)`; the old `'/collaborators'` pattern did NOT match `/app/{tenant}/manage-collaborators` (hyphen, not slash), so the tour never auto-ran. Fixed to `'/manage-collaborators'`.
+- `collaborators-tour.js` steps restructured: 1) Team & Collaborators (header), 2) Active Members (`#active-members-section`), 3) Pending Invites (`#pending-invites-section`), 4) Generate Share Codes (`#share-codes-section`). Dropped the old "Invite New Collaborator" button step.
+- `manage-collaborators.blade.php` now wraps each section in an id anchor so driver.js can target them reliably: members table, pending invites (conditional, so the step is skipped automatically when the user lacks `manage_collaborators`), share codes.
+- JS rebuild required after editing tour flows: `npm run build` in apis-hub-facade.
+
 
 

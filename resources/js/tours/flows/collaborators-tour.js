@@ -1,5 +1,5 @@
 export const collaboratorsTour = {
-    routePattern: '/collaborators',
+    routePattern: '/manage-collaborators',
     steps: [
         {
             element: '.fi-header-heading, .fi-header, .fi-page-header',
@@ -11,19 +11,28 @@ export const collaboratorsTour = {
             }
         },
         {
-            element: 'button:has(.heroicon-m-user-plus), .fi-page-header-actions button, .fi-ta-header-actions button, button:has(.heroicon-o-plus)',
+            element: '#active-members-section',
             popover: {
-                title: 'Invite New Collaborator',
-                description: 'Send an invitation by email and assign project roles (Admin, Editor, or Viewer) with optional asset group restrictions.',
-                side: 'bottom',
+                title: 'Active Members',
+                description: 'Review the active members of this project. Edit their roles and permissions, or revoke access.',
+                side: 'top',
                 align: 'center'
             }
         },
         {
-            element: '.fi-ta, table, .fi-ta-content',
+            element: '#pending-invites-section',
             popover: {
-                title: 'Active Members & Pending Invites',
-                description: 'Review active team members, edit permissions, resend pending invitation links, or revoke access.',
+                title: 'Pending Invites',
+                description: 'Below the active members you will find the pending invitations. Resend or cancel them, or grant access to new collaborators.',
+                side: 'top',
+                align: 'center'
+            }
+        },
+        {
+            element: '#share-codes-section',
+            popover: {
+                title: 'Generate Share Codes',
+                description: 'Generate share codes so any user can join this project from the registration form. Each code can only be used once.',
                 side: 'top',
                 align: 'center'
             }
