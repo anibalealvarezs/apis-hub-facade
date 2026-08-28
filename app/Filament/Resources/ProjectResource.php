@@ -121,6 +121,12 @@ class ProjectResource extends Resource
                             ->preload()
                             ->label(__('Account Holder'))
                             ->helperText(__('The user who owns this instance.')),
+                        Forms\Components\Placeholder::make('owner_profile_link')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(fn (?Project $record) => $record?->user
+                                ? '<a href="' . route('filament.admin.resources.users.edit', ['record' => $record->user_id]) . '" target="_blank" class="text-primary-600 hover:underline text-sm">' . __('Check user\'s profile') . '</a>'
+                                : ''),
                     ])->columns(4),
 
                 Forms\Components\Section::make('Repository & Deployment')
@@ -207,7 +213,12 @@ class ProjectResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('billing_profile_name')
                             ->label(__('Profile Name'))
-                            ->content(fn (?Project $record) => $record?->billingProfile?->reference_name ?? 'None'),
+                            ->content(fn (?Project $record) => $record?->billingProfile?->reference_name ?? 'None')
+                            ->extraAttributes([
+                                'class' => 'cursor-pointer text-primary-600 hover:underline',
+                                'wire:click' => '$dispatch("openBillingProfileView", { billingProfileId: ' . '$record->billing_profile_id' . ' })',
+                            ])
+                            ->columnSpan(1),
                         Forms\Components\Placeholder::make('billing_tier')
                             ->label(__('Tier'))
                             ->content(fn (?Project $record) => $record?->billingProfile?->tier instanceof \App\Enums\UserTier ? $record->billingProfile->tier->value : ($record?->billingProfile?->tier ?? 'None')),
@@ -348,6 +359,107 @@ class ProjectResource extends Resource
                                     ->send();
                             }),
                     ]),
+                Forms\Components\Section::make('Team & Collaborators')
+                    ->description(__('Project members and their roles.'))
+                    ->schema([
+                        Forms\Components\Placeholder::make('collaborators_list')
+                            ->label(__('Members'))
+                            ->content(function (?Project $record) {
+                                if (!$record) return '';
+                                
+                                $members = $record->users()->withPivot('asset_access_unrestricted')->get();
+                                $invitations = $record->invitations()->where('status', 'pending')->get();
+                                
+                                $html = '<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 dark:border-gray-700"><th class="text-left p-2 font-medium">' . __('User') . '</th><th class="text-left p-2 font-medium">' . __('Role') . '</th><th class="text-left p-2 font-medium">' . __('Asset Access') . '</th><th class="text-left p-2 font-medium">' . __('Invitation') . '</th></tr></thead><tbody>';
+                                
+                                foreach ($members as $user) {
+                                    $pivot = $user->pivot;
+                                    $role = $user->getRoleNames()->first() ?? 'member';
+                                    $access = $pivot->asset_access_unrestricted ? __('Unrestricted') : __('Restricted');
+                                    $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2"><a href="' . route('filament.admin.resources.users.edit', ['record' => $user->id]) . '" target="_blank" class="text-primary-600 hover:underline">' . e($user->name) . '</a><br><span class="text-xs text-gray-500 dark:text-gray-400">' . e($user->email) . '</span></td><td class="p-2">' . e(ucfirst($role)) . '</td><td class="p-2">' . e($access) . '</td><td class="p-2 text-green-600 dark:text-green-400">' . __('Active') . '</td></tr>';
+                                }
+                                
+                                foreach ($invitations as $invitation) {
+                                    $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2"><span class="text-gray-500 dark:text-gray-400">' . e($invitation->email) . '</span></td><td class="p-2">' . e(ucfirst($invitation->role ?? 'member')) . '</td><td class="p-2">—</td><td class="p-2 text-amber-600 dark:text-amber-400">' . __('Pending Invitation') . '</td></tr>';
+                                }
+                                
+                                if ($members->isEmpty() && $invitations->isEmpty()) {
+                                    $html .= '<tr><td colspan="4" class="p-2 text-center text-gray-500 dark:text-gray-400">' . __('No members or invitations') . '</td></tr>';
+                                }
+                                
+                                $html .= '</tbody></table>';
+                                return $html;
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(1)
+                    ->collapsible()
+                    ->collapsed(),
+                Forms\Components\Section::make('Settings')
+                    ->description(__('Timezone and content language preferences.'))
+                    ->schema([
+                        Forms\Components\Placeholder::make('timezone')
+                            ->label(__('Timezone'))
+                            ->content(fn (?Project $record) => $record?->timezone ?? 'UTC'),
+                        Forms\Components\Placeholder::make('content_languages')
+                            ->label(__('Content Languages'))
+                            ->content(function (?Project $record) {
+                                if (!$record || !$record->sync_config) return '—';
+                                $langs = [];
+                                foreach ($record->sync_config as $channelConfig) {
+                                    if (is_array($channelConfig) && !empty($channelConfig['language'])) {
+                                        $langs[] = $channelConfig['language'];
+                                    }
+                                }
+                                return $langs ? implode(', ', array_unique($langs)) : '—';
+                            }),
+                    ])
+                    ->columns(2)
+                    ->collapsible()
+                    ->collapsed(),
+                Forms\Components\Section::make('Sync Settings (Telemetry)')
+                    ->description(__('Sync configuration totals per channel (from telemetry).'))
+                    ->schema([
+                        Forms\Components\Placeholder::make('sync_settings_summary')
+                            ->label(__('Channel Totals'))
+                            ->content(function (?Project $record) {
+                                if (!$record || !$record->sync_config) return '—';
+                                
+                                $totals = [];
+                                foreach ($record->sync_config as $channelKey => $channelConfig) {
+                                    if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
+                                    
+                                    $assetCount = 0;
+                                    $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
+                                    foreach ($assetKeys as $assetKey) {
+                                        $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
+                                        if (is_array($assets)) {
+                                            foreach ($assets as $asset) {
+                                                if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
+                                                    $assetCount++;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if ($assetCount > 0) {
+                                        $totals[$channelKey] = $assetCount;
+                                    }
+                                }
+                                
+                                if (empty($totals)) return '—';
+                                
+                                $html = '<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 dark:border-gray-700"><th class="text-left p-2 font-medium">' . __('Channel') . '</th><th class="text-left p-2 font-medium">' . __('Enabled Assets') . '</th></tr></thead><tbody>';
+                                foreach ($totals as $channel => $count) {
+                                    $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2 font-medium">' . e(ucfirst(str_replace('_', ' ', $channel))) . '</td><td class="p-2">' . $count . '</td></tr>';
+                                }
+                                $html .= '</tbody></table>';
+                                return $html;
+                            })
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(1)
+                    ->collapsible()
+                    ->collapsed(),
             ]);
     }
 
