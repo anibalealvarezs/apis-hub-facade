@@ -479,17 +479,35 @@ class ProjectResource extends Resource
                     ->label(__('Owner (Name)'))
                     ->relationship('user', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
                 Tables\Filters\SelectFilter::make('user.email')
                     ->label(__('Owner (Email)'))
                     ->relationship('user', 'email')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'email')
+                        ->whereNotNull('email')
+                        ->orderBy('email')
+                        ->pluck('email', 'id')
+                        ->toArray()),
                 Tables\Filters\SelectFilter::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
                     ->relationship('billingProfile', 'reference_name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->options(fn () => \App\Models\BillingProfile::query()
+                        ->select('id', 'reference_name')
+                        ->whereNotNull('reference_name')
+                        ->orderBy('reference_name')
+                        ->pluck('reference_name', 'id')
+                        ->toArray()),
                 Tables\Filters\SelectFilter::make('billingProfile.tier')
                     ->label(__('Tier'))
                     ->options([
@@ -522,12 +540,25 @@ class ProjectResource extends Resource
                     ->label(__('Target Server'))
                     ->relationship('server', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->options(fn () => \App\Models\Server::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
                 Tables\Filters\SelectFilter::make('apisHubRelease.version_tag')
                     ->label(__('Release'))
                     ->relationship('apisHubRelease', 'version_tag')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->options(fn () => \App\Models\ApisHubRelease::query()
+                        ->select('id', 'version_tag')
+                        ->where('is_active', true)
+                        ->whereNotNull('version_tag')
+                        ->orderBy('version_tag')
+                        ->pluck('version_tag', 'id')
+                        ->toArray()),
             ])
             ->actions([
                 Tables\Actions\Action::make('checkAuth')
