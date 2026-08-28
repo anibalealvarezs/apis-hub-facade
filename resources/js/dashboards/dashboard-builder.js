@@ -1806,6 +1806,7 @@ export function dashboardBuilder(config = {}) {
             let multiDragStartPositions = null;
 
             this.grid.on('dragstart', (event, el) => {
+                const prevFloat = this.grid?.engine?.float ?? true;
                 let lastEvt = null;
                 const onPointerMove = (e) => { lastEvt = e; };
                 window.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -1831,6 +1832,7 @@ export function dashboardBuilder(config = {}) {
                     if (this.grid) this.grid.batchUpdate(true);
                 } else {
                     multiDragStartPositions = null;
+                    if (this.grid?.engine) this.grid.engine._float = false;
                 }
 
                 autoScrollTimer = setInterval(() => {
@@ -1876,6 +1878,7 @@ export function dashboardBuilder(config = {}) {
                 this.grid.on('drag', syncGroupMove);
 
                 const cleanup = () => {
+                    if (this.grid?.engine) this.grid.engine._float = prevFloat;
                     syncGroupMove();
                     if (multiDragStartPositions && this.grid) {
                         this.grid.batchUpdate(false);
