@@ -11,6 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 
 class BillingProfileResource extends Resource
 {
@@ -65,7 +67,15 @@ class BillingProfileResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('owner_name')
                             ->label(__('Name'))
-                            ->content(fn (BillingProfile $record): ?string => $record->user?->name),
+                            ->content(function (BillingProfile $record): Htmlable|string|null {
+                                if (!$record->user_id || !$record->user) {
+                                    return '—';
+                                }
+
+                                return new HtmlString(
+                                    '<a href="' . e(route('filament.admin.resources.users.edit', ['record' => $record->user_id])) . '" target="_blank" class="text-primary-600 hover:underline">' . e($record->user->name) . '</a>'
+                                );
+                            }),
                         Forms\Components\Placeholder::make('owner_email')
                             ->label(__('Email'))
                             ->content(fn (BillingProfile $record): ?string => $record->user?->email),

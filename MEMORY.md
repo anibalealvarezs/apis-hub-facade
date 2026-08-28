@@ -588,5 +588,10 @@
 - Repeater read-only recipe that works: disabled inner fields + `->addable(false)->deletable(false)->reorderable(false)->dehydrated(false)` + rows supplied by `mutateFormDataBeforeFill`.
 - Members list now guarantees the project owner is always present: `Project::user()` (BelongsTo, `user_id`) is unioned with the `users()` belongsToMany pivot (dedup by user id), then `pendingInvitations()` rows. Owner role label = `__('Owner')`.
 
+### Billing Profile view page: Owner + Projects links (2026-08-27)
+- `BillingProfileResource::form()` "Owner" section: `owner_name` Placeholder now renders a `HtmlString` anchor to `filament.admin.resources.users.edit` (target `_blank`, primary-600 / hover underline), instead of plain text. (Placeholder `content()` closures DO receive the record, so record edit/view forms are fine — unlike `default()`.)
+- `ProjectsRelationManager` Name column now links to `filament.admin.resources.projects.edit` with `->openUrlInNewTab()`.
+- BillingProfile view page = `ViewRecord` (`ViewBillingProfile`) — it renders the resource `form()` schema, so the Owner link lives in the form schema.
+
 
 

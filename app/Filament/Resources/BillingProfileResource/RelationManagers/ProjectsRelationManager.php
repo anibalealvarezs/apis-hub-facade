@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BillingProfileResource\RelationManagers;
 
+use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -29,7 +30,9 @@ class ProjectsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (Project $record): string => route('filament.admin.resources.projects.edit', ['record' => $record->id]))
+                    ->openUrlInNewTab(),
                 Tables\Columns\TextColumn::make('subdomain')
                     ->badge()
                     ->color('gray'),
