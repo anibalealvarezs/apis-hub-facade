@@ -366,12 +366,14 @@ class ProjectResource extends Resource
                     ->label(__('Owner'))
                     ->description(fn (Project $record): string => $record->user->email ?? '')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id])),
                 Tables\Columns\TextColumn::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
                     ->formatStateUsing(fn (?string $state) => $state)
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.edit', ['record' => $record->billing_profile_id])),
                 Tables\Columns\TextColumn::make('billingProfile.tier')
                     ->label(__('Tier'))
                     ->badge()
@@ -473,6 +475,82 @@ class ProjectResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active'),
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('user.name')
+                    ->label(__('Owner (Name)'))
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('user.email')
+                    ->label(__('Owner (Email)'))
+                    ->relationship('user', 'email')
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'email')
+                        ->whereNotNull('email')
+                        ->orderBy('email')
+                        ->pluck('email', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('billingProfile.reference_name')
+                    ->label(__('Billing Profile'))
+                    ->relationship('billingProfile', 'reference_name')
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => \App\Models\BillingProfile::query()
+                        ->select('id', 'reference_name')
+                        ->whereNotNull('reference_name')
+                        ->orderBy('reference_name')
+                        ->pluck('reference_name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('billingProfile.tier')
+                    ->label(__('Tier'))
+                    ->options(\App\Enums\UserTier::class)
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('billing_status')
+                    ->label(__('Billing'))
+                    ->options([
+                        'active' => 'Active',
+                        'past_due' => 'Past Due',
+                        'suspended' => 'Suspended',
+                    ])
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('health_status')
+                    ->label(__('Health Status'))
+                    ->options([
+                        'online' => 'Online',
+                        'offline' => 'Offline',
+                        'error' => 'Error',
+                        'upgrading' => 'Upgrading',
+                    ])
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('server.name')
+                    ->label(__('Target Server'))
+                    ->relationship('server', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => \App\Models\Server::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('apisHubRelease.version_tag')
+                    ->label(__('Release'))
+                    ->relationship('apisHubRelease', 'version_tag')
+                    ->searchable()
+                    ->preload()
+                    ->options(fn () => \App\Models\ApisHubRelease::query()
+                        ->select('id', 'version_tag')
+                        ->where('is_active', true)
+                        ->orderBy('version_tag')
+                        ->pluck('version_tag', 'id')
+                        ->toArray()),
             ])
             ->actions([
                 Tables\Actions\Action::make('checkAuth')
