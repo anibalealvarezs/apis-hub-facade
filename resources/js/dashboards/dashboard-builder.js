@@ -1684,6 +1684,7 @@ export function dashboardBuilder(config = {}) {
 
                 if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                     dragging = true;
+                    document.body.classList.add('bd-cursor-grabbing');
                     savedFloat = grid.float();
                     grid.float(false);
 
@@ -1737,6 +1738,7 @@ export function dashboardBuilder(config = {}) {
             const onPointerUp = (e) => {
                 document.removeEventListener('pointermove', onPointerMove, { capture: true });
                 document.removeEventListener('pointerup', onPointerUp, { capture: true });
+                document.body.classList.remove('bd-cursor-grabbing');
 
                 const wasDragging = dragging;
                 dragging = false;
@@ -1758,7 +1760,7 @@ export function dashboardBuilder(config = {}) {
                     this.targetGridW = activeW;
                     this.targetGridH = activeH;
                     this.pendingDragSourceType = activeSource;
-                    removeGhost();
+                    removeGhost({ skipCompact: true });
                     this.openAddWidgetModal(activeSource);
                 } else {
                     removeGhost();
@@ -1825,6 +1827,7 @@ export function dashboardBuilder(config = {}) {
 
                 if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                     dragging = true;
+                    document.body.classList.add('bd-cursor-grabbing');
                     savedFloat = grid.float();
                     grid.float(false);
 
@@ -1878,6 +1881,7 @@ export function dashboardBuilder(config = {}) {
             const onPointerUp = (e) => {
                 document.removeEventListener('pointermove', onPointerMove, { capture: true });
                 document.removeEventListener('pointerup', onPointerUp, { capture: true });
+                document.body.classList.remove('bd-cursor-grabbing');
 
                 const wasDragging = dragging;
                 dragging = false;
