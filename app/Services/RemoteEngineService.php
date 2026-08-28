@@ -269,9 +269,9 @@ class RemoteEngineService
     /**
      * Fetch sync telemetry payload.
      */
-    public function getSyncTelemetry(Project $project)
+    public function getSyncTelemetry(Project $project, ?int $timeout = null)
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->getSyncTelemetry());
+        return $this->execute($project, fn (ApisHubApi $client) => $client->getSyncTelemetry(), $timeout ?? 15);
     }
 
     /**

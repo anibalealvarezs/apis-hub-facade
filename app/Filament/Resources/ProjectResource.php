@@ -364,39 +364,49 @@ class ProjectResource extends Resource
                 Forms\Components\Section::make('Team & Collaborators')
                     ->description(__('Project members and their roles.'))
                     ->schema([
-                        Forms\Components\Placeholder::make('collaborators_list')
+                        Forms\Components\Repeater::make('collaborators_display')
                             ->label(__('Members'))
-                            ->content(function (?Project $record) {
-                                if (!$record) return '';
-                                
-                                $members = $record->users()->withPivot('asset_access_unrestricted')->get();
-                                $invitations = $record->pendingInvitations()->where('expires_at', '>', now())->get();
-                                
-                                $html = '<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 dark:border-gray-700"><th class="text-left p-2 font-medium">' . __('User') . '</th><th class="text-left p-2 font-medium">' . __('Role') . '</th><th class="text-left p-2 font-medium">' . __('Asset Access') . '</th><th class="text-left p-2 font-medium">' . __('Invitation') . '</th></tr></thead><tbody>';
-                                
-                                foreach ($members as $user) {
-                                    $pivot = $user->pivot;
-                                    $role = $user->getRoleNames()->first() ?? 'member';
-                                    $access = $pivot->asset_access_unrestricted ? __('Unrestricted') : __('Restricted');
-                                    $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2"><a href="' . route('filament.admin.resources.users.edit', ['record' => $user->id]) . '" target="_blank" class="text-primary-600 hover:underline">' . e($user->name) . '</a><br><span class="text-xs text-gray-500 dark:text-gray-400">' . e($user->email) . '</span></td><td class="p-2">' . e(ucfirst($role)) . '</td><td class="p-2">' . e($access) . '</td><td class="p-2 text-green-600 dark:text-green-400">' . __('Active') . '</td></tr>';
+                            ->schema([
+                                Forms\Components\TextInput::make('name')->disabled(),
+                                Forms\Components\TextInput::make('email')->disabled(),
+                                Forms\Components\TextInput::make('role')->disabled(),
+                                Forms\Components\TextInput::make('access')->disabled(),
+                                Forms\Components\TextInput::make('invitation')->disabled(),
+                            ])
+                            ->columns(5)
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->dehydrated(false)
+                            ->itemLabel(fn (array $state): string => $state['email'] ?? $state['name'] ?? '')
+                            ->default(function (?Project $record) {
+                                if (!$record) return [];
+
+                                $rows = collect();
+                                foreach ($record->users()->withPivot('asset_access_unrestricted')->get() as $user) {
+                                    $rows->push([
+                                        'name' => $user->name,
+                                        'email' => $user->email,
+                                        'role' => ucfirst((string) ($user->getRoleNames()->first() ?? 'member')),
+                                        'access' => $user->pivot->asset_access_unrestricted ? __('Unrestricted') : __('Restricted'),
+                                        'invitation' => __('Active'),
+                                    ]);
                                 }
-                                
-                                foreach ($invitations as $invitation) {
-                                    $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2"><span class="text-gray-500 dark:text-gray-400">' . e($invitation->email) . '</span></td><td class="p-2">' . e(ucfirst($invitation->role ?? 'member')) . '</td><td class="p-2">—</td><td class="p-2 text-amber-600 dark:text-amber-400">' . __('Pending Invitation') . '</td></tr>';
+
+                                foreach ($record->pendingInvitations()->where('expires_at', '>', now())->get() as $invitation) {
+                                    $rows->push([
+                                        'name' => '',
+                                        'email' => $invitation->email,
+                                        'role' => ucfirst((string) ($invitation->role ?? 'member')),
+                                        'access' => '—',
+                                        'invitation' => __('Pending Invitation'),
+                                    ]);
                                 }
-                                
-                                if ($members->isEmpty() && $invitations->isEmpty()) {
-                                    $html .= '<tr><td colspan="4" class="p-2 text-center text-gray-500 dark:text-gray-400">' . __('No members or invitations') . '</td></tr>';
-                                }
-                                
-                                $html .= '</tbody></table>';
-                                return new \Illuminate\Support\HtmlString($html);
-                            })
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(1)
-                    ->collapsible()
-                    ->collapsed(),
+
+                                return $rows->all();
+                            }),
+                    ]),
+
                 Forms\Components\Section::make('Settings')
                     ->description(__('Timezone and content language preferences.'))
                     ->schema([
@@ -416,53 +426,107 @@ class ProjectResource extends Resource
                                 return $langs ? implode(', ', array_unique($langs)) : '—';
                             }),
                     ])
-                    ->columns(2)
-                    ->collapsible()
-                    ->collapsed(),
-                Forms\Components\Section::make('Sync Settings (Telemetry)')
-                    ->description(__('Sync configuration totals per channel (from telemetry).'))
+                    ->columns(2),
+
+                Forms\Components\Section::make('Sync Telemetry')
+                    ->description(__('Live sync progress per channel, fetched from the remote node.'))
                     ->schema([
-                        Forms\Components\Placeholder::make('sync_settings_summary')
-                            ->label(__('Channel Totals'))
-                            ->content(function (?Project $record) {
-                                if (!$record || !$record->sync_config) return '—';
-                                
-                                $totals = [];
-                                foreach ($record->sync_config as $channelKey => $channelConfig) {
-                                    if (!is_array($channelConfig) || empty($channelConfig['enabled'])) continue;
-                                    
-                                    $assetCount = 0;
-                                    $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
-                                    foreach ($assetKeys as $assetKey) {
-                                        $assets = $channelConfig[$assetKey] ?? ($channelConfig['assets'][$assetKey] ?? null);
-                                        if (is_array($assets)) {
-                                            foreach ($assets as $asset) {
-                                                if (is_array($asset) && !empty($asset['enabled']) && empty($asset['lost_access'])) {
-                                                    $assetCount++;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    if ($assetCount > 0) {
-                                        $totals[$channelKey] = $assetCount;
-                                    }
-                                }
-                                
-                                if (empty($totals)) return '—';
-                                
-                                $html = '<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 dark:border-gray-700"><th class="text-left p-2 font-medium">' . __('Channel') . '</th><th class="text-left p-2 font-medium">' . __('Enabled Assets') . '</th></tr></thead><tbody>';
-                                foreach ($totals as $channel => $count) {
-                                    $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2 font-medium">' . e(ucfirst(str_replace('_', ' ', $channel))) . '</td><td class="p-2">' . $count . '</td></tr>';
-                                }
-                                $html .= '</tbody></table>';
-                                return new \Illuminate\Support\HtmlString($html);
-                            })
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Placeholder::make('overall_sync_percentage')
+                                    ->label(__('Overall Sync'))
+                                    ->content(fn (?Project $record) => ($pct = static::getSyncTelemetryData($record)['overall']) !== null ? "{$pct}%" : '—'),
+                                Forms\Components\Placeholder::make('overall_fully_synced')
+                                    ->label(__('Accounts Fully Synced'))
+                                    ->content(fn (?Project $record) => ($pct = static::getSyncTelemetryData($record)['fully_synced']) !== null ? "{$pct}%" : '—'),
+                                Forms\Components\Placeholder::make('overall_assets')
+                                    ->label(__('Assets Synced'))
+                                    ->content(fn (?Project $record) => static::getSyncTelemetryData($record)['assets'] ?: '—'),
+                            ])
                             ->columnSpanFull(),
-                    ])
-                    ->columns(1)
-                    ->collapsible()
-                    ->collapsed(),
+                        Forms\Components\Placeholder::make('sync_telemetry_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->extraAttributes(fn (?Project $record) => static::getSyncTelemetryData($record)['message']
+                                ? ['class' => 'text-warning-600 dark:text-warning-400']
+                                : [])
+                            ->content(fn (?Project $record) => static::getSyncTelemetryData($record)['message'] ?? ''),
+                        Forms\Components\Repeater::make('sync_telemetry_channels')
+                            ->label(__('Per Channel'))
+                            ->schema([
+                                Forms\Components\TextInput::make('channel')->disabled(),
+                                Forms\Components\TextInput::make('completion')->label(__('Sync %'))->disabled(),
+                                Forms\Components\TextInput::make('fully_synced')->label(__('Fully Synced %'))->disabled(),
+                                Forms\Components\TextInput::make('assets')->label(__('Assets Synced'))->disabled(),
+                            ])
+                            ->columns(4)
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->dehydrated(false)
+                            ->itemLabel(fn (array $state): string => $state['channel'] ?? '')
+                            ->default(fn (?Project $record) => static::getSyncTelemetryData($record)['channels']),
+                    ]),
             ]);
+    }
+
+    protected static ?array $syncTelemetryData = [];
+
+    private static function getSyncTelemetryData(?Project $record): array
+    {
+        $key = $record?->getKey();
+
+        if ($key === null || ! $record?->hasBeenDeployed()) {
+            return ['overall' => null, 'fully_synced' => null, 'assets' => null, 'channels' => [], 'message' => null];
+        }
+
+        if (array_key_exists($key, static::$syncTelemetryData)) {
+            return static::$syncTelemetryData[$key];
+        }
+
+        $unavailable = static::$syncTelemetryData[$key] = [
+            'overall' => null,
+            'fully_synced' => null,
+            'assets' => null,
+            'channels' => [],
+            'message' => __('Telemetry unavailable.'),
+        ];
+
+        try {
+            $result = app(RemoteEngineService::class)->getSyncTelemetry($record, 3);
+        } catch (\Throwable $e) {
+            return $unavailable;
+        }
+
+        if (! is_array($result) || ! isset($result['completion_percentage']) || ! is_array($result['channels'] ?? null)) {
+            if (is_array($result) && isset($result['status']) && $result['status'] === 'error') {
+                static::$syncTelemetryData[$key]['message'] = $result['message'] ?? __('Telemetry unavailable.');
+            }
+
+            return static::$syncTelemetryData[$key];
+        }
+
+        $channels = [];
+        foreach ($result['channels'] as $channelKey => $stats) {
+            if (! is_array($stats)) {
+                continue;
+            }
+
+            $channels[] = [
+                'channel' => ucfirst(str_replace('_', ' ', (string) $channelKey)),
+                'completion' => (int) round((float) ($stats['completion_percentage'] ?? 0)),
+                'fully_synced' => (int) round((float) ($stats['fully_synced_percentage'] ?? 0)),
+                'assets' => (int) ($stats['fully_synced_count'] ?? 0) . ' / ' . (int) ($stats['total_assets'] ?? 0),
+            ];
+        }
+
+        return static::$syncTelemetryData[$key] = [
+            'overall' => (int) round((float) ($result['completion_percentage'] ?? 0)),
+            'fully_synced' => (int) round((float) ($result['fully_synced_percentage'] ?? 0)),
+            'assets' => (int) ($result['fully_synced_count'] ?? 0) . ' / ' . (int) ($result['total_assets'] ?? 0),
+            'channels' => $channels,
+            'message' => null,
+        ];
     }
 
     public static function table(Table $table): Table
@@ -481,13 +545,15 @@ class ProjectResource extends Resource
                     ->description(fn (Project $record): string => $record->user->email ?? '')
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id])),
+                    ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id]))
+                    ->openUrlInNewTab(),
                 Tables\Columns\TextColumn::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
                     ->formatStateUsing(fn (?string $state) => $state)
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id])),
+                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id]))
+                    ->openUrlInNewTab(),
                 Tables\Columns\TextColumn::make('billingProfile.tier')
                     ->label(__('Tier'))
                     ->badge()

@@ -573,5 +573,14 @@
   - Added `.topbar-logo-anchor` with desktop `display: flex` / mobile `@media (max-width: 1023.98px) { display: none !important; }` in [topbar-logo.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/hooks/topbar-logo.blade.php).
 - **Important rule:** Utility classes (`.lg:flex`, `.sm:inline`, etc.) must NEVER use `!important` — Alpine's `x-show` relies on applying inline `style="display: none;"` which would otherwise be overridden by an `!important` CSS rule (e.g. the main menu sidebar collapse button `<x-filament::icon-button class="ms-auto hidden lg:flex" x-show="$store.sidebar.isOpen" />`).
 
+### Project edit page: read-only sections rebuilt with native Filament components (2026-08-27)
+- Removed the custom HTML `<table>` cards (Member list, Channel Totals) from `ProjectResource::form()` — user feedback: "custom tables are dumb / layout awful". Replaced with disabled `Repeater`s (`->addable(false)->deletable(false)->reorderable(false)->dehydrated(false)`) whose rows are populated via `->default(fn (?Project $record) => ...)` (no DB write). Team members come from `$record->users()->withPivot('asset_access_unrestricted')` + `pendingInvitations()`.
+- "Sync Telemetry" section now shows REAL live data fetched from the remote node via `RemoteEngineService::getSyncTelemetry()` (mirrors the app portal `/api/sync/status` shape): overall sync %, accounts fully synced %, assets synced (`fully_synced_count / total_assets`) as plain `Placeholder`s, plus a per-channel disabled Repeater. `getSyncTelemetryData()` private static helper on `ProjectResource` caches per-request in a static array (all form closures hit one request).
+- `RemoteEngineService::getSyncTelemetry()` gained an optional `$timeout` param (default keeps 15s for existing callers; the form passes 3s to avoid hanging the admin edit page on slow/unreachable nodes). Error/not-deployed → "Telemetry unavailable." warning placeholder, no crash.
+- All three formerly `->collapsible()->collapsed()` sections (Team & Collaborators, Settings, Sync Telemetry) are now open by default per user's "all tables must be uncollapsed by default" request.
+- Round-trip link rendering rule confirmed: to render raw HTML in a Filament `Placeholder`, return `new \Illuminate\Support\HtmlString(...)` — its value goes through Laravel's `e()` which outputs `Htmlable` unescaped (NOT `->html()`, which does not exist on the Field).
+- Owner + Billing Profile `TextColumn`s on the Projects table got `->openUrlInNewTab()` (anchors in placeholders already use `target="_blank"`).
+- Spanish keys added in `lang/es.json`: "Overall Sync", "Accounts Fully Synced", "Assets Synced", "Per Channel", "Sync %", "Fully Synced %", "Telemetry unavailable.".
+
 
 
