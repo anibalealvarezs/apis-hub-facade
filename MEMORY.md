@@ -286,8 +286,22 @@
 - **Behavior notes:** joint `select { color-scheme }` rules scoped to `.joint-page select`; gsc `.gsc-pagination-select` bug fixed (`--fb-*` → `--gsc-*`); fbo `.sticky-header-section` gained the sticky rules (was inline).
 - **Verification:** `php -l` clean on 5 blades, `view:cache` OK, dashboards.css braces balanced (219/219). No Vite rebuild needed (plain CSS).
 
-### CSS Extraction F0: Builder, View-Content, Modals, Globals (2026-08-06)
-- **Change:** Completed the remaining CSS-extraction plan (F0) across builder/view-content/modals/globals, extending the dashboards extraction above. All static `<style>` blocks and `style="..."` attributes moved to plain CSS files; only dynamic styles (Alpine `:style`, Blade `{{ }}`, JS template strings) stay inline.
+### Universal Project Feature Gate Middleware (2026-08-27)
+- **Problem:** Accessing a feature-required page (e.g., Alerts) on a project with an outdated release resulted in a 403 error instead of a friendly redirect with explanation.
+- **Solution:** Created `CheckProjectFeature` middleware (`app/Http/Middleware/CheckProjectFeature.php`) that:
+  - Maps route patterns → required features with minimum version (e.g., `'filament.app.resources.alerts.*' => ['alerts' => '1.15.0']`)
+  - Checks the current project's release version against requirements
+  - Redirects to dashboard with a persistent warning notification if feature is unavailable
+  - Registered in `AppPanelProvider` tenantMiddleware stack
+- **AlertResource updated:** `shouldRegisterNavigation()` hides nav for unsupported projects; `canAccess()` returns true (middleware handles gating)
+- **To add future feature gates**, edit `$featureRoutes` in `CheckProjectFeature`:
+  ```php
+  protected array $featureRoutes = [
+      'filament.app.resources.alerts.*' => ['alerts' => '1.15.0'],
+      'filament.app.resources.derived-metrics.*' => ['derived_metrics' => '1.16.0'],
+      // etc.
+  ];
+  ```
 - **4 CSS destinations now registered:**
   - `public/css/dashboard-builder.css` (loaded by builder/view-content/public pages): added `[x-cloak]`, `body{font-family:'Outfit',system-ui,sans-serif}` (public pages), `.pd-widget-content{overflow:visible!important}`, `.pd-widget-header{z-index:10}`, `.builder-toolbar` (sticky top 4rem/z-20/#f9fafb, dark #111827), `.bd-*` utilities (`bd-modal-root` z-999999, `bd-modal-panel` 95vw/1400px/90vh, `bd-config-col` flex 1 1 250px, `bd-canvas-col` flex 2 1 500px, `bd-search-input` padding-left 2.5rem, `bd-line-clamp-2`, `dvc-popout-root/panel/content`), GridStack resize-handle rules (previously a `<style>` in the builder's `@push('scripts')`).
   - `public/css/dashboards.css`: `.dash-alpine-hidden` **replaced by `[x-cloak]{display:none !important}`** (see Alpine finding below); added 25 metric-card `--color` bindings as attribute selectors (`[data-metric="..."]`) replacing per-card inline `--color` custom props.

@@ -36,12 +36,18 @@ class AlertResource extends Resource
         return __('Analytics');
     }
 
-    public static function canAccess(): bool
+    public static function shouldRegisterNavigation(): bool
     {
         $project = \Filament\Facades\Filament::getTenant();
         if (!$project || !$project->supportsAlerts()) {
             return false;
         }
+        return auth()->user()->can('edit_preferences');
+    }
+
+    public static function canAccess(): bool
+    {
+        // Allow access to routes; middleware handles feature gating
         return auth()->user()->can('edit_preferences');
     }
 
