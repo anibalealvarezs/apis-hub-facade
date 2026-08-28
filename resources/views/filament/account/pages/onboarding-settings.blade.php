@@ -103,7 +103,7 @@
                         'name' => __('Billing & Subscriptions'),
                         'description' => __('Billing profile management, subscription tiers, and payment checkouts.'),
                         'badge' => __('Account'),
-                        'url' => '/account/manage-subscription',
+                        'url' => '/account/account-subscription',
                     ],
                 ],
             ],

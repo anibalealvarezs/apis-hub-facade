@@ -607,5 +607,9 @@
 - `manage-collaborators.blade.php` now wraps each section in an id anchor so driver.js can target them reliably: members table, pending invites (conditional, so the step is skipped automatically when the user lacks `manage_collaborators`), share codes.
 - JS rebuild required after editing tour flows: `npm run build` in apis-hub-facade.
 
+### Subscription onboarding URL fix (2026-08-27)
+- The Billing & Subscriptions onboarding pointed to `/account/manage-subscription`, which does not exist (404). The Account panel page class is `App\Filament\Account\Pages\AccountSubscription` → URL `/account/account-subscription`.
+- Fixed `routePattern` in `resources/js/tours/flows/billing-tour.js` and the 'url' for the Billing tour in `resources/views/filament/account/pages/onboarding-settings.blade.php`; rebuilt JS.
+
 
 
