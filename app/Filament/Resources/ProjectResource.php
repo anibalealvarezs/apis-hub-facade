@@ -358,19 +358,28 @@ class ProjectResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('subdomain')
+                    ->badge()
+                    ->color('gray')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('Owner'))
                     ->description(fn (Project $record): string => $record->user->email ?? '')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('user.email')
-                    ->label(__('Owner Email'))
+                Tables\Columns\TextColumn::make('billingProfile.reference_name')
+                    ->label(__('Billing Profile'))
+                    ->formatStateUsing(fn (?string $state) => $state)
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('subdomain')
+                Tables\Columns\TextColumn::make('billingProfile.tier')
+                    ->label(__('Tier'))
                     ->badge()
-                    ->color('gray')
+                    ->sortable(query: fn ($query, $direction) => $query->orderBy(BillingProfile::select('tier')->whereColumn('billing_profiles.id', 'projects.billing_profile_id'), $direction)),
+                Tables\Columns\TextColumn::make('billingProfile.current_cycle_ends_at')
+                    ->label(__('Next Billing Cycle'))
+                    ->dateTime()
+                    ->placeholder(__('N/A'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('health_status')
                     ->badge()
@@ -382,46 +391,15 @@ class ProjectResource extends Resource
                         default => 'warning',
                     })
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_heartbeat_at')
-                    ->label(__('Last Heartbeat'))
-                    ->since()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('error_count')
-                    ->label(__('Errors'))
-                    ->numeric()
-                    ->color(fn (int $state): string => $state > 0 ? 'danger' : 'gray')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('server.name')
-                    ->label(__('Target Server'))
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_deployed_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->placeholder(__('Never deployed')),
                 Tables\Columns\TextColumn::make('is_active')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
-                Tables\Columns\TextColumn::make('billingProfile.reference_name')
-                    ->label(__('Billing Profile'))
-                    ->formatStateUsing(fn (?string $state, Project $record) => $state ? $state . ' ( Legal Name: ' . $record->billingProfile?->name . ' )' : null)
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('billingProfile.tier')
-                    ->label(__('Tier'))
-                    ->badge()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy(BillingProfile::select('tier')->whereColumn('billing_profiles.id', 'projects.billing_profile_id'), $direction)),
-                Tables\Columns\TextColumn::make('billingProfile.user.name')
-                    ->label(__('Billing Owner'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy(User::select('name')->whereColumn('users.id', function ($q) {
-                        $q->select('user_id')->from('billing_profiles')->whereColumn('billing_profiles.id', 'projects.billing_profile_id');
-                    }), $direction)),
-                Tables\Columns\TextColumn::make('billingProfile.user.email')
-                    ->label(__('Billing Email'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy(User::select('email')->whereColumn('users.id', function ($q) {
-                        $q->select('user_id')->from('billing_profiles')->whereColumn('billing_profiles.id', 'projects.billing_profile_id');
-                    }), $direction)),
                 Tables\Columns\TextColumn::make('billing_status')
                     ->label(__('Billing'))
                     ->badge()
@@ -432,6 +410,9 @@ class ProjectResource extends Resource
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('server.name')
+                    ->label(__('Target Server'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('apisHubRelease.version_tag')
                     ->label(__('Release'))
@@ -472,24 +453,22 @@ class ProjectResource extends Resource
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
                     ->sortable(false),
+                Tables\Columns\TextColumn::make('billingProfile.name')
+                    ->label(__('Billing Profile Legal Name'))
+                    ->placeholder(__('N/A'))
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_heartbeat_at')
+                    ->label(__('Last Heartbeat'))
+                    ->since()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('redeploy_pending')
                     ->label(__('Pending Deploy'))
                     ->boolean()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('users_count')
-                    ->label(__('Collaborators'))
-                    ->counts('users')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('deployment_logs_count')
-                    ->label(__('Deploys'))
-                    ->counts('deploymentLogs')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('last_deployed_at')
-                    ->dateTime()
                     ->sortable()
-                    ->placeholder(__('Never deployed')),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active'),
