@@ -43,7 +43,7 @@
             ],
             'Analytics & Insights' => [
                 'icon' => 'heroicon-o-chart-bar',
-                'tours' => [
+                'tours' => array_values(array_filter([
                     [
                         'id' => 'data-explorer',
                         'name' => __('Data Explorer'),
@@ -61,17 +61,17 @@
                     [
                         'id' => 'dashboards',
                         'name' => __('Dashboards & Visual Builder'),
-                        'description' => __('GridStack tile customization, widget palette, and asset group selector controls.'),
+                        'description' => __('Widget tile customization, widget palette, and asset group selector controls.'),
                         'badge' => __('Analytics'),
                         'url' => $dashboardBuilderUrl ?? "{$tenantPrefix}/dashboards",
                     ],
-                    [
+                    $alertsAvailable ?? false ? [
                         'id' => 'alerts',
                         'name' => __('Automated Alerts & Anomalies'),
                         'description' => __('AST calculation lines, threshold bounds, and background cron schedules.'),
                         'badge' => __('Proactive'),
                         'url' => "{$tenantPrefix}/alerts",
-                    ],
+                    ] : null,
                     [
                         'id' => 'custom-kpis',
                         'name' => __('Custom KPIs (Blended AST)'),
@@ -86,7 +86,7 @@
                         'badge' => __('Advanced'),
                         'url' => "{$tenantPrefix}/derived-metrics",
                     ],
-                ],
+                ])),
             ],
             'Administration & Account' => [
                 'icon' => 'heroicon-o-user-group',
@@ -96,14 +96,14 @@
                         'name' => __('Team & Collaborators'),
                         'description' => __('User invitations, role assignments, and granular asset group restrictions.'),
                         'badge' => __('Team'),
-                        'url' => "{$tenantPrefix}/collaborators",
+                        'url' => "{$tenantPrefix}/manage-collaborators",
                     ],
                     [
                         'id' => 'billing',
                         'name' => __('Billing & Subscriptions'),
                         'description' => __('Billing profile management, subscription tiers, and payment checkouts.'),
                         'badge' => __('Account'),
-                        'url' => '/account/manage-subscription',
+                        'url' => '/account/account-subscription',
                     ],
                 ],
             ],

@@ -535,6 +535,7 @@ class DashboardBuilder extends Page
                 ->label(fn (): string => $this->getHasUnsavedChanges() ? __('Save Version') . ' ⚠' : __('Save Version'))
                 ->icon('heroicon-o-document-plus')
                 ->color('primary')
+                ->extraAttributes(['id' => 'builder-save-version-btn'])
                 ->form([
                     Forms\Components\TextInput::make('label')
                         ->label(__('Version Label'))
@@ -555,6 +556,7 @@ class DashboardBuilder extends Page
                 ->label(__('Version History'))
                 ->icon('heroicon-o-clock')
                 ->color('gray')
+                ->extraAttributes(['id' => 'builder-version-history-btn'])
                 ->modalHeading(__('Dashboard Version History'))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(__('Close'))
@@ -595,7 +597,7 @@ class DashboardBuilder extends Page
                 ->label(__('View Dashboard'))
                 ->icon('heroicon-o-eye')
                 ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard]))
-                ->extraAttributes(['wire:navigate.none' => true]),
+                ->extraAttributes(['id' => 'builder-view-dashboard-btn', 'wire:navigate.none' => true]),
             Actions\Action::make('back')
                 ->label(__('Back to Dashboards'))
                 ->icon('heroicon-o-arrow-left')

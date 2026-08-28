@@ -1,5 +1,5 @@
 export const billingTour = {
-    routePattern: '/account/manage-subscription',
+    routePattern: '/account/account-subscription',
     steps: [
         {
             element: '.fi-header-heading, .fi-header, .fi-page-header',

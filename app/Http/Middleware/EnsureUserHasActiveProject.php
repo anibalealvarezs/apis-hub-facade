@@ -81,7 +81,12 @@ class EnsureUserHasActiveProject
                             ->danger()
                             ->send();
                         
-                        $alt = $user->projects()->whereNotNull('billing_profile_id')->first();
+                        $preferred = $user->preferredProject();
+
+                        $alt = ($preferred && ! empty($preferred->billing_profile_id))
+                            ? $preferred
+                            : $user->projects()->whereNotNull('billing_profile_id')->first();
+
                         if ($alt) {
                             return redirect()->route('filament.app.pages.dashboard', ['tenant' => $alt->subdomain]);
                         }
@@ -100,8 +105,8 @@ class EnsureUserHasActiveProject
 
         // 4. Si llegamos aquí es porque: No hay slug, o el slug es de un proyecto archivado/inexistente.
         
-        // Buscamos el primer proyecto alternativo
-        $alternativeProject = $user->projects()->first();
+        // Buscamos el proyecto predeterminado (o el primer proyecto alternativo)
+        $alternativeProject = $user->preferredProject();
 
         // 5. Si encontramos uno, lo mandamos allí
         if ($alternativeProject) {

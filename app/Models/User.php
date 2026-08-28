@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasDefaultTenant;
 use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -18,7 +19,7 @@ use App\Enums\UserTier;
 use Spatie\Permission\Traits\HasRoles;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 
-class User extends Authenticatable implements FilamentUser, HasTenants, MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, HasTenants, HasDefaultTenant, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
@@ -41,6 +42,64 @@ class User extends Authenticatable implements FilamentUser, HasTenants, MustVeri
     public function canAccessTenant(Model $tenant): bool
     {
         return $this->projects->contains($tenant);
+    }
+
+    /**
+     * Filament Multi-tenancy: The project the user should be redirected to by default.
+     * When null, Filament falls back to the first tenant.
+     */
+    public function getDefaultTenant(Panel $panel): ?Model
+    {
+        return $this->preferredProject();
+    }
+
+    /**
+     * The project explicitly chosen by the user as their default landing project.
+     */
+    public function defaultProject(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Project::class, 'default_project_id');
+    }
+
+    /**
+     * Resolve the project to be used for redirects and onboarding links.
+     * Returns the user's explicit default project when set and still accessible,
+     * otherwise falls back to the first project (legacy behaviour).
+     */
+    public function preferredProject(): ?Project
+    {
+        $default = $this->defaultProject;
+
+        if ($default && $this->projects()->whereKey($default->getKey())->exists()) {
+            return $default;
+        }
+
+        return $this->projects()->first();
+    }
+
+    /**
+     * Set the project the user should be redirected to by default.
+     * The project must belong to the user.
+     */
+    public function setDefaultProject(Project $project): void
+    {
+        if (! $this->projects()->whereKey($project->getKey())->exists()) {
+            throw new \InvalidArgumentException('Cannot set a project the user is not a member of as default.');
+        }
+
+        $this->default_project_id = $project->getKey();
+        $this->save();
+    }
+
+    /**
+     * Clear the default project if it is the given project (e.g. when membership was revoked).
+     */
+    public function clearDefaultProject(Project $project): void
+    {
+        if ($this->default_project_id === $project->getKey()) {
+            $this->default_project_id = null;
+            $this->save();
+        }
     }
 
     /**

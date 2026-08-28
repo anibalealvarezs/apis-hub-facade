@@ -71,6 +71,26 @@ class ProjectSettings extends Page
         $isSuspended = ! $project->is_active || $project->billing_status === 'suspended';
         $actions = [];
 
+        $isDefault = $user->default_project_id === $project->id;
+
+        $actions[] = Action::make('set_default_project')
+            ->label(fn () => $isDefault ? __('Default Project') : __('Set as Default Project'))
+            ->color($isDefault ? 'gray' : 'primary')
+            ->icon('heroicon-o-star')
+            ->disabled($isDefault || $isSuspended)
+            ->tooltip(fn () => $isDefault ? __('This is the project you are redirected to after login and from onboarding links.') : null)
+            ->action(function () use ($user, $project) {
+                $user->setDefaultProject($project);
+
+                Notification::make()
+                    ->title(__('Default Project Updated'))
+                    ->body(__(':project is now your default project. You will be redirected here after login and from onboarding links.', ['project' => $project->name]))
+                    ->success()
+                    ->send();
+
+                return redirect(request()->header('Referer'));
+            });
+
         $actions[] = Action::make('unsuspend')
             ->label(__('Reactivate Project'))
             ->color('success')
@@ -501,16 +521,21 @@ class ProjectSettings extends Page
                         }),
                 ])
                 ->action(function () use ($project) {
+                    $user = auth()->user();
+
                     // Soft delete del proyecto
                     $project->delete();
 
                     // Despachar Job para suspender el contenedor/dominio en Caddy
                     \App\Jobs\SuspendProjectDomainJob::dispatch($project);
 
-                    // Redirigir a otro proyecto activo o a la pantalla de creación
-                    $nextProject = auth()->user()->projects()
-                        ->where('is_active', true)
-                        ->first();
+                    // Redirigir al proyecto predeterminado o a otro proyecto activo
+                    $nextProject = $user->preferredProject();
+                    if (! $nextProject || ! $nextProject->is_active) {
+                        $nextProject = $user->projects()
+                            ->where('is_active', true)
+                            ->first();
+                    }
 
                     Notification::make()
                         ->title(__('Project Deleted'))
@@ -549,7 +574,12 @@ class ProjectSettings extends Page
                 })
                 ->requiresConfirmation()
                 ->modalHeading(__('Upgrade Project'))
-                ->modalDescription(__('Are you sure you want to upgrade your project to the newer version? This is a destructive operation.'))
+                ->modalDescription(function () use ($project) {
+                    if (is_null($project->last_deployed_at)) {
+                        return __('This project has not been deployed yet. The upgrade will only update the target version — the initial deployment will use the new version.');
+                    }
+                    return __('Are you sure you want to upgrade your project to the newer version? This will deploy the new version to your infrastructure.');
+                })
                 ->form([
                     TextInput::make('confirmation')
                         ->label(__('Type "UPGRADE" to confirm'))
@@ -564,15 +594,31 @@ class ProjectSettings extends Page
                 ])
                 ->action(function () use ($project) {
                     $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
-                    if ($defaultRelease) {
-                        \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease);
+                    if (! $defaultRelease) {
+                        return;
+                    }
+
+                    if (is_null($project->last_deployed_at)) {
+                        // Never deployed: just update the target release. Initial deploy will pick it up.
+                        $project->update(['apis_hub_release_id' => $defaultRelease->id]);
 
                         Notification::make()
-                            ->title(__('Upgrade Initiated'))
-                            ->body(__('Project upgrade to :version has been scheduled.', ['version' => $defaultRelease->version_tag]))
+                            ->title(__('Upgrade Saved'))
+                            ->body(__('Target version updated to :version. The initial deployment will use this version.', ['version' => $defaultRelease->version_tag]))
                             ->success()
                             ->send();
+
+                        return;
                     }
+
+                    // Already deployed: trigger full upgrade deployment
+                    \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease);
+
+                    Notification::make()
+                        ->title(__('Upgrade Initiated'))
+                        ->body(__('Project upgrade to :version has been scheduled.', ['version' => $defaultRelease->version_tag]))
+                        ->success()
+                        ->send();
                 });
 
         return $actions;

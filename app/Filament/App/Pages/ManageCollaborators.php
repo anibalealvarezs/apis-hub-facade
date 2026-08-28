@@ -170,6 +170,7 @@ class ManageCollaborators extends Page implements HasTable
                     })
                     ->action(function (User $record) use ($project) {
                         $record->projects()->detach($project->id);
+                        $record->clearDefaultProject($project);
 
                         $editorAndOwnerIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
                             ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
@@ -215,6 +216,7 @@ class ManageCollaborators extends Page implements HasTable
                         }
 
                         $record->projects()->detach($project->id);
+                        $record->clearDefaultProject($project);
 
                         $record->notify(new \App\Notifications\MemberExpelledFromProject($project));
 

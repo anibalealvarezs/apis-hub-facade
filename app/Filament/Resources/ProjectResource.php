@@ -121,6 +121,14 @@ class ProjectResource extends Resource
                             ->preload()
                             ->label(__('Account Holder'))
                             ->helperText(__('The user who owns this instance.')),
+                        Forms\Components\Placeholder::make('owner_profile_link')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(fn (?Project $record) => $record?->user
+                                ? new \Illuminate\Support\HtmlString(
+                                    '<a href="' . route('filament.admin.resources.users.edit', ['record' => $record->user_id]) . '" class="text-primary-600 hover:underline text-sm">' . __('Check user\'s profile') . '</a>'
+                                )
+                                : ''),
                     ])->columns(4),
 
                 Forms\Components\Section::make('Repository & Deployment')
@@ -207,7 +215,12 @@ class ProjectResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('billing_profile_name')
                             ->label(__('Profile Name'))
-                            ->content(fn (?Project $record) => $record?->billingProfile?->reference_name ?? 'None'),
+                            ->content(fn (?Project $record) => $record?->billingProfile
+                                ? new \Illuminate\Support\HtmlString(
+                                    '<a href="' . route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id]) . '" class="text-primary-600 hover:underline">' . e($record->billingProfile->reference_name) . '</a>'
+                                )
+                                : 'None')
+                            ->columnSpan(1),
                         Forms\Components\Placeholder::make('billing_tier')
                             ->label(__('Tier'))
                             ->content(fn (?Project $record) => $record?->billingProfile?->tier instanceof \App\Enums\UserTier ? $record->billingProfile->tier->value : ($record?->billingProfile?->tier ?? 'None')),
@@ -348,7 +361,193 @@ class ProjectResource extends Resource
                                     ->send();
                             }),
                     ]),
+                Forms\Components\Section::make('Team & Collaborators')
+                    ->description(__('Project members and their roles.'))
+                    ->schema([
+                        Forms\Components\Repeater::make('collaborators_display')
+                            ->label(__('Members'))
+                            ->schema([
+                                Forms\Components\TextInput::make('name')->disabled(),
+                                Forms\Components\TextInput::make('email')->disabled(),
+                                Forms\Components\TextInput::make('role')->disabled(),
+                                Forms\Components\TextInput::make('access')->disabled(),
+                                Forms\Components\TextInput::make('invitation')->disabled(),
+                            ])
+                            ->columns(5)
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->dehydrated(false)
+                            ->itemLabel(fn (array $state): string => $state['email'] ?? $state['name'] ?? '')
+                            ->default([]),
+                    ]),
+
+                Forms\Components\Section::make('Settings')
+                    ->description(__('Timezone and content language preferences.'))
+                    ->schema([
+                        Forms\Components\Placeholder::make('timezone')
+                            ->label(__('Timezone'))
+                            ->content(fn (?Project $record) => $record?->timezone ?? 'UTC'),
+                        Forms\Components\Placeholder::make('content_languages')
+                            ->label(__('Content Languages'))
+                            ->content(function (?Project $record) {
+                                if (!$record || !$record->sync_config) return '—';
+                                $langs = [];
+                                foreach ($record->sync_config as $channelConfig) {
+                                    if (is_array($channelConfig) && !empty($channelConfig['language'])) {
+                                        $langs[] = $channelConfig['language'];
+                                    }
+                                }
+                                return $langs ? implode(', ', array_unique($langs)) : '—';
+                            }),
+                    ])
+                    ->columns(2),
+
+                Forms\Components\Section::make('Sync Telemetry')
+                    ->description(__('Live sync progress per channel, fetched from the remote node.'))
+                    ->schema([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Placeholder::make('overall_sync_percentage')
+                                    ->label(__('Overall Sync'))
+                                    ->content(fn (?Project $record) => ($pct = static::getSyncTelemetryData($record)['overall']) !== null ? "{$pct}%" : '—'),
+                                Forms\Components\Placeholder::make('overall_fully_synced')
+                                    ->label(__('Accounts Fully Synced'))
+                                    ->content(fn (?Project $record) => ($pct = static::getSyncTelemetryData($record)['fully_synced']) !== null ? "{$pct}%" : '—'),
+                                Forms\Components\Placeholder::make('overall_assets')
+                                    ->label(__('Assets Synced'))
+                                    ->content(fn (?Project $record) => static::getSyncTelemetryData($record)['assets'] ?: '—'),
+                            ])
+                            ->columnSpanFull(),
+                        Forms\Components\Placeholder::make('sync_telemetry_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->extraAttributes(fn (?Project $record) => static::getSyncTelemetryData($record)['message']
+                                ? ['class' => 'text-warning-600 dark:text-warning-400']
+                                : [])
+                            ->content(fn (?Project $record) => static::getSyncTelemetryData($record)['message'] ?? ''),
+                        Forms\Components\Repeater::make('sync_telemetry_channels')
+                            ->label(__('Per Channel'))
+                            ->schema([
+                                Forms\Components\TextInput::make('channel')->disabled(),
+                                Forms\Components\TextInput::make('completion')->label(__('Sync %'))->disabled(),
+                                Forms\Components\TextInput::make('fully_synced')->label(__('Fully Synced %'))->disabled(),
+                                Forms\Components\TextInput::make('assets')->label(__('Assets Synced'))->disabled(),
+                            ])
+                            ->columns(4)
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->dehydrated(false)
+                            ->itemLabel(fn (array $state): string => $state['channel'] ?? '')
+                            ->default([]),
+                    ]),
             ]);
+    }
+
+    protected static ?array $syncTelemetryData = [];
+
+    private static function getSyncTelemetryData(?Project $record): array
+    {
+        $key = $record?->getKey();
+
+        if ($key === null || ! $record?->hasBeenDeployed()) {
+            return ['overall' => null, 'fully_synced' => null, 'assets' => null, 'channels' => [], 'message' => null];
+        }
+
+        if (array_key_exists($key, static::$syncTelemetryData)) {
+            return static::$syncTelemetryData[$key];
+        }
+
+        $unavailable = static::$syncTelemetryData[$key] = [
+            'overall' => null,
+            'fully_synced' => null,
+            'assets' => null,
+            'channels' => [],
+            'message' => __('Telemetry unavailable.'),
+        ];
+
+        try {
+            $result = app(RemoteEngineService::class)->getSyncTelemetry($record, 3);
+        } catch (\Throwable $e) {
+            return $unavailable;
+        }
+
+        if (! is_array($result) || ! isset($result['completion_percentage']) || ! is_array($result['channels'] ?? null)) {
+            if (is_array($result) && isset($result['status']) && $result['status'] === 'error') {
+                static::$syncTelemetryData[$key]['message'] = $result['message'] ?? __('Telemetry unavailable.');
+            }
+
+            return static::$syncTelemetryData[$key];
+        }
+
+        $channels = [];
+        foreach ($result['channels'] as $channelKey => $stats) {
+            if (! is_array($stats)) {
+                continue;
+            }
+
+            $channels[] = [
+                'channel' => ucfirst(str_replace('_', ' ', (string) $channelKey)),
+                'completion' => (int) round((float) ($stats['completion_percentage'] ?? 0)),
+                'fully_synced' => (int) round((float) ($stats['fully_synced_percentage'] ?? 0)),
+                'assets' => (int) ($stats['fully_synced_count'] ?? 0) . ' / ' . (int) ($stats['total_assets'] ?? 0),
+            ];
+        }
+
+        return static::$syncTelemetryData[$key] = [
+            'overall' => (int) round((float) ($result['completion_percentage'] ?? 0)),
+            'fully_synced' => (int) round((float) ($result['fully_synced_percentage'] ?? 0)),
+            'assets' => (int) ($result['fully_synced_count'] ?? 0) . ' / ' . (int) ($result['total_assets'] ?? 0),
+            'channels' => $channels,
+            'message' => null,
+        ];
+    }
+
+    public static function getCollaboratorDisplayData(Project $record): array
+    {
+        $memberIds = [];
+        $members = [];
+
+        foreach ($record->users()->withPivot('asset_access_unrestricted')->get() as $user) {
+            $memberIds[] = $user->id;
+            $members[] = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => ucfirst((string) ($user->getRoleNames()->first() ?? 'member')),
+                'access' => $user->pivot->asset_access_unrestricted ? __('Unrestricted') : __('Restricted'),
+                'invitation' => __('Active'),
+            ];
+        }
+
+        if ($owner = $record->user) {
+            if (! in_array($owner->id, $memberIds, true)) {
+                $members[] = [
+                    'name' => $owner->name,
+                    'email' => $owner->email,
+                    'role' => __('Owner'),
+                    'access' => '—',
+                    'invitation' => __('Active'),
+                ];
+            }
+        }
+
+        foreach ($record->pendingInvitations()->where('expires_at', '>', now())->get() as $invitation) {
+            $members[] = [
+                'name' => '',
+                'email' => $invitation->email,
+                'role' => ucfirst((string) ($invitation->role ?? 'member')),
+                'access' => '—',
+                'invitation' => __('Pending Invitation'),
+            ];
+        }
+
+        return $members;
+    }
+
+    public static function getSyncTelemetryChannels(Project $record): array
+    {
+        return static::getSyncTelemetryData($record)['channels'];
     }
 
     public static function table(Table $table): Table
@@ -358,19 +557,30 @@ class ProjectResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('subdomain')
+                    ->badge()
+                    ->color('gray')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('Owner'))
                     ->description(fn (Project $record): string => $record->user->email ?? '')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('user.email')
-                    ->label(__('Owner Email'))
+                    ->sortable()
+                    ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id])),
+                Tables\Columns\TextColumn::make('billingProfile.reference_name')
+                    ->label(__('Billing Profile'))
+                    ->formatStateUsing(fn (?string $state) => $state)
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('subdomain')
+                    ->sortable()
+                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id])),
+                Tables\Columns\TextColumn::make('billingProfile.tier')
+                    ->label(__('Tier'))
                     ->badge()
-                    ->color('gray')
+                    ->sortable(query: fn ($query, $direction) => $query->orderBy(BillingProfile::select('tier')->whereColumn('billing_profiles.id', 'projects.billing_profile_id'), $direction)),
+                Tables\Columns\TextColumn::make('billingProfile.current_cycle_ends_at')
+                    ->label(__('Next Billing Cycle'))
+                    ->dateTime()
+                    ->placeholder(__('N/A'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('health_status')
                     ->badge()
@@ -382,46 +592,15 @@ class ProjectResource extends Resource
                         default => 'warning',
                     })
                     ->sortable(),
-                Tables\Columns\TextColumn::make('last_heartbeat_at')
-                    ->label(__('Last Heartbeat'))
-                    ->since()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('error_count')
-                    ->label(__('Errors'))
-                    ->numeric()
-                    ->color(fn (int $state): string => $state > 0 ? 'danger' : 'gray')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('server.name')
-                    ->label(__('Target Server'))
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_deployed_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->placeholder(__('Never deployed')),
                 Tables\Columns\TextColumn::make('is_active')
                     ->label(__('Status'))
                     ->badge()
                     ->color(fn ($state) => $state ? 'success' : 'danger')
                     ->formatStateUsing(fn ($state) => $state ? 'Active' : 'Suspended'),
-                Tables\Columns\TextColumn::make('billingProfile.reference_name')
-                    ->label(__('Billing Profile'))
-                    ->formatStateUsing(fn (?string $state, Project $record) => $state ? $state . ' ( Legal Name: ' . $record->billingProfile?->name . ' )' : null)
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('billingProfile.tier')
-                    ->label(__('Tier'))
-                    ->badge()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy(BillingProfile::select('tier')->whereColumn('billing_profiles.id', 'projects.billing_profile_id'), $direction)),
-                Tables\Columns\TextColumn::make('billingProfile.user.name')
-                    ->label(__('Billing Owner'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy(User::select('name')->whereColumn('users.id', function ($q) {
-                        $q->select('user_id')->from('billing_profiles')->whereColumn('billing_profiles.id', 'projects.billing_profile_id');
-                    }), $direction)),
-                Tables\Columns\TextColumn::make('billingProfile.user.email')
-                    ->label(__('Billing Email'))
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(query: fn ($query, $direction) => $query->orderBy(User::select('email')->whereColumn('users.id', function ($q) {
-                        $q->select('user_id')->from('billing_profiles')->whereColumn('billing_profiles.id', 'projects.billing_profile_id');
-                    }), $direction)),
                 Tables\Columns\TextColumn::make('billing_status')
                     ->label(__('Billing'))
                     ->badge()
@@ -432,6 +611,9 @@ class ProjectResource extends Resource
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('server.name')
+                    ->label(__('Target Server'))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('apisHubRelease.version_tag')
                     ->label(__('Release'))
@@ -472,28 +654,105 @@ class ProjectResource extends Resource
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
                     ->sortable(false),
+                Tables\Columns\TextColumn::make('billingProfile.name')
+                    ->label(__('Billing Profile Legal Name'))
+                    ->placeholder(__('N/A'))
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('last_heartbeat_at')
+                    ->label(__('Last Heartbeat'))
+                    ->since()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('redeploy_pending')
                     ->label(__('Pending Deploy'))
                     ->boolean()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('users_count')
-                    ->label(__('Collaborators'))
-                    ->counts('users')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('deployment_logs_count')
-                    ->label(__('Deploys'))
-                    ->counts('deploymentLogs')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('last_deployed_at')
-                    ->dateTime()
                     ->sortable()
-                    ->placeholder(__('Never deployed')),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active'),
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('user.name')
+                    ->label(__('Owner (Name)'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->where('name', '!=', '')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('user.email')
+                    ->label(__('Owner (Email)'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'email')
+                        ->whereNotNull('email')
+                        ->where('email', '!=', '')
+                        ->orderBy('email')
+                        ->pluck('email', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('billingProfile.reference_name')
+                    ->label(__('Billing Profile'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\BillingProfile::query()
+                        ->select('id', 'reference_name')
+                        ->whereNotNull('reference_name')
+                        ->where('reference_name', '!=', '')
+                        ->orderBy('reference_name')
+                        ->pluck('reference_name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('billingProfile.tier')
+                    ->label(__('Tier'))
+                    ->options([
+                        \App\Enums\UserTier::FREE->value => \App\Enums\UserTier::FREE->getLabel(),
+                        \App\Enums\UserTier::PRO->value => \App\Enums\UserTier::PRO->getLabel(),
+                        \App\Enums\UserTier::ULTRA->value => \App\Enums\UserTier::ULTRA->getLabel(),
+                        \App\Enums\UserTier::FOUNDER->value => \App\Enums\UserTier::FOUNDER->getLabel(),
+                        \App\Enums\UserTier::ENTERPRISE->value => \App\Enums\UserTier::ENTERPRISE->getLabel(),
+                        \App\Enums\UserTier::SUSPENDED->value => \App\Enums\UserTier::SUSPENDED->getLabel(),
+                    ])
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('billing_status')
+                    ->label(__('Billing'))
+                    ->options([
+                        'active' => 'Active',
+                        'past_due' => 'Past Due',
+                        'suspended' => 'Suspended',
+                    ])
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('health_status')
+                    ->label(__('Health Status'))
+                    ->options([
+                        'online' => 'Online',
+                        'offline' => 'Offline',
+                        'error' => 'Error',
+                        'upgrading' => 'Upgrading',
+                    ])
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('server.name')
+                    ->label(__('Target Server'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\Server::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->where('name', '!=', '')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('apisHubRelease.version_tag')
+                    ->label(__('Release'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\ApisHubRelease::query()
+                        ->select('id', 'version_tag')
+                        ->where('is_active', true)
+                        ->whereNotNull('version_tag')
+                        ->where('version_tag', '!=', '')
+                        ->orderBy('version_tag')
+                        ->pluck('version_tag', 'id')
+                        ->toArray()),
             ])
             ->actions([
                 Tables\Actions\Action::make('checkAuth')
@@ -737,8 +996,11 @@ class ProjectResource extends Resource
                     ->visible(fn (Project $record) => $record->apisHubRelease !== null)
                     ->modalHeading(fn (Project $record) => "Upgrade {$record->name}")
                     ->modalDescription(fn (Project $record) => sprintf(
-                        'Current: %s. Select a newer release to upgrade to.',
-                        $record->apisHubRelease->version_tag
+                        'Current: %s. %s',
+                        $record->apisHubRelease->version_tag,
+                        is_null($record->last_deployed_at)
+                            ? 'This project has not been deployed yet. The upgrade will only update the target version.'
+                            : 'Select a newer release to upgrade to.'
                     ))
                     ->form(fn (Project $record) => [
                         Forms\Components\Select::make('target_release_id')
@@ -760,6 +1022,20 @@ class ProjectResource extends Resource
                             return;
                         }
 
+                        if (is_null($record->last_deployed_at)) {
+                            // Never deployed: just update the target release. Initial deploy will pick it up.
+                            $record->update(['apis_hub_release_id' => $target->id]);
+
+                            Notification::make()
+                                ->title(__('Upgrade Saved'))
+                                ->body("Target version updated to {$target->version_tag}. The initial deployment will use this version.")
+                                ->success()
+                                ->send();
+
+                            return;
+                        }
+
+                        // Already deployed: trigger full upgrade deployment
                         \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target);
 
                         Notification::make()

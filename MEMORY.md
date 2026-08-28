@@ -286,8 +286,22 @@
 - **Behavior notes:** joint `select { color-scheme }` rules scoped to `.joint-page select`; gsc `.gsc-pagination-select` bug fixed (`--fb-*` → `--gsc-*`); fbo `.sticky-header-section` gained the sticky rules (was inline).
 - **Verification:** `php -l` clean on 5 blades, `view:cache` OK, dashboards.css braces balanced (219/219). No Vite rebuild needed (plain CSS).
 
-### CSS Extraction F0: Builder, View-Content, Modals, Globals (2026-08-06)
-- **Change:** Completed the remaining CSS-extraction plan (F0) across builder/view-content/modals/globals, extending the dashboards extraction above. All static `<style>` blocks and `style="..."` attributes moved to plain CSS files; only dynamic styles (Alpine `:style`, Blade `{{ }}`, JS template strings) stay inline.
+### Universal Project Feature Gate Middleware (2026-08-27)
+- **Problem:** Accessing a feature-required page (e.g., Alerts) on a project with an outdated release resulted in a 403 error instead of a friendly redirect with explanation.
+- **Solution:** Created `CheckProjectFeature` middleware (`app/Http/Middleware/CheckProjectFeature.php`) that:
+  - Maps route patterns → required features with minimum version (e.g., `'filament.app.resources.alerts.*' => ['alerts' => '1.15.0']`)
+  - Checks the current project's release version against requirements
+  - Redirects to dashboard with a persistent warning notification if feature is unavailable
+  - Registered in `AppPanelProvider` tenantMiddleware stack
+- **AlertResource updated:** `shouldRegisterNavigation()` hides nav for unsupported projects; `canAccess()` returns true (middleware handles gating)
+- **To add future feature gates**, edit `$featureRoutes` in `CheckProjectFeature`:
+  ```php
+  protected array $featureRoutes = [
+      'filament.app.resources.alerts.*' => ['alerts' => '1.15.0'],
+      'filament.app.resources.derived-metrics.*' => ['derived_metrics' => '1.16.0'],
+      // etc.
+  ];
+  ```
 - **4 CSS destinations now registered:**
   - `public/css/dashboard-builder.css` (loaded by builder/view-content/public pages): added `[x-cloak]`, `body{font-family:'Outfit',system-ui,sans-serif}` (public pages), `.pd-widget-content{overflow:visible!important}`, `.pd-widget-header{z-index:10}`, `.builder-toolbar` (sticky top 4rem/z-20/#f9fafb, dark #111827), `.bd-*` utilities (`bd-modal-root` z-999999, `bd-modal-panel` 95vw/1400px/90vh, `bd-config-col` flex 1 1 250px, `bd-canvas-col` flex 2 1 500px, `bd-search-input` padding-left 2.5rem, `bd-line-clamp-2`, `dvc-popout-root/panel/content`), GridStack resize-handle rules (previously a `<style>` in the builder's `@push('scripts')`).
   - `public/css/dashboards.css`: `.dash-alpine-hidden` **replaced by `[x-cloak]{display:none !important}`** (see Alpine finding below); added 25 metric-card `--color` bindings as attribute selectors (`[data-metric="..."]`) replacing per-card inline `--color` custom props.
@@ -558,6 +572,44 @@
   - Added dedicated semantic classes and media queries (`@media (max-width: 1023.98px)`) for `.topbar-status-text`, `.topbar-sync-progress`, `.topbar-clock-icon`, and `.topbar-clock-tz` in [filament-extras.css](file:///d:/laragon/www/apis-hub-facade/public/css/filament-extras.css).
   - Added `.topbar-logo-anchor` with desktop `display: flex` / mobile `@media (max-width: 1023.98px) { display: none !important; }` in [topbar-logo.blade.php](file:///d:/laragon/www/apis-hub-facade/resources/views/filament/hooks/topbar-logo.blade.php).
 - **Important rule:** Utility classes (`.lg:flex`, `.sm:inline`, etc.) must NEVER use `!important` — Alpine's `x-show` relies on applying inline `style="display: none;"` which would otherwise be overridden by an `!important` CSS rule (e.g. the main menu sidebar collapse button `<x-filament::icon-button class="ms-auto hidden lg:flex" x-show="$store.sidebar.isOpen" />`).
+
+### Project edit page: read-only sections rebuilt with native Filament components (2026-08-27)
+- Removed the custom HTML `<table>` cards (Member list, Channel Totals) from `ProjectResource::form()` — user feedback: "custom tables are dumb / layout awful". Replaced with disabled `Repeater`s (`->addable(false)->deletable(false)->reorderable(false)->dehydrated(false)`) whose rows are populated via `->default(fn (?Project $record) => ...)` (no DB write). Team members come from `$record->users()->withPivot('asset_access_unrestricted')` + `pendingInvitations()`.
+- "Sync Telemetry" section now shows REAL live data fetched from the remote node via `RemoteEngineService::getSyncTelemetry()` (mirrors the app portal `/api/sync/status` shape): overall sync %, accounts fully synced %, assets synced (`fully_synced_count / total_assets`) as plain `Placeholder`s, plus a per-channel disabled Repeater. `getSyncTelemetryData()` private static helper on `ProjectResource` caches per-request in a static array (all form closures hit one request).
+- `RemoteEngineService::getSyncTelemetry()` gained an optional `$timeout` param (default keeps 15s for existing callers; the form passes 3s to avoid hanging the admin edit page on slow/unreachable nodes). Error/not-deployed → "Telemetry unavailable." warning placeholder, no crash.
+- All three formerly `->collapsible()->collapsed()` sections (Team & Collaborators, Settings, Sync Telemetry) are now open by default per user's "all tables must be uncollapsed by default" request.
+- Round-trip link rendering rule confirmed: to render raw HTML in a Filament `Placeholder`, return `new \Illuminate\Support\HtmlString(...)` — its value goes through Laravel's `e()` which outputs `Htmlable` unescaped (NOT `->html()`, which does not exist on the Field).
+- Owner + Billing Profile `TextColumn`s on the Projects table got `->openUrlInNewTab()` (anchors in placeholders already use `target="_blank"`).
+- Spanish keys added in `lang/es.json`: "Overall Sync", "Accounts Fully Synced", "Assets Synced", "Per Channel", "Sync %", "Fully Synced %", "Telemetry unavailable.".
+
+### IMPORTANT Filament v3 gotcha: `->default()` is NOT applied on EditRecord pages (2026-08-27)
+- **Root cause found:** In `vendor/filament/forms/src/Concerns/HasState.php`, `Form::fill(?array $state = null)` only applies field `default()` values when `$state === null` (i.e., a CREATE page where `$hydratedDefaultState = []`). On EditRecord pages `fill($modelData)` passes a non-null array → `$hydratedDefaultState = null` → `HasState::hydrateDefaultState()` takes the `loadStateFromRelationships()` branch and NEVER evaluates `default()`. Result: Repeaters/fields populated via `->default(fn(?Project $record) => ...)` show up empty on edit, even though the identical logic works in `Placeholder` `content()` closures (which are re-evaluated on render).
+- **Fix pattern:** Prefill derived (non-model) form paths via `EditRecord::mutateFormDataBeforeFill(array $data)` — set `$data['some_path'] = [...]` (computed from `$this->record`) and return `$data`. The Repeater then renders those rows. `->default([])` is left as a harmless fallback for the create page.
+- Repeater read-only recipe that works: disabled inner fields + `->addable(false)->deletable(false)->reorderable(false)->dehydrated(false)` + rows supplied by `mutateFormDataBeforeFill`.
+- Members list now guarantees the project owner is always present: `Project::user()` (BelongsTo, `user_id`) is unioned with the `users()` belongsToMany pivot (dedup by user id), then `pendingInvitations()` rows. Owner role label = `__('Owner')`.
+
+### Billing Profile view page: Owner + Projects links (2026-08-27)
+- `BillingProfileResource::form()` "Owner" section: `owner_name` Placeholder now renders a `HtmlString` anchor to `filament.admin.resources.users.edit` (target `_blank`, primary-600 / hover underline), instead of plain text. (Placeholder `content()` closures DO receive the record, so record edit/view forms are fine — unlike `default()`.)
+- `ProjectsRelationManager` Name column now links to `filament.admin.resources.projects.edit` with `->openUrlInNewTab()`.
+- BillingProfile view page = `ViewRecord` (`ViewBillingProfile`) — it renders the resource `form()` schema, so the Owner link lives in the form schema.
+- **Reversal (2026-08-27):** user asked to NOT open admin-portal links in a new tab. Removed `target="_blank"` from the OWner/Billing links in `ProjectResource` placeholders and `BillingProfileResource`, and removed `->openUrlInNewTab()` from the Projects/User/Billing columns. (Pre-existing new-tab links in `Account` panel and `DataSources` external URLs were left untouched.)
+
+### User edit page: Projects card + no search on Billing card (2026-08-27)
+- New widget `UserResource\Widgets\UserProjectsTable` (registered in `EditUser::getFooterWidgets()` after `UserBillingProfilesTable`): lists projects the user owns OR is a member of via `Project::where('user_id', $id)->orWhereHas('users', ...)`. Columns: name (link to project edit, not new tab), subdomain, Relationship badge (Owner/Member by `user_id`), Health badge, Billing badge. No searchable columns → no search box.
+- Removed `->searchable()` from `reference_name` and `owner.name` columns in `UserBillingProfilesTable` so the search box no longer appears on that card (Filament hides the search input when no columns are searchable and `table()` never called `->searchable()`).
+
+### Onboarding "Team & Collaborators" tour link fix (2026-08-27)
+- `resources/views/filament/account/pages/onboarding-settings.blade.php` "Team & Collaborators" tour pointed to `{$tenantPrefix}/collaborators` (404). Corrected to `{$tenantPrefix}/manage-collaborators` (matches the `ManageCollaborators` App panel page; Filament default slug = kebab class name).
+
+### Collaborators onboarding tour adjusted (2026-08-27)
+- `tour-manager.js` `routePattern` matching uses `path.includes(pattern)`; the old `'/collaborators'` pattern did NOT match `/app/{tenant}/manage-collaborators` (hyphen, not slash), so the tour never auto-ran. Fixed to `'/manage-collaborators'`.
+- `collaborators-tour.js` steps restructured: 1) Team & Collaborators (header), 2) Active Members (`#active-members-section`), 3) Pending Invites (`#pending-invites-section`), 4) Generate Share Codes (`#share-codes-section`). Dropped the old "Invite New Collaborator" button step.
+- `manage-collaborators.blade.php` now wraps each section in an id anchor so driver.js can target them reliably: members table, pending invites (conditional, so the step is skipped automatically when the user lacks `manage_collaborators`), share codes.
+- JS rebuild required after editing tour flows: `npm run build` in apis-hub-facade.
+
+### Subscription onboarding URL fix (2026-08-27)
+- The Billing & Subscriptions onboarding pointed to `/account/manage-subscription`, which does not exist (404). The Account panel page class is `App\Filament\Account\Pages\AccountSubscription` → URL `/account/account-subscription`.
+- Fixed `routePattern` in `resources/js/tours/flows/billing-tour.js` and the 'url' for the Billing tour in `resources/views/filament/account/pages/onboarding-settings.blade.php`; rebuilt JS.
 
 
 

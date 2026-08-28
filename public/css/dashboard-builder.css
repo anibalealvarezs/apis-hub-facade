@@ -177,6 +177,7 @@ select option, select optgroup {
 
 /* Subtle grid lines for layout visualization */
 #grid-stack {
+    min-height: 700px;
     background-image: repeating-linear-gradient(
         to right,
         transparent 0,

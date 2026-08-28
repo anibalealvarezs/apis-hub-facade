@@ -34,7 +34,6 @@ class UserBillingProfilesTable extends BaseWidget
                 Tables\Columns\TextColumn::make('reference_name')
                     ->label(__('Reference Name'))
                     ->formatStateUsing(fn (?string $state, \App\Models\BillingProfile $record) => $state . ' ( Legal Name: ' . $record->name . ' )')
-                    ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('type')
@@ -51,8 +50,7 @@ class UserBillingProfilesTable extends BaseWidget
 
                 Tables\Columns\TextColumn::make('owner.name')
                     ->label(__('Owner'))
-                    ->url(fn (BillingProfile $record) => \App\Filament\Resources\UserResource::getUrl('edit', ['record' => $record->user_id]))
-                    ->searchable(),
+                    ->url(fn (BillingProfile $record) => \App\Filament\Resources\UserResource::getUrl('edit', ['record' => $record->user_id])),
 
                 Tables\Columns\TextColumn::make('tier')
                     ->badge()

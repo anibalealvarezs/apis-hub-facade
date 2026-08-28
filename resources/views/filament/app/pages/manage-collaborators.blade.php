@@ -38,14 +38,20 @@
             <p class="text-sm text-gray-500">{{ __('Manage users who have access to this project.') }}</p>
         </div>
 
-        {{ $this->table }}
+        <div id="active-members-section">
+            {{ $this->table }}
+        </div>
 
         <!-- Tabla de Invitaciones Pendientes -->
         @if(auth()->user()->can('manage_collaborators'))
-            @livewire('pending-invitations-table')
+            <div id="pending-invites-section">
+                @livewire('pending-invitations-table')
+            </div>
         @endif
 
         <!-- Tabla de Códigos Compartidos -->
-        @livewire('share-codes-table')
+        <div id="share-codes-section">
+            @livewire('share-codes-table')
+        </div>
     </div>
 </x-filament-panels::page>

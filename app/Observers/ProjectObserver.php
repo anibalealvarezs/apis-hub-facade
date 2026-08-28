@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Project;
 use App\Models\BillingProfile;
+use App\Models\User;
 use App\Enums\UserTier;
 use App\Models\Subscription;
 use Srmklive\PayPal\Services\PayPal as PayPalClient;
@@ -50,6 +51,16 @@ class ProjectObserver
     public function deleted(Project $project): void
     {
         $this->syncSubscriptionQuantity($project->billingProfile);
+    }
+
+    /**
+     * When a project is soft-deleted (or permanently removed), no user should keep it
+     * as their default landing project, since every member loses access to it.
+     */
+    public function deleting(Project $project): void
+    {
+        User::where('default_project_id', $project->getKey())
+            ->update(['default_project_id' => null]);
     }
 
     /**

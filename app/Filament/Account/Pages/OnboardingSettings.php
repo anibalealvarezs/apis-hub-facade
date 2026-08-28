@@ -30,7 +30,7 @@ class OnboardingSettings extends Page
     public function getViewData(): array
     {
         $user = auth()->user();
-        $primaryProject = $user?->projects()->first();
+        $primaryProject = $user?->preferredProject();
 
         $builderUrl = null;
         if ($primaryProject) {
@@ -56,6 +56,7 @@ class OnboardingSettings extends Page
         return [
             'tenantSubdomain' => $primaryProject?->subdomain,
             'dashboardBuilderUrl' => $builderUrl,
+            'alertsAvailable' => $primaryProject?->supportsAlerts() ?? false,
         ];
     }
 }

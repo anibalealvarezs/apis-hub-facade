@@ -11,6 +11,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 
 class BillingProfileResource extends Resource
 {
@@ -65,7 +67,15 @@ class BillingProfileResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('owner_name')
                             ->label(__('Name'))
-                            ->content(fn (BillingProfile $record): ?string => $record->user?->name),
+                            ->content(function (BillingProfile $record): Htmlable|string|null {
+                                if (!$record->user_id || !$record->user) {
+                                    return '—';
+                                }
+
+                                return new HtmlString(
+                                    '<a href="' . e(route('filament.admin.resources.users.edit', ['record' => $record->user_id])) . '" class="text-primary-600 hover:underline">' . e($record->user->name) . '</a>'
+                                );
+                            }),
                         Forms\Components\Placeholder::make('owner_email')
                             ->label(__('Email'))
                             ->content(fn (BillingProfile $record): ?string => $record->user?->email),
@@ -104,14 +114,19 @@ class BillingProfileResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('reference_name')
                     ->label(__('Reference Name'))
-                    ->formatStateUsing(fn (?string $state, \App\Models\BillingProfile $record) => $state . ' ( Legal Name: ' . $record->name . ' )')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('Legal Name'))
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('Owner'))
                     ->description(fn (BillingProfile $record): string => $record->user->email ?? '')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (BillingProfile $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id])),
                 Tables\Columns\TextColumn::make('user.email')
                     ->label(__('Owner Email'))
                     ->searchable()
@@ -215,8 +230,35 @@ class BillingProfileResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('reference_name')
+                    ->label(__('Name'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\BillingProfile::query()
+                        ->select('id', 'reference_name')
+                        ->whereNotNull('reference_name')
+                        ->where('reference_name', '!=', '')
+                        ->orderBy('reference_name')
+                        ->pluck('reference_name', 'id')
+                        ->toArray()),
+                Tables\Filters\SelectFilter::make('user.name')
+                    ->label(__('Owner'))
+                    ->searchable()
+                    ->options(fn () => \App\Models\User::query()
+                        ->select('id', 'name')
+                        ->whereNotNull('name')
+                        ->where('name', '!=', '')
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->toArray()),
                 Tables\Filters\SelectFilter::make('tier')
-                    ->options(fn () => \App\Enums\UserTier::class),
+                    ->options([
+                        \App\Enums\UserTier::FREE->value => \App\Enums\UserTier::FREE->getLabel(),
+                        \App\Enums\UserTier::PRO->value => \App\Enums\UserTier::PRO->getLabel(),
+                        \App\Enums\UserTier::ULTRA->value => \App\Enums\UserTier::ULTRA->getLabel(),
+                        \App\Enums\UserTier::FOUNDER->value => \App\Enums\UserTier::FOUNDER->getLabel(),
+                        \App\Enums\UserTier::ENTERPRISE->value => \App\Enums\UserTier::ENTERPRISE->getLabel(),
+                        \App\Enums\UserTier::SUSPENDED->value => \App\Enums\UserTier::SUSPENDED->getLabel(),
+                    ]),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'active' => 'Active',
