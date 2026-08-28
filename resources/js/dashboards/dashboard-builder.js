@@ -1641,7 +1641,7 @@ export function dashboardBuilder(config = {}) {
                 return { x, y };
             };
 
-            const removeGhost = () => {
+            const removeGhost = (opts = {}) => {
                 if (ghostEl) {
                     try { grid.removeWidget(ghostEl); } catch (_) {}
                     ghostEl = null;
@@ -1659,7 +1659,7 @@ export function dashboardBuilder(config = {}) {
                         }
                     }
                 });
-                grid.compact();
+                if (!opts.skipCompact) grid.compact();
             };
 
             const onPointerDown = (e) => {
@@ -1684,6 +1684,7 @@ export function dashboardBuilder(config = {}) {
 
                 if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
                     dragging = true;
+                    document.body.classList.add('bd-cursor-grabbing');
                     savedFloat = grid.float();
                     grid.float(false);
 
@@ -1737,6 +1738,7 @@ export function dashboardBuilder(config = {}) {
             const onPointerUp = (e) => {
                 document.removeEventListener('pointermove', onPointerMove, { capture: true });
                 document.removeEventListener('pointerup', onPointerUp, { capture: true });
+                document.body.classList.remove('bd-cursor-grabbing');
 
                 const wasDragging = dragging;
                 dragging = false;
@@ -1758,7 +1760,7 @@ export function dashboardBuilder(config = {}) {
                     this.targetGridW = activeW;
                     this.targetGridH = activeH;
                     this.pendingDragSourceType = activeSource;
-                    removeGhost();
+                    removeGhost({ skipCompact: true });
                     this.openAddWidgetModal(activeSource);
                 } else {
                     removeGhost();
@@ -1768,6 +1770,172 @@ export function dashboardBuilder(config = {}) {
             };
 
             palette.addEventListener('pointerdown', onPointerDown);
+        },
+
+        _initDuplicateDragIntoGrid() {
+            const grid = this.grid;
+            if (!grid) return;
+            const container = document.getElementById('grid-container');
+            if (!container) return;
+
+            const GHOST_ID = '__duplicate_ghost__';
+            const COLUMNS = 12;
+
+            let activeSourceId = null;
+            let activeW = 4, activeH = 3;
+            let startX = 0, startY = 0;
+            let dragging = false;
+            let ghostEl = null;
+            let savedFloat = null;
+            let lastCellKey = null;
+            let savedPositions = {};
+
+            const cellFromPoint = (cx, cy) => {
+                const rect = grid.el.getBoundingClientRect();
+                const colW = rect.width / COLUMNS;
+                const cellH = parseInt(grid.opts.cellHeight, 10) || 100;
+                const scrollY = grid.el.scrollTop || 0;
+                const x = Math.max(0, Math.min(Math.floor((cx - rect.left) / colW), COLUMNS - activeW));
+                const y = Math.max(0, Math.floor((cy - rect.top + scrollY) / cellH));
+                return { x, y };
+            };
+
+            const removeGhost = (opts = {}) => {
+                if (ghostEl) {
+                    try { grid.removeWidget(ghostEl); } catch (_) {}
+                    ghostEl = null;
+                }
+                if (savedFloat !== null) {
+                    grid.float(savedFloat);
+                    savedFloat = null;
+                }
+                Object.keys(savedPositions).forEach(id => {
+                    const node = grid.engine.nodes.find(n => String(n.id) === String(id));
+                    if (node && node.el) {
+                        const sp = savedPositions[id];
+                        if (node.x !== sp.x || node.y !== sp.y || node.w !== sp.w || node.h !== sp.h) {
+                            grid.update(node.el, sp);
+                        }
+                    }
+                });
+                if (!opts.skipCompact) grid.compact();
+            };
+
+            const onPointerMove = (e) => {
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (!dragging && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+                    dragging = true;
+                    document.body.classList.add('bd-cursor-grabbing');
+                    savedFloat = grid.float();
+                    grid.float(false);
+
+                    savedPositions = {};
+                    (grid.engine.nodes || []).forEach(node => {
+                        const id = node.id || (node.el ? node.el.getAttribute('gs-id') : null);
+                        if (id && id !== GHOST_ID) {
+                            savedPositions[id] = { x: node.x, y: node.y, w: node.w, h: node.h };
+                        }
+                    });
+
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    ghostEl = grid.addWidget({
+                        id: GHOST_ID,
+                        x: pos.x, y: pos.y,
+                        w: activeW, h: activeH,
+                        minW: activeW, minH: activeH,
+                        noMove: true,
+                        noResize: true,
+                    });
+                    if (ghostEl) {
+                        const inner = ghostEl.querySelector('.grid-stack-item-content') || ghostEl;
+                        inner.innerHTML = '';
+                        inner.style.cssText = 'display:flex;align-items:center;justify-content:center;border:2px dashed var(--primary-400,#818cf8);background:var(--primary-50,rgba(99,102,241,.06));border-radius:8px;';
+                        const span = document.createElement('span');
+                        span.style.cssText = 'font-size:11px;font-weight:700;color:var(--primary-500,#6366f1);text-transform:uppercase;letter-spacing:.5px;opacity:.7;pointer-events:none;';
+                        span.textContent = activeH + '×' + activeW;
+                        inner.appendChild(span);
+                    }
+                }
+
+                if (dragging && ghostEl) {
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    const cellKey = `${pos.x},${pos.y}`;
+                    if (cellKey !== lastCellKey) {
+                        lastCellKey = cellKey;
+                        Object.keys(savedPositions).forEach(id => {
+                            const node = grid.engine.nodes.find(n => String(n.id) === String(id));
+                            if (node && node.el) {
+                                const sp = savedPositions[id];
+                                if (node.x !== sp.x || node.y !== sp.y || node.w !== sp.w || node.h !== sp.h) {
+                                    grid.update(node.el, sp);
+                                }
+                            }
+                        });
+                        grid.update(ghostEl, { x: pos.x, y: pos.y });
+                    }
+                }
+            };
+
+            const onPointerUp = (e) => {
+                document.removeEventListener('pointermove', onPointerMove, { capture: true });
+                document.removeEventListener('pointerup', onPointerUp, { capture: true });
+                document.body.classList.remove('bd-cursor-grabbing');
+
+                const wasDragging = dragging;
+                dragging = false;
+
+                if (!wasDragging || !activeSourceId) {
+                    activeSourceId = null;
+                    removeGhost();
+                    return;
+                }
+
+                const rect = grid.el.getBoundingClientRect();
+                const overGrid = e.clientX >= rect.left && e.clientX <= rect.right
+                               && e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+                if (overGrid) {
+                    const pos = cellFromPoint(e.clientX, e.clientY);
+                    const sourceId = activeSourceId;
+                    if (this.$wire) {
+                        this._duplicateDragCleanup = () => removeGhost({ skipCompact: true });
+                        this.duplicateWidget(sourceId, pos.x, pos.y);
+                    } else {
+                        removeGhost();
+                    }
+                } else {
+                    removeGhost();
+                }
+
+                activeSourceId = null;
+            };
+
+            const onPointerDown = (e) => {
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                const btn = e.target.closest('.bd-widget-duplicate-btn');
+                if (!btn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+                const item = e.target.closest('.grid-stack-item');
+                const node = item && item.gridstackNode;
+                activeW = parseInt((node && node.w) || btn.getAttribute('data-grid-w'), 10) || 4;
+                activeH = parseInt((node && node.h) || btn.getAttribute('data-grid-h'), 10) || 3;
+                activeSourceId = btn.getAttribute('data-widget-id');
+                startX = e.clientX;
+                startY = e.clientY;
+                dragging = false;
+                lastCellKey = null;
+                document.addEventListener('pointermove', onPointerMove, { capture: true });
+                document.addEventListener('pointerup', onPointerUp, { capture: true });
+            };
+
+            container.addEventListener('pointerdown', onPointerDown, true);
+            container.addEventListener('mousedown', onPointerDown, true);
+            container.addEventListener('touchstart', onPointerDown, true);
         },
 
         initGrid() {
@@ -1802,10 +1970,14 @@ export function dashboardBuilder(config = {}) {
             // ── Palette drag-in: insert temporary GridStack widget on drag ──
             this._initPaletteDragIntoGrid();
 
+            // ── Duplicate drag-in: ghost widget sized after the source ──
+            this._initDuplicateDragIntoGrid();
+
             let autoScrollTimer = null;
             let multiDragStartPositions = null;
 
             this.grid.on('dragstart', (event, el) => {
+                const prevFloat = this.grid?.engine?.float ?? true;
                 let lastEvt = null;
                 const onPointerMove = (e) => { lastEvt = e; };
                 window.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -1831,6 +2003,7 @@ export function dashboardBuilder(config = {}) {
                     if (this.grid) this.grid.batchUpdate(true);
                 } else {
                     multiDragStartPositions = null;
+                    if (this.grid?.engine) this.grid.engine._float = false;
                 }
 
                 autoScrollTimer = setInterval(() => {
@@ -1876,6 +2049,7 @@ export function dashboardBuilder(config = {}) {
                 this.grid.on('drag', syncGroupMove);
 
                 const cleanup = () => {
+                    if (this.grid?.engine) this.grid.engine._float = prevFloat;
                     syncGroupMove();
                     if (multiDragStartPositions && this.grid) {
                         this.grid.batchUpdate(false);
@@ -1981,6 +2155,7 @@ export function dashboardBuilder(config = {}) {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType !== 1 || !node.classList || !node.classList.contains('grid-stack-item')) return;
                         if (node.getAttribute('gs-id') === '__palette_ghost__') return;
+                        if (node.getAttribute('gs-id') === '__duplicate_ghost__') return;
                         if (node.gridstackNode) return;
                         const rawId = node.getAttribute('gs-id') || node.getAttribute('data-id');
                         if (rawId === null || rawId === undefined) return;
@@ -3574,15 +3749,23 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
-        duplicateWidget(id) {
-            console.log('[DB][duplicateWidget] CALL', { id, source: (this.widgets || []).find(w => String(w.id) === String(id)) });
+        duplicateWidget(id, targetX = null, targetY = null) {
+            console.log('[DB][duplicateWidget] CALL', { id, source: (this.widgets || []).find(w => String(w.id) === String(id)), targetX, targetY });
             if (!this.$wire) {
                 console.error('[dashboard-builder] duplicateWidget: $wire instance missing');
                 return;
             }
             const currentLayout = this.getLayout();
             this.$wire.duplicateWidget(id, currentLayout).then(rawWidget => {
+                if (typeof this._duplicateDragCleanup === 'function') {
+                    try { this._duplicateDragCleanup(); } catch (_) {}
+                    this._duplicateDragCleanup = null;
+                }
                 const widget = { ...rawWidget };
+                if (targetX !== null && targetY !== null) {
+                    widget.grid_x = targetX;
+                    widget.grid_y = targetY;
+                }
                 widget._isNew = true;
                 this.widgets.push(widget);
                 this.widgets = [...this.widgets];
@@ -3600,6 +3783,10 @@ export function dashboardBuilder(config = {}) {
                     this.saveLayout();
                 });
             }).catch(err => {
+                if (typeof this._duplicateDragCleanup === 'function') {
+                    try { this._duplicateDragCleanup(); } catch (_) {}
+                    this._duplicateDragCleanup = null;
+                }
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
             });
         },

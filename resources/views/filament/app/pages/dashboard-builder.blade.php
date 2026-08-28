@@ -154,9 +154,11 @@
                                                 </svg>
                                             </button>
                                             <button
-                                                class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                                                x-on:click.stop="duplicateWidget(widget.id)"
-                                                :title="'{{ __('Duplicate') }}'">
+                                                type="button"
+                                                class="bd-widget-duplicate-btn p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
+                                                :data-widget-id="widget.id"
+                                                x-on:click.stop="null"
+                                                :title="'{{ __('Drag to duplicate') }}'">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                                     <path stroke-linecap="round" stroke-linejoin="round"

@@ -178,18 +178,18 @@ class FacebookMarketingController extends Controller
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $defaultAggregations = [
-                'trend_total_spend' => 'spend',
-                'trend_total_clicks' => 'clicks',
-                'trend_total_impressions' => 'impressions',
-                'trend_total_reach' => 'reach',
-                'trend_average_frequency' => 'frequency',
-                'trend_average_cpm' => 'cpm',
-                'trend_average_ctr' => 'ctr',
-                'trend_average_cpc' => 'cpc',
-                'trend_total_results' => 'results',
-                'trend_average_purchase_roas' => 'purchase_roas',
-                'trend_average_cost_per_result' => 'cost_per_result',
-                'trend_average_result_rate' => 'result_rate'
+                'spend' => 'spend',
+                'clicks' => 'clicks',
+                'impressions' => 'impressions',
+                'reach' => 'reach',
+                'frequency' => 'frequency',
+                'cpm' => 'cpm',
+                'ctr' => 'ctr',
+                'cpc' => 'cpc',
+                'results' => 'results',
+                'purchase_roas' => 'purchase_roas',
+                'cost_per_result' => 'cost_per_result',
+                'result_rate' => 'result_rate'
             ];
 
             $aggregations = $defaultAggregations;
@@ -389,6 +389,11 @@ class FacebookMarketingController extends Controller
                 foreach ($mappings as $prefixed => $standard) {
                     if (isset($rowLower[$prefixed])) {
                         $row[$standard] = $rowLower[$prefixed];
+                        foreach ($row as $key => $value) {
+                            if (is_string($key) && strcasecmp($key, $prefixed) === 0) {
+                                unset($row[$key]);
+                            }
+                        }
                     }
                 }
             }

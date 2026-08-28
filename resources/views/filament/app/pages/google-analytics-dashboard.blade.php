@@ -98,31 +98,31 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <span x-text="formatVariance(variance.sessions)"></span>
                     </div>
                 </div>
-                <div class="card-stat-ga4" :class="activeMetrics.activeUsers ? 'active' : ''" @click="toggleMetric('activeUsers')"
-                     data-metric="activeUsers">
+                <div class="card-stat-ga4" :class="activeMetrics.reach ? 'active' : ''" @click="toggleMetric('reach')"
+                     data-metric="reach">
                     <div class="ga4-label">{{ __('Active Users') }}</div>
-                    <div class="card-metric-value" x-text="formatNumber(summary.activeUsers)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.activeUsers)">
-                        <span x-text="getVarianceIcon(variance.activeUsers)"></span>
-                        <span x-text="formatVariance(variance.activeUsers)"></span>
+                    <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
+                        <span x-text="getVarianceIcon(variance.reach)"></span>
+                        <span x-text="formatVariance(variance.reach)"></span>
                     </div>
                 </div>
-                <div class="card-stat-ga4" :class="activeMetrics.newUsers ? 'active' : ''" @click="toggleMetric('newUsers')"
-                     data-metric="newUsers">
+                <div class="card-stat-ga4" :class="activeMetrics.new_users ? 'active' : ''" @click="toggleMetric('new_users')"
+                     data-metric="new_users">
                     <div class="ga4-label">{{ __('New Users') }}</div>
-                    <div class="card-metric-value" x-text="formatNumber(summary.newUsers)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.newUsers)">
-                        <span x-text="getVarianceIcon(variance.newUsers)"></span>
-                        <span x-text="formatVariance(variance.newUsers)"></span>
+                    <div class="card-metric-value" x-text="formatNumber(summary.new_users)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.new_users)">
+                        <span x-text="getVarianceIcon(variance.new_users)"></span>
+                        <span x-text="formatVariance(variance.new_users)"></span>
                     </div>
                 </div>
-                <div class="card-stat-ga4" :class="activeMetrics.screenPageViews ? 'active' : ''" @click="toggleMetric('screenPageViews')"
-                     data-metric="screenPageViews">
+                <div class="card-stat-ga4" :class="activeMetrics.pageviews ? 'active' : ''" @click="toggleMetric('pageviews')"
+                     data-metric="pageviews">
                     <div class="ga4-label">{{ __('Pageviews') }}</div>
-                    <div class="card-metric-value" x-text="formatNumber(summary.screenPageViews)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.screenPageViews)">
-                        <span x-text="getVarianceIcon(variance.screenPageViews)"></span>
-                        <span x-text="formatVariance(variance.screenPageViews)"></span>
+                    <div class="card-metric-value" x-text="formatNumber(summary.pageviews)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.pageviews)">
+                        <span x-text="getVarianceIcon(variance.pageviews)"></span>
+                        <span x-text="formatVariance(variance.pageviews)"></span>
                     </div>
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.conversions ? 'active' : ''" @click="toggleMetric('conversions')"
@@ -134,31 +134,31 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <span x-text="formatVariance(variance.conversions)"></span>
                     </div>
                 </div>
-                <div class="card-stat-ga4" :class="activeMetrics.averageSessionDuration ? 'active' : ''" @click="toggleMetric('averageSessionDuration')"
-                     data-metric="averageSessionDuration">
+                <div class="card-stat-ga4" :class="activeMetrics.average_session_duration ? 'active' : ''" @click="toggleMetric('average_session_duration')"
+                     data-metric="average_session_duration">
                     <div class="ga4-label">{{ __('Avg Duration') }}</div>
-                    <div class="card-metric-value" x-text="formatDuration(summary.averageSessionDuration)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.averageSessionDuration)">
-                        <span x-text="getVarianceIcon(variance.averageSessionDuration)"></span>
-                        <span x-text="formatVariance(variance.averageSessionDuration)"></span>
+                    <div class="card-metric-value" x-text="formatDuration(summary.average_session_duration)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.average_session_duration)">
+                        <span x-text="getVarianceIcon(variance.average_session_duration)"></span>
+                        <span x-text="formatVariance(variance.average_session_duration)"></span>
                     </div>
                 </div>
-                <div class="card-stat-ga4" :class="activeMetrics.bounceRate ? 'active' : ''" @click="toggleMetric('bounceRate')"
-                     data-metric="bounceRate">
+                <div class="card-stat-ga4" :class="activeMetrics.bounce_rate ? 'active' : ''" @click="toggleMetric('bounce_rate')"
+                     data-metric="bounce_rate">
                     <div class="ga4-label">{{ __('Bounce Rate') }}</div>
-                    <div class="card-metric-value" x-text="formatPercent(summary.bounceRate)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.bounceRate, true)">
-                        <span x-text="getVarianceIcon(variance.bounceRate, true)"></span>
-                        <span x-text="formatVariance(variance.bounceRate)"></span>
+                    <div class="card-metric-value" x-text="formatPercent(summary.bounce_rate)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.bounce_rate, true)">
+                        <span x-text="getVarianceIcon(variance.bounce_rate, true)"></span>
+                        <span x-text="formatVariance(variance.bounce_rate)"></span>
                     </div>
                 </div>
-                <div class="card-stat-ga4" :class="activeMetrics.totalUsers ? 'active' : ''" @click="toggleMetric('totalUsers')"
-                     data-metric="totalUsers">
+                <div class="card-stat-ga4" :class="activeMetrics.total_users ? 'active' : ''" @click="toggleMetric('total_users')"
+                     data-metric="total_users">
                     <div class="ga4-label">{{ __('Total Users') }}</div>
-                    <div class="card-metric-value" x-text="formatNumber(summary.totalUsers)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.totalUsers)">
-                        <span x-text="getVarianceIcon(variance.totalUsers)"></span>
-                        <span x-text="formatVariance(variance.totalUsers)"></span>
+                    <div class="card-metric-value" x-text="formatNumber(summary.total_users)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.total_users)">
+                        <span x-text="getVarianceIcon(variance.total_users)"></span>
+                        <span x-text="formatVariance(variance.total_users)"></span>
                     </div>
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.revenue ? 'active' : ''" @click="toggleMetric('revenue')"

@@ -69,14 +69,14 @@ class GoogleAnalyticsController extends Controller
     private function mapFromGa4(string $metric): string
     {
         return match ($metric) {
-            'pageviews' => 'screenPageViews',
-            'bounce_rate' => 'bounceRate',
-            'new_users' => 'newUsers',
-            'average_session_duration' => 'averageSessionDuration',
+            'screenPageViews' => 'pageviews',
+            'bounceRate' => 'bounce_rate',
+            'newUsers' => 'new_users',
+            'averageSessionDuration' => 'average_session_duration',
             'totalRevenue', 'total_revenue' => 'revenue',
-            'events', 'event_count' => 'eventCount',
-            'reach', 'active_users' => 'activeUsers',
-            'total_users' => 'totalUsers',
+            'eventCount' => 'event_count',
+            'activeUsers' => 'reach',
+            'totalUsers' => 'total_users',
             default => $metric,
         };
     }
@@ -399,14 +399,12 @@ class GoogleAnalyticsController extends Controller
                     foreach ($results["summary_{$scope}"]['data'][0] as $k => $v) {
                         $mappedKey = $this->mapFromGa4($k);
                         $summary[$mappedKey] = $v;
-                        $summary[$k] = $v;
                     }
                 }
                 if (isset($results["previous_{$scope}"]['data'][0])) {
                     foreach ($results["previous_{$scope}"]['data'][0] as $k => $v) {
                         $mappedKey = $this->mapFromGa4($k);
                         $previous[$mappedKey] = $v;
-                        $previous[$k] = $v;
                     }
                 }
             }
@@ -670,7 +668,6 @@ class GoogleAnalyticsController extends Controller
                 foreach ($row as $k => $v) {
                     $mappedKey = $this->mapFromGa4($k);
                     $mappedRow[$mappedKey] = $v;
-                    $mappedRow[$k] = $v;
                 }
                 $mappedTableData[] = $mappedRow;
             }

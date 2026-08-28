@@ -1173,4 +1173,10 @@ body.pv-page .dvc-controls-bar {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* Show a grabbing cursor across the whole page while a ghost drag is active */
+body.bd-cursor-grabbing,
+body.bd-cursor-grabbing * {
+    cursor: grabbing !important;
+}
+
 
