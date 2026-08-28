@@ -574,7 +574,12 @@ class ProjectSettings extends Page
                 })
                 ->requiresConfirmation()
                 ->modalHeading(__('Upgrade Project'))
-                ->modalDescription(__('Are you sure you want to upgrade your project to the newer version? This is a destructive operation.'))
+                ->modalDescription(function () use ($project) {
+                    if (is_null($project->last_deployed_at)) {
+                        return __('This project has not been deployed yet. The upgrade will only update the target version — the initial deployment will use the new version.');
+                    }
+                    return __('Are you sure you want to upgrade your project to the newer version? This will deploy the new version to your infrastructure.');
+                })
                 ->form([
                     TextInput::make('confirmation')
                         ->label(__('Type "UPGRADE" to confirm'))
@@ -589,15 +594,31 @@ class ProjectSettings extends Page
                 ])
                 ->action(function () use ($project) {
                     $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
-                    if ($defaultRelease) {
-                        \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease);
+                    if (! $defaultRelease) {
+                        return;
+                    }
+
+                    if (is_null($project->last_deployed_at)) {
+                        // Never deployed: just update the target release. Initial deploy will pick it up.
+                        $project->update(['apis_hub_release_id' => $defaultRelease->id]);
 
                         Notification::make()
-                            ->title(__('Upgrade Initiated'))
-                            ->body(__('Project upgrade to :version has been scheduled.', ['version' => $defaultRelease->version_tag]))
+                            ->title(__('Upgrade Saved'))
+                            ->body(__('Target version updated to :version. The initial deployment will use this version.', ['version' => $defaultRelease->version_tag]))
                             ->success()
                             ->send();
+
+                        return;
                     }
+
+                    // Already deployed: trigger full upgrade deployment
+                    \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease);
+
+                    Notification::make()
+                        ->title(__('Upgrade Initiated'))
+                        ->body(__('Project upgrade to :version has been scheduled.', ['version' => $defaultRelease->version_tag]))
+                        ->success()
+                        ->send();
                 });
 
         return $actions;
