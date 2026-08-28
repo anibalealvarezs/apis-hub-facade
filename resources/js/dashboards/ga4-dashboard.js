@@ -14,19 +14,19 @@ export function ga4Dashboard(config = {}) {
         isSummaryLoading: false,
         isChartLoading: false,
 
-        summary: { sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0, bounceRate: 0, revenue: 0 },
-        previous: { sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0, bounceRate: 0, revenue: 0 },
+        summary: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
+        previous: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
         chartDataRaw: [],
 
         activeMetrics: {
             sessions: true,
-            activeUsers: true,
-            newUsers: false,
+            reach: true,
+            new_users: false,
             conversions: false,
-            screenPageViews: false,
-            averageSessionDuration: false,
-            bounceRate: false,
-            totalUsers: false,
+            pageviews: false,
+            average_session_duration: false,
+            bounce_rate: false,
+            total_users: false,
             revenue: false,
         },
 
@@ -34,8 +34,8 @@ export function ga4Dashboard(config = {}) {
             campaigns: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             channels: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             traffic: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            acquisition: dataTable({ sortCol: 'newUsers', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            events: dataTable({ sortCol: 'eventCount', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            acquisition: dataTable({ sortCol: 'new_users', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            events: dataTable({ sortCol: 'event_count', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             adtouchpoints: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
         },
         sl: {
@@ -58,31 +58,31 @@ export function ga4Dashboard(config = {}) {
         },
 
         tabConfig: {
-            campaigns: { label: 'Campaign', metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue'] },
-            adgroups: { label: 'Ad Group', metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue'] },
-            channels: { label: 'Channel', metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue'] },
-            sources: { label: 'Source/Medium', metrics: ['sessions', 'activeUsers', 'newUsers', 'conversions', 'screenPageViews', 'averageSessionDuration', 'totalUsers', 'revenue'] },
-            traffic_pages: { label: 'Landing Page', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions', 'revenue'] },
-            traffic_countries: { label: 'Country', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions', 'revenue'] },
-            traffic_devices: { label: 'Device', metrics: ['sessions', 'screenPageViews', 'bounceRate', 'averageSessionDuration', 'conversions', 'revenue'] },
-            acquisition_channels: { label: 'Acq. Channel', metrics: ['newUsers', 'activeUsers', 'totalUsers', 'revenue'] },
-            events: { label: 'Event Name', metrics: ['eventCount', 'conversions'] },
+            campaigns: { label: 'Campaign', metrics: ['sessions', 'reach', 'new_users', 'conversions', 'pageviews', 'average_session_duration', 'total_users', 'revenue'] },
+            adgroups: { label: 'Ad Group', metrics: ['sessions', 'reach', 'new_users', 'conversions', 'pageviews', 'average_session_duration', 'total_users', 'revenue'] },
+            channels: { label: 'Channel', metrics: ['sessions', 'reach', 'new_users', 'conversions', 'pageviews', 'average_session_duration', 'total_users', 'revenue'] },
+            sources: { label: 'Source/Medium', metrics: ['sessions', 'reach', 'new_users', 'conversions', 'pageviews', 'average_session_duration', 'total_users', 'revenue'] },
+            traffic_pages: { label: 'Landing Page', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
+            traffic_countries: { label: 'Country', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
+            traffic_devices: { label: 'Device', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
+            acquisition_channels: { label: 'Acq. Channel', metrics: ['new_users', 'reach', 'total_users', 'revenue'] },
+            events: { label: 'Event Name', metrics: ['event_count', 'conversions'] },
             adtouchpoints_adgroups: { label: 'Ad Group', metrics: ['sessions', 'conversions', 'revenue'] },
             adtouchpoints_terms: { label: 'Manual Term', metrics: ['sessions', 'conversions', 'revenue'] },
             adtouchpoints_content: { label: 'Ad Content', metrics: ['sessions', 'conversions', 'revenue'] },
         },
         metricLabels: {
-            sessions: 'Sessions', activeUsers: 'Users', newUsers: 'New',
-            conversions: 'Conv.', screenPageViews: 'Page Views',
-            bounceRate: 'Bounce Rate', eventCount: 'Event Count',
-            averageSessionDuration: 'Avg. Duration', totalUsers: 'Total Users'
+            sessions: 'Sessions', reach: 'Users', new_users: 'New',
+            conversions: 'Conv.', pageviews: 'Page Views',
+            bounce_rate: 'Bounce Rate', event_count: 'Event Count',
+            average_session_duration: 'Avg. Duration', total_users: 'Total Users'
         },
         metricColors: {
-            sessions: 'var(--ga4-sessions)', activeUsers: 'var(--ga4-activeUsers)',
-            newUsers: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
-            screenPageViews: 'var(--ga4-pageViews)', bounceRate: 'var(--ga4-revenue)',
-            eventCount: '#8B5CF6', averageSessionDuration: 'var(--ga4-avgSessionDuration)',
-            totalUsers: 'var(--ga4-totalUsers)'
+            sessions: 'var(--ga4-sessions)', reach: 'var(--ga4-activeUsers)',
+            new_users: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
+            pageviews: 'var(--ga4-pageViews)', bounce_rate: 'var(--ga4-revenue)',
+            event_count: '#8B5CF6', average_session_duration: 'var(--ga4-avgSessionDuration)',
+            total_users: 'var(--ga4-totalUsers)'
         },
 
         get isAnySectionLoading() {
@@ -270,17 +270,17 @@ export function ga4Dashboard(config = {}) {
         },
 
         normalizeSummaryMetrics(obj) {
-            if (!obj) return { sessions: 0, activeUsers: 0, newUsers: 0, conversions: 0, screenPageViews: 0, averageSessionDuration: 0, totalUsers: 0 };
+            if (!obj) return { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0 };
             return {
                 sessions: obj.sessions ?? 0,
-                activeUsers: obj.activeUsers ?? obj.active_users ?? 0,
-                newUsers: obj.newUsers ?? obj.new_users ?? 0,
+                reach: obj.reach ?? 0,
+                new_users: obj.new_users ?? 0,
                 conversions: obj.conversions ?? 0,
-                screenPageViews: obj.screenPageViews ?? obj.pageviews ?? 0,
-                averageSessionDuration: obj.averageSessionDuration ?? obj.average_session_duration ?? 0,
-                totalUsers: obj.totalUsers ?? obj.total_users ?? 0,
-                bounceRate: obj.bounceRate ?? obj.bounce_rate ?? 0,
-                events: obj.events ?? 0,
+                pageviews: obj.pageviews ?? 0,
+                average_session_duration: obj.average_session_duration ?? 0,
+                total_users: obj.total_users ?? 0,
+                bounce_rate: obj.bounce_rate ?? 0,
+                revenue: obj.revenue ?? 0,
             };
         },
 
@@ -371,13 +371,13 @@ export function ga4Dashboard(config = {}) {
             };
             return {
                 sessions: calc(this.summary.sessions, this.previous.sessions),
-                activeUsers: calc(this.summary.activeUsers, this.previous.activeUsers),
-                newUsers: calc(this.summary.newUsers, this.previous.newUsers),
+                reach: calc(this.summary.reach, this.previous.reach),
+                new_users: calc(this.summary.new_users, this.previous.new_users),
                 conversions: calc(this.summary.conversions, this.previous.conversions),
-                screenPageViews: calc(this.summary.screenPageViews, this.previous.screenPageViews),
-                averageSessionDuration: calc(this.summary.averageSessionDuration, this.previous.averageSessionDuration),
-                bounceRate: calc(this.summary.bounceRate, this.previous.bounceRate),
-                totalUsers: calc(this.summary.totalUsers, this.previous.totalUsers),
+                pageviews: calc(this.summary.pageviews, this.previous.pageviews),
+                average_session_duration: calc(this.summary.average_session_duration, this.previous.average_session_duration),
+                bounce_rate: calc(this.summary.bounce_rate, this.previous.bounce_rate),
+                total_users: calc(this.summary.total_users, this.previous.total_users),
                 revenue: calc(this.summary.revenue, this.previous.revenue),
             };
         },
@@ -533,9 +533,9 @@ export function ga4Dashboard(config = {}) {
                 if (dataByDate[dateStr]) return dataByDate[dateStr];
                 return {
                     daily: dateStr,
-                    sessions: 0, activeUsers: 0, newUsers: 0,
-                    conversions: 0, screenPageViews: 0, bounceRate: 0,
-                    averageSessionDuration: 0, totalUsers: 0, revenue: 0
+                    sessions: 0, reach: 0, new_users: 0,
+                    conversions: 0, pageviews: 0, bounce_rate: 0,
+                    average_session_duration: 0, total_users: 0, revenue: 0
                 };
             });
 
@@ -558,10 +558,10 @@ export function ga4Dashboard(config = {}) {
                 });
             }
 
-            if (this.activeMetrics.activeUsers) {
+            if (this.activeMetrics.reach) {
                 datasets.push({
                     label: 'Active Users',
-                    data: chartData.map(r => r.activeUsers),
+                    data: chartData.map(r => r.reach),
                     borderColor: '#0F9D58',
                     backgroundColor: 'rgba(15, 157, 88, 0.1)',
                     borderWidth: 2,
@@ -573,10 +573,10 @@ export function ga4Dashboard(config = {}) {
                 });
             }
 
-            if (this.activeMetrics.newUsers) {
+            if (this.activeMetrics.new_users) {
                 datasets.push({
                     label: 'New Users',
-                    data: chartData.map(r => r.newUsers),
+                    data: chartData.map(r => r.new_users),
                     borderColor: '#FBBC04',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -587,10 +587,10 @@ export function ga4Dashboard(config = {}) {
                 });
             }
 
-            if (this.activeMetrics.screenPageViews) {
+            if (this.activeMetrics.pageviews) {
                 datasets.push({
                     label: 'Pageviews',
-                    data: chartData.map(r => r.screenPageViews),
+                    data: chartData.map(r => r.pageviews),
                     borderColor: '#a855f7',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -615,10 +615,10 @@ export function ga4Dashboard(config = {}) {
                 });
             }
 
-            if (this.activeMetrics.averageSessionDuration) {
+            if (this.activeMetrics.average_session_duration) {
                 datasets.push({
                     label: 'Avg Duration',
-                    data: chartData.map(r => r.averageSessionDuration),
+                    data: chartData.map(r => r.average_session_duration),
                     borderColor: '#06b6d4',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -629,10 +629,10 @@ export function ga4Dashboard(config = {}) {
                 });
             }
 
-            if (this.activeMetrics.bounceRate) {
+            if (this.activeMetrics.bounce_rate) {
                 datasets.push({
                     label: 'Bounce Rate',
-                    data: chartData.map(r => r.bounceRate),
+                    data: chartData.map(r => r.bounce_rate),
                     borderColor: '#ec4899',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -643,10 +643,10 @@ export function ga4Dashboard(config = {}) {
                 });
             }
 
-            if (this.activeMetrics.totalUsers) {
+            if (this.activeMetrics.total_users) {
                 datasets.push({
                     label: 'Total Users',
-                    data: chartData.map(r => r.totalUsers),
+                    data: chartData.map(r => r.total_users),
                     borderColor: '#6366f1',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -678,8 +678,15 @@ export function ga4Dashboard(config = {}) {
             chart.options.scales.x.grid.color = cssGridColor;
             chart.options.scales.x.ticks.color = cssTicksColor;
 
-            ['sessions', 'activeUsers', 'newUsers', 'screenPageViews', 'conversions', 'averageSessionDuration', 'bounceRate', 'totalUsers', 'revenue'].forEach(m => {
-                let scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
+            const scaleIds = {
+                sessions: 'ySessions', reach: 'yActiveUsers', new_users: 'yNewUsers',
+                pageviews: 'yScreenPageViews', conversions: 'yConversions',
+                average_session_duration: 'yAverageSessionDuration', bounce_rate: 'yBounceRate',
+                total_users: 'yTotalUsers', revenue: 'yRevenue'
+            };
+
+            ['sessions', 'reach', 'new_users', 'pageviews', 'conversions', 'average_session_duration', 'bounce_rate', 'total_users', 'revenue'].forEach(m => {
+                let scaleId = scaleIds[m];
                 if (chart.options.scales[scaleId]) {
                     chart.options.scales[scaleId].display = this.activeMetrics[m];
                     if (this.activeMetrics[m]) {
@@ -721,10 +728,10 @@ export function ga4Dashboard(config = {}) {
         },
 
         formatMetricValue(key, value) {
-            if (key === 'averageSessionDuration') {
+            if (key === 'average_session_duration') {
                 return this.formatDuration(value);
             }
-            if (key === 'bounceRate') {
+            if (key === 'bounce_rate') {
                 return this.formatPercent(value);
             }
             return this.formatNumber(value);
