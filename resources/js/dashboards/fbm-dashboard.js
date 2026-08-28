@@ -397,7 +397,7 @@ export function fbDashboard(config = {}) {
                 const promises = validMetrics.map(async (metric) => {
                     const seriesDates = this.chartDataRaw.map(r => r.daily || r.date).filter(Boolean);
                     const seriesValues = this.chartDataRaw.map(r => {
-                        let v = r[metric] ?? r['trend_total_' + metric] ?? r['trend_average_' + metric];
+                        let v = r[metric];
                         return v !== undefined && v !== null && v !== '' ? parseFloat(v) : null;
                     });
                     
@@ -693,18 +693,18 @@ export function fbDashboard(config = {}) {
                 if (dataByDate[dateStr]) return dataByDate[dateStr];
                 return {
                     daily: dateStr,
-                    spend: 0, trend_total_spend: 0,
-                    impressions: 0, trend_total_impressions: 0,
-                    reach: 0, trend_total_reach: 0,
-                    frequency: 0, trend_average_frequency: 0,
-                    cpm: 0, trend_average_cpm: 0,
-                    clicks: 0, trend_total_clicks: 0,
-                    ctr: 0, trend_average_ctr: 0,
-                    cpc: 0, trend_average_cpc: 0,
-                    results: 0, trend_total_results: 0,
-                    purchase_roas: 0, trend_average_purchase_roas: 0,
-                    cost_per_result: 0, trend_average_cost_per_result: 0,
-                    result_rate: 0, trend_average_result_rate: 0
+                    spend: 0,
+                    impressions: 0,
+                    reach: 0,
+                    frequency: 0,
+                    cpm: 0,
+                    clicks: 0,
+                    ctr: 0,
+                    cpc: 0,
+                    results: 0,
+                    purchase_roas: 0,
+                    cost_per_result: 0,
+                    result_rate: 0
                 };
             });
 
@@ -716,7 +716,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.spend) {
                 datasets.push({
                     label: 'Amount Spent',
-                    data: chartData.map(r => r.spend || r.trend_total_spend),
+                    data: chartData.map(r => r.spend),
                     borderColor: '#10B981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     borderWidth: 2,
@@ -731,7 +731,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.impressions) {
                 datasets.push({
                     label: 'Impressions',
-                    data: chartData.map(r => r.impressions || r.trend_total_impressions),
+                    data: chartData.map(r => r.impressions),
                     borderColor: '#6366F1',
                     backgroundColor: 'rgba(99, 102, 241, 0.1)',
                     borderWidth: 2,
@@ -746,7 +746,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.reach) {
                 datasets.push({
                     label: 'Reach',
-                    data: chartData.map(r => r.reach || r.trend_total_reach || 0),
+                    data: chartData.map(r => r.reach || 0),
                     borderColor: '#3B82F6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
@@ -761,7 +761,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.frequency) {
                 datasets.push({
                     label: 'Frequency',
-                    data: chartData.map(r => r.frequency || r.trend_average_frequency || 0),
+                    data: chartData.map(r => r.frequency || 0),
                     borderColor: '#F43F5E',
                     backgroundColor: 'rgba(244, 63, 94, 0.1)',
                     borderWidth: 2,
@@ -776,7 +776,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.cpm) {
                 datasets.push({
                     label: 'CPM',
-                    data: chartData.map(r => r.cpm || r.trend_average_cpm || 0),
+                    data: chartData.map(r => r.cpm || 0),
                     borderColor: '#EAB308',
                     backgroundColor: 'rgba(234, 179, 8, 0.1)',
                     borderWidth: 2,
@@ -791,7 +791,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.clicks) {
                 datasets.push({
                     label: 'Clicks',
-                    data: chartData.map(r => r.clicks || r.trend_total_clicks),
+                    data: chartData.map(r => r.clicks),
                     borderColor: '#0EA5E9',
                     backgroundColor: 'rgba(14, 165, 233, 0.1)',
                     borderWidth: 2,
@@ -806,7 +806,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.ctr) {
                 datasets.push({
                     label: 'CTR',
-                    data: chartData.map(r => (r.ctr || r.trend_average_ctr || 0) * 100),
+                    data: chartData.map(r => (r.ctr || 0) * 100),
                     borderColor: '#8B5CF6',
                     backgroundColor: 'rgba(139, 92, 246, 0.1)',
                     borderWidth: 2,
@@ -821,7 +821,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.cpc) {
                 datasets.push({
                     label: 'CPC',
-                    data: chartData.map(r => r.cpc || r.trend_average_cpc || 0),
+                    data: chartData.map(r => r.cpc || 0),
                     borderColor: '#F59E0B',
                     backgroundColor: 'rgba(245, 158, 11, 0.1)',
                     borderWidth: 2,
@@ -836,7 +836,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.results) {
                 datasets.push({
                     label: 'Purchases',
-                    data: chartData.map(r => r.results || r.trend_total_results || 0),
+                    data: chartData.map(r => r.results || 0),
                     borderColor: '#14B8A6',
                     backgroundColor: 'rgba(20, 184, 166, 0.1)',
                     borderWidth: 2,
@@ -851,7 +851,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.purchase_roas) {
                 datasets.push({
                     label: 'ROAS',
-                    data: chartData.map(r => r.purchase_roas || r.trend_average_purchase_roas || 0),
+                    data: chartData.map(r => r.purchase_roas || 0),
                     borderColor: '#EC4899',
                     backgroundColor: 'rgba(236, 72, 153, 0.1)',
                     borderWidth: 2,
@@ -866,7 +866,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.cost_per_result) {
                 datasets.push({
                     label: 'Cost per Result',
-                    data: chartData.map(r => r.cost_per_result || r.trend_average_cost_per_result || 0),
+                    data: chartData.map(r => r.cost_per_result || 0),
                     borderColor: '#A855F7',
                     backgroundColor: 'rgba(168, 85, 247, 0.1)',
                     borderWidth: 2,
@@ -881,7 +881,7 @@ export function fbDashboard(config = {}) {
             if (this.activeMetrics.result_rate) {
                 datasets.push({
                     label: 'Result Rate',
-                    data: chartData.map(r => (r.result_rate || r.trend_average_result_rate || 0) * 100),
+                    data: chartData.map(r => (r.result_rate || 0) * 100),
                     borderColor: '#EF4444',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     borderWidth: 2,
