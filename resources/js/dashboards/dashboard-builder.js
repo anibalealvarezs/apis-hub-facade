@@ -1641,7 +1641,7 @@ export function dashboardBuilder(config = {}) {
                 return { x, y };
             };
 
-            const removeGhost = () => {
+            const removeGhost = (opts = {}) => {
                 if (ghostEl) {
                     try { grid.removeWidget(ghostEl); } catch (_) {}
                     ghostEl = null;
@@ -1659,7 +1659,7 @@ export function dashboardBuilder(config = {}) {
                         }
                     }
                 });
-                grid.compact();
+                if (!opts.skipCompact) grid.compact();
             };
 
             const onPointerDown = (e) => {
@@ -1798,7 +1798,7 @@ export function dashboardBuilder(config = {}) {
                 return { x, y };
             };
 
-            const removeGhost = () => {
+            const removeGhost = (opts = {}) => {
                 if (ghostEl) {
                     try { grid.removeWidget(ghostEl); } catch (_) {}
                     ghostEl = null;
@@ -1816,7 +1816,7 @@ export function dashboardBuilder(config = {}) {
                         }
                     }
                 });
-                grid.compact();
+                if (!opts.skipCompact) grid.compact();
             };
 
             const onPointerMove = (e) => {
@@ -1895,8 +1895,12 @@ export function dashboardBuilder(config = {}) {
                 if (overGrid) {
                     const pos = cellFromPoint(e.clientX, e.clientY);
                     const sourceId = activeSourceId;
-                    removeGhost();
-                    this.duplicateWidget(sourceId, pos.x, pos.y);
+                    if (this.$wire) {
+                        this._duplicateDragCleanup = () => removeGhost({ skipCompact: true });
+                        this.duplicateWidget(sourceId, pos.x, pos.y);
+                    } else {
+                        removeGhost();
+                    }
                 } else {
                     removeGhost();
                 }
@@ -3749,6 +3753,10 @@ export function dashboardBuilder(config = {}) {
             }
             const currentLayout = this.getLayout();
             this.$wire.duplicateWidget(id, currentLayout).then(rawWidget => {
+                if (typeof this._duplicateDragCleanup === 'function') {
+                    try { this._duplicateDragCleanup(); } catch (_) {}
+                    this._duplicateDragCleanup = null;
+                }
                 const widget = { ...rawWidget };
                 if (targetX !== null && targetY !== null) {
                     widget.grid_x = targetX;
@@ -3771,6 +3779,10 @@ export function dashboardBuilder(config = {}) {
                     this.saveLayout();
                 });
             }).catch(err => {
+                if (typeof this._duplicateDragCleanup === 'function') {
+                    try { this._duplicateDragCleanup(); } catch (_) {}
+                    this._duplicateDragCleanup = null;
+                }
                 console.error('[dashboard-builder] duplicateWidget wire call error:', err);
             });
         },
