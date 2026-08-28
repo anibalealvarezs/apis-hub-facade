@@ -592,6 +592,7 @@
 - `BillingProfileResource::form()` "Owner" section: `owner_name` Placeholder now renders a `HtmlString` anchor to `filament.admin.resources.users.edit` (target `_blank`, primary-600 / hover underline), instead of plain text. (Placeholder `content()` closures DO receive the record, so record edit/view forms are fine — unlike `default()`.)
 - `ProjectsRelationManager` Name column now links to `filament.admin.resources.projects.edit` with `->openUrlInNewTab()`.
 - BillingProfile view page = `ViewRecord` (`ViewBillingProfile`) — it renders the resource `form()` schema, so the Owner link lives in the form schema.
+- **Reversal (2026-08-27):** user asked to NOT open admin-portal links in a new tab. Removed `target="_blank"` from the OWner/Billing links in `ProjectResource` placeholders and `BillingProfileResource`, and removed `->openUrlInNewTab()` from the Projects/User/Billing columns. (Pre-existing new-tab links in `Account` panel and `DataSources` external URLs were left untouched.)
 
 
 

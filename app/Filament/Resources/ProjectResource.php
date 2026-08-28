@@ -126,7 +126,7 @@ class ProjectResource extends Resource
                             ->columnSpanFull()
                             ->content(fn (?Project $record) => $record?->user
                                 ? new \Illuminate\Support\HtmlString(
-                                    '<a href="' . route('filament.admin.resources.users.edit', ['record' => $record->user_id]) . '" target="_blank" class="text-primary-600 hover:underline text-sm">' . __('Check user\'s profile') . '</a>'
+                                    '<a href="' . route('filament.admin.resources.users.edit', ['record' => $record->user_id]) . '" class="text-primary-600 hover:underline text-sm">' . __('Check user\'s profile') . '</a>'
                                 )
                                 : ''),
                     ])->columns(4),
@@ -217,7 +217,7 @@ class ProjectResource extends Resource
                             ->label(__('Profile Name'))
                             ->content(fn (?Project $record) => $record?->billingProfile
                                 ? new \Illuminate\Support\HtmlString(
-                                    '<a href="' . route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id]) . '" target="_blank" class="text-primary-600 hover:underline">' . e($record->billingProfile->reference_name) . '</a>'
+                                    '<a href="' . route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id]) . '" class="text-primary-600 hover:underline">' . e($record->billingProfile->reference_name) . '</a>'
                                 )
                                 : 'None')
                             ->columnSpan(1),
@@ -566,15 +566,13 @@ class ProjectResource extends Resource
                     ->description(fn (Project $record): string => $record->user->email ?? '')
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id]))
-                    ->openUrlInNewTab(),
+                    ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id])),
                 Tables\Columns\TextColumn::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
                     ->formatStateUsing(fn (?string $state) => $state)
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id]))
-                    ->openUrlInNewTab(),
+                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id])),
                 Tables\Columns\TextColumn::make('billingProfile.tier')
                     ->label(__('Tier'))
                     ->badge()

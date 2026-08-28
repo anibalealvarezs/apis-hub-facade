@@ -31,8 +31,7 @@ class ProjectsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.projects.edit', ['record' => $record->id]))
-                    ->openUrlInNewTab(),
+                    ->url(fn (Project $record): string => route('filament.admin.resources.projects.edit', ['record' => $record->id])),
                 Tables\Columns\TextColumn::make('subdomain')
                     ->badge()
                     ->color('gray'),

@@ -73,7 +73,7 @@ class BillingProfileResource extends Resource
                                 }
 
                                 return new HtmlString(
-                                    '<a href="' . e(route('filament.admin.resources.users.edit', ['record' => $record->user_id])) . '" target="_blank" class="text-primary-600 hover:underline">' . e($record->user->name) . '</a>'
+                                    '<a href="' . e(route('filament.admin.resources.users.edit', ['record' => $record->user_id])) . '" class="text-primary-600 hover:underline">' . e($record->user->name) . '</a>'
                                 );
                             }),
                         Forms\Components\Placeholder::make('owner_email')
