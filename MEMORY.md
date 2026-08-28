@@ -594,5 +594,9 @@
 - BillingProfile view page = `ViewRecord` (`ViewBillingProfile`) — it renders the resource `form()` schema, so the Owner link lives in the form schema.
 - **Reversal (2026-08-27):** user asked to NOT open admin-portal links in a new tab. Removed `target="_blank"` from the OWner/Billing links in `ProjectResource` placeholders and `BillingProfileResource`, and removed `->openUrlInNewTab()` from the Projects/User/Billing columns. (Pre-existing new-tab links in `Account` panel and `DataSources` external URLs were left untouched.)
 
+### User edit page: Projects card + no search on Billing card (2026-08-27)
+- New widget `UserResource\Widgets\UserProjectsTable` (registered in `EditUser::getFooterWidgets()` after `UserBillingProfilesTable`): lists projects the user owns OR is a member of via `Project::where('user_id', $id)->orWhereHas('users', ...)`. Columns: name (link to project edit, not new tab), subdomain, Relationship badge (Owner/Member by `user_id`), Health badge, Billing badge. No searchable columns → no search box.
+- Removed `->searchable()` from `reference_name` and `owner.name` columns in `UserBillingProfilesTable` so the search box no longer appears on that card (Filament hides the search input when no columns are searchable and `table()` never called `->searchable()`).
+
 
 

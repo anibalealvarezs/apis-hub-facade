@@ -21,6 +21,7 @@ class EditUser extends EditRecord
     {
         return [
             \App\Filament\Resources\UserResource\Widgets\UserBillingProfilesTable::class,
+            \App\Filament\Resources\UserResource\Widgets\UserProjectsTable::class,
         ];
     }
 }
