@@ -125,7 +125,9 @@ class ProjectResource extends Resource
                             ->label('')
                             ->columnSpanFull()
                             ->content(fn (?Project $record) => $record?->user
-                                ? '<a href="' . route('filament.admin.resources.users.edit', ['record' => $record->user_id]) . '" target="_blank" class="text-primary-600 hover:underline text-sm">' . __('Check user\'s profile') . '</a>'
+                                ? new \Illuminate\Support\HtmlString(
+                                    '<a href="' . route('filament.admin.resources.users.edit', ['record' => $record->user_id]) . '" target="_blank" class="text-primary-600 hover:underline text-sm">' . __('Check user\'s profile') . '</a>'
+                                )
                                 : ''),
                     ])->columns(4),
 
@@ -213,11 +215,11 @@ class ProjectResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('billing_profile_name')
                             ->label(__('Profile Name'))
-                            ->content(fn (?Project $record) => $record?->billingProfile?->reference_name ?? 'None')
-                            ->extraAttributes([
-                                'class' => 'cursor-pointer text-primary-600 hover:underline',
-                                'wire:click' => '$dispatch("openBillingProfileView", { billingProfileId: ' . '$record->billing_profile_id' . ' })',
-                            ])
+                            ->content(fn (?Project $record) => $record?->billingProfile
+                                ? new \Illuminate\Support\HtmlString(
+                                    '<a href="' . route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id]) . '" target="_blank" class="text-primary-600 hover:underline">' . e($record->billingProfile->reference_name) . '</a>'
+                                )
+                                : 'None')
                             ->columnSpan(1),
                         Forms\Components\Placeholder::make('billing_tier')
                             ->label(__('Tier'))
@@ -388,7 +390,7 @@ class ProjectResource extends Resource
                                 }
                                 
                                 $html .= '</tbody></table>';
-                                return $html;
+                                return new \Illuminate\Support\HtmlString($html);
                             })
                             ->columnSpanFull(),
                     ])
@@ -453,7 +455,7 @@ class ProjectResource extends Resource
                                     $html .= '<tr class="border-b border-gray-100 dark:border-gray-800"><td class="p-2 font-medium">' . e(ucfirst(str_replace('_', ' ', $channel))) . '</td><td class="p-2">' . $count . '</td></tr>';
                                 }
                                 $html .= '</tbody></table>';
-                                return $html;
+                                return new \Illuminate\Support\HtmlString($html);
                             })
                             ->columnSpanFull(),
                     ])
