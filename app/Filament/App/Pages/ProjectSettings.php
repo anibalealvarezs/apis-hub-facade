@@ -78,7 +78,7 @@ class ProjectSettings extends Page
             ->color($isDefault ? 'gray' : 'primary')
             ->icon('heroicon-o-star')
             ->disabled($isDefault || $isSuspended)
-            ->helperText(fn () => $isDefault ? __('This is the project you are redirected to after login and from onboarding links.') : null)
+            ->tooltip(fn () => $isDefault ? __('This is the project you are redirected to after login and from onboarding links.') : null)
             ->action(function () use ($user, $project) {
                 $user->setDefaultProject($project);
 
