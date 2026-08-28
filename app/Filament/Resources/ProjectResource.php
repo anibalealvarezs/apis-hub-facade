@@ -368,7 +368,7 @@ class ProjectResource extends Resource
                                 if (!$record) return '';
                                 
                                 $members = $record->users()->withPivot('asset_access_unrestricted')->get();
-                                $invitations = $record->invitations()->where('status', 'pending')->get();
+                                $invitations = $record->pendingInvitations()->where('expires_at', '>', now())->get();
                                 
                                 $html = '<table class="w-full text-sm"><thead><tr class="border-b border-gray-200 dark:border-gray-700"><th class="text-left p-2 font-medium">' . __('User') . '</th><th class="text-left p-2 font-medium">' . __('Role') . '</th><th class="text-left p-2 font-medium">' . __('Asset Access') . '</th><th class="text-left p-2 font-medium">' . __('Invitation') . '</th></tr></thead><tbody>';
                                 
