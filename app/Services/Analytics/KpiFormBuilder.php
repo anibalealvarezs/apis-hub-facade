@@ -942,13 +942,19 @@ class KpiFormBuilder
 
                                                 $calcName = $calcLabels[$kpi['calculation_type']] ?? $kpi['calculation_type'];
 
+                                                $categories = $kpi['categories'] ?? (isset($kpi['category']) ? [$kpi['category']] : []);
+                                                $categoryBadges = '';
+                                                foreach ($categories as $cat) {
+                                                    $categoryBadges .= '<span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">' . e(ucfirst(str_replace('_', ' ', $cat))) . '</span>';
+                                                }
+
                                                 return new HtmlString(
                                                     '<div class="space-y-4 p-6 bg-white dark:bg-gray-900 ring-1 ring-gray-950/5 dark:ring-white/10 rounded-xl shadow-sm h-full">'
                                                     . '<div><h3 class="text-lg font-semibold text-gray-950 dark:text-white">' . e($kpi['name']) . '</h3></div>'
                                                     . '<div><p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">' . e($kpi['description'] ?? '') . '</p></div>'
                                                     . '<div class="flex flex-wrap gap-2">'
                                                     . '<span class="px-2 py-1 text-xs font-medium rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400">' . e($calcName) . '</span>'
-                                                    . '<span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">' . ucfirst($kpi['category']) . '</span>'
+                                                    . $categoryBadges
                                                     . '</div>'
                                                     . '</div>'
                                                 );
