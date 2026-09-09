@@ -1279,12 +1279,12 @@
                                                             <div class="space-y-4">
                                                                 <div>
                                                                     <x-ui.select-input
-                                                                        :value="series.breakdown ? series.breakdown.dimension : ''"
+                                                                        x-bind:value="series.breakdown ? series.breakdown.dimension : ''"
                                                                         x-on:change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
                                                                         class="w-full">
                                                                         <x-ui.select-option value="">{{ __('None (Standard series)') }}</x-ui.select-option>
                                                                         <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
-                                                                            <x-ui.select-option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
+                                                                            <x-ui.select-option x-bind:value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" x-bind:selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
                                                                         </template>
                                                                     </x-ui.select-input>
                                                                 </div>
