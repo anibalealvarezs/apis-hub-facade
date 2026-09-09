@@ -1293,24 +1293,24 @@
 
                                                                 {{-- Breakdown Options: Limit & Order --}}
                                                                 <template x-if="series.breakdown && series.breakdown.dimension">
-                                                                    <div class="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-800/60 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                    <div class="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-900/60 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
                                                                         <div>
-                                                                            <label class="block text-2xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{{ __('Max Items') }}</label>
+                                                                            <label class="block text-2xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Max Items') }}</label>
                                                                             <select
                                                                                 x-model.number="series.breakdown.limit"
                                                                                 @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                                class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                                 <option value="3">Top 3</option>
                                                                                 <option value="5">Top 5</option>
                                                                                 <option value="10">Top 10</option>
                                                                             </select>
                                                                         </div>
                                                                         <div>
-                                                                            <label class="block text-2xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{{ __('Sorting') }}</label>
+                                                                            <label class="block text-2xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Sorting') }}</label>
                                                                             <select
                                                                                 x-model="series.breakdown.order"
                                                                                 @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                                class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                                 <option value="value_desc">{{ __('Highest Value') }}</option>
                                                                                 <option value="value_asc">{{ __('Lowest Value') }}</option>
                                                                                 <option value="alpha_asc">{{ __('Alphabetical (A-Z)') }}</option>
@@ -1354,14 +1354,14 @@
 
                                                         <div class="space-y-2">
                                                             <template x-for="(flt, fIdx) in (series.filters || [])" :key="fIdx">
-                                                                <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700">
                                                                     <div class="flex-1 space-y-1.5">
                                                                         <div class="grid grid-cols-2 gap-1.5">
                                                                             {{-- Dimension --}}
                                                                             <select
                                                                                 x-model="flt.dimension"
                                                                                 @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                                class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                                 <option value="">{{ __('Select Dimension...') }}</option>
                                                                                 <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
                                                                                     <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
@@ -1372,7 +1372,7 @@
                                                                             <select
                                                                                 x-model="flt.operator"
                                                                                 @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                                class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                                 <option value="in">{{ __('Contains (In)') }}</option>
                                                                                 <option value="not_in">{{ __('Does not contain (Not In)') }}</option>
                                                                                 <option value="eq">{{ __('Equals (=)') }}</option>
@@ -1390,7 +1390,7 @@
                                                                                 x-model="flt.value"
                                                                                 @input="markWidgetControlsDirty()"
                                                                                 :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated values...') }}' : '{{ __('Filter value...') }}'"
-                                                                                class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1">
+                                                                                class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1 focus:border-primary-500 focus:ring-primary-500">
                                                                         </template>
                                                                     </div>
 
@@ -1576,13 +1576,13 @@
 
                                                     <div class="space-y-2">
                                                         <template x-for="(flt, fIdx) in (widgetControlsForm.series_filters?.dependent || [])" :key="fIdx">
-                                                            <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                            <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700">
                                                                 <div class="flex-1 space-y-1.5">
                                                                     <div class="grid grid-cols-2 gap-1.5">
                                                                         <select
                                                                             x-model="flt.dimension"
                                                                             @change="markWidgetControlsDirty()"
-                                                                            class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                            class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                             <option value="">{{ __('Select Dimension...') }}</option>
                                                                             <template x-for="(bDef, bKey) in getBreakdownsForSeries(widgetKpiConfig.dependent_channel, widgetControlsForm.series_dependencies?.dependent)" :key="bKey">
                                                                                 <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
@@ -1592,7 +1592,7 @@
                                                                         <select
                                                                             x-model="flt.operator"
                                                                             @change="markWidgetControlsDirty()"
-                                                                            class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                            class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                             <option value="in">{{ __('Contains (In)') }}</option>
                                                                             <option value="not_in">{{ __('Does not contain (Not In)') }}</option>
                                                                             <option value="eq">{{ __('Equals (=)') }}</option>
@@ -1609,7 +1609,7 @@
                                                                             x-model="flt.value"
                                                                             @input="markWidgetControlsDirty()"
                                                                             :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated values...') }}' : '{{ __('Filter value...') }}'"
-                                                                            class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1">
+                                                                            class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1 focus:border-primary-500 focus:ring-primary-500">
                                                                     </template>
                                                                 </div>
 
@@ -2069,13 +2069,13 @@
 
                                                                             <div class="space-y-2">
                                                                                 <template x-for="(flt, fIdx) in (widgetControlsForm.series_filters?.['independent_' + idx] || [])" :key="fIdx">
-                                                                                    <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-800/60 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                                    <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700">
                                                                                         <div class="flex-1 space-y-1.5">
                                                                                             <div class="grid grid-cols-2 gap-1.5">
                                                                                                 <select
                                                                                                     x-model="flt.dimension"
                                                                                                     @change="markWidgetControlsDirty()"
-                                                                                                    class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                                                    class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                                                     <option value="">{{ __('Select Dimension...') }}</option>
                                                                                                     <template x-for="(bDef, bKey) in getBreakdownsForSeries(varCfg.independent_channel, widgetControlsForm.series_dependencies?.['independent_' + idx])" :key="bKey">
                                                                                                         <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
@@ -2085,7 +2085,7 @@
                                                                                                 <select
                                                                                                     x-model="flt.operator"
                                                                                                     @change="markWidgetControlsDirty()"
-                                                                                                    class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                                                                                                    class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                                                     <option value="in">{{ __('Contains (In)') }}</option>
                                                                                                     <option value="not_in">{{ __('Does not contain (Not In)') }}</option>
                                                                                                     <option value="eq">{{ __('Equals (=)') }}</option>
@@ -2102,7 +2102,7 @@
                                                                                                     x-model="flt.value"
                                                                                                     @input="markWidgetControlsDirty()"
                                                                                                     :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated values...') }}' : '{{ __('Filter value...') }}'"
-                                                                                                    class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1">
+                                                                                                    class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1 focus:border-primary-500 focus:ring-primary-500">
                                                                                             </template>
                                                                                         </div>
 
