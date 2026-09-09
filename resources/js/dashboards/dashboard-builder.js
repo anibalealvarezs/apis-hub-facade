@@ -785,7 +785,7 @@ export function dashboardBuilder(config = {}) {
             if (this.allChannelBreakdowns[cacheKey]) {
                 return this.allChannelBreakdowns[cacheKey];
             }
-            if (this.allChannelBreakdowns[ch]) {
+            if (!dep && this.allChannelBreakdowns[ch]) {
                 return this.allChannelBreakdowns[ch];
             }
             this.fetchBreakdownsForChannel(ch, dep);
@@ -1364,26 +1364,6 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
-        onWidgetRawSeriesDependencyChange(index) {
-            if (!this.widgetControlsForm.raw_series || !this.widgetControlsForm.raw_series[index] || !this.$wire) return;
-            const series = this.widgetControlsForm.raw_series[index];
-            const ch = series.channel;
-            const dep = series.dependency || null;
-            const gran = this.widgetControlsForm.granularity;
-
-            if (ch) {
-                this.$wire.getMetricsForChannel(ch, gran, dep).then(metrics => {
-                    if (!this.widgetControlsForm.series_metrics_map) {
-                        this.widgetControlsForm.series_metrics_map = {};
-                    }
-                    this.widgetControlsForm.series_metrics_map = {
-                        ...this.widgetControlsForm.series_metrics_map,
-                        [index]: metrics
-                    };
-                    this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
-                });
-            }
-        },
 
         initGridItem(el, widget) {
             console.log('[DB][initGridItem] CALL', {

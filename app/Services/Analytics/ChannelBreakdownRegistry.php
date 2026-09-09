@@ -45,35 +45,7 @@ class ChannelBreakdownRegistry
             ],
 
             'google_analytics' => self::getGa4Breakdowns($dependency, $defaultOperators),
-
-            'google_search_console' => [
-                'query' => [
-                    'label' => __('Query / Keyword'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-                'dimensions.page' => [
-                    'label' => __('Landing Page'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-                'country' => [
-                    'label' => __('Country'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-                'device' => [
-                    'label' => __('Device'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-                'dimensions.searchAppearance' => [
-                    'label' => __('Search Appearance'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-            ],
-
+            'google_search_console' => self::getGscBreakdowns($dependency, $defaultOperators),
             'facebook_organic' => self::getFacebookOrganicBreakdowns($dependency, $defaultOperators),
 
             'shopify' => [
@@ -91,6 +63,44 @@ class ChannelBreakdownRegistry
 
             default => [],
         };
+    }
+
+    private static function getGscBreakdowns(?string $dependency, array $defaultOperators): array
+    {
+        $dep = $dependency ?? 'non-searchAppearance';
+
+        if ($dep === 'searchAppearance' || $dep === 'search_appearance') {
+            return [
+                'dimensions.searchAppearance' => [
+                    'label' => __('Search Appearance'),
+                    'type' => 'dimension',
+                    'operators' => $defaultOperators,
+                ],
+            ];
+        }
+
+        return [
+            'query' => [
+                'label' => __('Query / Keyword'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.page' => [
+                'label' => __('Landing Page'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'country' => [
+                'label' => __('Country'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'device' => [
+                'label' => __('Device'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+        ];
     }
 
     private static function getGa4Breakdowns(?string $dependency, array $defaultOperators): array
