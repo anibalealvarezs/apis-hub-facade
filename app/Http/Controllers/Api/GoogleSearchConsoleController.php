@@ -174,7 +174,20 @@ class GoogleSearchConsoleController extends Controller
                 ]
             ];
 
+            \Illuminate\Support\Facades\Log::info("[GSC_DEBUG] Chart calling aggregateChanneledPool", [
+                'tenant' => $tenant->id,
+                'payloads' => $payloads
+            ]);
+
             $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+
+            \Illuminate\Support\Facades\Log::info("[GSC_DEBUG] Chart received from aggregateChanneledPool", [
+                'status' => $results['chart']['status'] ?? null,
+                'rowCount' => isset($results['chart']['data']) && is_array($results['chart']['data']) ? count($results['chart']['data']) : 0,
+                'sample' => isset($results['chart']['data']) && is_array($results['chart']['data']) ? array_slice($results['chart']['data'], 0, 3) : null,
+                'error' => $results['chart']['error'] ?? $results['chart']['message'] ?? null,
+                'meta' => $results['chart']['meta'] ?? null,
+            ]);
 
             if (isset($results['chart']['status']) && $results['chart']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("GSC Chart APIs Hub Error: " . json_encode($results['chart']));

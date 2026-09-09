@@ -2297,6 +2297,15 @@ class DashboardWidgetDataController extends Controller
 
                 $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
 
+                \Illuminate\Support\Facades\Log::info("[DASHBOARD_BREAKDOWN_DEBUG] forwardToChannelEndpoint result", [
+                    'channel' => $channel,
+                    'breakdown' => $breakdownDim,
+                    'hasChart' => isset($channelResponse['chart']),
+                    'hasData' => isset($channelResponse['data']),
+                    'chartCount' => isset($channelResponse['chart']) && is_array($channelResponse['chart']) ? count($channelResponse['chart']) : 0,
+                    'keys' => is_array($channelResponse) ? array_keys($channelResponse) : gettype($channelResponse),
+                ]);
+
                 if (! empty($breakdownDim)) {
                     // Fan-out broken-down series into multiple curves
                     $fanOutCurves = $this->fanOutBreakdownSeries(
