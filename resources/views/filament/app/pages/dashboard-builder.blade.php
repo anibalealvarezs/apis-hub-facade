@@ -1059,43 +1059,42 @@
                                                     {{-- Channel & Metric (Editable for Raw Metric Series) --}}
                                                     <template x-if="series.type !== 'derived_metric'">
                                                         <div class="flex flex-col gap-4">
-                                                            {{-- Channel & Scope Row (Side-by-side) --}}
-                                                            <div class="grid grid-cols-1 gap-4"
-                                                                 :class="(series.channel && allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0) ? 'sm:grid-cols-2' : ''">
-                                                                <div>
-                                                                    <label
-                                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
-                                                                    <x-ui.select-input x-model="series.channel"
-                                                                                       x-on:change="onWidgetRawChannelChange(index)"
-                                                                                       x-init="$nextTick(() => { $el.value = series.channel })"
-                                                                                       class="w-full">
-                                                                        <x-ui.select-option
-                                                                            value="">{{ __('Select a channel...') }}</x-ui.select-option>
-                                                                        <template x-for="(label, key) in channels" :key="key">
-                                                                            <x-ui.select-option x-bind:value="key"
-                                                                                                x-text="label"></x-ui.select-option>
-                                                                        </template>
-                                                                    </x-ui.select-input>
-                                                                </div>
+                                                             {{-- Channel & Scope Row (Side-by-side) --}}
+                                                             <div class="flex flex-row items-start gap-3">
+                                                                 <div :class="(series.channel && allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0) ? 'w-1/2 flex-1 min-w-0' : 'w-full'">
+                                                                     <label
+                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
+                                                                     <x-ui.select-input x-model="series.channel"
+                                                                                        x-on:change="onWidgetRawChannelChange(index)"
+                                                                                        x-init="$nextTick(() => { $el.value = series.channel })"
+                                                                                        class="w-full">
+                                                                         <x-ui.select-option
+                                                                             value="">{{ __('Select a channel...') }}</x-ui.select-option>
+                                                                         <template x-for="(label, key) in channels" :key="key">
+                                                                             <x-ui.select-option x-bind:value="key"
+                                                                                                 x-text="label"></x-ui.select-option>
+                                                                         </template>
+                                                                     </x-ui.select-input>
+                                                                 </div>
 
-                                                                {{-- Data Scope / Matrix (Per-Series) --}}
-                                                                <template x-if="series.channel && allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0">
-                                                                    <div>
-                                                                        <label
-                                                                            class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
-                                                                        <x-ui.select-input x-model="series.dependency"
-                                                                                           x-on:change="onWidgetRawSeriesDependencyChange(index)"
-                                                                                           x-init="$nextTick(() => { if (series.dependency) $el.value = series.dependency })"
-                                                                                           class="w-full">
-                                                                            <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
-                                                                                <x-ui.select-option x-bind:value="key"
-                                                                                                    x-bind:selected="series.dependency === key"
-                                                                                                    x-text="label"></x-ui.select-option>
-                                                                            </template>
-                                                                        </x-ui.select-input>
-                                                                    </div>
-                                                                </template>
-                                                            </div>
+                                                                 {{-- Data Scope / Matrix (Per-Series) --}}
+                                                                 <div x-show="series.channel && allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0"
+                                                                      x-cloak
+                                                                      class="w-1/2 flex-1 min-w-0">
+                                                                     <label
+                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
+                                                                     <x-ui.select-input x-model="series.dependency"
+                                                                                        x-on:change="onWidgetRawSeriesDependencyChange(index)"
+                                                                                        x-init="$nextTick(() => { if (series.dependency) $el.value = series.dependency })"
+                                                                                        class="w-full">
+                                                                         <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
+                                                                             <x-ui.select-option x-bind:value="key"
+                                                                                                 x-bind:selected="series.dependency === key"
+                                                                                                 x-text="label"></x-ui.select-option>
+                                                                         </template>
+                                                                     </x-ui.select-input>
+                                                                 </div>
+                                                             </div>
 
                                                             <div class="my-1 flex flex-col shrink-0">
                                                                 <div class="flex items-center justify-between mb-2">
