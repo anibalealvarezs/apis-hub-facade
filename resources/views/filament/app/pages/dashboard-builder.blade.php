@@ -1284,8 +1284,8 @@
                                                                             @change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
                                                                             class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
                                                                             <option value="">{{ __('None (Standard series)') }}</option>
-                                                                            <template x-for="(bLabel, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
-                                                                                <option :value="bKey" x-text="bLabel" :selected="series.breakdown && series.breakdown.dimension === bKey"></option>
+                                                                            <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
+                                                                                <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="series.breakdown && series.breakdown.dimension === bKey"></option>
                                                                             </template>
                                                                         </select>
                                                                     </div>
@@ -1363,8 +1363,8 @@
                                                                                 @change="markWidgetControlsDirty()"
                                                                                 class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
                                                                                 <option value="">{{ __('Select Dimension...') }}</option>
-                                                                                <template x-for="(bLabel, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
-                                                                                    <option :value="bKey" x-text="bLabel" :selected="flt.dimension === bKey"></option>
+                                                                                <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
+                                                                                    <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
                                                                                 </template>
                                                                             </select>
 
@@ -1584,8 +1584,8 @@
                                                                             @change="markWidgetControlsDirty()"
                                                                             class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
                                                                             <option value="">{{ __('Select Dimension...') }}</option>
-                                                                            <template x-for="(bLabel, bKey) in getBreakdownsForSeries(widgetKpiConfig.dependent_channel, widgetControlsForm.series_dependencies?.dependent)" :key="bKey">
-                                                                                <option :value="bKey" x-text="bLabel" :selected="flt.dimension === bKey"></option>
+                                                                            <template x-for="(bDef, bKey) in getBreakdownsForSeries(widgetKpiConfig.dependent_channel, widgetControlsForm.series_dependencies?.dependent)" :key="bKey">
+                                                                                <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
                                                                             </template>
                                                                         </select>
 
@@ -2077,8 +2077,8 @@
                                                                                                     @change="markWidgetControlsDirty()"
                                                                                                     class="w-full text-2xs rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
                                                                                                     <option value="">{{ __('Select Dimension...') }}</option>
-                                                                                                    <template x-for="(bLabel, bKey) in getBreakdownsForSeries(varCfg.independent_channel, widgetControlsForm.series_dependencies?.['independent_' + idx])" :key="bKey">
-                                                                                                        <option :value="bKey" x-text="bLabel" :selected="flt.dimension === bKey"></option>
+                                                                                                    <template x-for="(bDef, bKey) in getBreakdownsForSeries(varCfg.independent_channel, widgetControlsForm.series_dependencies?.['independent_' + idx])" :key="bKey">
+                                                                                                        <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
                                                                                                     </template>
                                                                                                 </select>
 
