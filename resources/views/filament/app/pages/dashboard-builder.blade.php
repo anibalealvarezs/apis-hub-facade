@@ -1259,147 +1259,152 @@
                                                         </div>
                                                     </div>
 
-                                                    {{-- Breakdown Configuration (Direct Metrics only) --}}
-                                                    <template x-if="series.type !== 'derived_metric' && series.channel">
-                                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                                            <div class="flex items-center justify-between mb-2">
-                                                                <div class="flex items-center gap-1.5">
-                                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Breakdown') }}</label>
-                                                                    <span class="text-2xs text-gray-400 dark:text-gray-500 font-normal">({{ __('Split into multiple series') }})</span>
-                                                                </div>
-                                                                <template x-if="series.breakdown && series.breakdown.dimension">
-                                                                    <button type="button"
-                                                                            @click="series.breakdown = null; markWidgetControlsDirty()"
-                                                                            class="text-2xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium hover:underline">
-                                                                        {{ __('Remove Breakdown') }}
-                                                                    </button>
-                                                                </template>
-                                                            </div>
-
-                                                            <div class="space-y-4">
+                                                    {{-- Breakdown & Filters Row (Side-by-side, half width each) --}}
+                                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-row items-start gap-4">
+                                                        {{-- Breakdown Configuration (Direct Metrics only) --}}
+                                                        <div class="w-1/2 flex-1 min-w-0">
+                                                            <template x-if="series.type !== 'derived_metric' && series.channel">
                                                                 <div>
-                                                                    <x-ui.select-input
-                                                                        x-bind:value="series.breakdown ? series.breakdown.dimension : ''"
-                                                                        x-on:change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
-                                                                        class="w-full">
-                                                                        <x-ui.select-option value="">{{ __('None (Standard series)') }}</x-ui.select-option>
-                                                                        <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
-                                                                            <x-ui.select-option x-bind:value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" x-bind:selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
+                                                                    <div class="flex items-center justify-between mb-2">
+                                                                        <div class="flex items-center gap-1.5">
+                                                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Breakdown') }}</label>
+                                                                            <span class="text-2xs text-gray-400 dark:text-gray-500 font-normal">({{ __('Split into multiple series') }})</span>
+                                                                        </div>
+                                                                        <template x-if="series.breakdown && series.breakdown.dimension">
+                                                                            <button type="button"
+                                                                                    @click="series.breakdown = null; markWidgetControlsDirty()"
+                                                                                    class="text-2xs text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium hover:underline">
+                                                                                {{ __('Remove Breakdown') }}
+                                                                            </button>
                                                                         </template>
-                                                                    </x-ui.select-input>
-                                                                </div>
+                                                                    </div>
 
-                                                                {{-- Breakdown Options: Limit & Order --}}
-                                                                <template x-if="series.breakdown && series.breakdown.dimension">
                                                                     <div class="space-y-4">
                                                                         <div>
-                                                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Max Items') }}</label>
                                                                             <x-ui.select-input
-                                                                                x-model.number="series.breakdown.limit"
-                                                                                x-on:change="markWidgetControlsDirty()"
+                                                                                x-bind:value="series.breakdown ? series.breakdown.dimension : ''"
+                                                                                x-on:change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
                                                                                 class="w-full">
-                                                                                <x-ui.select-option value="3">Top 3</x-ui.select-option>
-                                                                                <x-ui.select-option value="5">Top 5</x-ui.select-option>
-                                                                                <x-ui.select-option value="10">Top 10</x-ui.select-option>
-                                                                            </x-ui.select-input>
-                                                                        </div>
-                                                                        <div>
-                                                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Sorting') }}</label>
-                                                                            <x-ui.select-input
-                                                                                x-model="series.breakdown.order"
-                                                                                x-on:change="markWidgetControlsDirty()"
-                                                                                class="w-full">
-                                                                                <x-ui.select-option value="value_desc">{{ __('Highest Value') }}</x-ui.select-option>
-                                                                                <x-ui.select-option value="value_asc">{{ __('Lowest Value') }}</x-ui.select-option>
-                                                                                <x-ui.select-option value="alpha_asc">{{ __('Alphabetical (A-Z)') }}</x-ui.select-option>
-                                                                                <x-ui.select-option value="alpha_desc">{{ __('Alphabetical (Z-A)') }}</x-ui.select-option>
-                                                                            </x-ui.select-input>
-                                                                        </div>
-
-                                                                        {{-- Chart type hint/recommendation when breakdown produces many curves --}}
-                                                                        <div x-show="series.breakdown && (widgetControlsForm.widget_type === 'line' || widgetControlsForm.widget_type === 'area') && series.breakdown.limit > 5">
-                                                                            <span class="inline-flex items-center gap-1 text-2xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50">
-                                                                                💡 {{ __('Bar or Table charts may read clearer than line charts for many breakdown items.') }}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </template>
-                                                            </div>
-                                                        </div>
-                                                    </template>
-
-                                                    {{-- Filters Repeater Section --}}
-                                                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                                        <div class="flex items-center justify-between mb-2">
-                                                            <div class="flex items-center gap-1.5">
-                                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Series Filters') }}</label>
-                                                                <template x-if="Array.isArray(series.filters) && series.filters.length > 0">
-                                                                    <span class="text-2xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-bold px-1.5 py-0.5 rounded-full border border-primary-200 dark:border-primary-800"
-                                                                          x-text="series.filters.length"></span>
-                                                                </template>
-                                                            </div>
-                                                            <button type="button"
-                                                                    @click="if (!Array.isArray(series.filters)) series.filters = []; addSeriesFilter(series.filters)"
-                                                                    class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
-                                                                + {{ __('Add Filter') }}
-                                                            </button>
-                                                        </div>
-
-                                                        <template x-if="!Array.isArray(series.filters) || series.filters.length === 0">
-                                                            <p class="text-2xs text-gray-400 dark:text-gray-500 italic">{{ __('No filters applied to this series.') }}</p>
-                                                        </template>
-
-                                                        <div class="space-y-2">
-                                                            <template x-for="(flt, fIdx) in (series.filters || [])" :key="fIdx">
-                                                                <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700">
-                                                                    <div class="flex-1 space-y-1.5">
-                                                                        <div class="grid grid-cols-2 gap-1.5">
-                                                                            {{-- Dimension --}}
-                                                                            <select
-                                                                                x-model="flt.dimension"
-                                                                                @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
-                                                                                <option value="">{{ __('Select Dimension...') }}</option>
+                                                                                <x-ui.select-option value="">{{ __('None (Standard series)') }}</x-ui.select-option>
                                                                                 <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
-                                                                                    <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
+                                                                                    <x-ui.select-option x-bind:value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" x-bind:selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
                                                                                 </template>
-                                                                            </select>
-
-                                                                            {{-- Operator --}}
-                                                                            <select
-                                                                                x-model="flt.operator"
-                                                                                @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
-                                                                                <option value="in">{{ __('Contains (In)') }}</option>
-                                                                                <option value="not_in">{{ __('Does not contain (Not In)') }}</option>
-                                                                                <option value="eq">{{ __('Equals (=)') }}</option>
-                                                                                <option value="neq">{{ __('Not Equals (!=)') }}</option>
-                                                                                <option value="like">{{ __('Matches Pattern (Like)') }}</option>
-                                                                                <option value="is_null">{{ __('Is Empty / Null') }}</option>
-                                                                                <option value="is_not_null">{{ __('Is Not Empty / Not Null') }}</option>
-                                                                            </select>
+                                                                            </x-ui.select-input>
                                                                         </div>
 
-                                                                        {{-- Value Input (hidden for is_null / is_not_null) --}}
-                                                                        <template x-if="flt.operator !== 'is_null' && flt.operator !== 'is_not_null'">
-                                                                            <input
-                                                                                type="text"
-                                                                                x-model="flt.value"
-                                                                                @input="markWidgetControlsDirty()"
-                                                                                :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated values...') }}' : '{{ __('Filter value...') }}'"
-                                                                                class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1 focus:border-primary-500 focus:ring-primary-500">
+                                                                        {{-- Breakdown Options: Limit & Order --}}
+                                                                        <template x-if="series.breakdown && series.breakdown.dimension">
+                                                                            <div class="space-y-4">
+                                                                                <div>
+                                                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Max Items') }}</label>
+                                                                                    <x-ui.select-input
+                                                                                        x-model.number="series.breakdown.limit"
+                                                                                        x-on:change="markWidgetControlsDirty()"
+                                                                                        class="w-full">
+                                                                                        <x-ui.select-option value="3">Top 3</x-ui.select-option>
+                                                                                        <x-ui.select-option value="5">Top 5</x-ui.select-option>
+                                                                                        <x-ui.select-option value="10">Top 10</x-ui.select-option>
+                                                                                    </x-ui.select-input>
+                                                                                </div>
+                                                                                <div>
+                                                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Sorting') }}</label>
+                                                                                    <x-ui.select-input
+                                                                                        x-model="series.breakdown.order"
+                                                                                        x-on:change="markWidgetControlsDirty()"
+                                                                                        class="w-full">
+                                                                                        <x-ui.select-option value="value_desc">{{ __('Highest Value') }}</x-ui.select-option>
+                                                                                        <x-ui.select-option value="value_asc">{{ __('Lowest Value') }}</x-ui.select-option>
+                                                                                        <x-ui.select-option value="alpha_asc">{{ __('Alphabetical (A-Z)') }}</x-ui.select-option>
+                                                                                        <x-ui.select-option value="alpha_desc">{{ __('Alphabetical (Z-A)') }}</x-ui.select-option>
+                                                                                    </x-ui.select-input>
+                                                                                </div>
+
+                                                                                {{-- Chart type hint/recommendation when breakdown produces many curves --}}
+                                                                                <div x-show="series.breakdown && (widgetControlsForm.widget_type === 'line' || widgetControlsForm.widget_type === 'area') && series.breakdown.limit > 5">
+                                                                                    <span class="inline-flex items-center gap-1 text-2xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50">
+                                                                                        💡 {{ __('Bar or Table charts may read clearer than line charts for many breakdown items.') }}
+                                                                                    </span>
+                                                                                </div>
+                                                                            </div>
                                                                         </template>
                                                                     </div>
-
-                                                                    <button type="button"
-                                                                            @click="removeSeriesFilter(series.filters, fIdx)"
-                                                                            class="text-gray-400 hover:text-red-500 p-1 shrink-0">
-                                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                                        </svg>
-                                                                    </button>
                                                                 </div>
                                                             </template>
+                                                        </div>
+
+                                                        {{-- Filters Repeater Section --}}
+                                                        <div class="w-1/2 flex-1 min-w-0">
+                                                            <div class="flex items-center justify-between mb-2">
+                                                                <div class="flex items-center gap-1.5">
+                                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Series Filters') }}</label>
+                                                                    <template x-if="Array.isArray(series.filters) && series.filters.length > 0">
+                                                                        <span class="text-2xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-bold px-1.5 py-0.5 rounded-full border border-primary-200 dark:border-primary-800"
+                                                                              x-text="series.filters.length"></span>
+                                                                    </template>
+                                                                </div>
+                                                                <button type="button"
+                                                                        @click="if (!Array.isArray(series.filters)) series.filters = []; addSeriesFilter(series.filters)"
+                                                                        class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
+                                                                    + {{ __('Add Filter') }}
+                                                                </button>
+                                                            </div>
+
+                                                            <template x-if="!Array.isArray(series.filters) || series.filters.length === 0">
+                                                                <p class="text-2xs text-gray-400 dark:text-gray-500 italic">{{ __('No filters applied to this series.') }}</p>
+                                                            </template>
+
+                                                            <div class="space-y-2">
+                                                                <template x-for="(flt, fIdx) in (series.filters || [])" :key="fIdx">
+                                                                    <div class="flex items-start gap-1.5 p-2 bg-gray-50 dark:bg-gray-900/60 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                        <div class="flex-1 space-y-1.5">
+                                                                            <div class="grid grid-cols-2 gap-1.5">
+                                                                                {{-- Dimension --}}
+                                                                                <select
+                                                                                    x-model="flt.dimension"
+                                                                                    @change="markWidgetControlsDirty()"
+                                                                                    class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
+                                                                                    <option value="">{{ __('Select Dimension...') }}</option>
+                                                                                    <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
+                                                                                        <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></option>
+                                                                                    </template>
+                                                                                </select>
+
+                                                                                {{-- Operator --}}
+                                                                                <select
+                                                                                    x-model="flt.operator"
+                                                                                    @change="markWidgetControlsDirty()"
+                                                                                    class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
+                                                                                    <option value="in">{{ __('Contains (In)') }}</option>
+                                                                                    <option value="not_in">{{ __('Does not contain (Not In)') }}</option>
+                                                                                    <option value="eq">{{ __('Equals (=)') }}</option>
+                                                                                    <option value="neq">{{ __('Not Equals (!=)') }}</option>
+                                                                                    <option value="like">{{ __('Matches Pattern (Like)') }}</option>
+                                                                                    <option value="is_null">{{ __('Is Empty / Null') }}</option>
+                                                                                    <option value="is_not_null">{{ __('Is Not Empty / Not Null') }}</option>
+                                                                                </select>
+                                                                            </div>
+
+                                                                            {{-- Value Input (hidden for is_null / is_not_null) --}}
+                                                                            <template x-if="flt.operator !== 'is_null' && flt.operator !== 'is_not_null'">
+                                                                                <input
+                                                                                    type="text"
+                                                                                    x-model="flt.value"
+                                                                                    @input="markWidgetControlsDirty()"
+                                                                                    :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated values...') }}' : '{{ __('Filter value...') }}'"
+                                                                                    class="w-full text-2xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 py-1 focus:border-primary-500 focus:ring-primary-500">
+                                                                            </template>
+                                                                        </div>
+
+                                                                        <button type="button"
+                                                                                @click="removeSeriesFilter(series.filters, fIdx)"
+                                                                                class="text-gray-400 hover:text-red-500 p-1 shrink-0">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                            </svg>
+                                                                        </button>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
