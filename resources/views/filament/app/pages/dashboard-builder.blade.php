@@ -1276,52 +1276,49 @@
                                                                 </template>
                                                             </div>
 
-                                                            <div class="space-y-2.5">
-                                                                <div class="flex items-center gap-2">
-                                                                    <div class="flex-1">
-                                                                        <select
-                                                                            :value="series.breakdown ? series.breakdown.dimension : ''"
-                                                                            @change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
-                                                                            class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
-                                                                            <option value="">{{ __('None (Standard series)') }}</option>
-                                                                            <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
-                                                                                <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="series.breakdown && series.breakdown.dimension === bKey"></option>
-                                                                            </template>
-                                                                        </select>
-                                                                    </div>
+                                                            <div class="space-y-4">
+                                                                <div>
+                                                                    <x-ui.select-input
+                                                                        :value="series.breakdown ? series.breakdown.dimension : ''"
+                                                                        x-on:change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
+                                                                        class="w-full">
+                                                                        <x-ui.select-option value="">{{ __('None (Standard series)') }}</x-ui.select-option>
+                                                                        <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
+                                                                            <x-ui.select-option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
+                                                                        </template>
+                                                                    </x-ui.select-input>
                                                                 </div>
 
                                                                 {{-- Breakdown Options: Limit & Order --}}
                                                                 <template x-if="series.breakdown && series.breakdown.dimension">
-                                                                    <div class="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-900/60 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                                                                    <div class="space-y-4">
                                                                         <div>
-                                                                            <label class="block text-2xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Max Items') }}</label>
-                                                                            <select
+                                                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Max Items') }}</label>
+                                                                            <x-ui.select-input
                                                                                 x-model.number="series.breakdown.limit"
-                                                                                @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
-                                                                                <option value="3">Top 3</option>
-                                                                                <option value="5">Top 5</option>
-                                                                                <option value="10">Top 10</option>
-                                                                            </select>
+                                                                                x-on:change="markWidgetControlsDirty()"
+                                                                                class="w-full">
+                                                                                <x-ui.select-option value="3">Top 3</x-ui.select-option>
+                                                                                <x-ui.select-option value="5">Top 5</x-ui.select-option>
+                                                                                <x-ui.select-option value="10">Top 10</x-ui.select-option>
+                                                                            </x-ui.select-input>
                                                                         </div>
                                                                         <div>
-                                                                            <label class="block text-2xs font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ __('Sorting') }}</label>
-                                                                            <select
+                                                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Sorting') }}</label>
+                                                                            <x-ui.select-input
                                                                                 x-model="series.breakdown.order"
-                                                                                @change="markWidgetControlsDirty()"
-                                                                                class="w-full text-xs rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:border-primary-500 focus:ring-primary-500">
-                                                                                <option value="value_desc">{{ __('Highest Value') }}</option>
-                                                                                <option value="value_asc">{{ __('Lowest Value') }}</option>
-                                                                                <option value="alpha_asc">{{ __('Alphabetical (A-Z)') }}</option>
-                                                                                <option value="alpha_desc">{{ __('Alphabetical (Z-A)') }}</option>
-                                                                            </select>
+                                                                                x-on:change="markWidgetControlsDirty()"
+                                                                                class="w-full">
+                                                                                <x-ui.select-option value="value_desc">{{ __('Highest Value') }}</x-ui.select-option>
+                                                                                <x-ui.select-option value="value_asc">{{ __('Lowest Value') }}</x-ui.select-option>
+                                                                                <x-ui.select-option value="alpha_asc">{{ __('Alphabetical (A-Z)') }}</x-ui.select-option>
+                                                                                <x-ui.select-option value="alpha_desc">{{ __('Alphabetical (Z-A)') }}</x-ui.select-option>
+                                                                            </x-ui.select-input>
                                                                         </div>
 
                                                                         {{-- Chart type hint/recommendation when breakdown produces many curves --}}
-                                                                        <div class="col-span-2 mt-1"
-                                                                             x-show="series.breakdown && (widgetControlsForm.widget_type === 'line' || widgetControlsForm.widget_type === 'area') && series.breakdown.limit > 5">
-                                                                            <span class="inline-flex items-center gap-1 text-2xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 rounded border border-amber-200 dark:border-amber-800/50">
+                                                                        <div x-show="series.breakdown && (widgetControlsForm.widget_type === 'line' || widgetControlsForm.widget_type === 'area') && series.breakdown.limit > 5">
+                                                                            <span class="inline-flex items-center gap-1 text-2xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50">
                                                                                 💡 {{ __('Bar or Table charts may read clearer than line charts for many breakdown items.') }}
                                                                             </span>
                                                                         </div>
