@@ -762,11 +762,72 @@ export function dashboardBuilder(config = {}) {
         allChannelAssetGroups: {},
         allChannelMetrics: {},
         allChannelDependencies: {},
+        allChannelBreakdowns: {},
         dashboardAssets: {},
         dashboardMetrics: {},
         availableDependencies: {},
         availableGranularities: {},
         availableLanguages: config.availableLanguages || {},
+
+        // ─── Breakdown & Filter Helpers ───
+        fetchBreakdownsForChannel(ch, dep) {
+            if (!ch || !this.$wire) return;
+            const cacheKey = ch + (dep ? ('_' + dep) : '');
+            if (this.allChannelBreakdowns[cacheKey]) return;
+            this.$wire.getBreakdownsForChannel(ch, dep || null).then(bds => {
+                this.allChannelBreakdowns = { ...this.allChannelBreakdowns, [cacheKey]: bds || {} };
+            });
+        },
+
+        getBreakdownsForSeries(ch, dep) {
+            if (!ch) return {};
+            const cacheKey = ch + (dep ? ('_' + dep) : '');
+            if (this.allChannelBreakdowns[cacheKey]) {
+                return this.allChannelBreakdowns[cacheKey];
+            }
+            if (this.allChannelBreakdowns[ch]) {
+                return this.allChannelBreakdowns[ch];
+            }
+            this.fetchBreakdownsForChannel(ch, dep);
+            return {};
+        },
+
+        onSeriesBreakdownDimensionChange(series) {
+            this.markWidgetControlsDirty();
+            if (!series.breakdown || !series.breakdown.dimension) {
+                series.breakdown = null;
+                return;
+            }
+            if (!series.breakdown.limit) {
+                series.breakdown.limit = 5;
+            }
+            if (!series.breakdown.order) {
+                series.breakdown.order = 'value_desc';
+            }
+            // Single-metric enforcement: if multiple metrics selected, slice to 1
+            if (Array.isArray(series.allowed_metrics) && series.allowed_metrics.length > 1) {
+                series.allowed_metrics = [series.allowed_metrics[0]];
+            }
+            if (Array.isArray(series.metrics) && series.metrics.length > 1) {
+                series.metrics = [series.metrics[0]];
+            }
+        },
+
+        addSeriesFilter(targetList) {
+            this.markWidgetControlsDirty();
+            if (!Array.isArray(targetList)) return;
+            targetList.push({
+                dimension: '',
+                operator: 'in',
+                value: ''
+            });
+        },
+
+        removeSeriesFilter(targetList, fIdx) {
+            this.markWidgetControlsDirty();
+            if (!Array.isArray(targetList) || fIdx < 0 || fIdx >= targetList.length) return;
+            targetList.splice(fIdx, 1);
+        },
 
         // ─── Dashboard Controls ──
         showDashboardControls: false,
@@ -1503,7 +1564,9 @@ export function dashboardBuilder(config = {}) {
                 type: 'metric',
                 channel: this.dashboardControls.channel || '',
                 metrics: [],
-                assets: []
+                assets: [],
+                breakdown: null,
+                filters: []
             });
             this.widgetControlsForm.raw_series = list;
             if (this.dashboardControls.channel) {
@@ -2498,6 +2561,7 @@ export function dashboardBuilder(config = {}) {
                 series_assets: wc.series_assets || {},
                 series_asset_groups: wc.series_asset_groups || {},
                 series_dependencies: wc.series_dependencies ? { ...wc.series_dependencies } : {},
+                series_filters: wc.series_filters ? JSON.parse(JSON.stringify(wc.series_filters)) : {},
                 edge_case_inherit: wc.edge_case_weighted === undefined && wc.edge_case_grouping === undefined,
                 edge_case_weighted: wc.edge_case_weighted !== undefined ? wc.edge_case_weighted : (this.dashboardControls.edge_case_weighted ?? true),
                 edge_case_grouping: wc.edge_case_grouping !== undefined ? wc.edge_case_grouping : (this.dashboardControls.edge_case_grouping || 'none'),
@@ -2531,7 +2595,9 @@ export function dashboardBuilder(config = {}) {
                             allowed_metrics: rawAllowed,
                             metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
                             allowed_assets: rawAllowedAssets,
-                            assets: rawSelectedAssets.length > 0 ? rawSelectedAssets : [...rawAllowedAssets]
+                            assets: rawSelectedAssets.length > 0 ? rawSelectedAssets : [...rawAllowedAssets],
+                            breakdown: s.breakdown ? { ...s.breakdown } : null,
+                            filters: Array.isArray(s.filters) ? s.filters.map(f => ({ ...f })) : []
                         };
                     });
                 } else if (wc.series_channels && Object.keys(wc.series_channels).length > 0) {
@@ -2564,7 +2630,9 @@ export function dashboardBuilder(config = {}) {
                             dependency: rawDep,
                             allowed_metrics: allowed,
                             metrics,
-                            assets
+                            assets,
+                            breakdown: null,
+                            filters: []
                         });
                     });
                     this.widgetControlsForm.raw_series = groupedSeries;
@@ -2574,17 +2642,22 @@ export function dashboardBuilder(config = {}) {
                         dependency: (wc.series_dependencies && (wc.series_dependencies[0] || wc.series_dependencies['0'])) || wc.dependency || '',
                         allowed_metrics: [...wc.metrics],
                         metrics: [...wc.metrics],
-                        assets: wc.assets ? [...wc.assets] : []
+                        assets: wc.assets ? [...wc.assets] : [],
+                        breakdown: null,
+                        filters: []
                     }];
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], breakdown: null, filters: [] });
                 }
 
                 if (this.$wire) {
                     this.widgetControlsForm.raw_series.forEach((series, idx) => {
                         const ch = series.channel;
+                        if (ch) {
+                            this.fetchBreakdownsForChannel(ch, series.dependency);
+                        }
                         if (ch && !this.allChannelAssets[ch]) {
                             this.$wire.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
                         }
@@ -2596,6 +2669,7 @@ export function dashboardBuilder(config = {}) {
                                 this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
                                 if (deps && Object.keys(deps).length > 0 && !series.dependency) {
                                     series.dependency = Object.keys(deps)[0];
+                                    this.fetchBreakdownsForChannel(ch, series.dependency);
                                 }
                                 this.$wire.getMetricsForChannel(ch, wc.granularity, series.dependency).then(metrics => {
                                     if (!this.widgetControlsForm.series_metrics_map) {
@@ -2611,6 +2685,7 @@ export function dashboardBuilder(config = {}) {
                         } else {
                             if (ch && this.allChannelDependencies[ch] && Object.keys(this.allChannelDependencies[ch]).length > 0 && !series.dependency) {
                                 series.dependency = Object.keys(this.allChannelDependencies[ch])[0];
+                                this.fetchBreakdownsForChannel(ch, series.dependency);
                             }
                             if (ch) {
                                 this.$wire.getMetricsForChannel(ch, wc.granularity, series.dependency).then(metrics => {
@@ -2792,6 +2867,7 @@ export function dashboardBuilder(config = {}) {
                         }
                     }
                     channelsToLoad.forEach(ch => {
+                        this.fetchBreakdownsForChannel(ch, null);
                         if (!this.allChannelAssets[ch]) {
                             this.$wire.getAssetsForChannel(ch).then(assets => {
                                 this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
@@ -3001,6 +3077,32 @@ export function dashboardBuilder(config = {}) {
                 }
             } else if (ch && this.$wire) {
                 this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
+                    if (!this.widgetControlsForm.series_metrics_map) {
+                        this.widgetControlsForm.series_metrics_map = {};
+                    }
+                    this.widgetControlsForm.series_metrics_map = {
+                        ...this.widgetControlsForm.series_metrics_map,
+                        [index]: metrics
+                    };
+                    this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                });
+            }
+        },
+
+        onWidgetRawSeriesDependencyChange(index) {
+            if (!this.widgetControlsForm.raw_series || !this.widgetControlsForm.raw_series[index]) return;
+            const series = this.widgetControlsForm.raw_series[index];
+            const ch = series.channel;
+            const dep = series.dependency;
+
+            // Reset breakdown if dimension is not available in new dependency
+            if (series.breakdown) {
+                series.breakdown = null;
+            }
+
+            if (ch && this.$wire) {
+                this.fetchBreakdownsForChannel(ch, dep);
+                this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, dep).then(metrics => {
                     if (!this.widgetControlsForm.series_metrics_map) {
                         this.widgetControlsForm.series_metrics_map = {};
                     }
@@ -3454,7 +3556,17 @@ export function dashboardBuilder(config = {}) {
                     allowed_metrics: Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [],
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
                     allowed_assets: Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []),
-                    assets: Array.isArray(s.assets) ? [...s.assets] : []
+                    assets: Array.isArray(s.assets) ? [...s.assets] : [],
+                    breakdown: (s.breakdown && s.breakdown.dimension) ? {
+                        dimension: s.breakdown.dimension,
+                        limit: parseInt(s.breakdown.limit, 10) || 5,
+                        order: s.breakdown.order || 'value_desc'
+                    } : null,
+                    filters: Array.isArray(s.filters) ? s.filters.filter(f => f.dimension).map(f => ({
+                        dimension: f.dimension,
+                        operator: f.operator || 'in',
+                        value: f.value !== undefined ? f.value : ''
+                    })) : []
                 }));
                 if (payload.series_channels['0']) {
                     payload.channel = payload.series_channels['0'];
@@ -3467,6 +3579,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_allowed_assets = c.series_allowed_assets || {};
                 payload.series_asset_groups = c.series_asset_groups || {};
                 payload.series_dependencies = c.series_dependencies || {};
+                payload.series_filters = c.series_filters || {};
             }
 
             if (c.combo_chart_config && Object.keys(c.combo_chart_config).length > 0) {

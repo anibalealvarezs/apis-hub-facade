@@ -19,7 +19,10 @@ class GoogleSearchConsoleController extends Controller
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:queries,pages,countries,devices,appearances',
             'activeFilters' => 'nullable|array',
-            'activeFilters.*' => 'nullable|array',
+            'activeFilters.*' => 'nullable',
+            'filters' => 'nullable|array',
+            'breakdown' => 'nullable|string',
+            'groupBy' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string'
         ]);
@@ -49,10 +52,18 @@ class GoogleSearchConsoleController extends Controller
         return empty($aggregations) ? $availableAggs : $aggregations;
     }
 
-    private function applyDynamicFilters(array &$filters, ?array $activeFilters): void
+    private function applyDynamicFilters(array &$filters, ?array $activeFilters, ?array $explicitFilters = null): void
     {
         // Search Appearance is incompatible with other dimensions, must always be standard
         $filters['dimensions.searchAppearance'] = 'standard';
+
+        if (!empty($explicitFilters)) {
+            foreach ($explicitFilters as $k => $v) {
+                if ($v !== null && $v !== '') {
+                    $filters[$k] = $v;
+                }
+            }
+        }
 
         if (empty($activeFilters)) {
             return;
@@ -141,18 +152,25 @@ class GoogleSearchConsoleController extends Controller
 
             // The dashboard account selector sends channeled_account IDs, not page IDs.
             $baseFilters = ['channeledAccount' => (string)$validated['account']];
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $aggs = $this->getRequestedAggregations($request);
+
+            $groupBy = ['daily'];
+            if (!empty($validated['groupBy'])) {
+                $groupBy = $validated['groupBy'];
+            } elseif (!empty($validated['breakdown'])) {
+                $groupBy = ['daily', $validated['breakdown']];
+            }
 
             $payloads = [
                 'chart' => [
                     'aggregations' => $aggs,
-                    'groupBy' => ['daily'], // or 'date' if daily fails
+                    'groupBy' => $groupBy,
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
-                    'limit' => 1000 // ensure all days are returned
+                    'limit' => 5000 // ensure all days are returned
                 ]
             ];
 

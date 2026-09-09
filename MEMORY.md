@@ -11,6 +11,14 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Widget Series Breakdown and Filtering Support (2026-09-08)
+- **Problem:** Dashboard widgets only supported aggregate/global time series without multidimensional segment breakdowns or granular series-level filtering.
+- **Solution:**
+  - Created `ChannelBreakdownRegistry` to provide a unified source of truth for channel-specific breakdowns, dimensions, operators, and types across all 4 channels (`facebook_organic`, `facebook_marketing`, `google_analytics`, `google_search_console`).
+  - Added breakdown and filter configurators into `DashboardBuilder` (modal UI and JS state manager), supporting single-metric series breakdown splitting (with configurable limit, order, and manual value selection) and multi-condition query filters (`=`, `!=`, `in`, `not_in`, `like`).
+  - Updated `DashboardWidgetDataController` to query breakdowns, split series dynamically, apply series-level filters to queries, and resolve localized labels.
+  - Aligned data explorer controllers (`FacebookOrganicController`, `FacebookMarketingController`, `GoogleAnalyticsController`, `GoogleSearchConsoleController`) to leverage `ChannelBreakdownRegistry` for consistent dimension options and Spanish localization (`lang/es.json`).
+
 ### Graceful Un-deployed Project & Remote Server Offline Error Handling (2026-08-13)
 - **Problem:** When a project has never been deployed (`last_deployed_at === null`), background telemetry polls and remote engine calls triggered Guzzle requests resulting in 500 / 502 / connection errors that logged full `production.ERROR` stack traces to `laravel.log`.
 - **Fix:**

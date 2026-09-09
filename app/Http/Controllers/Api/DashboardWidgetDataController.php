@@ -1852,6 +1852,23 @@ class DashboardWidgetDataController extends Controller
             ];
         }
 
+        // Inject series-level filters into KPI variables
+        if (! empty($controls['series_filters']['dependent'])) {
+            $mergedState['filters'] = $this->normalizeFiltersForPayload($controls['series_filters']['dependent']);
+        } elseif (! empty($controls['series_filters']['0'])) {
+            $mergedState['filters'] = $this->normalizeFiltersForPayload($controls['series_filters']['0']);
+        }
+        if (! empty($mergedState['independent_variables']) && is_array($mergedState['independent_variables'])) {
+            foreach ($mergedState['independent_variables'] as $key => $var) {
+                $indFilter = $controls['series_filters']["independent_{$key}"]
+                    ?? $controls['series_filters'][(string)($key + 1)]
+                    ?? null;
+                if (! empty($indFilter)) {
+                    $mergedState['independent_variables'][$key]['filters'] = $this->normalizeFiltersForPayload($indFilter);
+                }
+            }
+        }
+
         $payload = KpiPayloadBuilder::build(
             $kpi->calculation_type,
             $mergedState,
@@ -2251,41 +2268,79 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
 
+                $seriesFilters = $controls['series_filters'][$sIdx] ?? $series['filters'] ?? null;
+                $normalizedFilters = $this->normalizeFiltersForPayload($seriesFilters);
+                if (! empty($normalizedFilters)) {
+                    $payload['filters'] = $normalizedFilters;
+                }
+
+                $seriesBreakdown = $series['breakdown'] ?? $controls['series_breakdown'][$sIdx] ?? null;
+                $breakdownDim = is_array($seriesBreakdown) ? ($seriesBreakdown['dimension'] ?? null) : $seriesBreakdown;
+                $breakdownLimit = is_array($seriesBreakdown) ? (int) ($seriesBreakdown['limit'] ?? 5) : 5;
+                $breakdownLimit = max(1, min(10, $breakdownLimit));
+                $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
+
+                if (! empty($breakdownDim)) {
+                    $payload['breakdown'] = $breakdownDim;
+                    $payload['groupBy'] = $granularity === 'lifetime' ? [$breakdownDim] : ['daily', $breakdownDim];
+                }
+
                 $channelResponse = $this->forwardToChannelEndpoint($channel, 'chart', $payload);
 
-                foreach ($metrics as $metric) {
-                    $timeSeries = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
-                    $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
-                    $isRatio = in_array($cleanMetric, $ratioMetrics);
-
-                    if ($granularity !== 'daily' && ! empty($timeSeries)) {
-                        $aggregator = new \App\Services\Analytics\GranularityAggregationService;
-                        $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
+                if (! empty($breakdownDim)) {
+                    // Fan-out broken-down series into multiple curves
+                    $fanOutCurves = $this->fanOutBreakdownSeries(
+                        $channelResponse,
+                        $metrics[0],
+                        $breakdownDim,
+                        $breakdownLimit,
+                        $breakdownOrder,
+                        $granularity,
+                        $sIdx,
+                        $channel,
+                        $seriesDependency ?? null,
+                        $series['label'] ?? null,
+                        $metricLabels,
+                        $ratioMetrics
+                    );
+                    foreach ($fanOutCurves as $foc) {
+                        $seriesCurves[] = $foc;
                     }
+                } else {
+                    foreach ($metrics as $metric) {
+                        $timeSeries = $this->extractTimeSeriesFromResponse($channelResponse, $metric);
+                        $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
+                        $isRatio = in_array($cleanMetric, $ratioMetrics);
 
-                    $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
-                    $cLabel = $this->getSimplifiedChannelName($channel, $seriesDependency ?? null);
-                    $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
+                        if ($granularity !== 'daily' && ! empty($timeSeries)) {
+                            $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                            $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
+                        }
 
-                    if ($isRatio) {
-                        $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
+                        $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
+                        $cLabel = $this->getSimplifiedChannelName($channel, $seriesDependency ?? null);
+                        $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
+
+                        if ($isRatio) {
+                            $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
+                        }
+
+                        $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                        $isCurrency = in_array($cleanMetric, $currencyMetrics);
+
+                        $seriesCurves[] = [
+                            'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
+                            'key' => 'series_' . $sIdx . '_' . $metric,
+                            'series_index' => $sIdx,
+                            'metric' => $cleanMetric,
+                            'raw_metric' => $metric,
+                            'axis_key' => $cleanMetric,
+                            'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
+                            'currency' => $isCurrency,
+                            'percentage' => $isRatio,
+                            'data' => $timeSeries,
+                        ];
                     }
-
-                    $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
-                    $isCurrency = in_array($cleanMetric, $currencyMetrics);
-
-                    $seriesCurves[] = [
-                        'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
-                        'key' => 'series_' . $sIdx . '_' . $metric,
-                        'series_index' => $sIdx,
-                        'metric' => $cleanMetric,
-                        'raw_metric' => $metric,
-                        'axis_key' => $cleanMetric,
-                        'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
-                        'currency' => $isCurrency,
-                        'percentage' => $isRatio,
-                        'data' => $timeSeries,
-                    ];
                 }
             }
         }
@@ -2393,6 +2448,17 @@ class DashboardWidgetDataController extends Controller
 
                 if (! empty($ssDependency)) {
                     $payload['dependency'] = $ssDependency;
+                }
+
+                // Check for series-level filters on DM cards
+                $dmCardFilters = null;
+                if ($matchingItem) {
+                    $cardIdx = $matchingItem['series_index'];
+                    $dmCardFilters = $controls['series_filters'][$cardIdx] ?? $matchingItem['series']['filters'] ?? null;
+                }
+                $normalizedDmFilters = $this->normalizeFiltersForPayload($dmCardFilters);
+                if (! empty($normalizedDmFilters)) {
+                    $payload['filters'] = $normalizedDmFilters;
                 }
 
                 if ($ssChannel === 'facebook_organic') {
@@ -2536,6 +2602,185 @@ class DashboardWidgetDataController extends Controller
             'datasets' => $datasets,
             'scales' => $scales,
         ];
+    }
+
+    /**
+     * Normalize a series filters array into an associative map suitable for query engines.
+     *
+     * @param array|null $filters
+     * @return array
+     */
+    protected function normalizeFiltersForPayload(?array $filters): array
+    {
+        if (empty($filters)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($filters as $k => $item) {
+            if (is_array($item) && isset($item['dimension'])) {
+                $dim = $item['dimension'];
+                $op = $item['operator'] ?? 'eq';
+                $val = $item['value'] ?? null;
+
+                if ($op === 'is_null') {
+                    $result[$dim] = ['operator' => 'is_null'];
+                } elseif ($op === 'is_not_null') {
+                    $result[$dim] = ['operator' => 'is_not_null'];
+                } elseif ($op === 'in' || $op === 'not_in') {
+                    $valArray = is_array($val) ? array_values(array_filter($val, fn ($v) => $v !== null && $v !== '')) : [$val];
+                    if (! empty($valArray)) {
+                        $result[$dim] = ['operator' => $op, 'value' => $valArray];
+                    }
+                } elseif ($val !== null && $val !== '') {
+                    $result[$dim] = ['operator' => $op, 'value' => $val];
+                }
+            } elseif (is_string($k) && ($item !== null && $item !== '')) {
+                $result[$k] = $item;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Fan-out a broken-down channel response into multiple time-series curves.
+     *
+     * @param array $channelResponse
+     * @param string $metric
+     * @param string $breakdownDim
+     * @param int $limit
+     * @param string $order
+     * @param string $granularity
+     * @param int $sIdx
+     * @param string $channel
+     * @param string|null $seriesDependency
+     * @param string|null $seriesLabel
+     * @param array $metricLabels
+     * @param array $ratioMetrics
+     * @return array
+     */
+    protected function fanOutBreakdownSeries(
+        array $channelResponse,
+        string $metric,
+        string $breakdownDim,
+        int $limit,
+        string $order,
+        string $granularity,
+        int $sIdx,
+        string $channel,
+        ?string $seriesDependency,
+        ?string $seriesLabel,
+        array $metricLabels,
+        array $ratioMetrics
+    ): array {
+        $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
+        $isRatio = in_array($cleanMetric, $ratioMetrics);
+        $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+        $isCurrency = in_array($cleanMetric, $currencyMetrics);
+        $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
+
+        // Get raw rows from response
+        $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
+        if (! is_array($rawRows) || empty($rawRows)) {
+            return [];
+        }
+
+        // Determine possible breakdown keys in rows (e.g. 'channeledCampaign', 'dimensions.age', 'age', etc.)
+        $dimKeysToTry = [
+            $breakdownDim,
+            str_replace('dimensions.', '', $breakdownDim),
+            strtolower($breakdownDim),
+            strtolower(str_replace('dimensions.', '', $breakdownDim)),
+        ];
+
+        // Group rows by breakdown value
+        $groupedData = []; // [dimValue => [date => value]]
+        $totals = [];      // [dimValue => sumValue]
+
+        foreach ($rawRows as $row) {
+            $date = $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? null;
+            if ($granularity === 'lifetime') {
+                $date = 'Lifetime';
+            }
+            if (! $date) {
+                continue;
+            }
+
+            $dimVal = null;
+            foreach ($dimKeysToTry as $dk) {
+                if (isset($row[$dk]) && $row[$dk] !== null && $row[$dk] !== '') {
+                    $dimVal = (string) $row[$dk];
+                    break;
+                }
+            }
+
+            if ($dimVal === null || $dimVal === 'null' || $dimVal === '(not set)') {
+                $dimVal = 'Unknown';
+            }
+
+            $val = $this->findMetricValueInPoint($row, $metric);
+
+            if (! isset($groupedData[$dimVal])) {
+                $groupedData[$dimVal] = [];
+                $totals[$dimVal] = 0.0;
+            }
+
+            $groupedData[$dimVal][$date] = ($groupedData[$dimVal][$date] ?? 0.0) + (float) $val;
+            $totals[$dimVal] += (float) $val;
+        }
+
+        // Sort breakdown keys according to order
+        $dimValues = array_keys($groupedData);
+        usort($dimValues, function ($a, $b) use ($totals, $order) {
+            if ($order === 'value_desc') {
+                return ($totals[$b] ?? 0) <=> ($totals[$a] ?? 0);
+            } elseif ($order === 'value_asc') {
+                return ($totals[$a] ?? 0) <=> ($totals[$b] ?? 0);
+            } elseif ($order === 'alpha_desc') {
+                return strcasecmp($b, $a);
+            } else { // alpha_asc
+                return strcasecmp($a, $b);
+            }
+        });
+
+        // Limit top N
+        $selectedDimValues = array_slice($dimValues, 0, $limit);
+
+        $curves = [];
+        $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+
+        foreach ($selectedDimValues as $dimVal) {
+            $timeSeries = $groupedData[$dimVal];
+
+            if ($granularity !== 'daily' && $granularity !== 'lifetime' && ! empty($timeSeries)) {
+                $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
+            }
+
+            if ($isRatio) {
+                $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
+            }
+
+            $dimSlug = preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($dimVal));
+            $baseLabel = ! empty($seriesLabel) ? $seriesLabel : $mLabel;
+            $curveLabel = "{$baseLabel} - {$dimVal}";
+
+            $curves[] = [
+                'label' => $isRatio ? $curveLabel . ' (%)' : $curveLabel,
+                'key' => "series_{$sIdx}_{$metric}_{$dimSlug}",
+                'series_index' => $sIdx,
+                'metric' => $cleanMetric,
+                'raw_metric' => $metric,
+                'breakdown_value' => $dimVal,
+                'axis_key' => $cleanMetric,
+                'axis_title' => $isRatio ? $mLabel . ' (%)' : $mLabel,
+                'currency' => $isCurrency,
+                'percentage' => $isRatio,
+                'data' => $timeSeries,
+            ];
+        }
+
+        return $curves;
     }
 
     protected function handleEntitySource(Project $project, DashboardWidget $widget, array $controls): array
