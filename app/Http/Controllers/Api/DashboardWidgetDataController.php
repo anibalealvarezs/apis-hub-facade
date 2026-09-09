@@ -1607,6 +1607,14 @@ class DashboardWidgetDataController extends Controller
                 } elseif (is_numeric($key) && isset($controls['series_assets'][(string)($key + 1)])) {
                     $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets'][(string)($key + 1)];
                     $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                } elseif (is_array($controls['series_assets'] ?? null)) {
+                    // Fallback: If only 1 independent variable exists or a key in series_assets starts with independent_
+                    $indAssetKeys = array_filter(array_keys($controls['series_assets']), fn ($k) => str_starts_with((string) $k, 'independent_'));
+                    if (count($indAssetKeys) === 1 && count($uiState['independent_variables']) === 1) {
+                        $matchedKey = reset($indAssetKeys);
+                        $uiState['independent_variables'][$key]['independent_asset_filter'] = $controls['series_assets'][$matchedKey];
+                        $uiState['independent_variables'][$key]['independent_asset_group'] = null;
+                    }
                 }
                 if (! empty($controls['series_dependencies']["independent_{$key}"])) {
                     $uiState['independent_variables'][$key]['independent_dependency'] = $controls['series_dependencies']["independent_{$key}"];
@@ -2115,12 +2123,14 @@ class DashboardWidgetDataController extends Controller
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
         $config = $widget->source_config ?? [];
 
-        // Check if widget has multiple series configured via raw_series
+        // Check if widget has multiple series or breakdown/filters configured via raw_series
         $rawSeries = $controls['raw_series'] ?? $config['raw_series'] ?? null;
         $hasMultiSeries = false;
         if (is_array($rawSeries) && count($rawSeries) > 0) {
-            // It's multi-series if there is more than 1 series, or any series is a derived_metric, or raw_series is explicitly defined
-            $hasMultiSeries = count($rawSeries) > 1 || (! empty($rawSeries[0]['type']) && $rawSeries[0]['type'] === 'derived_metric');
+            $hasMultiSeries = count($rawSeries) > 1
+                || (! empty($rawSeries[0]['type']) && $rawSeries[0]['type'] === 'derived_metric')
+                || (! empty($rawSeries[0]['breakdown']['dimension']))
+                || (! empty($rawSeries[0]['filters']));
         }
 
         if ($hasMultiSeries) {
