@@ -552,6 +552,7 @@
     "Day of Week": "Día de la semana",
     "Day-over-day change. It answers the question: \"Did the metric grow or shrink today compared to yesterday?\" Useful for removing long-term seasonal trends.": "Cambio día a día. Responde a la pregunta: \"¿La métrica creció o se redujo hoy en comparación con ayer?\" Útil para eliminar tendencias estacionales a largo plazo.",
     "Day-over-day or period-over-period change.": "Cambio día a día o período a período.",
+    "Does Not Match Pattern (Not Like)": "No coincide con el patrón (Not Like)",
     "Days of Month": "Días del mes",
     "Decay Escape Velocity": "Velocidad de Escape de Decaimiento",
     "Deepest level of entities to sync.": "Nivel más profundo de entidades a sincronizar.",

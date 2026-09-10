@@ -13,7 +13,7 @@ class ChannelBreakdownRegistry
      */
     public static function getBreakdownsForChannel(string $channel, ?string $dependency = null): array
     {
-        $defaultOperators = ['in', 'not_in', 'eq', 'neq', 'like', 'is_null', 'is_not_null'];
+        $defaultOperators = ['in', 'not_in', 'eq', 'neq', 'like', 'not_like', 'is_null', 'is_not_null'];
 
         return match ($channel) {
             'facebook_marketing' => [

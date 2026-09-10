@@ -1385,6 +1385,7 @@
                                                                                     <option value="eq">{{ __('Equals (=)') }}</option>
                                                                                     <option value="neq">{{ __('Not Equals (!=)') }}</option>
                                                                                     <option value="like">{{ __('Matches Pattern (Like)') }}</option>
+                                                                                    <option value="not_like">{{ __('Does Not Match Pattern (Not Like)') }}</option>
                                                                                     <option value="is_null">{{ __('Is Empty / Null') }}</option>
                                                                                     <option value="is_not_null">{{ __('Is Not Empty / Not Null') }}</option>
                                                                                 </select>
@@ -1606,6 +1607,7 @@
                                                                             <option value="eq">{{ __('Equals (=)') }}</option>
                                                                             <option value="neq">{{ __('Not Equals (!=)') }}</option>
                                                                             <option value="like">{{ __('Matches Pattern (Like)') }}</option>
+                                                                            <option value="not_like">{{ __('Does Not Match Pattern (Not Like)') }}</option>
                                                                             <option value="is_null">{{ __('Is Empty / Null') }}</option>
                                                                             <option value="is_not_null">{{ __('Is Not Empty / Not Null') }}</option>
                                                                         </select>
@@ -2099,6 +2101,7 @@
                                                                                                     <option value="eq">{{ __('Equals (=)') }}</option>
                                                                                                     <option value="neq">{{ __('Not Equals (!=)') }}</option>
                                                                                                     <option value="like">{{ __('Matches Pattern (Like)') }}</option>
+                                                                                                    <option value="not_like">{{ __('Does Not Match Pattern (Not Like)') }}</option>
                                                                                                     <option value="is_null">{{ __('Is Empty / Null') }}</option>
                                                                                                     <option value="is_not_null">{{ __('Is Not Empty / Not Null') }}</option>
                                                                                                 </select>
