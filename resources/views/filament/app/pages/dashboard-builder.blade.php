@@ -2290,34 +2290,34 @@
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 dark:border-gray-700/60">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Dimension') }}</label>
-                                    <x-ui.select-input
+                                    <select
                                         x-model="flt.dimension"
                                         @change="markWidgetControlsDirty()"
-                                        class="w-full"
+                                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
                                     >
-                                        <x-ui.select-option value="">{{ __('Select Dimension...') }}</x-ui.select-option>
+                                        <option value="" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Select Dimension...') }}</option>
                                         <template x-for="(bDef, bKey) in getBreakdownsForSeries(filterModalChannel, filterModalDependency)" :key="bKey">
-                                            <x-ui.select-option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey"></x-ui.select-option>
+                                            <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                         </template>
-                                    </x-ui.select-input>
+                                    </select>
                                 </div>
 
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Operator') }}</label>
-                                    <x-ui.select-input
+                                    <select
                                         x-model="flt.operator"
                                         @change="markWidgetControlsDirty()"
-                                        class="w-full"
+                                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
                                     >
-                                        <x-ui.select-option value="in">{{ __('Contains (In)') }}</x-ui.select-option>
-                                        <x-ui.select-option value="not_in">{{ __('Does not contain (Not In)') }}</x-ui.select-option>
-                                        <x-ui.select-option value="eq">{{ __('Equals (=)') }}</x-ui.select-option>
-                                        <x-ui.select-option value="neq">{{ __('Not Equals (!=)') }}</x-ui.select-option>
-                                        <x-ui.select-option value="like">{{ __('Matches Pattern (Like)') }}</x-ui.select-option>
-                                        <x-ui.select-option value="not_like">{{ __('Does Not Match Pattern (Not Like)') }}</x-ui.select-option>
-                                        <x-ui.select-option value="is_null">{{ __('Is Empty / Null') }}</x-ui.select-option>
-                                        <x-ui.select-option value="is_not_null">{{ __('Is Not Empty / Not Null') }}</x-ui.select-option>
-                                    </x-ui.select-input>
+                                        <option value="in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Contains (In)') }}</option>
+                                        <option value="not_in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Does not contain (Not In)') }}</option>
+                                        <option value="eq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Equals (=)') }}</option>
+                                        <option value="neq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not Equals (!=)') }}</option>
+                                        <option value="like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Matches Pattern (Like)') }}</option>
+                                        <option value="not_like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Does Not Match Pattern (Not Like)') }}</option>
+                                        <option value="is_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Empty / Null') }}</option>
+                                        <option value="is_not_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Not Empty / Not Null') }}</option>
+                                    </select>
                                 </div>
 
                                 <div>
