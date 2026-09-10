@@ -2264,9 +2264,9 @@
                     </template>
 
                     <template x-for="(flt, fIdx) in getFilterModalList()" :key="fIdx">
-                        <div class="p-3.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3 relative group transition-all">
+                        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-4 relative group transition-all">
                             {{-- Top row: Rule Name & Remove button --}}
-                            <div class="flex items-center justify-between gap-2.5">
+                            <div class="flex items-center justify-between gap-3">
                                 <div class="flex-1 flex items-center gap-2">
                                     <span class="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400" x-text="'#' + (fIdx + 1)"></span>
                                     <input
@@ -2287,7 +2287,7 @@
                             </div>
 
                             {{-- Bottom row: Dimension, Operator, Value --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100 dark:border-gray-700/60">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-gray-100 dark:border-gray-700/60">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Dimension') }}</label>
                                     <select

@@ -35,13 +35,13 @@
     };
 
     $onCancel = trim($onCancel ?? $open . ' = false;');
-    $onConfirm = trim($onConfirm ?? '');
-    $onSecondary = trim($onSecondary ?? '');
+    $onConfirm = trim($onConfirm ?? '', " \t\n\r\0\x0B;");
+    $onSecondary = trim($onSecondary ?? '', " \t\n\r\0\x0B;");
     $confirmClick = $closeOnConfirm
-        ? trim($onConfirm . '; ' . $open . ' = false;')
+        ? ($onConfirm !== '' ? $onConfirm . '; ' . $open . ' = false;' : $open . ' = false;')
         : $onConfirm;
     $secondaryClick = $closeOnSecondary
-        ? trim($onSecondary . '; ' . $open . ' = false;')
+        ? ($onSecondary !== '' ? $onSecondary . '; ' . $open . ' = false;' : $open . ' = false;')
         : $onSecondary;
 
     $confirmLabel = $confirmLabel ?? __('Confirm');
