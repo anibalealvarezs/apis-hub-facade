@@ -1037,17 +1037,29 @@
                                                             <div>
                                                                 <div class="flex items-center justify-between mb-2">
                                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metric') }}</label>
-                                                                    <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
-                                                                        <button type="button"
-                                                                                @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
-                                                                                :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
-                                                                                :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
-                                                                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                                                                                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
-                                                                            <span x-text="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
-                                                                        </button>
-                                                                    </template>
+                                                                    <div class="flex items-center gap-1.5 shrink-0">
+                                                                        {{-- Metric Color Picker for Derived Metric --}}
+                                                                        <div class="relative flex items-center" :title="'{{ __('Metric Color') }}'">
+                                                                            <input type="color"
+                                                                                   class="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+                                                                                   :value="getMetricColor(index, series.metrics?.[0] || 'dm')"
+                                                                                   @input="setMetricColor(index, series.metrics?.[0] || 'dm', $event.target.value)">
+                                                                            <span class="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 shadow-xs flex items-center justify-center transition-transform hover:scale-110 cursor-pointer pointer-events-none"
+                                                                                  :style="'background-color: ' + getMetricColor(index, series.metrics?.[0] || 'dm')"></span>
+                                                                        </div>
+
+                                                                        <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
+                                                                            <button type="button"
+                                                                                    @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
+                                                                                    :title="'{{ __('Switch between Bar and Line chart representation') }}'"
+                                                                                    class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
+                                                                                    :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
+                                                                                        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                                                                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
+                                                                                <span x-text="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
+                                                                            </button>
+                                                                        </template>
+                                                                    </div>
                                                                 </div>
                                                                 <div class="bd-dm-fixed-field">
                                                                     <span x-text="(allChannelMetrics[series.channel] || {})[series.metrics?.[0]] || series.metrics?.[0] || series.label || '—'"></span>
@@ -1140,22 +1152,32 @@
                                                                                           x-text="label"></span>
                                                                                 </div>
                                                                                 {{-- Badge for Default Active on Load --}}
-                                                                                 <template x-if="series.allowed_metrics && series.allowed_metrics.includes(key)">
-                                                                                     <div class="flex items-center gap-1.5 shrink-0">
-                                                                                         {{-- Combo Chart Type Toggle (Bar / Line) --}}
-                                                                                         <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
-                                                                                             <button type="button"
-                                                                                                     @click.stop="toggleRawMetricComboType(index, key)"
-                                                                                                     :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                                     class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
-                                                                                                     :class="getRawMetricComboType(index, key) === 'bar'
-                                                                                                         ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                                                                                                         : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
-                                                                                                 <span x-text="getRawMetricComboType(index, key) === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
-                                                                                             </button>
-                                                                                         </template>
+                                                                                <template x-if="series.allowed_metrics && series.allowed_metrics.includes(key)">
+                                                                                    <div class="flex items-center gap-1.5 shrink-0">
+                                                                                        {{-- Metric Color Picker --}}
+                                                                                        <div class="relative flex items-center" :title="'{{ __('Metric Color') }}'">
+                                                                                            <input type="color"
+                                                                                                   class="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+                                                                                                   :value="getMetricColor(index, key)"
+                                                                                                   @input="setMetricColor(index, key, $event.target.value)">
+                                                                                            <span class="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 shadow-xs flex items-center justify-center transition-transform hover:scale-110 cursor-pointer pointer-events-none"
+                                                                                                  :style="'background-color: ' + getMetricColor(index, key)"></span>
+                                                                                        </div>
 
-                                                                                         <button type="button"
+                                                                                        {{-- Combo Chart Type Toggle (Bar / Line) --}}
+                                                                                        <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
+                                                                                            <button type="button"
+                                                                                                    @click.stop="toggleRawMetricComboType(index, key)"
+                                                                                                    :title="'{{ __('Switch between Bar and Line chart representation') }}'"
+                                                                                                    class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
+                                                                                                    :class="getRawMetricComboType(index, key) === 'bar'
+                                                                                                        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                                                                                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
+                                                                                                <span x-text="getRawMetricComboType(index, key) === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
+                                                                                            </button>
+                                                                                        </template>
+
+                                                                                        <button type="button"
                                                                                                 @click.stop="toggleRawMetricDefaultActive(index, key)"
                                                                                                 :title="(series.metrics || []).includes(key) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
                                                                                                 class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"

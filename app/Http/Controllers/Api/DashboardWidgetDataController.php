@@ -1125,7 +1125,13 @@ class DashboardWidgetDataController extends Controller
                                 $values = array_map(fn ($v) => round($v * 100, 4), $values);
                             }
 
-                            $color = $palette[$idx % count($palette)];
+                            $customMetricColor = $controls['series_metric_colors'][0][$key]
+                                ?? $controls['series_metric_colors']['0'][$key]
+                                ?? $controls['series_metric_colors'][0][$cleanKey]
+                                ?? $controls['series_metric_colors']['0'][$cleanKey]
+                                ?? ($controls['metric_colors'][$key] ?? $controls['metric_colors'][$cleanKey] ?? null);
+
+                            $color = ! empty($customMetricColor) ? $customMetricColor : $palette[$idx % count($palette)];
 
                             $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
                             $isCurrency = in_array($cleanKey, $currencyMetrics);
@@ -2306,7 +2312,19 @@ class DashboardWidgetDataController extends Controller
                     'keys' => is_array($channelResponse) ? array_keys($channelResponse) : gettype($channelResponse),
                 ]);
 
+                // Determine base color for this series/metric if defined
+                $seriesMetricColors = $series['metric_colors'] 
+                    ?? $controls['series_metric_colors'][$sIdx] 
+                    ?? $controls['series_metric_colors'][(string)$sIdx] 
+                    ?? [];
+
                 if (! empty($breakdownDim)) {
+                    $firstMetric = $metrics[0];
+                    $cleanFirstMetric = preg_replace('/^trend_(?:total|average)_/', '', $firstMetric);
+                    $baseColor = $seriesMetricColors[$firstMetric] 
+                        ?? $seriesMetricColors[$cleanFirstMetric] 
+                        ?? ($palette[$sIdx % count($palette)]);
+
                     // Fan-out broken-down series into multiple curves
                     $fanOutCurves = $this->fanOutBreakdownSeries(
                         $channelResponse,
@@ -2320,7 +2338,8 @@ class DashboardWidgetDataController extends Controller
                         $seriesDependency ?? null,
                         $series['label'] ?? null,
                         $metricLabels,
-                        $ratioMetrics
+                        $ratioMetrics,
+                        $baseColor
                     );
                     foreach ($fanOutCurves as $foc) {
                         $seriesCurves[] = $foc;
@@ -2347,6 +2366,8 @@ class DashboardWidgetDataController extends Controller
                         $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
                         $isCurrency = in_array($cleanMetric, $currencyMetrics);
 
+                        $customMetricColor = $seriesMetricColors[$metric] ?? $seriesMetricColors[$cleanMetric] ?? null;
+
                         $seriesCurves[] = [
                             'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
                             'key' => 'series_' . $sIdx . '_' . $metric,
@@ -2358,6 +2379,7 @@ class DashboardWidgetDataController extends Controller
                             'currency' => $isCurrency,
                             'percentage' => $isRatio,
                             'data' => $timeSeries,
+                            'color' => $customMetricColor,
                         ];
                     }
                 }
@@ -2572,7 +2594,7 @@ class DashboardWidgetDataController extends Controller
         $scales = [];
 
         foreach ($seriesCurves as $idx => $curve) {
-            $color = $palette[$idx % count($palette)];
+            $color = ! empty($curve['color']) ? $curve['color'] : $palette[$idx % count($palette)];
             $alignedValues = array_map(fn ($d) => (float) ($curve['data'][$d] ?? 0), $allDates);
 
             $dataset = [
@@ -2691,7 +2713,8 @@ class DashboardWidgetDataController extends Controller
         ?string $seriesDependency,
         ?string $seriesLabel,
         array $metricLabels,
-        array $ratioMetrics
+        array $ratioMetrics,
+        ?string $baseColor = null
     ): array {
         $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
         $isRatio = in_array($cleanMetric, $ratioMetrics);
@@ -2799,7 +2822,169 @@ class DashboardWidgetDataController extends Controller
             ];
         }
 
+        // Generate shades for breakdown curves based on sorting criteria
+        if (! empty($curves) && ! empty($baseColor)) {
+            $count = count($curves);
+            $shades = $this->generateMetricShades($baseColor, $count, $order);
+            foreach ($curves as $cIdx => &$cRef) {
+                if (isset($shades[$cIdx])) {
+                    $cRef['color'] = $shades[$cIdx];
+                }
+            }
+            unset($cRef);
+        }
+
         return $curves;
+    }
+
+    /**
+     * Generate an array of shades of a base color for breakdown series curves.
+     * Follows the sorting criteria:
+     * - If ordered highest to lowest ('value_desc'), darkest shade corresponds to highest value.
+     * - If ordered lowest to highest ('value_asc'), darkest shade corresponds to lowest value.
+     *
+     * @param string $baseHex
+     * @param int $count
+     * @param string $order
+     * @return array
+     */
+    protected function generateMetricShades(string $baseHex, int $count, string $order = 'value_desc'): array
+    {
+        if ($count <= 0) {
+            return [];
+        }
+
+        $hsl = $this->hexToHsl($baseHex);
+        if (! $hsl) {
+            return array_fill(0, $count, $baseHex);
+        }
+
+        $h = $hsl['h'];
+        $s = $hsl['s'];
+        $l = $hsl['l'];
+
+        if ($count === 1) {
+            return [$this->hslToHex($h, $s, $l)];
+        }
+
+        // Distance between lightness and white (100) / black (0)
+        $dWhite = 100.0 - $l;
+        $dBlack = $l;
+        $dMin = min($dWhite, $dBlack);
+
+        // Define radius around base lightness
+        $radius = $dMin * 0.75;
+        if ($radius < 15.0) {
+            $radius = min(35.0, (float) $dMin);
+        }
+
+        $lDark = max(12.0, $l - $radius);
+        $lLight = min(90.0, $l + $radius);
+
+        // Sorting rule:
+        // If 'value_desc': curve 0 is highest value -> darkest shade (lDark).
+        // If 'value_asc': curve 0 is lowest value -> darkest shade (lDark).
+        // For alphabetical or other orders: default curve 0 gets darkest shade.
+        $startL = $lDark;
+        $endL = $lLight;
+
+        $step = ($count > 1) ? ($endL - $startL) / ($count - 1) : 0;
+        $shades = [];
+
+        for ($i = 0; $i < $count; $i++) {
+            $curL = $startL + ($i * $step);
+            $shades[] = $this->hslToHex($h, $s, $curL);
+        }
+
+        return $shades;
+    }
+
+    /**
+     * Convert Hex color (#RGB or #RRGGBB) to HSL array ['h' => 0-360, 's' => 0-100, 'l' => 0-100].
+     *
+     * @param string $hex
+     * @return array|null
+     */
+    protected function hexToHsl(string $hex): ?array
+    {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        if (strlen($hex) !== 6) {
+            return null;
+        }
+
+        $r = hexdec(substr($hex, 0, 2)) / 255.0;
+        $g = hexdec(substr($hex, 2, 2)) / 255.0;
+        $b = hexdec(substr($hex, 4, 2)) / 255.0;
+
+        $max = max($r, $g, $b);
+        $min = min($r, $g, $b);
+        $delta = $max - $min;
+
+        $l = ($max + $min) / 2.0;
+
+        if ($delta == 0) {
+            $h = 0;
+            $s = 0;
+        } else {
+            $s = $l > 0.5 ? $delta / (2.0 - $max - $min) : $delta / ($max + $min);
+            if ($max == $r) {
+                $h = (($g - $b) / $delta) + ($g < $b ? 6 : 0);
+            } elseif ($max == $g) {
+                $h = (($b - $r) / $delta) + 2;
+            } else {
+                $h = (($r - $g) / $delta) + 4;
+            }
+            $h *= 60.0;
+        }
+
+        return [
+            'h' => round($h, 2),
+            's' => round($s * 100, 2),
+            'l' => round($l * 100, 2),
+        ];
+    }
+
+    /**
+     * Convert HSL (h: 0-360, s: 0-100, l: 0-100) to Hex color (#RRGGBB).
+     *
+     * @param float $h
+     * @param float $s
+     * @param float $l
+     * @return string
+     */
+    protected function hslToHex(float $h, float $s, float $l): string
+    {
+        $h = fmod($h, 360.0);
+        if ($h < 0) $h += 360.0;
+        $s = max(0.0, min(100.0, $s)) / 100.0;
+        $l = max(0.0, min(100.0, $l)) / 100.0;
+
+        $c = (1.0 - abs(2.0 * $l - 1.0)) * $s;
+        $x = $c * (1.0 - abs(fmod($h / 60.0, 2.0) - 1.0));
+        $m = $l - $c / 2.0;
+
+        if ($h < 60) {
+            $r = $c; $g = $x; $b = 0;
+        } elseif ($h < 120) {
+            $r = $x; $g = $c; $b = 0;
+        } elseif ($h < 180) {
+            $r = 0; $g = $c; $b = $x;
+        } elseif ($h < 240) {
+            $r = 0; $g = $x; $b = $c;
+        } elseif ($h < 300) {
+            $r = $x; $g = 0; $b = $c;
+        } else {
+            $r = $c; $g = 0; $b = $x;
+        }
+
+        $red = (int) round(($r + $m) * 255.0);
+        $green = (int) round(($g + $m) * 255.0);
+        $blue = (int) round(($b + $m) * 255.0);
+
+        return sprintf('#%02x%02x%02x', $red, $green, $blue);
     }
 
     protected function handleEntitySource(Project $project, DashboardWidget $widget, array $controls): array

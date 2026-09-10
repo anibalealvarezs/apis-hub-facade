@@ -1545,6 +1545,7 @@ export function dashboardBuilder(config = {}) {
                 channel: this.dashboardControls.channel || '',
                 metrics: [],
                 assets: [],
+                metric_colors: {},
                 breakdown: null,
                 filters: []
             });
@@ -1594,7 +1595,10 @@ export function dashboardBuilder(config = {}) {
                     type: 'metric',
                     channel: this.dashboardControls.channel || '',
                     metrics: [],
-                    assets: []
+                    assets: [],
+                    metric_colors: {},
+                    breakdown: null,
+                    filters: []
                 });
             }
 
@@ -2576,6 +2580,7 @@ export function dashboardBuilder(config = {}) {
                             metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
                             allowed_assets: rawAllowedAssets,
                             assets: rawSelectedAssets.length > 0 ? rawSelectedAssets : [...rawAllowedAssets],
+                            metric_colors: (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : ((wc.series_metric_colors && wc.series_metric_colors[sIdx]) ? { ...wc.series_metric_colors[sIdx] } : {}),
                             breakdown: s.breakdown ? { ...s.breakdown } : null,
                             filters: Array.isArray(s.filters) ? s.filters.map(f => ({ ...f })) : []
                         };
@@ -2611,6 +2616,7 @@ export function dashboardBuilder(config = {}) {
                             allowed_metrics: allowed,
                             metrics,
                             assets,
+                            metric_colors: (wc.series_metric_colors && wc.series_metric_colors[sIdx]) ? { ...wc.series_metric_colors[sIdx] } : {},
                             breakdown: null,
                             filters: []
                         });
@@ -2623,13 +2629,14 @@ export function dashboardBuilder(config = {}) {
                         allowed_metrics: [...wc.metrics],
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : [],
+                        metric_colors: (wc.series_metric_colors && (wc.series_metric_colors[0] || wc.series_metric_colors['0'])) ? { ...(wc.series_metric_colors[0] || wc.series_metric_colors['0']) } : {},
                         breakdown: null,
                         filters: []
                     }];
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], breakdown: null, filters: [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], metric_colors: {}, breakdown: null, filters: [] });
                 }
 
                 if (this.$wire) {
@@ -3169,6 +3176,29 @@ export function dashboardBuilder(config = {}) {
             return this.widgetControlsForm?.combo_chart_config?.[cfgKey]?.type || this.getRawMetricDefaultComboType(index, metricKey);
         },
 
+        getMetricColor(seriesIndex, metricKey) {
+            const series = this.widgetControlsForm?.raw_series?.[seriesIndex];
+            if (series?.metric_colors && series.metric_colors[metricKey]) {
+                return series.metric_colors[metricKey];
+            }
+            // Fallback to palette based on series index
+            const palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
+            return palette[seriesIndex % palette.length];
+        },
+
+        setMetricColor(seriesIndex, metricKey, color) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm?.raw_series?.[seriesIndex];
+            if (!series) return;
+            if (!series.metric_colors) {
+                series.metric_colors = {};
+            }
+            series.metric_colors = {
+                ...series.metric_colors,
+                [metricKey]: color
+            };
+        },
+
         getRawMetricDefaultComboType(index, metricKey) {
             const m = String(metricKey || '').toLowerCase();
             const rateKeywords = ['roas', 'cpc', 'cpm', 'ctr', 'rate', 'aov', 'frequency', 'cost_per', 'percentage', 'ratio', 'bounce'];
@@ -3501,6 +3531,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_channels = {};
                 payload.series_dependencies = {};
                 payload.series_allowed_metrics = {};
+                payload.series_metric_colors = {};
 
                 c.raw_series.forEach((s, sIdx) => {
                     const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0)
@@ -3524,6 +3555,7 @@ export function dashboardBuilder(config = {}) {
                     payload.series_channels[sIdx] = s.channel || '';
                     payload.series_dependencies[sIdx] = s.dependency || '';
                     payload.series_allowed_metrics[sIdx] = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [];
+                    payload.series_metric_colors[sIdx] = (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : {};
                 });
                 payload.raw_series = c.raw_series.map(s => ({
                     type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
@@ -3537,6 +3569,7 @@ export function dashboardBuilder(config = {}) {
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
                     allowed_assets: Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []),
                     assets: Array.isArray(s.assets) ? [...s.assets] : [],
+                    metric_colors: (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : {},
                     breakdown: (s.breakdown && s.breakdown.dimension) ? {
                         dimension: s.breakdown.dimension,
                         limit: parseInt(s.breakdown.limit, 10) || 5,
