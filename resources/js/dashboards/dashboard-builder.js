@@ -816,7 +816,9 @@ export function dashboardBuilder(config = {}) {
         addSeriesFilter(targetList) {
             this.markWidgetControlsDirty();
             if (!Array.isArray(targetList)) return;
+            const nextIndex = targetList.length + 1;
             targetList.push({
+                name: '',
                 dimension: '',
                 operator: 'in',
                 value: ''
@@ -827,6 +829,74 @@ export function dashboardBuilder(config = {}) {
             this.markWidgetControlsDirty();
             if (!Array.isArray(targetList) || fIdx < 0 || fIdx >= targetList.length) return;
             targetList.splice(fIdx, 1);
+        },
+
+        // Filter modal state
+        showSeriesFiltersModal: false,
+        filterModalSeriesIndex: null,
+        filterModalSeriesType: 'raw', // 'raw', 'kpi_dependent', 'kpi_independent'
+        filterModalChannel: '',
+        filterModalDependency: '',
+        filterModalSeriesTitle: '',
+
+        openSeriesFiltersModal(type, indexOrKey) {
+            this.filterModalSeriesType = type;
+            if (type === 'raw') {
+                const s = this.widgetControlsForm.raw_series?.[indexOrKey];
+                if (!s) return;
+                this.filterModalSeriesIndex = indexOrKey;
+                this.filterModalChannel = s.channel || '';
+                this.filterModalDependency = s.dependency || '';
+                this.filterModalSeriesTitle = s.label || ('Series ' + (indexOrKey + 1));
+                if (!Array.isArray(s.filters)) {
+                    s.filters = [];
+                }
+            } else if (type === 'kpi_dependent') {
+                this.filterModalSeriesIndex = 'dependent';
+                this.filterModalChannel = this.widgetKpiConfig?.dependent_channel || '';
+                this.filterModalDependency = this.widgetControlsForm?.series_dependencies?.dependent || '';
+                this.filterModalSeriesTitle = 'Dependent Series';
+                if (!this.widgetControlsForm.series_filters) this.widgetControlsForm.series_filters = {};
+                if (!Array.isArray(this.widgetControlsForm.series_filters.dependent)) {
+                    this.widgetControlsForm.series_filters.dependent = [];
+                }
+            } else if (type === 'kpi_independent') {
+                const idx = indexOrKey;
+                const varCfg = this.widgetKpiConfig?.independent_variables?.[idx] || {};
+                this.filterModalSeriesIndex = idx;
+                this.filterModalChannel = varCfg.independent_channel || '';
+                this.filterModalDependency = this.widgetControlsForm?.series_dependencies?.['independent_' + idx] || '';
+                this.filterModalSeriesTitle = 'Variable ' + (parseInt(idx, 10) + 1);
+                if (!this.widgetControlsForm.series_filters) this.widgetControlsForm.series_filters = {};
+                if (!Array.isArray(this.widgetControlsForm.series_filters['independent_' + idx])) {
+                    this.widgetControlsForm.series_filters['independent_' + idx] = [];
+                }
+            }
+            this.showSeriesFiltersModal = true;
+        },
+
+        getFilterModalList() {
+            if (this.filterModalSeriesType === 'raw') {
+                const s = this.widgetControlsForm.raw_series?.[this.filterModalSeriesIndex];
+                return s ? s.filters : [];
+            } else if (this.filterModalSeriesType === 'kpi_dependent') {
+                return this.widgetControlsForm.series_filters?.dependent || [];
+            } else if (this.filterModalSeriesType === 'kpi_independent') {
+                return this.widgetControlsForm.series_filters?.['independent_' + this.filterModalSeriesIndex] || [];
+            }
+            return [];
+        },
+
+        getFilterDisplayName(flt, index) {
+            if (flt?.name && String(flt.name).trim() !== '') {
+                return flt.name.trim();
+            }
+            if (flt?.dimension) {
+                const op = flt.operator || 'eq';
+                const val = (flt.value !== undefined && flt.value !== null && flt.value !== '') ? ` (${flt.value})` : '';
+                return `${flt.dimension} ${op}${val}`;
+            }
+            return `Rule #${index + 1}`;
         },
 
         // ─── Dashboard Controls ──
@@ -3576,6 +3646,7 @@ export function dashboardBuilder(config = {}) {
                         order: s.breakdown.order || 'value_desc'
                     } : null,
                     filters: Array.isArray(s.filters) ? s.filters.filter(f => f.dimension).map(f => ({
+                        name: f.name || '',
                         dimension: f.dimension,
                         operator: f.operator || 'in',
                         value: f.value !== undefined ? f.value : ''
