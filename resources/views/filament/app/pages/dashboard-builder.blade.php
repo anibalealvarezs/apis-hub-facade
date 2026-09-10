@@ -2214,44 +2214,45 @@
         {{-- ============================================================ --}}
         {{-- SERIES FILTERS CONFIGURATION MODAL                           --}}
         {{-- ============================================================ --}}
-        <div x-show="showSeriesFiltersModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" @click="showSeriesFiltersModal = false"></div>
-
-            <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-2xl w-full border border-gray-200 dark:border-gray-800 flex flex-col max-h-[85vh] overflow-hidden z-10 animate-scale-in">
-                {{-- Modal Header --}}
-                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/50">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0 border border-primary-200/60 dark:border-primary-800/60">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-base font-bold text-gray-900 dark:text-white">{{ __('Filtering Rules') }}</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="filterModalSeriesTitle ? ('{{ __('Target: ') }}' + filterModalSeriesTitle) : '{{ __('Configure criteria for this series') }}'"></p>
-                        </div>
-                    </div>
-                    <button type="button" @click="showSeriesFiltersModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-lg">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <x-confirm-modal
+            open="showSeriesFiltersModal"
+            title="{{ __('Filtering Rules') }}"
+            icon="heroicon-o-adjustments-horizontal"
+            color="primary"
+            confirm-label="{{ __('Done') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-check"
+            cancel-label="{{ __('Close') }}"
+            max-width="!max-w-2xl"
+        >
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium"
+                       x-text="filterModalSeriesTitle ? ('{{ __('Target: ') }}' + filterModalSeriesTitle) : '{{ __('Configure criteria for this series') }}'"></p>
+                    <button type="button"
+                            @click="addSeriesFilter(getFilterModalList())"
+                            class="inline-flex items-center gap-1 px-2.5 py-1 text-2xs font-semibold rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/60 border border-primary-200 dark:border-primary-800 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
+                        <span>{{ __('Add Rule') }}</span>
                     </button>
                 </div>
 
-                {{-- Modal Body: List of Rules --}}
-                <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                {{-- List of Rules --}}
+                <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
                     <template x-if="getFilterModalList().length === 0">
-                        <div class="text-center py-10 px-4 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
-                            <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 flex items-center justify-center">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-center py-8 px-4 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+                            <div class="w-10 h-10 mx-auto mb-2.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
                                 </svg>
                             </div>
-                            <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ __('No filtering rules defined yet.') }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">{{ __('Filter rules allow scoping the metrics to specific dimensions, campaign tags, regions or statuses.') }}</p>
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('No filtering rules defined yet.') }}</p>
+                            <p class="text-2xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">{{ __('Filter rules allow scoping the metrics to specific dimensions, tags, regions or statuses.') }}</p>
                             <button type="button"
                                     @click="addSeriesFilter(getFilterModalList())"
-                                    class="mt-4 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-700 dark:bg-primary-950/50 dark:hover:bg-primary-900/60 dark:text-primary-300 border border-primary-200 dark:border-primary-800 transition-colors">
+                                    class="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-2xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-700 text-white shadow-2xs transition-colors">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                 </svg>
@@ -2261,9 +2262,9 @@
                     </template>
 
                     <template x-for="(flt, fIdx) in getFilterModalList()" :key="fIdx">
-                        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-800/60 space-y-3 relative group transition-all hover:border-gray-300 dark:hover:border-gray-700 shadow-2xs">
+                        <div class="p-3 rounded-xl border border-gray-200 dark:border-gray-700/80 bg-gray-50/70 dark:bg-gray-800/60 space-y-2.5 relative group transition-all hover:border-gray-300 dark:hover:border-gray-600 shadow-2xs">
                             {{-- Top row: Rule Name & Remove button --}}
-                            <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center justify-between gap-2.5">
                                 <div class="flex-1 flex items-center gap-2">
                                     <span class="text-2xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400" x-text="'#' + (fIdx + 1)"></span>
                                     <input
@@ -2276,7 +2277,7 @@
                                 <button type="button"
                                         @click="removeSeriesFilter(getFilterModalList(), fIdx)"
                                         :title="'{{ __('Remove this rule') }}'"
-                                        class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0">
+                                        class="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
@@ -2335,26 +2336,8 @@
                         </div>
                     </template>
                 </div>
-
-                {{-- Modal Footer --}}
-                <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/50">
-                    <button type="button"
-                            @click="addSeriesFilter(getFilterModalList())"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 shadow-2xs transition-colors">
-                        <svg class="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        <span>{{ __('Add Rule') }}</span>
-                    </button>
-
-                    <button type="button"
-                            @click="showSeriesFiltersModal = false"
-                            class="inline-flex items-center justify-center px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-700 text-white shadow-2xs transition-colors">
-                        {{ __('Done') }}
-                    </button>
-                </div>
             </div>
-        </div>
+        </x-confirm-modal>
 
         {{-- ============================================================ --}}
         {{-- ADD SERIES CONFIRMATION MODAL                                --}}

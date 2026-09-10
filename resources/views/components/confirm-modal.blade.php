@@ -15,6 +15,7 @@
     'secondaryIcon' => null,
     'onSecondary' => null,
     'closeOnSecondary' => true,
+    'maxWidth' => null,
 ])
 
 @php
@@ -60,7 +61,7 @@
         <div class="confirm-modal-backdrop" @click="{{ $onCancel }}"></div>
 
         <div
-            class="confirm-modal-panel"
+            class="confirm-modal-panel{{ $maxWidth ? ' ' . $maxWidth : '' }}"
             x-show="{{ $open }}"
             x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95"
