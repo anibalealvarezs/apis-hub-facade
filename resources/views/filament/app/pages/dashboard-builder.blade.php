@@ -2386,12 +2386,12 @@
         >
             <div class="space-y-4">
                 {{-- Live Preview Box --}}
-                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-2.5">
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">{{ __('Live Preview') }}</span>
                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Chart legend format') }}</span>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div class="flex flex-wrap items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm font-medium text-gray-900 dark:text-gray-100">
                         <template x-if="getNamingModalPreviewParts().channel">
                             <span class="text-primary-600 dark:text-primary-400 font-semibold" x-text="getNamingModalPreviewParts().channel"></span>
                         </template>
