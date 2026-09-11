@@ -2382,8 +2382,6 @@ window.dashboardRenderer = {
 
     _crosshairInitialized: false,
     _isCrosshairActive: false,
-    _lastHoveredChart: null,
-    _lastCanvasPosition: null,
 
     _initCrosshairListeners() {
         if (this._crosshairInitialized || typeof window === "undefined") return;
@@ -2394,7 +2392,6 @@ window.dashboardRenderer = {
             if (this._isCrosshairActive === isDown) return;
             this._isCrosshairActive = isDown;
             this._applyCrosshairModeToAllCharts();
-            this._triggerCrosshairTooltipUpdate();
         };
 
         window.addEventListener("keydown", (e) => handleKey(e, true));
@@ -2403,7 +2400,6 @@ window.dashboardRenderer = {
             if (this._isCrosshairActive) {
                 this._isCrosshairActive = false;
                 this._applyCrosshairModeToAllCharts();
-                this._triggerCrosshairTooltipUpdate();
             }
         });
     },
@@ -2424,30 +2420,6 @@ window.dashboardRenderer = {
                 chart.options.interaction.intersect = true;
             }
         });
-    },
-
-    _triggerCrosshairTooltipUpdate() {
-        const chart = this._lastHoveredChart;
-        const pos = this._lastCanvasPosition;
-        if (!chart || !pos || !chart.canvas || !chart.canvas.isConnected) return;
-        try {
-            const mode = this._isCrosshairActive ? "index" : "nearest";
-            const intersect = !this._isCrosshairActive;
-            const elements = chart.getElementsAtEventForMode(
-                pos,
-                mode,
-                { axis: "x", intersect },
-                false,
-            );
-            if (elements && elements.length > 0) {
-                chart.tooltip.setActiveElements(elements, pos);
-            } else {
-                chart.tooltip.setActiveElements([], { x: 0, y: 0 });
-            }
-            chart.update("none");
-        } catch (e) {
-            // Ignore if chart is destroyed or in transition
-        }
     },
 
     updateTheme() {
@@ -2501,6 +2473,16 @@ window.dashboardRenderer = {
         }
 
         config.options = config.options || {};
+        config.options.interaction = config.options.interaction || {};
+        if (this._isCrosshairActive && (config.type === "line" || config.type === "bar")) {
+            config.options.interaction.mode = "index";
+            config.options.interaction.axis = "x";
+            config.options.interaction.intersect = false;
+        } else {
+            config.options.interaction.mode = "nearest";
+            config.options.interaction.axis = "xy";
+            config.options.interaction.intersect = true;
+        }
         config.options.plugins = config.options.plugins || {};
         config.options.plugins.tooltip = config.options.plugins.tooltip || {};
         config.options.plugins.tooltip.enabled = false;
@@ -2528,16 +2510,6 @@ window.dashboardRenderer = {
             const chart = new Chart(canvas, config);
             this._chartInstances.set(containerEl, chart);
             this._attachTooltipPin(chart, canvas, containerEl);
-            canvas.addEventListener("mousemove", (e) => {
-                this._lastHoveredChart = chart;
-                this._lastCanvasPosition = { x: e.clientX, y: e.clientY };
-            });
-            canvas.addEventListener("mouseleave", () => {
-                if (this._lastHoveredChart === chart) {
-                    this._lastHoveredChart = null;
-                    this._lastCanvasPosition = null;
-                }
-            });
             canvas.addEventListener("dblclick", () => {
                 if (chart.options?.plugins?.zoom) chart.resetZoom();
             });
