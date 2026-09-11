@@ -2391,7 +2391,7 @@
                         <span class="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">{{ __('Live Preview') }}</span>
                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Chart legend format') }}</span>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-gray-50 dark:bg-gray-900/60 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm font-medium text-gray-900 dark:text-gray-100">
                         <template x-if="getNamingModalPreviewParts().channel">
                             <span class="text-primary-600 dark:text-primary-400 font-semibold" x-text="getNamingModalPreviewParts().channel"></span>
                         </template>
@@ -2445,54 +2445,66 @@
 
                     <div class="space-y-2">
                         {{-- Show Channel --}}
-                        <div class="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/30 transition-colors">
-                            <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/50">
+                            <div class="flex items-center gap-2 cursor-pointer select-none" @click="namingModalForm.show_channel = !namingModalForm.show_channel; markWidgetControlsDirty()">
                                 <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Channel') }}</span>
                                 <span class="text-2xs font-mono font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-1.5 py-0.5 rounded">[channel]</span>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    x-model="namingModalForm.show_channel"
-                                    @change="markWidgetControlsDirty()"
-                                    class="sr-only peer"
-                                >
-                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                            </label>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="namingModalForm.show_channel.toString()"
+                                @click="namingModalForm.show_channel = !namingModalForm.show_channel; markWidgetControlsDirty()"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                :class="namingModalForm.show_channel ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    :class="namingModalForm.show_channel ? 'translate-x-5' : 'translate-x-0'"
+                                ></span>
+                            </button>
                         </div>
 
                         {{-- Show Breakdown Value --}}
-                        <div class="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/30 transition-colors">
-                            <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/50">
+                            <div class="flex items-center gap-2 cursor-pointer select-none" @click="namingModalForm.show_breakdown = !namingModalForm.show_breakdown; markWidgetControlsDirty()">
                                 <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Breakdown Value') }}</span>
                                 <span class="text-2xs italic font-medium text-gray-600 dark:text-gray-300 bg-gray-200/70 dark:bg-gray-700/70 px-1.5 py-0.5 rounded">breakdown</span>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    x-model="namingModalForm.show_breakdown"
-                                    @change="markWidgetControlsDirty()"
-                                    class="sr-only peer"
-                                >
-                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                            </label>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="namingModalForm.show_breakdown.toString()"
+                                @click="namingModalForm.show_breakdown = !namingModalForm.show_breakdown; markWidgetControlsDirty()"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                :class="namingModalForm.show_breakdown ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    :class="namingModalForm.show_breakdown ? 'translate-x-5' : 'translate-x-0'"
+                                ></span>
+                            </button>
                         </div>
 
                         {{-- Show Unit --}}
-                        <div class="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/30 transition-colors">
-                            <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/50">
+                            <div class="flex items-center gap-2 cursor-pointer select-none" @click="namingModalForm.show_unit = !namingModalForm.show_unit; markWidgetControlsDirty()">
                                 <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Unit') }}</span>
                                 <span class="text-2xs font-mono font-medium text-gray-600 dark:text-gray-300 bg-gray-200/70 dark:bg-gray-700/70 px-1.5 py-0.5 rounded">(unit)</span>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    x-model="namingModalForm.show_unit"
-                                    @change="markWidgetControlsDirty()"
-                                    class="sr-only peer"
-                                >
-                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                            </label>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="namingModalForm.show_unit.toString()"
+                                @click="namingModalForm.show_unit = !namingModalForm.show_unit; markWidgetControlsDirty()"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                :class="namingModalForm.show_unit ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    :class="namingModalForm.show_unit ? 'translate-x-5' : 'translate-x-0'"
+                                ></span>
+                            </button>
                         </div>
                     </div>
                 </div>
