@@ -765,6 +765,10 @@ export function dashboardBuilder(config = {}) {
         allChannelMetrics: {},
         allChannelDependencies: {},
         allChannelBreakdowns: {},
+        seriesMetricsLoading: {},
+        seriesBreakdownsLoading: {},
+        seriesDependenciesLoading: {},
+        seriesAssetsLoading: {},
         dashboardAssets: {},
         dashboardMetrics: {},
         availableDependencies: {},
@@ -775,9 +779,12 @@ export function dashboardBuilder(config = {}) {
         fetchBreakdownsForChannel(ch, dep) {
             if (!ch || !this.$wire) return;
             const cacheKey = ch + (dep ? ('_' + dep) : '');
-            if (this.allChannelBreakdowns[cacheKey]) return;
+            if (this.allChannelBreakdowns[cacheKey] || this.seriesBreakdownsLoading[cacheKey]) return;
+            this.seriesBreakdownsLoading = { ...this.seriesBreakdownsLoading, [cacheKey]: true };
             this.$wire.getBreakdownsForChannel(ch, dep || null).then(bds => {
                 this.allChannelBreakdowns = { ...this.allChannelBreakdowns, [cacheKey]: bds || {} };
+            }).finally(() => {
+                this.seriesBreakdownsLoading = { ...this.seriesBreakdownsLoading, [cacheKey]: false };
             });
         },
 
@@ -792,6 +799,26 @@ export function dashboardBuilder(config = {}) {
             }
             this.fetchBreakdownsForChannel(ch, dep);
             return {};
+        },
+
+        isSeriesMetricsLoading(index) {
+            return !!(this.seriesMetricsLoading && this.seriesMetricsLoading[index]);
+        },
+
+        isSeriesBreakdownsLoading(ch, dep) {
+            if (!ch) return false;
+            const cacheKey = ch + (dep ? ('_' + dep) : '');
+            return !!(this.seriesBreakdownsLoading && this.seriesBreakdownsLoading[cacheKey]);
+        },
+
+        isSeriesDependenciesLoading(ch) {
+            if (!ch) return false;
+            return !!(this.seriesDependenciesLoading && this.seriesDependenciesLoading[ch]);
+        },
+
+        isSeriesAssetsLoading(ch) {
+            if (!ch) return false;
+            return !!(this.seriesAssetsLoading && this.seriesAssetsLoading[ch]);
         },
 
         onSeriesBreakdownDimensionChange(series) {
@@ -2729,6 +2756,8 @@ export function dashboardBuilder(config = {}) {
                     this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], metric_colors: {}, naming: null, metric_namings: {}, breakdown: null, filters: [] });
                 }
 
+                this.seriesMetricsLoading = {};
+
                 if (this.$wire) {
                     this.widgetControlsForm.raw_series.forEach((series, idx) => {
                         const ch = series.channel;
@@ -2736,12 +2765,19 @@ export function dashboardBuilder(config = {}) {
                             this.fetchBreakdownsForChannel(ch, series.dependency);
                         }
                         if (ch && !this.allChannelAssets[ch]) {
-                            this.$wire.getAssetsForChannel(ch).then(assets => { this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets }; });
+                            this.seriesAssetsLoading = { ...this.seriesAssetsLoading, [ch]: true };
+                            this.$wire.getAssetsForChannel(ch).then(assets => {
+                                this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                            }).finally(() => {
+                                this.seriesAssetsLoading = { ...this.seriesAssetsLoading, [ch]: false };
+                            });
                         }
                         if (ch && !this.allChannelAssetGroups[ch]) {
                             this.$wire.getAssetGroupsForChannel(ch).then(groups => { this.allChannelAssetGroups = { ...this.allChannelAssetGroups, [ch]: groups }; });
                         }
                         if (ch && !this.allChannelDependencies[ch]) {
+                            this.seriesDependenciesLoading = { ...this.seriesDependenciesLoading, [ch]: true };
+                            this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [idx]: true };
                             this.$wire.getDependenciesForChannel(ch).then(deps => {
                                 this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
                                 if (deps && Object.keys(deps).length > 0 && !series.dependency) {
@@ -2757,7 +2793,11 @@ export function dashboardBuilder(config = {}) {
                                         [idx]: metrics
                                     };
                                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                }).finally(() => {
+                                    this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [idx]: false };
                                 });
+                            }).finally(() => {
+                                this.seriesDependenciesLoading = { ...this.seriesDependenciesLoading, [ch]: false };
                             });
                         } else {
                             if (ch && this.allChannelDependencies[ch] && Object.keys(this.allChannelDependencies[ch]).length > 0 && !series.dependency) {
@@ -2765,6 +2805,7 @@ export function dashboardBuilder(config = {}) {
                                 this.fetchBreakdownsForChannel(ch, series.dependency);
                             }
                             if (ch) {
+                                this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [idx]: true };
                                 this.$wire.getMetricsForChannel(ch, wc.granularity, series.dependency).then(metrics => {
                                     if (!this.widgetControlsForm.series_metrics_map) {
                                         this.widgetControlsForm.series_metrics_map = {};
@@ -2774,6 +2815,8 @@ export function dashboardBuilder(config = {}) {
                                         [idx]: metrics
                                     };
                                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                                }).finally(() => {
+                                    this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [idx]: false };
                                 });
                             }
                         }
@@ -3108,9 +3151,17 @@ export function dashboardBuilder(config = {}) {
                 this.widgetControlsForm.channel = ch;
             }
 
+            if (ch) {
+                this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: true };
+                this.fetchBreakdownsForChannel(ch, series.dependency);
+            }
+
             if (ch && !this.allChannelAssets[ch] && this.$wire) {
+                this.seriesAssetsLoading = { ...this.seriesAssetsLoading, [ch]: true };
                 this.$wire.getAssetsForChannel(ch).then(assets => {
                     this.allChannelAssets = { ...this.allChannelAssets, [ch]: assets };
+                }).finally(() => {
+                    this.seriesAssetsLoading = { ...this.seriesAssetsLoading, [ch]: false };
                 });
             }
             if (ch && !this.allChannelAssetGroups[ch] && this.$wire) {
@@ -3119,10 +3170,12 @@ export function dashboardBuilder(config = {}) {
                 });
             }
             if (ch && !this.allChannelDependencies[ch] && this.$wire) {
+                this.seriesDependenciesLoading = { ...this.seriesDependenciesLoading, [ch]: true };
                 this.$wire.getDependenciesForChannel(ch).then(deps => {
                     this.allChannelDependencies = { ...this.allChannelDependencies, [ch]: deps };
                     if (deps && Object.keys(deps).length > 0 && !series.dependency) {
                         series.dependency = Object.keys(deps)[0];
+                        this.fetchBreakdownsForChannel(ch, series.dependency);
                     }
                     this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
                         if (!this.widgetControlsForm.series_metrics_map) {
@@ -3133,12 +3186,17 @@ export function dashboardBuilder(config = {}) {
                             [index]: metrics
                         };
                         this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                    }).finally(() => {
+                        this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: false };
                     });
+                }).finally(() => {
+                    this.seriesDependenciesLoading = { ...this.seriesDependenciesLoading, [ch]: false };
                 });
             } else if (ch && this.allChannelDependencies[ch]) {
                 const deps = this.allChannelDependencies[ch];
                 if (deps && Object.keys(deps).length > 0 && !series.dependency) {
                     series.dependency = Object.keys(deps)[0];
+                    this.fetchBreakdownsForChannel(ch, series.dependency);
                 }
                 if (this.$wire) {
                     this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
@@ -3150,7 +3208,11 @@ export function dashboardBuilder(config = {}) {
                             [index]: metrics
                         };
                         this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                    }).finally(() => {
+                        this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: false };
                     });
+                } else {
+                    this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: false };
                 }
             } else if (ch && this.$wire) {
                 this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, series.dependency).then(metrics => {
@@ -3162,7 +3224,11 @@ export function dashboardBuilder(config = {}) {
                         [index]: metrics
                     };
                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                }).finally(() => {
+                    this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: false };
                 });
+            } else {
+                this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: false };
             }
         },
 
@@ -3178,6 +3244,7 @@ export function dashboardBuilder(config = {}) {
             }
 
             if (ch && this.$wire) {
+                this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: true };
                 this.fetchBreakdownsForChannel(ch, dep);
                 this.$wire.getMetricsForChannel(ch, this.widgetControlsForm.granularity, dep).then(metrics => {
                     if (!this.widgetControlsForm.series_metrics_map) {
@@ -3188,6 +3255,8 @@ export function dashboardBuilder(config = {}) {
                         [index]: metrics
                     };
                     this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
+                }).finally(() => {
+                    this.seriesMetricsLoading = { ...this.seriesMetricsLoading, [index]: false };
                 });
             }
         },
