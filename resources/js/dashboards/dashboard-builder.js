@@ -591,7 +591,9 @@ export function dashboardBuilder(config = {}) {
                     channel: s.channel || '',
                     dependency: s.dependency || '',
                     metrics: Array.isArray(s.metrics) ? [...s.metrics].sort() : [],
-                    assets: Array.isArray(s.assets) ? [...s.assets].sort() : []
+                    assets: Array.isArray(s.assets) ? [...s.assets].sort() : [],
+                    naming: s.naming || null,
+                    metric_namings: s.metric_namings || {}
                 }))
             });
         },
@@ -838,6 +840,18 @@ export function dashboardBuilder(config = {}) {
         filterModalChannel: '',
         filterModalDependency: '',
         filterModalSeriesTitle: '',
+
+        // Metric Display & Naming modal state
+        showMetricNamingModal: false,
+        namingModalSeriesIndex: null,
+        namingModalMetricKey: null,
+        namingModalChannel: '',
+        namingModalForm: {
+            custom_name: '',
+            show_channel: true,
+            show_breakdown: true,
+            show_unit: true
+        },
 
         openSeriesFiltersModal(type, indexOrKey) {
             this.filterModalSeriesType = type;
@@ -2651,6 +2665,8 @@ export function dashboardBuilder(config = {}) {
                             allowed_assets: rawAllowedAssets,
                             assets: rawSelectedAssets.length > 0 ? rawSelectedAssets : [...rawAllowedAssets],
                             metric_colors: (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : ((wc.series_metric_colors && wc.series_metric_colors[sIdx]) ? { ...wc.series_metric_colors[sIdx] } : {}),
+                            naming: (s.naming && typeof s.naming === 'object') ? { ...s.naming } : null,
+                            metric_namings: (s.metric_namings && typeof s.metric_namings === 'object') ? JSON.parse(JSON.stringify(s.metric_namings)) : ((wc.series_metric_namings && wc.series_metric_namings[sIdx]) ? JSON.parse(JSON.stringify(wc.series_metric_namings[sIdx])) : {}),
                             breakdown: s.breakdown ? { ...s.breakdown } : null,
                             filters: Array.isArray(s.filters) ? s.filters.map(f => ({ ...f })) : []
                         };
@@ -2687,6 +2703,8 @@ export function dashboardBuilder(config = {}) {
                             metrics,
                             assets,
                             metric_colors: (wc.series_metric_colors && wc.series_metric_colors[sIdx]) ? { ...wc.series_metric_colors[sIdx] } : {},
+                            naming: null,
+                            metric_namings: (wc.series_metric_namings && wc.series_metric_namings[sIdx]) ? JSON.parse(JSON.stringify(wc.series_metric_namings[sIdx])) : {},
                             breakdown: null,
                             filters: []
                         });
@@ -2700,13 +2718,15 @@ export function dashboardBuilder(config = {}) {
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : [],
                         metric_colors: (wc.series_metric_colors && (wc.series_metric_colors[0] || wc.series_metric_colors['0'])) ? { ...(wc.series_metric_colors[0] || wc.series_metric_colors['0']) } : {},
+                        naming: null,
+                        metric_namings: (wc.series_metric_namings && (wc.series_metric_namings[0] || wc.series_metric_namings['0'])) ? JSON.parse(JSON.stringify(wc.series_metric_namings[0] || wc.series_metric_namings['0'])) : {},
                         breakdown: null,
                         filters: []
                     }];
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], metric_colors: {}, breakdown: null, filters: [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], metric_colors: {}, naming: null, metric_namings: {}, breakdown: null, filters: [] });
                 }
 
                 if (this.$wire) {
@@ -3269,6 +3289,94 @@ export function dashboardBuilder(config = {}) {
             };
         },
 
+        getMetricNaming(seriesIndex, metricKey) {
+            const series = this.widgetControlsForm?.raw_series?.[seriesIndex];
+            if (!series) return null;
+            if (series.metric_namings && series.metric_namings[metricKey]) {
+                return series.metric_namings[metricKey];
+            }
+            return series.naming || null;
+        },
+
+        hasCustomMetricNaming(seriesIndex, metricKey) {
+            const naming = this.getMetricNaming(seriesIndex, metricKey);
+            if (!naming) return false;
+            return !!(naming.custom_name && naming.custom_name.trim() !== '') ||
+                naming.show_channel === false ||
+                naming.show_breakdown === false ||
+                naming.show_unit === false;
+        },
+
+        openMetricNamingModal(seriesIndex, metricKey) {
+            const series = this.widgetControlsForm?.raw_series?.[seriesIndex];
+            if (!series) return;
+            this.namingModalSeriesIndex = seriesIndex;
+            this.namingModalMetricKey = metricKey;
+            this.namingModalChannel = series.channel || '';
+
+            const current = (series.metric_namings && series.metric_namings[metricKey]) || series.naming || {};
+            this.namingModalForm = {
+                custom_name: current.custom_name || '',
+                show_channel: current.show_channel !== undefined ? !!current.show_channel : true,
+                show_breakdown: current.show_breakdown !== undefined ? !!current.show_breakdown : true,
+                show_unit: current.show_unit !== undefined ? !!current.show_unit : true
+            };
+            this.showMetricNamingModal = true;
+        },
+
+        saveMetricNamingModal() {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm?.raw_series?.[this.namingModalSeriesIndex];
+            if (series) {
+                if (!series.metric_namings) {
+                    series.metric_namings = {};
+                }
+                series.metric_namings[this.namingModalMetricKey] = {
+                    custom_name: (this.namingModalForm.custom_name || '').trim(),
+                    show_channel: !!this.namingModalForm.show_channel,
+                    show_breakdown: !!this.namingModalForm.show_breakdown,
+                    show_unit: !!this.namingModalForm.show_unit
+                };
+                // Also assign to series.naming if only one metric
+                if ((series.metrics || []).length <= 1) {
+                    series.naming = { ...series.metric_namings[this.namingModalMetricKey] };
+                }
+            }
+            this.showMetricNamingModal = false;
+        },
+
+        getNamingModalDefaultMetricName() {
+            const series = this.widgetControlsForm?.raw_series?.[this.namingModalSeriesIndex];
+            if (!series) return this.namingModalMetricKey || '';
+            const ch = series.channel;
+            const metricsMap = (this.widgetControlsForm?.series_metrics_map && this.widgetControlsForm.series_metrics_map[this.namingModalSeriesIndex]) || this.allChannelMetrics[ch] || {};
+            return metricsMap[this.namingModalMetricKey] || this.namingModalMetricKey || '';
+        },
+
+        getNamingModalPreviewParts() {
+            const series = this.widgetControlsForm?.raw_series?.[this.namingModalSeriesIndex];
+            const ch = series?.channel || this.namingModalChannel || 'channel';
+            const chLabel = this.channels[ch] || ch || 'Channel';
+
+            const defaultMetricName = this.getNamingModalDefaultMetricName();
+            const metricText = (this.namingModalForm.custom_name && this.namingModalForm.custom_name.trim() !== '')
+                ? this.namingModalForm.custom_name.trim()
+                : (defaultMetricName || 'Metric');
+
+            // Detect unit
+            const mKey = String(this.namingModalMetricKey || '').toLowerCase();
+            const isRatio = ['ctr', 'bounce_rate', 'result_rate', 'rate', 'percentage', 'ratio'].some(k => mKey.includes(k));
+            const isCurrency = ['spend', 'cost', 'cpm', 'cpc', 'revenue', 'aov'].some(k => mKey.includes(k));
+            const unitText = isRatio ? '(%)' : (isCurrency ? '($)' : '');
+
+            return {
+                channel: this.namingModalForm.show_channel ? `[${chLabel}]` : null,
+                metric: metricText,
+                breakdown: this.namingModalForm.show_breakdown ? 'Breakdown Value' : null,
+                unit: (this.namingModalForm.show_unit && unitText) ? unitText : (this.namingModalForm.show_unit && !unitText ? '(unit)' : null)
+            };
+        },
+
         getRawMetricDefaultComboType(index, metricKey) {
             const m = String(metricKey || '').toLowerCase();
             const rateKeywords = ['roas', 'cpc', 'cpm', 'ctr', 'rate', 'aov', 'frequency', 'cost_per', 'percentage', 'ratio', 'bounce'];
@@ -3626,6 +3734,7 @@ export function dashboardBuilder(config = {}) {
                     payload.series_dependencies[sIdx] = s.dependency || '';
                     payload.series_allowed_metrics[sIdx] = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [];
                     payload.series_metric_colors[sIdx] = (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : {};
+                    payload.series_metric_namings[sIdx] = (s.metric_namings && typeof s.metric_namings === 'object') ? { ...s.metric_namings } : {};
                 });
                 payload.raw_series = c.raw_series.map(s => ({
                     type: s.type || (s.dm_id ? 'derived_metric' : 'metric'),
@@ -3640,6 +3749,8 @@ export function dashboardBuilder(config = {}) {
                     allowed_assets: Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []),
                     assets: Array.isArray(s.assets) ? [...s.assets] : [],
                     metric_colors: (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : {},
+                    naming: (s.naming && typeof s.naming === 'object') ? { ...s.naming } : null,
+                    metric_namings: (s.metric_namings && typeof s.metric_namings === 'object') ? { ...s.metric_namings } : {},
                     breakdown: (s.breakdown && s.breakdown.dimension) ? {
                         dimension: s.breakdown.dimension,
                         limit: parseInt(s.breakdown.limit, 10) || 5,

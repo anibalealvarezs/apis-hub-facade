@@ -1118,7 +1118,6 @@ class DashboardWidgetDataController extends Controller
                         foreach ($metricKeys as $idx => $key) {
                             $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $key);
                             $isRatio = in_array($cleanKey, $ratioMetrics);
-                            $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
                             $values = array_map(fn ($row) => (float) ($row[$key] ?? 0), $chartData);
 
                             if ($isRatio) {
@@ -1136,8 +1135,30 @@ class DashboardWidgetDataController extends Controller
                             $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
                             $isCurrency = in_array($cleanKey, $currencyMetrics);
 
+                            $metricNaming = $controls['series_metric_namings'][0][$key]
+                                ?? $controls['series_metric_namings']['0'][$key]
+                                ?? $controls['series_metric_namings'][0][$cleanKey]
+                                ?? $controls['series_metric_namings']['0'][$cleanKey]
+                                ?? ($controls['metric_namings'][$key] ?? $controls['metric_namings'][$cleanKey] ?? []);
+
+                            $channel = $controls['channel'] ?? $controls['series_channels'][0] ?? $controls['series_channels']['0'] ?? '';
+                            $dep = $controls['dependency'] ?? $controls['series_dependencies'][0] ?? $controls['series_dependencies']['0'] ?? null;
+
+                            $label = $this->formatSeriesMetricLabel(
+                                $channel,
+                                $dep,
+                                $cleanKey,
+                                null,
+                                $isRatio,
+                                $isCurrency,
+                                $metricNaming,
+                                null,
+                                $metricLabels,
+                                false
+                            );
+
                             $dataset = [
-                                'label' => $isRatio ? $label . ' (%)' : $label,
+                                'label' => $label,
                                 'key' => $key,
                                 'series_index' => 0,
                                 'metric' => $cleanKey,
@@ -2312,11 +2333,18 @@ class DashboardWidgetDataController extends Controller
                     'keys' => is_array($channelResponse) ? array_keys($channelResponse) : gettype($channelResponse),
                 ]);
 
-                // Determine base color for this series/metric if defined
+                // Determine base color and naming config for this series/metric if defined
                 $seriesMetricColors = $series['metric_colors'] 
                     ?? $controls['series_metric_colors'][$sIdx] 
                     ?? $controls['series_metric_colors'][(string)$sIdx] 
                     ?? [];
+
+                $seriesMetricNamings = $series['metric_namings']
+                    ?? $controls['series_metric_namings'][$sIdx]
+                    ?? $controls['series_metric_namings'][(string)$sIdx]
+                    ?? [];
+
+                $seriesGeneralNaming = $series['naming'] ?? null;
 
                 if (! empty($breakdownDim)) {
                     $firstMetric = $metrics[0];
@@ -2324,6 +2352,11 @@ class DashboardWidgetDataController extends Controller
                     $baseColor = $seriesMetricColors[$firstMetric] 
                         ?? $seriesMetricColors[$cleanFirstMetric] 
                         ?? ($palette[$sIdx % count($palette)]);
+
+                    $metricNaming = $seriesMetricNamings[$firstMetric] 
+                        ?? $seriesMetricNamings[$cleanFirstMetric] 
+                        ?? $seriesGeneralNaming 
+                        ?? [];
 
                     // Fan-out broken-down series into multiple curves
                     $fanOutCurves = $this->fanOutBreakdownSeries(
@@ -2339,7 +2372,9 @@ class DashboardWidgetDataController extends Controller
                         $series['label'] ?? null,
                         $metricLabels,
                         $ratioMetrics,
-                        $baseColor
+                        $baseColor,
+                        $metricNaming,
+                        count($rawSeries) > 1
                     );
                     foreach ($fanOutCurves as $foc) {
                         $seriesCurves[] = $foc;
@@ -2356,20 +2391,35 @@ class DashboardWidgetDataController extends Controller
                         }
 
                         $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
-                        $cLabel = $this->getSimplifiedChannelName($channel, $seriesDependency ?? null);
-                        $sLabel = ! empty($series['label']) ? $series['label'] : (count($rawSeries) > 1 ? "{$cLabel} - {$mLabel}" : $mLabel);
+                        $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                        $isCurrency = in_array($cleanMetric, $currencyMetrics);
+
+                        $metricNaming = $seriesMetricNamings[$metric]
+                            ?? $seriesMetricNamings[$cleanMetric]
+                            ?? $seriesGeneralNaming
+                            ?? [];
+
+                        $formattedLabel = $this->formatSeriesMetricLabel(
+                            $channel,
+                            $seriesDependency ?? null,
+                            $cleanMetric,
+                            null,
+                            $isRatio,
+                            $isCurrency,
+                            $metricNaming,
+                            $series['label'] ?? null,
+                            $metricLabels,
+                            count($rawSeries) > 1
+                        );
 
                         if ($isRatio) {
                             $timeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $timeSeries);
                         }
 
-                        $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
-                        $isCurrency = in_array($cleanMetric, $currencyMetrics);
-
                         $customMetricColor = $seriesMetricColors[$metric] ?? $seriesMetricColors[$cleanMetric] ?? null;
 
                         $seriesCurves[] = [
-                            'label' => $isRatio ? $sLabel . ' (%)' : $sLabel,
+                            'label' => $formattedLabel,
                             'key' => 'series_' . $sIdx . '_' . $metric,
                             'series_index' => $sIdx,
                             'metric' => $cleanMetric,
@@ -2685,6 +2735,99 @@ class DashboardWidgetDataController extends Controller
     }
 
     /**
+     * Format a series / metric curve label according to user customization rules.
+     * Pattern: [ channel ] - [ metric ] - [ breakdown value ] - [ unit ]
+     * Guidelines:
+     * - channel: between brackets => [channel]
+     * - metric: normal
+     * - breakdown: plain string for chart datasets (italicized in UI/previews)
+     * - unit: between parentheses => (unit)
+     *
+     * @param string $channel
+     * @param string|null $dependency
+     * @param string $cleanMetric
+     * @param string|null $breakdownVal
+     * @param bool $isRatio
+     * @param bool $isCurrency
+     * @param array $namingConfig
+     * @param string|null $seriesLabel
+     * @param array $metricLabels
+     * @param bool $multipleSeries
+     * @return string
+     */
+    protected function formatSeriesMetricLabel(
+        string $channel,
+        ?string $dependency,
+        string $cleanMetric,
+        ?string $breakdownVal = null,
+        bool $isRatio = false,
+        bool $isCurrency = false,
+        array $namingConfig = [],
+        ?string $seriesLabel = null,
+        array $metricLabels = [],
+        bool $multipleSeries = false
+    ): string {
+        $hasCustomName = ! empty($namingConfig['custom_name']) && trim($namingConfig['custom_name']) !== '';
+        $hasNamingRules = isset($namingConfig['show_channel']) || isset($namingConfig['show_breakdown']) || isset($namingConfig['show_unit']) || $hasCustomName;
+
+        // Metric part
+        if ($hasCustomName) {
+            $metricText = trim($namingConfig['custom_name']);
+        } elseif (! empty($seriesLabel)) {
+            $metricText = $seriesLabel;
+        } else {
+            $metricText = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
+        }
+
+        // If no naming customization was configured at all, maintain strict backward compatibility
+        if (! $hasNamingRules) {
+            $cLabel = $this->getSimplifiedChannelName($channel, $dependency);
+            $base = ! empty($seriesLabel) ? $seriesLabel : ($multipleSeries ? "{$cLabel} - {$metricText}" : $metricText);
+            if (! empty($breakdownVal)) {
+                $base = "{$base} - {$breakdownVal}";
+            }
+            if ($isRatio) {
+                $base .= ' (%)';
+            }
+            return $base;
+        }
+
+        // Toggles (default true if not specified)
+        $showChannel = isset($namingConfig['show_channel']) ? (bool) $namingConfig['show_channel'] : $multipleSeries;
+        $showBreakdown = isset($namingConfig['show_breakdown']) ? (bool) $namingConfig['show_breakdown'] : true;
+        $showUnit = isset($namingConfig['show_unit']) ? (bool) $namingConfig['show_unit'] : true;
+
+        $parts = [];
+
+        // 1. Channel in brackets => [channel]
+        if ($showChannel && ! empty($channel)) {
+            $cName = $this->getSimplifiedChannelName($channel, $dependency);
+            $parts[] = "[{$cName}]";
+        }
+
+        // 2. Metric (normal)
+        if (! empty($metricText)) {
+            $parts[] = $metricText;
+        }
+
+        // 3. Breakdown value
+        if ($showBreakdown && ! empty($breakdownVal)) {
+            $parts[] = $breakdownVal;
+        }
+
+        // 4. Unit in parentheses => (unit)
+        if ($showUnit) {
+            if ($isRatio) {
+                $parts[] = '(%)';
+            } elseif ($isCurrency) {
+                $parts[] = '($)';
+            }
+        }
+
+        return ! empty($parts) ? implode(' - ', $parts) : $metricText;
+    }
+
+    /**
      * Fan-out a broken-down channel response into multiple time-series curves.
      *
      * @param array $channelResponse
@@ -2699,6 +2842,9 @@ class DashboardWidgetDataController extends Controller
      * @param string|null $seriesLabel
      * @param array $metricLabels
      * @param array $ratioMetrics
+     * @param string|null $baseColor
+     * @param array $namingConfig
+     * @param bool $multipleSeries
      * @return array
      */
     protected function fanOutBreakdownSeries(
@@ -2714,7 +2860,9 @@ class DashboardWidgetDataController extends Controller
         ?string $seriesLabel,
         array $metricLabels,
         array $ratioMetrics,
-        ?string $baseColor = null
+        ?string $baseColor = null,
+        array $namingConfig = [],
+        bool $multipleSeries = false
     ): array {
         $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
         $isRatio = in_array($cleanMetric, $ratioMetrics);
@@ -2804,11 +2952,21 @@ class DashboardWidgetDataController extends Controller
             }
 
             $dimSlug = preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($dimVal));
-            $baseLabel = ! empty($seriesLabel) ? $seriesLabel : $mLabel;
-            $curveLabel = "{$baseLabel} - {$dimVal}";
+            $formattedLabel = $this->formatSeriesMetricLabel(
+                $channel,
+                $seriesDependency,
+                $cleanMetric,
+                $dimVal,
+                $isRatio,
+                $isCurrency,
+                $namingConfig,
+                $seriesLabel,
+                $metricLabels,
+                $multipleSeries
+            );
 
             $curves[] = [
-                'label' => $isRatio ? $curveLabel . ' (%)' : $curveLabel,
+                'label' => $formattedLabel,
                 'key' => "series_{$sIdx}_{$metric}_{$dimSlug}",
                 'series_index' => $sIdx,
                 'metric' => $cleanMetric,

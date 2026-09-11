@@ -1048,6 +1048,19 @@
                                                                                   :style="'background-color: ' + getMetricColor(index, series.metrics?.[0] || 'dm')"></span>
                                                                         </div>
 
+                                                                        {{-- Metric Display / Naming Modal Button for Derived Metric --}}
+                                                                        <button type="button"
+                                                                                @click.stop="openMetricNamingModal(index, series.metrics?.[0] || 'dm')"
+                                                                                :title="hasCustomMetricNaming(index, series.metrics?.[0] || 'dm') ? '{{ __('Custom metric display name active (click to edit)') }}' : '{{ __('Customize metric display & naming pattern') }}'"
+                                                                                class="p-1 rounded-md transition-colors border shadow-xs flex items-center justify-center"
+                                                                                :class="hasCustomMetricNaming(index, series.metrics?.[0] || 'dm')
+                                                                                    ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border-primary-300 dark:border-primary-700'
+                                                                                    : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 border-gray-200 dark:border-gray-700'">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                                            </svg>
+                                                                        </button>
+
                                                                         <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
                                                                             <button type="button"
                                                                                     @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
@@ -1163,6 +1176,19 @@
                                                                                             <span class="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 shadow-xs flex items-center justify-center transition-transform hover:scale-110 cursor-pointer pointer-events-none"
                                                                                                   :style="'background-color: ' + getMetricColor(index, key)"></span>
                                                                                         </div>
+
+                                                                                        {{-- Metric Display / Naming Modal Button --}}
+                                                                                        <button type="button"
+                                                                                                @click.stop="openMetricNamingModal(index, key)"
+                                                                                                :title="hasCustomMetricNaming(index, key) ? '{{ __('Custom metric display name active (click to edit)') }}' : '{{ __('Customize metric display & naming pattern') }}'"
+                                                                                                class="p-1 rounded-md transition-colors border shadow-xs flex items-center justify-center"
+                                                                                                :class="hasCustomMetricNaming(index, key)
+                                                                                                    ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border-primary-300 dark:border-primary-700'
+                                                                                                    : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 border-gray-200 dark:border-gray-700'">
+                                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                                                            </svg>
+                                                                                        </button>
 
                                                                                         {{-- Combo Chart Type Toggle (Bar / Line) --}}
                                                                                         <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
@@ -2339,6 +2365,123 @@
                             </div>
                         </div>
                     </template>
+                </div>
+            </div>
+        </x-confirm-modal>
+
+        {{-- ============================================================ --}}
+        {{-- METRIC DISPLAY & NAMING MODAL                                --}}
+        {{-- ============================================================ --}}
+        <x-confirm-modal
+            open="showMetricNamingModal"
+            title="{{ __('Metric Display & Naming') }}"
+            icon="heroicon-o-tag"
+            color="primary"
+            confirm-label="{{ __('Done') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-check"
+            on-confirm="saveMetricNamingModal()"
+            cancel-label="{{ __('Cancel') }}"
+            max-width="!max-w-xl"
+        >
+            <div class="space-y-5">
+                {{-- Live Preview Box --}}
+                <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/70">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Live Preview') }}</span>
+                        <span class="text-3xs font-medium text-gray-400 dark:text-gray-500">{{ __('Chart legend format') }}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 shadow-xs">
+                        <template x-if="getNamingModalPreviewParts().channel">
+                            <span class="text-primary-600 dark:text-primary-400 font-semibold" x-text="getNamingModalPreviewParts().channel"></span>
+                        </template>
+                        <template x-if="getNamingModalPreviewParts().channel">
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                        </template>
+
+                        <span class="font-bold text-gray-900 dark:text-white" x-text="getNamingModalPreviewParts().metric"></span>
+
+                        <template x-if="getNamingModalPreviewParts().breakdown">
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                        </template>
+                        <template x-if="getNamingModalPreviewParts().breakdown">
+                            <span class="italic text-gray-600 dark:text-gray-300" x-text="getNamingModalPreviewParts().breakdown"></span>
+                        </template>
+
+                        <template x-if="getNamingModalPreviewParts().unit">
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                        </template>
+                        <template x-if="getNamingModalPreviewParts().unit">
+                            <span class="text-gray-500 dark:text-gray-400" x-text="getNamingModalPreviewParts().unit"></span>
+                        </template>
+                    </div>
+                    <p class="text-2xs text-gray-500 dark:text-gray-400 mt-2">
+                        {{ __('Pattern format: [channel] - metric - breakdown - (unit). Omitted parts are excluded from the legend.') }}
+                    </p>
+                </div>
+
+                {{-- Custom Name Input --}}
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {{ __('Custom Metric Name') }}
+                    </label>
+                    <input
+                        type="text"
+                        x-model="namingModalForm.custom_name"
+                        :placeholder="getNamingModalDefaultMetricName() || '{{ __('Enter custom name...') }}'"
+                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-3 focus:ring-primary-500 focus:border-primary-500 shadow-xs"
+                    >
+                    <p class="text-2xs text-gray-500 dark:text-gray-400">
+                        {{ __('Replaces the default metric name in chart legends and tooltips. Leave empty to use default.') }}
+                    </p>
+                </div>
+
+                {{-- Pattern Components Toggle Section --}}
+                <div class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {{ __('Naming Pattern Elements') }}
+                    </label>
+
+                    <div class="space-y-2.5">
+                        {{-- Show Channel --}}
+                        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors shadow-xs">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ __('Show Channel') }}</span>
+                                <span class="text-2xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-2 py-0.5 rounded font-mono font-bold">[channel]</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                x-model="namingModalForm.show_channel"
+                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4"
+                            >
+                        </label>
+
+                        {{-- Show Breakdown Value --}}
+                        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors shadow-xs">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ __('Show Breakdown Value') }}</span>
+                                <span class="text-2xs text-gray-600 dark:text-gray-300 italic bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 rounded font-medium">breakdown</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                x-model="namingModalForm.show_breakdown"
+                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4"
+                            >
+                        </label>
+
+                        {{-- Show Unit --}}
+                        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors shadow-xs">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ __('Show Unit') }}</span>
+                                <span class="text-2xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 rounded font-mono font-medium">(unit)</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                x-model="namingModalForm.show_unit"
+                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4"
+                            >
+                        </label>
+                    </div>
                 </div>
             </div>
         </x-confirm-modal>
