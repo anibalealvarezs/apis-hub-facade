@@ -2384,14 +2384,14 @@
             cancel-label="{{ __('Cancel') }}"
             max-width="!max-w-xl"
         >
-            <div class="space-y-5">
+            <div class="space-y-4">
                 {{-- Live Preview Box --}}
-                <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/70">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-2xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ __('Live Preview') }}</span>
-                        <span class="text-3xs font-medium text-gray-400 dark:text-gray-500">{{ __('Chart legend format') }}</span>
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">{{ __('Live Preview') }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Chart legend format') }}</span>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-900 dark:text-gray-100 shadow-xs">
+                    <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-gray-50 dark:bg-gray-900/60 text-sm font-medium text-gray-900 dark:text-gray-100">
                         <template x-if="getNamingModalPreviewParts().channel">
                             <span class="text-primary-600 dark:text-primary-400 font-semibold" x-text="getNamingModalPreviewParts().channel"></span>
                         </template>
@@ -2415,72 +2415,85 @@
                             <span class="text-gray-500 dark:text-gray-400" x-text="getNamingModalPreviewParts().unit"></span>
                         </template>
                     </div>
-                    <p class="text-2xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-2xs text-gray-500 dark:text-gray-400">
                         {{ __('Pattern format: [channel] - metric - breakdown - (unit). Omitted parts are excluded from the legend.') }}
                     </p>
                 </div>
 
-                {{-- Custom Name Input --}}
-                <div class="space-y-1.5">
+                {{-- Custom Name Card --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-2">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                         {{ __('Custom Metric Name') }}
                     </label>
                     <input
                         type="text"
                         x-model="namingModalForm.custom_name"
+                        @input="markWidgetControlsDirty()"
                         :placeholder="getNamingModalDefaultMetricName() || '{{ __('Enter custom name...') }}'"
-                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-3 focus:ring-primary-500 focus:border-primary-500 shadow-xs"
+                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500"
                     >
                     <p class="text-2xs text-gray-500 dark:text-gray-400">
                         {{ __('Replaces the default metric name in chart legends and tooltips. Leave empty to use default.') }}
                     </p>
                 </div>
 
-                {{-- Pattern Components Toggle Section --}}
-                <div class="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                {{-- Pattern Components Card --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                         {{ __('Naming Pattern Elements') }}
                     </label>
 
-                    <div class="space-y-2.5">
+                    <div class="space-y-2">
                         {{-- Show Channel --}}
-                        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors shadow-xs">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ __('Show Channel') }}</span>
-                                <span class="text-2xs text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-2 py-0.5 rounded font-mono font-bold">[channel]</span>
+                        <div class="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/30 transition-colors">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Channel') }}</span>
+                                <span class="text-2xs font-mono font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-1.5 py-0.5 rounded">[channel]</span>
                             </div>
-                            <input
-                                type="checkbox"
-                                x-model="namingModalForm.show_channel"
-                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4"
-                            >
-                        </label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    x-model="namingModalForm.show_channel"
+                                    @change="markWidgetControlsDirty()"
+                                    class="sr-only peer"
+                                >
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                            </label>
+                        </div>
 
                         {{-- Show Breakdown Value --}}
-                        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors shadow-xs">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ __('Show Breakdown Value') }}</span>
-                                <span class="text-2xs text-gray-600 dark:text-gray-300 italic bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 rounded font-medium">breakdown</span>
+                        <div class="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/30 transition-colors">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Breakdown Value') }}</span>
+                                <span class="text-2xs italic font-medium text-gray-600 dark:text-gray-300 bg-gray-200/70 dark:bg-gray-700/70 px-1.5 py-0.5 rounded">breakdown</span>
                             </div>
-                            <input
-                                type="checkbox"
-                                x-model="namingModalForm.show_breakdown"
-                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4"
-                            >
-                        </label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    x-model="namingModalForm.show_breakdown"
+                                    @change="markWidgetControlsDirty()"
+                                    class="sr-only peer"
+                                >
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                            </label>
+                        </div>
 
                         {{-- Show Unit --}}
-                        <label class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700/80 bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors shadow-xs">
-                            <div class="flex items-center gap-2.5">
-                                <span class="text-xs font-semibold text-gray-800 dark:text-gray-200">{{ __('Show Unit') }}</span>
-                                <span class="text-2xs text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700/60 px-2 py-0.5 rounded font-mono font-medium">(unit)</span>
+                        <div class="flex items-center justify-between p-2.5 rounded-lg border border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-900/30 transition-colors">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Unit') }}</span>
+                                <span class="text-2xs font-mono font-medium text-gray-600 dark:text-gray-300 bg-gray-200/70 dark:bg-gray-700/70 px-1.5 py-0.5 rounded">(unit)</span>
                             </div>
-                            <input
-                                type="checkbox"
-                                x-model="namingModalForm.show_unit"
-                                class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4"
-                            >
-                        </label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    x-model="namingModalForm.show_unit"
+                                    @change="markWidgetControlsDirty()"
+                                    class="sr-only peer"
+                                >
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
