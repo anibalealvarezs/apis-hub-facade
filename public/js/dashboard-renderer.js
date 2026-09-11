@@ -711,7 +711,7 @@ window.dashboardRenderer = {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
-                                if (resultFormat?.multiply)
+                                if (!ctx.dataset?.percentage && resultFormat?.multiply)
                                     val = val * resultFormat.multiply;
                                 if (ctx.dataset?.currency)
                                     return this.formatCurrency(val);
@@ -2223,7 +2223,7 @@ window.dashboardRenderer = {
                                 const ds = ctx.dataset || {};
                                 const label = ds.label || "Value";
                                 let val = ctx.parsed.y;
-                                if (resultFormat?.multiply)
+                                if (!ds.percentage && resultFormat?.multiply)
                                     val = val * resultFormat.multiply;
                                 if (ds.currency)
                                     return `${label}: ${this.formatCurrency(val)}`;
@@ -2629,7 +2629,7 @@ window.dashboardRenderer = {
                 } else {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
-                    if (resultFormat?.multiply) v = v * resultFormat.multiply;
+                    if (!ds.percentage && resultFormat?.multiply) v = v * resultFormat.multiply;
                     if (ds.currency || resultFormat?.format === "currency") {
                         val = this.formatCurrency(v);
                     } else if (
@@ -3101,7 +3101,7 @@ window.dashboardRenderer = {
                             typeof dp.raw === "object"
                                 ? (dp.raw.y ?? 0)
                                 : dp.raw;
-                        if (rFmt?.multiply) v = v * rFmt.multiply;
+                        if (!dp.dataset.percentage && rFmt?.multiply) v = v * rFmt.multiply;
                         if (
                             dp.dataset.currency ||
                             rFmt?.format === "currency"
