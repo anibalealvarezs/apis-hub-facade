@@ -3710,6 +3710,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_dependencies = {};
                 payload.series_allowed_metrics = {};
                 payload.series_metric_colors = {};
+                payload.series_metric_namings = {};
 
                 c.raw_series.forEach((s, sIdx) => {
                     const metricsToSave = (Array.isArray(s.metrics) && s.metrics.length > 0)
