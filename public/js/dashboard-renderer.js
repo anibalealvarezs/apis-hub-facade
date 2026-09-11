@@ -2380,6 +2380,76 @@ window.dashboardRenderer = {
         window.addEventListener("theme-changed", () => this.updateTheme());
     },
 
+    _crosshairInitialized: false,
+    _isCrosshairActive: false,
+    _lastHoveredChart: null,
+    _lastCanvasPosition: null,
+
+    _initCrosshairListeners() {
+        if (this._crosshairInitialized || typeof window === "undefined") return;
+        this._crosshairInitialized = true;
+
+        const handleKey = (e, isDown) => {
+            if (e.key !== "Control" && e.key !== "Shift") return;
+            if (this._isCrosshairActive === isDown) return;
+            this._isCrosshairActive = isDown;
+            this._applyCrosshairModeToAllCharts();
+            this._triggerCrosshairTooltipUpdate();
+        };
+
+        window.addEventListener("keydown", (e) => handleKey(e, true));
+        window.addEventListener("keyup", (e) => handleKey(e, false));
+        window.addEventListener("blur", () => {
+            if (this._isCrosshairActive) {
+                this._isCrosshairActive = false;
+                this._applyCrosshairModeToAllCharts();
+                this._triggerCrosshairTooltipUpdate();
+            }
+        });
+    },
+
+    _applyCrosshairModeToAllCharts() {
+        this._chartInstances.forEach((chart) => {
+            if (!chart || !chart.options) return;
+            const type = chart.config?.type;
+            if (type !== "line" && type !== "bar") return;
+            chart.options.interaction = chart.options.interaction || {};
+            if (this._isCrosshairActive) {
+                chart.options.interaction.mode = "index";
+                chart.options.interaction.axis = "x";
+                chart.options.interaction.intersect = false;
+            } else {
+                chart.options.interaction.mode = "nearest";
+                chart.options.interaction.axis = "xy";
+                chart.options.interaction.intersect = true;
+            }
+        });
+    },
+
+    _triggerCrosshairTooltipUpdate() {
+        const chart = this._lastHoveredChart;
+        const pos = this._lastCanvasPosition;
+        if (!chart || !pos || !chart.canvas || !chart.canvas.isConnected) return;
+        try {
+            const mode = this._isCrosshairActive ? "index" : "nearest";
+            const intersect = !this._isCrosshairActive;
+            const elements = chart.getElementsAtEventForMode(
+                pos,
+                mode,
+                { axis: "x", intersect },
+                false,
+            );
+            if (elements && elements.length > 0) {
+                chart.tooltip.setActiveElements(elements, pos);
+            } else {
+                chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+            }
+            chart.update("none");
+        } catch (e) {
+            // Ignore if chart is destroyed or in transition
+        }
+    },
+
     updateTheme() {
         const isDark = document.documentElement.classList.contains("dark");
         const legendColor = isDark ? "#E4E4E7" : "#374151";
@@ -2409,6 +2479,7 @@ window.dashboardRenderer = {
 
     renderChart(containerEl, config) {
         this._initThemeObserver();
+        this._initCrosshairListeners();
         this._pinnedTooltips.delete(containerEl);
         const isDark = document.documentElement.classList.contains("dark");
         if (config.options && config.options.scales) {
@@ -2457,6 +2528,16 @@ window.dashboardRenderer = {
             const chart = new Chart(canvas, config);
             this._chartInstances.set(containerEl, chart);
             this._attachTooltipPin(chart, canvas, containerEl);
+            canvas.addEventListener("mousemove", (e) => {
+                this._lastHoveredChart = chart;
+                this._lastCanvasPosition = { x: e.clientX, y: e.clientY };
+            });
+            canvas.addEventListener("mouseleave", () => {
+                if (this._lastHoveredChart === chart) {
+                    this._lastHoveredChart = null;
+                    this._lastCanvasPosition = null;
+                }
+            });
             canvas.addEventListener("dblclick", () => {
                 if (chart.options?.plugins?.zoom) chart.resetZoom();
             });
@@ -2480,10 +2561,12 @@ window.dashboardRenderer = {
                 }
                 return;
             }
+            const mode = this._isCrosshairActive ? "index" : "nearest";
+            const intersect = !this._isCrosshairActive;
             const elements = chart.getElementsAtEventForMode(
                 e,
-                "nearest",
-                { intersect: true },
+                mode,
+                { axis: "x", intersect },
                 false,
             );
             if (elements.length === 0) return;
@@ -2500,6 +2583,19 @@ window.dashboardRenderer = {
                 : null;
 
             let html = "";
+            const isMulti = elements.length > 1;
+            if (isMulti && chartType !== "scatter") {
+                const headerLabel = chart.data.labels?.[elements[0].index] || "";
+                if (headerLabel) {
+                    html +=
+                        '<div style="font-weight:700;font-size:12px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid ' +
+                        (document.documentElement.classList.contains("dark") ? "#374151" : "#E5E7EB") +
+                        ';">' +
+                        headerLabel +
+                        '</div>';
+                }
+            }
+
             elements.forEach((el) => {
                 const ds = chart.data.datasets[el.datasetIndex];
                 const raw = ds.data[el.index];
@@ -2541,7 +2637,11 @@ window.dashboardRenderer = {
                         val = this.formatNumber(v);
                     }
                     const dsLabel = ds.label || yMetricName;
-                    val = (label ? label + " — " : "") + val + " " + dsLabel;
+                    if (isMulti) {
+                        val = '<span style="color:#9ca3af;margin-right:6px;">' + dsLabel + ':</span>' + val;
+                    } else {
+                        val = (label ? label + " — " : "") + val + " " + dsLabel;
+                    }
                 }
                 const isLine = ds.type === "line";
                 const color = ds.borderColor || ds.backgroundColor || "#3B82F6";
@@ -2551,7 +2651,7 @@ window.dashboardRenderer = {
                     '<span style="width:8px;height:8px;border-radius:50%;background:' +
                     colorStr +
                     ';flex-shrink:0;"></span>' +
-                    (isLine
+                    (isLine && !isMulti
                         ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
                         : "") +
                     '<span style="font-weight:600;">' +
@@ -2920,6 +3020,18 @@ window.dashboardRenderer = {
                 : null;
 
             let html = "";
+            const isMulti = (tooltip.dataPoints?.length || 0) > 1;
+            if (isMulti && chartType !== "scatter") {
+                const headerLabel = chart.data.labels?.[tooltip.dataPoints[0].dataIndex] || "";
+                if (headerLabel) {
+                    html +=
+                        '<div style="font-weight:700;font-size:12px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid ' +
+                        borderColor +
+                        ';">' +
+                        headerLabel +
+                        '</div>';
+                }
+            }
 
             if (tooltip.body?.length) {
                 tooltip.body.forEach((body, i) => {
@@ -2971,8 +3083,11 @@ window.dashboardRenderer = {
                             val = this.formatNumber(v);
                         }
                         const dsLabel = dp.dataset.label || yMN;
-                        val =
-                            (label ? label + " — " : "") + val + " " + dsLabel;
+                        if (isMulti) {
+                            val = '<span style="color:#9ca3af;margin-right:6px;">' + dsLabel + ':</span>' + val;
+                        } else {
+                            val = (label ? label + " — " : "") + val + " " + dsLabel;
+                        }
                     }
                     const isLine = dp.dataset.type === "line";
                     const color =
@@ -2984,7 +3099,7 @@ window.dashboardRenderer = {
                         '<span style="width:8px;height:8px;border-radius:50%;background:' +
                         color +
                         ';flex-shrink:0;"></span>' +
-                        (isLine
+                        (isLine && !isMulti
                             ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
                             : "") +
                         '<span style="font-weight:600;">' +
