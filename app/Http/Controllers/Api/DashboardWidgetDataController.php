@@ -2708,23 +2708,33 @@ class DashboardWidgetDataController extends Controller
         }
 
         $result = [];
+        $dimCounts = [];
+
         foreach ($filters as $k => $item) {
             if (is_array($item) && isset($item['dimension'])) {
                 $dim = $item['dimension'];
                 $op = $item['operator'] ?? 'eq';
                 $val = $item['value'] ?? null;
 
+                $filterPayload = null;
                 if ($op === 'is_null') {
-                    $result[$dim] = ['operator' => 'is_null'];
+                    $filterPayload = ['operator' => 'is_null'];
                 } elseif ($op === 'is_not_null') {
-                    $result[$dim] = ['operator' => 'is_not_null'];
+                    $filterPayload = ['operator' => 'is_not_null'];
                 } elseif ($op === 'in' || $op === 'not_in') {
                     $valArray = is_array($val) ? array_values(array_filter($val, fn ($v) => $v !== null && $v !== '')) : [$val];
                     if (! empty($valArray)) {
-                        $result[$dim] = ['operator' => $op, 'value' => $valArray];
+                        $filterPayload = ['operator' => $op, 'value' => $valArray];
                     }
                 } elseif ($val !== null && $val !== '') {
-                    $result[$dim] = ['operator' => $op, 'value' => $val];
+                    $filterPayload = ['operator' => $op, 'value' => $val];
+                }
+
+                if ($filterPayload !== null) {
+                    $count = $dimCounts[$dim] ?? 0;
+                    $key = $count === 0 ? $dim : $dim . '__' . $count;
+                    $dimCounts[$dim] = $count + 1;
+                    $result[$key] = $filterPayload;
                 }
             } elseif (is_string($k) && ($item !== null && $item !== '')) {
                 $result[$k] = $item;
