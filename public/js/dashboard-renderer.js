@@ -2383,9 +2383,23 @@ window.dashboardRenderer = {
     _crosshairInitialized: false,
     _isCrosshairActive: false,
 
+    _lastMousePos: null,
+
     _initCrosshairListeners() {
         if (this._crosshairInitialized || typeof window === "undefined") return;
         this._crosshairInitialized = true;
+
+        window.addEventListener(
+            "mousemove",
+            (e) => {
+                this._lastMousePos = {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    target: e.target,
+                };
+            },
+            { passive: true },
+        );
 
         const handleKey = (e, isDown) => {
             if (e.key !== "Control" && e.key !== "Shift") return;
@@ -2405,21 +2419,18 @@ window.dashboardRenderer = {
     },
 
     _applyCrosshairModeToAllCharts() {
-        this._chartInstances.forEach((chart) => {
-            if (!chart || !chart.options) return;
-            const type = chart.config?.type;
-            if (type !== "line" && type !== "bar") return;
-            chart.options.interaction = chart.options.interaction || {};
-            if (this._isCrosshairActive) {
-                chart.options.interaction.mode = "index";
-                chart.options.interaction.axis = "x";
-                chart.options.interaction.intersect = false;
-            } else {
-                chart.options.interaction.mode = "nearest";
-                chart.options.interaction.axis = "xy";
-                chart.options.interaction.intersect = true;
-            }
-        });
+        if (!this._lastMousePos) return;
+        const { clientX, clientY } = this._lastMousePos;
+        const elem = document.elementFromPoint(clientX, clientY);
+        if (elem && elem.tagName === "CANVAS") {
+            const evt = new MouseEvent("mousemove", {
+                clientX,
+                clientY,
+                bubbles: true,
+                cancelable: true,
+            });
+            elem.dispatchEvent(evt);
+        }
     },
 
     updateTheme() {
@@ -2474,17 +2485,15 @@ window.dashboardRenderer = {
 
         config.options = config.options || {};
         config.options.interaction = config.options.interaction || {};
-        if (this._isCrosshairActive && (config.type === "line" || config.type === "bar")) {
-            config.options.interaction.mode = "index";
-            config.options.interaction.axis = "x";
-            config.options.interaction.intersect = false;
-        } else {
-            config.options.interaction.mode = "nearest";
-            config.options.interaction.axis = "xy";
-            config.options.interaction.intersect = true;
-        }
+        config.options.interaction.mode = "nearest";
+        config.options.interaction.axis = "x";
+        config.options.interaction.intersect = false;
+
         config.options.plugins = config.options.plugins || {};
         config.options.plugins.tooltip = config.options.plugins.tooltip || {};
+        config.options.plugins.tooltip.mode = "nearest";
+        config.options.plugins.tooltip.axis = "x";
+        config.options.plugins.tooltip.intersect = false;
         config.options.plugins.tooltip.enabled = false;
         config.options.plugins.tooltip.external = (ctx) =>
             this._externalTooltipHandler(ctx);
@@ -2535,13 +2544,36 @@ window.dashboardRenderer = {
             }
             const mode = this._isCrosshairActive ? "index" : "nearest";
             const intersect = !this._isCrosshairActive;
-            const elements = chart.getElementsAtEventForMode(
+            let elements = chart.getElementsAtEventForMode(
                 e,
                 mode,
                 { axis: "x", intersect },
                 false,
             );
             if (elements.length === 0) return;
+
+            if (
+                this._isCrosshairActive &&
+                (chart.config.type === "line" || chart.config.type === "bar")
+            ) {
+                const targetIdx = elements[0].index;
+                const synthesized = [];
+                chart.data.datasets.forEach((ds, dsIndex) => {
+                    const meta = chart.getDatasetMeta(dsIndex);
+                    if (meta.hidden || ds.hidden) return;
+                    if (ds.data[targetIdx] !== undefined && ds.data[targetIdx] !== null) {
+                        synthesized.push({
+                            element: meta.data?.[targetIdx],
+                            datasetIndex: dsIndex,
+                            index: targetIdx,
+                        });
+                    }
+                });
+                if (synthesized.length > 0) {
+                    elements = synthesized;
+                }
+            }
+
             const widgetJson = this._widgetData.get(container);
             const controls = widgetJson?.controls;
             const resultFormat = this.getKpiResultFormat(controls);
@@ -2991,10 +3023,40 @@ window.dashboardRenderer = {
                 ? new Set(anomalyDates)
                 : null;
 
+            const isCrosshair = this._isCrosshairActive;
+            let dataPoints = tooltip.dataPoints || [];
+            if (
+                isCrosshair &&
+                (chartType === "line" || chartType === "bar") &&
+                dataPoints.length > 0
+            ) {
+                const targetIndex = dataPoints[0].dataIndex;
+                const synthesized = [];
+                chart.data.datasets.forEach((ds, dsIndex) => {
+                    const meta = chart.getDatasetMeta(dsIndex);
+                    if (meta.hidden || ds.hidden) return;
+                    const raw = ds.data[targetIndex];
+                    if (raw === undefined || raw === null) return;
+                    synthesized.push({
+                        chart,
+                        dataset: ds,
+                        datasetIndex: dsIndex,
+                        dataIndex: targetIndex,
+                        raw,
+                        formattedValue:
+                            typeof raw === "object" ? raw.y ?? 0 : raw,
+                    });
+                });
+                if (synthesized.length > 0) {
+                    dataPoints = synthesized;
+                }
+            }
+
             let html = "";
-            const isMulti = (tooltip.dataPoints?.length || 0) > 1;
-            if (isMulti && chartType !== "scatter") {
-                const headerLabel = chart.data.labels?.[tooltip.dataPoints[0].dataIndex] || "";
+            const isMulti = (dataPoints.length || 0) > 1;
+            if (isMulti && chartType !== "scatter" && dataPoints.length > 0) {
+                const headerLabel =
+                    chart.data.labels?.[dataPoints[0].dataIndex] || "";
                 if (headerLabel) {
                     html +=
                         '<div style="font-weight:700;font-size:12px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid ' +
@@ -3005,9 +3067,8 @@ window.dashboardRenderer = {
                 }
             }
 
-            if (tooltip.body?.length) {
-                tooltip.body.forEach((body, i) => {
-                    const dp = tooltip.dataPoints?.[i];
+            if (dataPoints.length) {
+                dataPoints.forEach((dp) => {
                     if (!dp) return;
                     let val;
                     if (chartType === "scatter") {
