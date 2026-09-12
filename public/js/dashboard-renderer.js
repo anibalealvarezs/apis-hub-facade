@@ -2803,14 +2803,29 @@ window.dashboardRenderer = {
      * Pop a widget's canvas/chart into a different container (fullscreen modal).
      */
     popOutWidget(containerEl, targetEl) {
-        const json = this._widgetData.get(containerEl);
-        if (!json) return;
+        let json = this._widgetData.get(containerEl);
+        if (!json && containerEl.dataset.widgetId) {
+            const wid = String(containerEl.dataset.widgetId);
+            for (const [, val] of this._widgetData.entries()) {
+                if (val && String(val.id) === wid) {
+                    json = val;
+                    this._widgetData.set(containerEl, json);
+                    break;
+                }
+            }
+        }
 
         // Ensure the chart is rendered before moving its canvas
         this.flushRender(containerEl);
 
+        if (!json) {
+            json = this._widgetData.get(containerEl);
+        }
+
         // Transfer widget data and pinned tooltip to the modal container
-        this._widgetData.set(targetEl, json);
+        if (json) {
+            this._widgetData.set(targetEl, json);
+        }
         if (this._pinnedTooltips.has(containerEl)) {
             this._pinnedTooltips.set(
                 targetEl,
@@ -2832,7 +2847,10 @@ window.dashboardRenderer = {
             while (containerEl.children.length > 0) {
                 targetEl.appendChild(containerEl.children[0]);
             }
-            const chart = this._chartInstances.get(containerEl);
+            let chart = this._chartInstances.get(containerEl);
+            if (!chart && window.Chart?.getChart) {
+                chart = window.Chart.getChart(canvas);
+            }
             if (chart) {
                 this._chartInstances.set(targetEl, chart);
                 this._chartInstances.delete(containerEl);
