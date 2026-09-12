@@ -596,11 +596,7 @@ window.dashboardRenderer = {
                         : "default";
                 },
                 plugins: {
-                    legend: {
-                        display: datasets.length > 1,
-                        position: "bottom",
-                        labels: { boxWidth: 12, padding: 12 },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             title: (ctx) =>
@@ -702,11 +698,7 @@ window.dashboardRenderer = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: datasets.length > 1,
-                        position: "bottom",
-                        labels: { boxWidth: 12, padding: 12 },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
@@ -2168,55 +2160,7 @@ window.dashboardRenderer = {
                 },
                 scales: scalesConfig,
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: "bottom",
-                        labels: {
-                            usePointStyle: true,
-                            pointStyleWidth: 18,
-                            font: { size: 11 },
-                            padding: 12,
-                            color: document.documentElement.classList.contains(
-                                "dark",
-                            )
-                                ? "#E4E4E7"
-                                : "#374151",
-                            generateLabels: (chart) => {
-                                const isDark =
-                                    document.documentElement.classList.contains(
-                                        "dark",
-                                    );
-                                const labelColor =
-                                    chart.options?.plugins?.legend?.labels
-                                        ?.color ||
-                                    (isDark ? "#E4E4E7" : "#374151");
-                                return (chart.data.datasets || []).map(
-                                    (ds, i) => {
-                                        const isHidden =
-                                            !chart.isDatasetVisible(i);
-                                        const isLine = ds.type === "line";
-                                        return {
-                                            text: ds.label,
-                                            fillStyle: isLine
-                                                ? ds.borderColor
-                                                : ds.backgroundColor ||
-                                                  ds.borderColor,
-                                            strokeStyle: ds.borderColor,
-                                            lineWidth: isLine ? 2.5 : 1,
-                                            fontColor: labelColor,
-                                            color: labelColor,
-                                            hidden: isHidden,
-                                            datasetIndex: i,
-                                            pointStyle: isLine
-                                                ? "line"
-                                                : "rectRounded",
-                                            pointStyleWidth: isLine ? 20 : 12,
-                                        };
-                                    },
-                                );
-                            },
-                        },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
@@ -2449,14 +2393,28 @@ window.dashboardRenderer = {
                     if (axis.grid) axis.grid.color = gridColor;
                 }
             }
-            if (chart.options.plugins?.legend?.labels) {
-                chart.options.plugins.legend.labels.color = legendColor;
-            }
+            // Skipping native legend color — native legend is disabled
             try {
                 chart.update("none");
             } catch (e) {
                 // Ignore transient update errors during navigation
             }
+        });
+
+        // Update custom HTML legend colors
+        this._updateCustomLegendTheme(isDark);
+    },
+
+    _updateCustomLegendTheme(isDark) {
+        document.querySelectorAll(".custom-chart-legend").forEach((wrapper) => {
+            const toggle = wrapper.querySelector(".chart-legend-toggle");
+            if (toggle) {
+                toggle.style.borderTopColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+                toggle.style.color = isDark ? "#A1A1AA" : "#9CA3AF";
+            }
+            wrapper.querySelectorAll(".chart-legend-body > div").forEach((item) => {
+                item.style.color = isDark ? "#D4D4D8" : "#374151";
+            });
         });
     },
 
@@ -2477,11 +2435,7 @@ window.dashboardRenderer = {
                 }
             }
         }
-        if (config.options?.plugins?.legend?.labels) {
-            config.options.plugins.legend.labels.color = isDark
-                ? "#E4E4E7"
-                : "#374151";
-        }
+        // Native legend disabled; custom HTML legend handles theming
 
         config.options = config.options || {};
         config.options.interaction = config.options.interaction || {};
@@ -2513,6 +2467,17 @@ window.dashboardRenderer = {
         const canvas = document.createElement("canvas");
         const existingCanvas = containerEl.querySelector("canvas");
         if (existingCanvas) existingCanvas.remove();
+        // Remove any stale custom legend from a previous render
+        const existingLegend = containerEl.querySelector(".custom-chart-legend");
+        if (existingLegend) existingLegend.remove();
+
+        // Ensure flex-column layout so legend sits below the canvas
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.overflow = "hidden";
+        canvas.style.flex = "1 1 0";
+        canvas.style.minHeight = "0";
+
         containerEl.appendChild(canvas);
 
         const createChart = () => {
@@ -2522,9 +2487,159 @@ window.dashboardRenderer = {
             canvas.addEventListener("dblclick", () => {
                 if (chart.options?.plugins?.zoom) chart.resetZoom();
             });
+            // Build custom HTML legend for multi-dataset charts
+            if (chart.data.datasets && chart.data.datasets.length > 1) {
+                this._renderCustomLegend(chart, containerEl);
+            }
         };
 
         this._ensureZoomPlugin(createChart);
+    },
+
+    /**
+     * Build a custom HTML legend below the chart canvas.
+     * - CSS Grid with equal-width columns sized to the longest label.
+     * - Collapsible toggle bar showing series count + chevron.
+     * - Click items to toggle dataset visibility.
+     */
+    _renderCustomLegend(chart, containerEl) {
+        const datasets = chart.data.datasets || [];
+        if (datasets.length === 0) return;
+
+        const isDark = document.documentElement.classList.contains("dark");
+
+        // ── Wrapper ──
+        const wrapper = document.createElement("div");
+        wrapper.className = "custom-chart-legend";
+        wrapper.style.cssText = "width:100%; flex-shrink:0; user-select:none;";
+
+        // ── Toggle bar ──
+        const toggleBar = document.createElement("div");
+        toggleBar.className = "chart-legend-toggle";
+        toggleBar.style.cssText = [
+            "display:flex", "align-items:center", "justify-content:space-between",
+            "cursor:pointer", "font-size:11px", "padding:3px 6px",
+            "border-top:1px solid " + (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"),
+            "color:" + (isDark ? "#A1A1AA" : "#9CA3AF"),
+            "transition:color 0.15s",
+        ].join(";");
+        toggleBar.innerHTML =
+            `<span>Legend (${datasets.length})</span><span class="legend-chevron" style="font-size:10px;transition:transform 0.2s">▲</span>`;
+        toggleBar.addEventListener("mouseenter", () => {
+            toggleBar.style.color = isDark ? "#E4E4E7" : "#374151";
+        });
+        toggleBar.addEventListener("mouseleave", () => {
+            toggleBar.style.color = isDark ? "#A1A1AA" : "#9CA3AF";
+        });
+
+        // ── Legend body (grid) ──
+        const body = document.createElement("div");
+        body.className = "chart-legend-body";
+
+        // Calculate optimal min column width from longest label
+        const maxLabelLen = Math.max(...datasets.map((ds) => (ds.label || "").length));
+        const minColWidth = Math.max(160, Math.min(320, maxLabelLen * 7.5 + 44));
+
+        body.style.cssText = [
+            "display:grid",
+            `grid-template-columns:repeat(auto-fill, minmax(${minColWidth}px, 1fr))`,
+            "gap:4px 10px",
+            "padding:4px 6px 6px",
+            "max-height:7.5rem",
+            "overflow-y:auto",
+            "transition:max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease",
+        ].join(";");
+
+        // ── Build items ──
+        datasets.forEach((ds, i) => {
+            const item = document.createElement("div");
+            item.style.cssText = [
+                "display:flex", "align-items:center", "gap:6px",
+                "cursor:pointer", "padding:2px 4px", "border-radius:4px",
+                "white-space:nowrap", "overflow:hidden", "text-overflow:ellipsis",
+                "transition:opacity 0.15s, background 0.15s",
+                "font-size:11px",
+                "color:" + (isDark ? "#D4D4D8" : "#374151"),
+            ].join(";");
+
+            // Color swatch
+            const swatch = document.createElement("span");
+            const swatchColor = ds.borderColor || ds.backgroundColor || "#888";
+            const isLine = ds.type === "line";
+            if (isLine) {
+                // Line swatch: short line
+                swatch.style.cssText = [
+                    "display:inline-block", "width:18px", "height:3px",
+                    "border-radius:2px", "flex-shrink:0",
+                    "background:" + swatchColor,
+                ].join(";");
+            } else {
+                // Bar/area swatch: small rounded rect
+                swatch.style.cssText = [
+                    "display:inline-block", "width:12px", "height:12px",
+                    "border-radius:2px", "flex-shrink:0",
+                    "background:" + (ds.backgroundColor || swatchColor),
+                    "border:1px solid " + (ds.borderColor || "transparent"),
+                ].join(";");
+            }
+
+            // Label
+            const label = document.createElement("span");
+            label.style.cssText = "overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            label.textContent = ds.label || `Series ${i + 1}`;
+            label.title = ds.label || `Series ${i + 1}`;
+
+            item.appendChild(swatch);
+            item.appendChild(label);
+
+            // Hover
+            item.addEventListener("mouseenter", () => {
+                item.style.background = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+            });
+            item.addEventListener("mouseleave", () => {
+                item.style.background = "transparent";
+            });
+
+            // Click → toggle dataset visibility
+            item.addEventListener("click", () => {
+                const meta = chart.getDatasetMeta(i);
+                meta.hidden = meta.hidden === null ? !chart.data.datasets[i].hidden : null;
+                chart.update();
+                const isHidden = meta.hidden;
+                item.style.opacity = isHidden ? "0.35" : "1";
+                label.style.textDecoration = isHidden ? "line-through" : "none";
+            });
+
+            body.appendChild(item);
+        });
+
+        // ── Toggle collapse/expand ──
+        let collapsed = false;
+        const chevron = toggleBar.querySelector(".legend-chevron");
+        toggleBar.addEventListener("click", () => {
+            collapsed = !collapsed;
+            if (collapsed) {
+                body.style.maxHeight = "0";
+                body.style.opacity = "0";
+                body.style.paddingTop = "0";
+                body.style.paddingBottom = "0";
+                body.style.overflow = "hidden";
+                chevron.textContent = "▼";
+            } else {
+                body.style.maxHeight = "7.5rem";
+                body.style.opacity = "1";
+                body.style.paddingTop = "4px";
+                body.style.paddingBottom = "6px";
+                body.style.overflow = "auto";
+                chevron.textContent = "▲";
+            }
+            // Let Chart.js reclaim/release the space
+            requestAnimationFrame(() => chart.resize());
+        });
+
+        wrapper.appendChild(toggleBar);
+        wrapper.appendChild(body);
+        containerEl.appendChild(wrapper);
     },
 
     _attachTooltipPin(chart, canvas, containerEl) {
