@@ -1896,7 +1896,8 @@ class DashboardWidgetDataController extends Controller
         if (! empty($mergedState['independent_variables']) && is_array($mergedState['independent_variables'])) {
             foreach ($mergedState['independent_variables'] as $key => $var) {
                 $indFilter = $controls['series_filters']["independent_{$key}"]
-                    ?? $controls['series_filters'][(string)($key + 1)]
+                    ?? (is_numeric($key) ? ($controls['series_filters'][(string)($key + 1)] ?? null) : null)
+                    ?? (isset($var['key']) ? ($controls['series_filters']["independent_{$var['key']}"] ?? null) : null)
                     ?? null;
                 if (! empty($indFilter)) {
                     $mergedState['independent_variables'][$key]['filters'] = $this->normalizeFiltersForPayload($indFilter);
