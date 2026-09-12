@@ -58,6 +58,7 @@ export function sharedView(config = {}) {
         },
 
         reloadWidget(widgetId, controls) {
+            window.dashboardRenderer?.clearStorageCache?.(widgetId);
             const widgetItem = document.querySelector(`.grid-stack-item[gs-id="${widgetId}"]`);
             if (!widgetItem) return;
 

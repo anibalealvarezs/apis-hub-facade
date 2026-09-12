@@ -193,6 +193,96 @@ window.dashboardRenderer = {
 
         return f0 || null;
     },
+    _concurrencyLimit: 4,
+    _activeRequests: 0,
+    _queue: [],
+
+    _enqueue(fn) {
+        return new Promise((resolve, reject) => {
+            this._queue.push({ fn, resolve, reject });
+            this._dequeue();
+        });
+    },
+
+    _dequeue() {
+        if (this._activeRequests >= this._concurrencyLimit || this._queue.length === 0) {
+            return;
+        }
+        this._activeRequests++;
+        const { fn, resolve, reject } = this._queue.shift();
+        fn()
+            .then(resolve)
+            .catch(reject)
+            .finally(() => {
+                this._activeRequests--;
+                this._dequeue();
+            });
+    },
+
+    _hashString(str) {
+        let hash = 5381;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) + hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash).toString(36);
+    },
+
+    _getStorageCache(widgetId, effectiveTenant, body, lang) {
+        try {
+            const keySuffix = this._hashString(JSON.stringify(body) + "|" + (lang || ""));
+            const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
+            const item = localStorage.getItem(cacheKey);
+            if (!item) return null;
+            const parsed = JSON.parse(item);
+            // 30 minute TTL
+            if (Date.now() - (parsed.timestamp || 0) > 30 * 60 * 1000) {
+                localStorage.removeItem(cacheKey);
+                return null;
+            }
+            return parsed.data;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    _setStorageCache(widgetId, effectiveTenant, body, lang, data) {
+        try {
+            const keySuffix = this._hashString(JSON.stringify(body) + "|" + (lang || ""));
+            const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
+            localStorage.setItem(
+                cacheKey,
+                JSON.stringify({
+                    timestamp: Date.now(),
+                    data: data,
+                }),
+            );
+        } catch (e) {
+            // Storage quota exceeded or disabled
+        }
+    },
+
+    clearStorageCache(widgetId) {
+        try {
+            const prefix = widgetId !== undefined && widgetId !== null
+                ? `db_widget_`
+                : "db_widget_";
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key) continue;
+                if (widgetId !== undefined && widgetId !== null) {
+                    if (key.startsWith("db_widget_") && key.includes(`_${widgetId}_`)) {
+                        keysToRemove.push(key);
+                    }
+                } else if (key.startsWith("db_widget_")) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach((k) => localStorage.removeItem(k));
+        } catch (e) {}
+    },
+
     /**
      * Fetch data for a single widget and render into its container.
      * Data fetch happens immediately; Chart.js rendering is deferred until
@@ -249,34 +339,96 @@ window.dashboardRenderer = {
                 document.documentElement.lang ||
                 window.Filament?.locale ||
                 "en";
-            const response = await fetch(
-                "/api/dashboard/widget/" +
-                    widgetId +
-                    "/data?lang=" +
-                    encodeURIComponent(currentLang),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                        "X-CSRF-TOKEN":
-                            document.querySelector('meta[name="csrf-token"]')
-                                ?.content || "",
-                    },
-                    body: JSON.stringify(body),
-                },
-            );
 
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || "HTTP " + response.status);
+            // Check localStorage cache first
+            const cachedData = this._getStorageCache(
+                widgetId,
+                effectiveTenant,
+                body,
+                currentLang,
+            );
+            if (cachedData) {
+                if (cachedData.missing_assets || cachedData.data?._missing_assets) {
+                    containerEl.innerHTML = this.emptyAssetState();
+                    this._widgetData.set(containerEl, cachedData);
+                    return;
+                }
+                this._widgetData.set(containerEl, cachedData);
+                this._lazyRenderWhenVisible(containerEl, cachedData);
+                return;
             }
 
-            const json = await response.json();
+            // Enqueue request (max 4 concurrent) with exponential backoff
+            const json = await this._enqueue(async () => {
+                const maxAttempts = 3;
+                let lastError = null;
+
+                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    try {
+                        const response = await fetch(
+                            "/api/dashboard/widget/" +
+                                widgetId +
+                                "/data?lang=" +
+                                encodeURIComponent(currentLang),
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Accept: "application/json",
+                                    "X-CSRF-TOKEN":
+                                        document.querySelector('meta[name="csrf-token"]')
+                                            ?.content || "",
+                                },
+                                body: JSON.stringify(body),
+                            },
+                        );
+
+                        if (!response.ok) {
+                            const err = await response.json().catch(() => ({}));
+                            const status = response.status;
+                            const errMsg = err.error || "HTTP " + status;
+                            // Retry on server errors or gateway timeouts
+                            if (attempt < maxAttempts && (status >= 500 || status === 429)) {
+                                throw new Error(errMsg);
+                            }
+                            throw new Error(errMsg);
+                        }
+
+                        const resJson = await response.json();
+
+                        if (!resJson.success) {
+                            const errMsg = resJson.message || resJson.error || "Unknown error";
+                            if (attempt < maxAttempts && (errMsg.includes("timed out") || errMsg.includes("timeout") || errMsg.includes("cURL error 28"))) {
+                                throw new Error(errMsg);
+                            }
+                            return resJson;
+                        }
+
+                        return resJson;
+                    } catch (err) {
+                        lastError = err;
+                        if (attempt < maxAttempts) {
+                            // Exponential backoff: 1000ms, then 2500ms
+                            const delayMs = attempt === 1 ? 1000 : 2500;
+                            await new Promise((r) => setTimeout(r, delayMs));
+                        }
+                    }
+                }
+                throw lastError || new Error("Failed to load widget data");
+            });
 
             if (!json.success) {
                 throw new Error(json.message || json.error || "Unknown error");
             }
+
+            // Save to localStorage cache
+            this._setStorageCache(
+                widgetId,
+                effectiveTenant,
+                body,
+                currentLang,
+                json,
+            );
 
             if (json.missing_assets || json.data?._missing_assets) {
                 containerEl.innerHTML = this.emptyAssetState();

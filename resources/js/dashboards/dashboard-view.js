@@ -679,6 +679,7 @@ export function dashboardView(config = {}) {
         },
 
         refreshAll() {
+            window.dashboardRenderer?.clearStorageCache?.();
             this.loadedCount = 0;
             this._loadedWidgets = {};
             const widgets = document.querySelectorAll(
@@ -731,6 +732,7 @@ export function dashboardView(config = {}) {
         },
 
         reloadWidget(widgetId, controls) {
+            window.dashboardRenderer?.clearStorageCache?.(widgetId);
             const widgetItem = document.querySelector(
                 `.grid-stack-item[gs-id="${widgetId}"]`,
             );
