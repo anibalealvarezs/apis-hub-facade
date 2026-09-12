@@ -1413,6 +1413,10 @@
                                                                                             <x-ui.select-option value="3">Top 3</x-ui.select-option>
                                                                                             <x-ui.select-option value="5">Top 5</x-ui.select-option>
                                                                                             <x-ui.select-option value="10">Top 10</x-ui.select-option>
+                                                                                            <x-ui.select-option value="15">Top 15</x-ui.select-option>
+                                                                                            <x-ui.select-option value="20">Top 20</x-ui.select-option>
+                                                                                            <x-ui.select-option value="25">Top 25</x-ui.select-option>
+                                                                                            <x-ui.select-option value="30">Top 30</x-ui.select-option>
                                                                                         </x-ui.select-input>
                                                                                     </div>
                                                                                     <div class="w-1/2 flex-1 min-w-0">

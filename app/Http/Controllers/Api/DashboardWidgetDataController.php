@@ -2314,7 +2314,7 @@ class DashboardWidgetDataController extends Controller
                 $seriesBreakdown = $series['breakdown'] ?? $controls['series_breakdown'][$sIdx] ?? null;
                 $breakdownDim = is_array($seriesBreakdown) ? ($seriesBreakdown['dimension'] ?? null) : $seriesBreakdown;
                 $breakdownLimit = is_array($seriesBreakdown) ? (int) ($seriesBreakdown['limit'] ?? 5) : 5;
-                $breakdownLimit = max(1, min(10, $breakdownLimit));
+                $breakdownLimit = max(1, min(30, $breakdownLimit));
                 $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
 
                 if (! empty($breakdownDim)) {
