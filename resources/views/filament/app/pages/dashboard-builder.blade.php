@@ -1426,9 +1426,9 @@
 
                                                      {{-- Breakdown & Filters Row (Side-by-side, half width each) --}}
                                                      <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-row items-start gap-4">
-                                                         {{-- Breakdown Configuration (Direct Metrics only) --}}
+                                                         {{-- Breakdown Configuration --}}
                                                          <div class="w-1/2 flex-1 min-w-0">
-                                                             <template x-if="series.type !== 'derived_metric' && series.channel">
+                                                             <template x-if="series.channel">
                                                                  <div>
                                                                      <div class="flex items-center justify-between mb-2">
                                                                          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">

@@ -2570,76 +2570,327 @@ class DashboardWidgetDataController extends Controller
                     }
                 }
 
-                $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
-                $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
+                // Check for series-level breakdown on DM cards
+                $ssBreakdown = null;
+                if ($matchingItem) {
+                    $cardIdx = $matchingItem['series_index'];
+                    $ssBreakdown = $matchingItem['series']['breakdown']
+                        ?? $controls['series_breakdown'][$cardIdx]
+                        ?? $controls['series_breakdown'][(string)$cardIdx]
+                        ?? null;
+                }
+                $ssBreakdownDim = is_array($ssBreakdown) ? ($ssBreakdown['dimension'] ?? null) : $ssBreakdown;
+                $defaultBreakdownLimit = ($widget->widget_type === 'pie_chart' && isset($controls['pie_slice_limit']))
+                    ? (int) $controls['pie_slice_limit']
+                    : 5;
+                $ssBreakdownLimit = is_array($ssBreakdown) ? (int) ($ssBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit;
+                $ssBreakdownLimit = max(1, min(30, $ssBreakdownLimit));
+                $ssBreakdownOrder = is_array($ssBreakdown) ? ($ssBreakdown['order'] ?? 'value_desc') : 'value_desc';
 
-                if ($effectiveGranularity !== 'daily' && ! empty($seriesData)) {
-                    $aggregator = new \App\Services\Analytics\GranularityAggregationService;
-                    $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
+                if (! empty($ssBreakdownDim)) {
+                    $payload['breakdown'] = $ssBreakdownDim;
+                    $payload['groupBy'] = $granularity === 'lifetime' ? [$ssBreakdownDim] : ['daily', $ssBreakdownDim];
                 }
 
-                $fetchedSeries[$ssKey] = $seriesData;
+                $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
+
+                if (! empty($ssBreakdownDim)) {
+                    $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
+                    if (! is_array($rawRows)) {
+                        $rawRows = [];
+                    }
+
+                    $dimKeysToTry = [
+                        $ssBreakdownDim,
+                        str_replace('dimensions.', '', $ssBreakdownDim),
+                        strtolower($ssBreakdownDim),
+                        strtolower(str_replace('dimensions.', '', $ssBreakdownDim)),
+                    ];
+
+                    $groupedData = [];
+                    $totals = [];
+                    $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+
+                    foreach ($rawRows as $row) {
+                        $date = $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? null;
+                        if ($granularity === 'lifetime') {
+                            $date = 'Lifetime';
+                        }
+                        if (! $date) {
+                            continue;
+                        }
+
+                        $dimVal = null;
+                        foreach ($dimKeysToTry as $dk) {
+                            if (isset($row[$dk]) && $row[$dk] !== null && $row[$dk] !== '') {
+                                $dimVal = (string) $row[$dk];
+                                break;
+                            }
+                        }
+
+                        if ($dimVal === null || $dimVal === 'null' || $dimVal === '(not set)') {
+                            $dimVal = 'Unknown';
+                        }
+
+                        $val = $this->findMetricValueInPoint($row, $ssMetric);
+
+                        if (! isset($groupedData[$dimVal])) {
+                            $groupedData[$dimVal] = [];
+                            $totals[$dimVal] = 0.0;
+                        }
+
+                        $groupedData[$dimVal][$date] = ($groupedData[$dimVal][$date] ?? 0.0) + (float) $val;
+                        $totals[$dimVal] += (float) $val;
+                    }
+
+                    if ($effectiveGranularity !== 'daily' && $effectiveGranularity !== 'lifetime') {
+                        foreach ($groupedData as $dv => $ts) {
+                            $groupedData[$dv] = $aggregator->aggregateFlatMap($ts, $effectiveGranularity);
+                        }
+                    }
+
+                    $ssBreakdownData[$ssKey] = [
+                        'has_breakdown' => true,
+                        'dimension' => $ssBreakdownDim,
+                        'limit' => $ssBreakdownLimit,
+                        'order' => $ssBreakdownOrder,
+                        'grouped' => $groupedData,
+                        'totals' => $totals,
+                    ];
+                } else {
+                    $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
+
+                    if ($effectiveGranularity !== 'daily' && ! empty($seriesData)) {
+                        $aggregator = new \App\Services\Analytics\GranularityAggregationService;
+                        $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
+                    }
+
+                    $ssBreakdownData[$ssKey] = [
+                        'has_breakdown' => false,
+                        'flat' => $seriesData,
+                    ];
+                }
+            }
+
+            // Check if any source series in this Derived Metric has breakdown configured
+            $hasAnyBreakdown = false;
+            $breakdownSeriesKeys = [];
+            foreach ($ssBreakdownData as $key => $bdInfo) {
+                if (! empty($bdInfo['has_breakdown'])) {
+                    $hasAnyBreakdown = true;
+                    $breakdownSeriesKeys[] = $key;
+                }
             }
 
             $derivedResults = $this->resolveDerivedMetricReferences($ast, $project, $controls);
-            $computePayload = [
-                'ast' => $ast,
-                'filters' => [
-                    'startDate' => $dateStart,
-                    'endDate' => $dateEnd,
-                    'period' => $effectiveGranularity,
-                    'groupBy' => [$effectiveGranularity],
-                ],
-                'series_data' => $fetchedSeries,
-                'derived_metrics' => $derivedResults,
-            ];
 
-            $result = $this->remoteEngineService->computeKpi($project, $computePayload);
-            $data = $result['data'] ?? $result;
+            if (! $hasAnyBreakdown) {
+                // Flat mode: no source series has breakdown configured
+                $flatSeriesData = [];
+                foreach ($ssBreakdownData as $key => $bdInfo) {
+                    $flatSeriesData[$key] = $bdInfo['flat'] ?? [];
+                }
 
-            $dmTimeSeries = [];
-            if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
-                foreach ($data['dates'] as $i => $d) {
-                    $dmTimeSeries[$d] = (float) ($data['values'][$i] ?? 0);
-                }
-            } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
-                foreach ($data as $d => $v) {
-                    $dmTimeSeries[$d] = (float) $v;
-                }
-            } elseif (is_array($data) && isset($data['chart'])) {
-                foreach ($data['chart'] as $point) {
-                    $d = $point['date'] ?? $point['label'] ?? null;
-                    $v = $point['value'] ?? $point['y'] ?? reset($point);
-                    if ($d !== null && is_numeric($v)) {
+                $computePayload = [
+                    'ast' => $ast,
+                    'filters' => [
+                        'startDate' => $dateStart,
+                        'endDate' => $dateEnd,
+                        'period' => $effectiveGranularity,
+                        'groupBy' => [$effectiveGranularity],
+                    ],
+                    'series_data' => $flatSeriesData,
+                    'derived_metrics' => $derivedResults,
+                ];
+
+                $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+                $data = $result['data'] ?? $result;
+
+                $dmTimeSeries = [];
+                if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
+                    foreach ($data['dates'] as $i => $d) {
+                        $dmTimeSeries[$d] = (float) ($data['values'][$i] ?? 0);
+                    }
+                } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
+                    foreach ($data as $d => $v) {
                         $dmTimeSeries[$d] = (float) $v;
                     }
+                } elseif (is_array($data) && isset($data['chart'])) {
+                    foreach ($data['chart'] as $point) {
+                        $d = $point['date'] ?? $point['label'] ?? null;
+                        $v = $point['value'] ?? $point['y'] ?? reset($point);
+                        if ($d !== null && is_numeric($v)) {
+                            $dmTimeSeries[$d] = (float) $v;
+                        }
+                    }
+                }
+
+                if ($derivedMetric->format === 'percentage') {
+                    $dmTimeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $dmTimeSeries);
+                }
+
+                $dmLabel = $derivedMetric->name;
+                if ($derivedMetric->format === 'percentage') {
+                    $dmLabel .= ' (%)';
+                } elseif ($derivedMetric->format === 'currency') {
+                    $dmLabel = '$ ' . $dmLabel;
+                }
+
+                $firstItemIndex = ! empty($items) ? ($items[0]['series_index'] ?? 0) : 0;
+                $seriesCurves[] = [
+                    'label' => $dmLabel,
+                    'key' => 'dm_' . $dmId,
+                    'series_index' => $firstItemIndex,
+                    'metric' => 'dm',
+                    'raw_metric' => 'dm',
+                    'axis_key' => 'dm_' . $dmId,
+                    'axis_title' => $dmLabel,
+                    'currency' => $derivedMetric->format === 'currency',
+                    'percentage' => $derivedMetric->format === 'percentage',
+                    'data' => $dmTimeSeries,
+                ];
+            } else {
+                // Breakdown mode: at least one source series has breakdown configured.
+                // When multiple series have breakdowns defined, align by common breakdown value (intersection).
+                $commonDimValues = null;
+                $combinedTotals = [];
+                $primaryOrder = 'value_desc';
+                $primaryLimit = 5;
+
+                foreach ($breakdownSeriesKeys as $bKey) {
+                    $bInfo = $ssBreakdownData[$bKey];
+                    $seriesDimVals = array_keys($bInfo['grouped']);
+                    if ($commonDimValues === null) {
+                        $commonDimValues = $seriesDimVals;
+                        $primaryOrder = $bInfo['order'] ?? 'value_desc';
+                        $primaryLimit = $bInfo['limit'] ?? 5;
+                    } else {
+                        $commonDimValues = array_values(array_intersect($commonDimValues, $seriesDimVals));
+                    }
+
+                    foreach ($bInfo['totals'] as $dv => $tot) {
+                        $combinedTotals[$dv] = ($combinedTotals[$dv] ?? 0.0) + (float) $tot;
+                    }
+                }
+
+                if (empty($commonDimValues)) {
+                    $commonDimValues = [];
+                }
+
+                // Sort common breakdown values according to order
+                usort($commonDimValues, function ($a, $b) use ($combinedTotals, $primaryOrder) {
+                    if ($primaryOrder === 'value_desc') {
+                        return ($combinedTotals[$b] ?? 0) <=> ($combinedTotals[$a] ?? 0);
+                    } elseif ($primaryOrder === 'value_asc') {
+                        return ($combinedTotals[$a] ?? 0) <=> ($combinedTotals[$b] ?? 0);
+                    } elseif ($primaryOrder === 'alpha_desc') {
+                        return strcasecmp($b, $a);
+                    } else { // alpha_asc
+                        return strcasecmp($a, $b);
+                    }
+                });
+
+                // Apply limit
+                $selectedDimValues = array_slice($commonDimValues, 0, $primaryLimit);
+
+                // Base color and custom naming
+                $firstItem = ! empty($items) ? $items[0] : null;
+                $firstItemIndex = $firstItem ? ($firstItem['series_index'] ?? 0) : 0;
+                $baseColor = ($firstItem && isset($firstItem['series']['metric_colors']['dm']))
+                    ? $firstItem['series']['metric_colors']['dm']
+                    : ($palette[$firstItemIndex % count($palette)]);
+
+                $dmCurves = [];
+                foreach ($selectedDimValues as $dimVal) {
+                    // Build series_data slice for this specific breakdown value
+                    $sliceSeriesData = [];
+                    foreach ($ssBreakdownData as $key => $bdInfo) {
+                        if (! empty($bdInfo['has_breakdown'])) {
+                            $sliceSeriesData[$key] = $bdInfo['grouped'][$dimVal] ?? [];
+                        } else {
+                            $sliceSeriesData[$key] = $bdInfo['flat'] ?? [];
+                        }
+                    }
+
+                    $computePayload = [
+                        'ast' => $ast,
+                        'filters' => [
+                            'startDate' => $dateStart,
+                            'endDate' => $dateEnd,
+                            'period' => $effectiveGranularity,
+                            'groupBy' => [$effectiveGranularity],
+                        ],
+                        'series_data' => $sliceSeriesData,
+                        'derived_metrics' => $derivedResults,
+                    ];
+
+                    $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+                    $data = $result['data'] ?? $result;
+
+                    $dmTimeSeries = [];
+                    if (is_array($data) && isset($data['dates']) && isset($data['values'])) {
+                        foreach ($data['dates'] as $i => $d) {
+                            $dmTimeSeries[$d] = (float) ($data['values'][$i] ?? 0);
+                        }
+                    } elseif (is_array($data) && ! isset($data['dates']) && ! isset($data['datasets'])) {
+                        foreach ($data as $d => $v) {
+                            $dmTimeSeries[$d] = (float) $v;
+                        }
+                    } elseif (is_array($data) && isset($data['chart'])) {
+                        foreach ($data['chart'] as $point) {
+                            $d = $point['date'] ?? $point['label'] ?? null;
+                            $v = $point['value'] ?? $point['y'] ?? reset($point);
+                            if ($d !== null && is_numeric($v)) {
+                                $dmTimeSeries[$d] = (float) $v;
+                            }
+                        }
+                    }
+
+                    if ($derivedMetric->format === 'percentage') {
+                        $dmTimeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $dmTimeSeries);
+                    }
+
+                    $cleanDmName = $derivedMetric->name;
+                    $dmLabel = $cleanDmName . ' - ' . $dimVal;
+                    if ($derivedMetric->format === 'percentage') {
+                        $dmLabel .= ' (%)';
+                    } elseif ($derivedMetric->format === 'currency') {
+                        $dmLabel = '$ ' . $dmLabel;
+                    }
+
+                    $dimSlug = preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($dimVal));
+                    $axisTitle = $derivedMetric->name . ($derivedMetric->format === 'percentage' ? ' (%)' : '');
+
+                    $dmCurves[] = [
+                        'label' => $dmLabel,
+                        'key' => 'dm_' . $dmId . '_' . $dimSlug,
+                        'series_index' => $firstItemIndex,
+                        'metric' => 'dm',
+                        'raw_metric' => 'dm',
+                        'breakdown_value' => $dimVal,
+                        'axis_key' => 'dm_' . $dmId,
+                        'axis_title' => $axisTitle,
+                        'currency' => $derivedMetric->format === 'currency',
+                        'percentage' => $derivedMetric->format === 'percentage',
+                        'data' => $dmTimeSeries,
+                    ];
+                }
+
+                // Generate shades for curves
+                if (! empty($dmCurves) && ! empty($baseColor)) {
+                    $shades = $this->generateMetricShades($baseColor, count($dmCurves), $primaryOrder);
+                    foreach ($dmCurves as $cIdx => &$cRef) {
+                        if (isset($shades[$cIdx])) {
+                            $cRef['color'] = $shades[$cIdx];
+                        }
+                    }
+                    unset($cRef);
+                }
+
+                foreach ($dmCurves as $curve) {
+                    $seriesCurves[] = $curve;
                 }
             }
-
-            if ($derivedMetric->format === 'percentage') {
-                $dmTimeSeries = array_map(fn ($v) => round((float) $v * 100, 4), $dmTimeSeries);
-            }
-
-            $dmLabel = $derivedMetric->name;
-            if ($derivedMetric->format === 'percentage') {
-                $dmLabel .= ' (%)';
-            } elseif ($derivedMetric->format === 'currency') {
-                $dmLabel = '$ ' . $dmLabel;
-            }
-
-            $firstItemIndex = ! empty($items) ? ($items[0]['series_index'] ?? 0) : 0;
-            $seriesCurves[] = [
-                'label' => $dmLabel,
-                'key' => 'dm_' . $dmId,
-                'series_index' => $firstItemIndex,
-                'metric' => 'dm',
-                'raw_metric' => 'dm',
-                'axis_key' => 'dm_' . $dmId,
-                'axis_title' => $dmLabel,
-                'currency' => $derivedMetric->format === 'currency',
-                'percentage' => $derivedMetric->format === 'percentage',
-                'data' => $dmTimeSeries,
-            ];
         }
 
         // 3. Align all series across unified sorted dates

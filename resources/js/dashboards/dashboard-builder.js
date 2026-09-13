@@ -1642,6 +1642,9 @@ export function dashboardBuilder(config = {}) {
                             this.allChannelMetrics = { ...this.allChannelMetrics, [ch]: metrics };
                         });
                     }
+                    if (ch) {
+                        this.fetchBreakdownsForChannel(ch, ss.dependency || '');
+                    }
                 });
             }
 
