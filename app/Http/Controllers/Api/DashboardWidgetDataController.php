@@ -2630,6 +2630,8 @@ class DashboardWidgetDataController extends Controller
 
                         if ($dimVal === null || $dimVal === 'null' || $dimVal === '(not set)') {
                             $dimVal = 'Unknown';
+                        } else {
+                            $dimVal = $this->normalizeBreakdownDimensionValue($dimVal, $ssChannel, $ssBreakdownDim);
                         }
 
                         $val = $this->findMetricValueInPoint($row, $ssMetric);
@@ -3013,6 +3015,42 @@ class DashboardWidgetDataController extends Controller
     }
 
     /**
+     * Normalize breakdown dimension values across channels.
+     * Specifically, Google Search Console page values include the base URL (scheme + host),
+     * whereas Google Analytics (and others) only include the path. Strip the scheme + host
+     * and ensure a leading '/' so they match GA page paths.
+     *
+     * @param string $dimVal
+     * @param string $channel
+     * @param string $dimension
+     * @return string
+     */
+    protected function normalizeBreakdownDimensionValue(string $dimVal, string $channel, string $dimension): string
+    {
+        if ($dimVal === 'Unknown') {
+            return $dimVal;
+        }
+
+        $cleanDim = strtolower(str_replace('dimensions.', '', $dimension));
+        $isPageDimension = in_array($cleanDim, ['page', 'page_path', 'pagepath', 'landing_page', 'url']);
+
+        if ($isPageDimension || $channel === 'google_search_console') {
+            if (preg_match('/^https?:\/\//i', $dimVal)) {
+                $path = parse_url($dimVal, PHP_URL_PATH);
+                $query = parse_url($dimVal, PHP_URL_QUERY);
+                $dimVal = ($path !== null && $path !== '') ? $path : '/';
+                if (! empty($query)) {
+                    $dimVal .= '?' . $query;
+                }
+            } elseif (! str_starts_with($dimVal, '/') && $isPageDimension) {
+                $dimVal = '/' . $dimVal;
+            }
+        }
+
+        return $dimVal;
+    }
+
+    /**
      * Format a series / metric curve label according to user customization rules.
      * Pattern: [ channel ] - [ metric ] - [ breakdown value ] - [ unit ]
      * Guidelines:
@@ -3185,6 +3223,8 @@ class DashboardWidgetDataController extends Controller
 
             if ($dimVal === null || $dimVal === 'null' || $dimVal === '(not set)') {
                 $dimVal = 'Unknown';
+            } else {
+                $dimVal = $this->normalizeBreakdownDimensionValue($dimVal, $channel, $breakdownDim);
             }
 
             $val = $this->findMetricValueInPoint($row, $metric);
