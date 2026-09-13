@@ -2141,5 +2141,21 @@
     "Contact Button Type": "Tipo de botón de contacto",
     "Follow Type": "Tipo de seguimiento",
     "Media Product Type": "Tipo de producto multimedia",
-    "Reaction Type": "Tipo de reacción"
+    "Reaction Type": "Tipo de reacción",
+    "Pie / Donut Chart": "Gráfico de Tarta / Donut",
+    "Pie & Donut Options": "Opciones de Tarta y Donut",
+    "Chart Style": "Estilo de Gráfico",
+    "Donut": "Donut",
+    "Solid Pie": "Tarta Sólida",
+    "Composition Mode": "Modo de Composición",
+    "Dimension Breakdown (e.g. Campaign, Device)": "Desglose por Dimensión (ej. Campaña, Dispositivo)",
+    "Asset Share (Multiple Stores / Accounts)": "Distribución por Recurso (Múltiples Cuentas / Tiendas)",
+    "Multi-Metric Share (e.g. New vs Returning)": "Distribución Multimétrica (ej. Nuevos vs Recurrentes)",
+    "Configure 1 metric and 1 dimension breakdown in the series panel.": "Configura 1 métrica y 1 desglose por dimensión en el panel de series.",
+    "Select 1 metric and multiple assets to compare their distribution.": "Selecciona 1 métrica y múltiples recursos para comparar su distribución.",
+    "Select multiple metrics of comparable units to display their proportions.": "Selecciona múltiples métricas de unidades comparables para mostrar sus proporciones.",
+    "Max Slices (Top N)": "Máximo de Porciones (Top N)",
+    "slices": "porciones",
+    "Remaining slices will be grouped automatically into \"Other\".": "Las porciones restantes se agruparán automáticamente en \"Otros\".",
+    "Other": "Otros"
 }

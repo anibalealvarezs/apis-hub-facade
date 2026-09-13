@@ -1328,6 +1328,10 @@ class DashboardWidgetDataController extends Controller
                 }
             }
 
+            // If pie_chart, transform data into pie/donut dataset format
+            if ($effectiveWidgetType === 'pie_chart') {
+                $data = $this->transformPieChartData($data, $widget, $resolvedControls);
+            }
 
             \Illuminate\Support\Facades\Log::info('[STEP show] Response data', [
                 'widget_id' => $widget->id,
@@ -2220,7 +2224,7 @@ class DashboardWidgetDataController extends Controller
         }
 
         $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'];
-        if ($widget->widget_type === 'table') {
+        if (in_array($widget->widget_type, ['table', 'pie_chart'])) {
             $action = 'chart';
         } elseif (in_array($widget->widget_type, ['tile', 'gauge'])) {
             $action = 'chart';
@@ -4165,4 +4169,189 @@ class DashboardWidgetDataController extends Controller
 
         return (float) ($point['value'] ?? $point['y'] ?? 0);
     }
+
+    /**
+     * Transform raw or multi-series widget data into a normalized pie/donut chart structure.
+     *
+     * @param array $data
+     * @param DashboardWidget $widget
+     * @param array $controls
+     * @return array
+     */
+    protected function transformPieChartData(array $data, DashboardWidget $widget, array $controls): array
+    {
+        $limit = isset($controls['pie_slice_limit']) ? (int) $controls['pie_slice_limit'] : 7;
+        $limit = max(1, min(30, $limit));
+        $pieStyle = $controls['pie_style'] ?? 'donut';
+        $pieMode = $controls['pie_mode'] ?? 'dimension';
+
+        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+        $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+        $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+
+        $slices = []; // [ ['label' => ..., 'value' => float, 'currency' => bool, 'percentage' => bool] ]
+
+        // Case 1: Data has multi-series datasets
+        if (isset($data['datasets']) && is_array($data['datasets'])) {
+            foreach ($data['datasets'] as $ds) {
+                $rawVals = $ds['data'] ?? [];
+                $cleanVals = array_filter(array_map('floatval', (array) $rawVals), fn ($v) => ! is_nan($v));
+                $metricKey = $ds['metric'] ?? $ds['metric_key'] ?? '';
+                $isRatio = ! empty($ds['percentage']) || in_array($metricKey, $ratioMetrics);
+                $isCurrency = ! empty($ds['currency']) || in_array($metricKey, $currencyMetrics);
+
+                if (! empty($cleanVals)) {
+                    $val = $isRatio ? (array_sum($cleanVals) / count($cleanVals)) : array_sum($cleanVals);
+                } else {
+                    $val = 0.0;
+                }
+
+                // Non-negative clamping for pie charts
+                $val = max(0.0, (float) $val);
+
+                $slices[] = [
+                    'label' => $ds['label'] ?? 'Slice',
+                    'value' => $val,
+                    'currency' => $isCurrency,
+                    'percentage' => $isRatio,
+                ];
+            }
+        }
+        // Case 2: Data has summary associative array
+        elseif (isset($data['summary']) && is_array($data['summary'])) {
+            $metrics = $controls['metrics'] ?? array_keys($data['summary']);
+            foreach ($metrics as $m) {
+                if (! isset($data['summary'][$m])) {
+                    continue;
+                }
+                $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $m);
+                $val = max(0.0, (float) ($data['summary'][$m] ?? 0));
+                $isRatio = in_array($cleanKey, $ratioMetrics);
+                $isCurrency = in_array($cleanKey, $currencyMetrics);
+                $label = $metricLabels[$cleanKey] ?? ucfirst(str_replace('_', ' ', $cleanKey));
+
+                $slices[] = [
+                    'label' => $label,
+                    'value' => $val,
+                    'currency' => $isCurrency,
+                    'percentage' => $isRatio,
+                ];
+            }
+        }
+        // Case 3: Data has chart array with rows
+        elseif (isset($data['chart']) && is_array($data['chart']) && ! empty($data['chart'])) {
+            $chartRows = $data['chart'];
+            $firstRow = $chartRows[0];
+            $dateKey = isset($firstRow['daily']) ? 'daily' : 'date';
+            $metricKeys = array_values(array_filter(array_keys($firstRow), fn ($k) => $k !== $dateKey));
+
+            if (count($metricKeys) > 1) {
+                // Multi-metric
+                foreach ($metricKeys as $k) {
+                    $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $k);
+                    $isRatio = in_array($cleanKey, $ratioMetrics);
+                    $isCurrency = in_array($cleanKey, $currencyMetrics);
+                    $label = $metricLabels[$cleanKey] ?? ucfirst(str_replace('_', ' ', $cleanKey));
+
+                    $vals = array_map(fn ($r) => max(0.0, (float) ($r[$k] ?? 0)), $chartRows);
+                    $val = $isRatio ? (count($vals) > 0 ? array_sum($vals) / count($vals) : 0.0) : array_sum($vals);
+
+                    $slices[] = [
+                        'label' => $label,
+                        'value' => $val,
+                        'currency' => $isCurrency,
+                        'percentage' => $isRatio,
+                    ];
+                }
+            } else {
+                // Time-series or single breakdown
+                $singleKey = $metricKeys[0] ?? 'value';
+                $cleanKey = preg_replace('/^trend_(?:total|average)_/', '', $singleKey);
+                $isRatio = in_array($cleanKey, $ratioMetrics);
+                $isCurrency = in_array($cleanKey, $currencyMetrics);
+
+                foreach ($chartRows as $r) {
+                    $rowLabel = $r[$dateKey] ?? $r['label'] ?? 'Point';
+                    $val = max(0.0, (float) ($r[$singleKey] ?? 0));
+                    $slices[] = [
+                        'label' => (string) $rowLabel,
+                        'value' => $val,
+                        'currency' => $isCurrency,
+                        'percentage' => $isRatio,
+                    ];
+                }
+            }
+        }
+
+        // Sort slices descending by value
+        usort($slices, fn ($a, $b) => ($b['value'] <=> $a['value']));
+
+        // Group into Top N and "Other"
+        $topSlices = array_slice($slices, 0, $limit);
+        $remainder = array_slice($slices, $limit);
+
+        $hasCurrency = false;
+        $hasPercentage = false;
+        foreach ($topSlices as $ts) {
+            if (! empty($ts['currency'])) $hasCurrency = true;
+            if (! empty($ts['percentage'])) $hasPercentage = true;
+        }
+
+        if (! empty($remainder)) {
+            $otherSum = 0.0;
+            foreach ($remainder as $rem) {
+                $otherSum += (float) $rem['value'];
+            }
+            if ($otherSum > 0) {
+                $topSlices[] = [
+                    'label' => __('Other'),
+                    'value' => $otherSum,
+                    'currency' => $hasCurrency,
+                    'percentage' => $hasPercentage,
+                    'is_other' => true,
+                ];
+            }
+        }
+
+        $labels = [];
+        $values = [];
+        $bgColors = [];
+
+        $palette = [
+            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1',
+            '#84cc16', '#a855f7', '#eab308', '#0ea5e9', '#d946ef'
+        ];
+
+        foreach ($topSlices as $i => $s) {
+            $labels[] = $s['label'];
+            $values[] = round($s['value'], 4);
+            if (! empty($s['is_other'])) {
+                $bgColors[] = '#94a3b8'; // Slate/gray for Other
+            } else {
+                $bgColors[] = $palette[$i % count($palette)];
+            }
+        }
+
+        $total = array_sum($values);
+
+        return [
+            'labels' => $labels,
+            'datasets' => [
+                [
+                    'data' => $values,
+                    'backgroundColor' => $bgColors,
+                    'borderWidth' => 2,
+                    'borderColor' => 'transparent',
+                    'currency' => $hasCurrency,
+                    'percentage' => $hasPercentage,
+                    'total' => $total,
+                ],
+            ],
+            'total' => $total,
+            'pie_style' => $pieStyle,
+            'pie_mode' => $pieMode,
+        ];
+    }
 }
+

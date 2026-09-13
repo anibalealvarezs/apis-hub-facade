@@ -1081,6 +1081,7 @@ export function dashboardBuilder(config = {}) {
                 tile: 'Number Tile',
                 line_chart: 'Line Chart',
                 bar_chart: 'Bar Chart',
+                pie_chart: 'Pie / Donut Chart',
                 scatter_plot: 'Scatter Plot',
                 combo_chart: 'Combo Chart',
                 table: 'Table',
@@ -1096,13 +1097,13 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
             } else if (sourceType === 'kpi') {
                 if (!kpiId) {
-                    const allowed = ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
+                    const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
                     for (const t of allowed) {
                         filtered[t] = allTypes[t] || defaultLabels[t] || t;
                     }
@@ -1123,7 +1124,7 @@ export function dashboardBuilder(config = {}) {
             } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
-                    : ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
+                    : ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1155,7 +1156,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'combo_chart', 'table', 'gauge'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1171,7 +1172,7 @@ export function dashboardBuilder(config = {}) {
                     typeMap = allTypes;
                 }
             } else if (target.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
+                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'combo_chart', 'table'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1184,6 +1185,7 @@ export function dashboardBuilder(config = {}) {
                     tile: 'Tile',
                     line_chart: 'Line Chart',
                     bar_chart: 'Bar Chart',
+                    pie_chart: 'Pie / Donut Chart',
                     sparkline: 'Sparkline',
                     table: 'Table',
                     gauge: 'Gauge'
@@ -1199,6 +1201,7 @@ export function dashboardBuilder(config = {}) {
                 tile: 'Single large number for totals',
                 line_chart: 'Track continuous trends over time',
                 bar_chart: 'Compare discrete volumes side-by-side',
+                pie_chart: 'Part-to-whole proportions and categorical share',
                 scatter_plot: 'Find correlations and trendlines',
                 combo_chart: 'Dual-axis bars and lines (e.g. MACD)',
                 table: 'Detailed row-by-row data view',
@@ -1259,6 +1262,7 @@ export function dashboardBuilder(config = {}) {
                 tile: '<svg viewBox="0 0 40 24" class="w-full h-full"><text x="20" y="16" text-anchor="middle" font-weight="bold" font-size="14" class="fill-gray-800 dark:fill-gray-200">12K</text><path d="M 28 8 L 32 4 L 36 8 M 32 4 L 32 16" class="stroke-green-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
                 line_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 18 L 12 11 L 20 15 L 28 6 L 36 8" class="stroke-primary-500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="4" cy="18" r="1.5" class="fill-primary-500"/><circle cx="12" cy="11" r="1.5" class="fill-primary-500"/><circle cx="20" cy="15" r="1.5" class="fill-primary-500"/><circle cx="28" cy="6" r="1.5" class="fill-primary-500"/><circle cx="36" cy="8" r="1.5" class="fill-primary-500"/></svg>',
                 bar_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="10" width="6" height="10" rx="1" class="fill-primary-400"/><rect x="17" y="6" width="6" height="14" rx="1" class="fill-primary-600"/><rect x="28" y="14" width="6" height="6" rx="1" class="fill-primary-300"/></svg>',
+                pie_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><circle cx="20" cy="12" r="9" class="stroke-primary-200 dark:stroke-primary-900/50" stroke-width="3" fill="none"/><circle cx="20" cy="12" r="9" class="stroke-primary-500" stroke-width="3" stroke-dasharray="32 57" stroke-dashoffset="14" fill="none"/><circle cx="20" cy="12" r="9" class="stroke-teal-400" stroke-width="3" stroke-dasharray="16 57" stroke-dashoffset="-18" fill="none"/></svg>',
                 scatter_plot: '<svg viewBox="0 0 40 24" class="w-full h-full"><line x1="4" y1="20" x2="36" y2="4" class="stroke-gray-300 dark:stroke-gray-600" stroke-width="1" stroke-dasharray="2 2"/><circle cx="8" cy="17" r="1.5" class="fill-primary-500"/><circle cx="14" cy="13" r="1.5" class="fill-primary-500"/><circle cx="20" cy="15" r="1.5" class="fill-primary-500"/><circle cx="26" cy="8" r="1.5" class="fill-primary-500"/><circle cx="32" cy="6" r="1.5" class="fill-primary-500"/></svg>',
                 combo_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="6" y="12" width="4" height="8" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="15" y="8" width="4" height="12" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="24" y="14" width="4" height="6" rx="0.5" class="fill-primary-400 opacity-60"/><rect x="33" y="6" width="4" height="14" rx="0.5" class="fill-primary-400 opacity-60"/><path d="M 4 16 L 14 7 L 24 12 L 36 4" class="stroke-amber-500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
                 table: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="4" y="3" width="32" height="18" rx="2" class="stroke-primary-500 fill-none" stroke-width="1.5"/><path d="M 4 8 L 36 8" class="stroke-primary-500" stroke-width="1.5"/><path d="M 4 14 L 36 14" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1" stroke-dasharray="1 1"/><path d="M 16 8 L 16 21" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1"/></svg>',
@@ -2663,6 +2667,9 @@ export function dashboardBuilder(config = {}) {
                 max_ratio_inherit: wc.max_ratio === undefined,
                 max_ratio: wc.max_ratio !== undefined ? wc.max_ratio : null,
                 block_first_col: wc.block_first_col !== undefined ? !!wc.block_first_col : true,
+                pie_mode: wc.pie_mode || 'dimension',
+                pie_style: wc.pie_style || 'donut',
+                pie_slice_limit: wc.pie_slice_limit !== undefined ? wc.pie_slice_limit : 7,
                 raw_series: [],
                 dm_assets: wc.dm_assets || {},
                 combo_chart_config: wc.combo_chart_config ? JSON.parse(JSON.stringify(wc.combo_chart_config)) : {},
@@ -3754,6 +3761,12 @@ export function dashboardBuilder(config = {}) {
             }
 
             payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;
+
+            if (this.widgetControlsTarget.widget_type === 'pie_chart') {
+                payload.pie_mode = c.pie_mode || 'dimension';
+                payload.pie_style = c.pie_style || 'donut';
+                payload.pie_slice_limit = c.pie_slice_limit !== undefined ? parseInt(c.pie_slice_limit, 10) : 7;
+            }
 
             this.widgetControlsError = '';
             if (this.widgetControlsTarget.source_type === 'derived_metric') {

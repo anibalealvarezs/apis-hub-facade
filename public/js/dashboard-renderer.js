@@ -873,6 +873,90 @@ window.dashboardRenderer = {
         this.renderChart(containerEl, config);
     },
 
+    // ─── Pie & Donut Chart ───
+
+    renderPieChart(containerEl, data, controls) {
+        const labels = data?.labels ?? [];
+        const datasets = data?.datasets ?? [];
+        const resultFormat = this.getKpiResultFormat(controls);
+
+        if (!labels.length || !datasets.length || !datasets[0]?.data?.length) {
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            return;
+        }
+
+        const pieStyle = data?.pie_style || controls?.pie_style || "donut";
+        const isDonut = pieStyle !== "pie";
+        const total = (datasets[0].data || []).reduce((acc, curr) => acc + (typeof curr === "number" ? curr : 0), 0);
+
+        const mappedDatasets = datasets.map((ds) => ({
+            ...ds,
+            currency: ds.currency ?? (resultFormat?.format === "currency" ? true : undefined),
+            percentage: ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined),
+            borderWidth: 2,
+            borderColor: document.documentElement.classList.contains("dark") ? "#1f2937" : "#ffffff",
+        }));
+
+        const isCurrency = mappedDatasets[0]?.currency;
+        const isPercentage = mappedDatasets[0]?.percentage;
+
+        // Custom plugin to draw center text in Donut charts
+        const centerTextPlugin = {
+            id: "centerTextPlugin_" + Math.random().toString(36).substr(2, 9),
+            beforeDraw: (chart) => {
+                if (!isDonut) return;
+                const { ctx, chartArea } = chart;
+                if (!chartArea) return;
+                const centerX = (chartArea.left + chartArea.right) / 2;
+                const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+                ctx.save();
+                const isDark = document.documentElement.classList.contains("dark");
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                // Subtitle: Total
+                ctx.font = "600 11px Inter, system-ui, sans-serif";
+                ctx.fillStyle = isDark ? "#9ca3af" : "#6b7280";
+                ctx.fillText("TOTAL", centerX, centerY - 10);
+
+                // Value
+                let formattedTotal = this.formatNumber(total);
+                if (isCurrency) {
+                    formattedTotal = this.formatCurrency(total);
+                } else if (isPercentage) {
+                    formattedTotal = total.toFixed(1) + "%";
+                }
+                ctx.font = "700 16px Inter, system-ui, sans-serif";
+                ctx.fillStyle = isDark ? "#f3f4f6" : "#111827";
+                ctx.fillText(formattedTotal, centerX, centerY + 10);
+                ctx.restore();
+            },
+        };
+
+        const config = {
+            type: isDonut ? "doughnut" : "pie",
+            data: { labels, datasets: mappedDatasets },
+            plugins: isDonut ? [centerTextPlugin] : [],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: isDonut ? "65%" : "0%",
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: false,
+                        external: (ctx) => this._externalTooltipHandler(ctx),
+                    },
+                },
+            },
+        };
+
+        this._setAnimation(config, false);
+        this.renderChart(containerEl, config);
+    },
+
     // ─── Table ───
 
     renderTable(containerEl, data, controls) {
@@ -2639,8 +2723,8 @@ window.dashboardRenderer = {
             canvas.addEventListener("dblclick", () => {
                 if (chart.options?.plugins?.zoom) chart.resetZoom();
             });
-            // Build custom HTML legend for multi-dataset charts
-            if (chart.data.datasets && chart.data.datasets.length > 1) {
+            // Build custom HTML legend for multi-dataset charts or pie/donut charts
+            if ((chart.data.datasets && chart.data.datasets.length > 1) || (['pie', 'doughnut'].includes(chart.config.type) && chart.data.labels?.length > 1)) {
                 this._renderCustomLegend(chart, containerEl);
             }
         };
@@ -2651,13 +2735,14 @@ window.dashboardRenderer = {
     /**
      * Build a custom HTML legend below the chart canvas.
      * - CSS Grid with equal-width columns sized to the longest label.
-     * - Collapsible toggle bar showing series count + chevron.
-     * - Click items to toggle dataset visibility.
+     * - Collapsible toggle bar showing series/slice count + chevron.
+     * - Click items to toggle dataset/slice visibility.
      */
     _renderCustomLegend(chart, containerEl) {
         const datasets = chart.data.datasets || [];
         if (datasets.length === 0) return;
-
+        const isPie = ['pie', 'doughnut'].includes(chart.config.type);
+        const labels = chart.data.labels || [];
         const isDark = document.documentElement.classList.contains("dark");
 
         // ── Wrapper ──
@@ -2675,8 +2760,19 @@ window.dashboardRenderer = {
             "color:" + (isDark ? "#A1A1AA" : "#9CA3AF"),
             "transition:color 0.15s",
         ].join(";");
+        const itemsList = isPie
+            ? labels.map((l, i) => {
+                const bg = Array.isArray(datasets[0]?.backgroundColor) ? datasets[0].backgroundColor[i] : '#888';
+                return { label: l || `Slice ${i + 1}`, color: bg, index: i };
+            })
+            : datasets.map((ds, i) => {
+                const isLine = ds.type === 'line';
+                const swatchColor = ds.borderColor || ds.backgroundColor || '#888';
+                return { label: ds.label || `Series ${i + 1}`, color: swatchColor, isLine, index: i, ds };
+            });
+
         toggleBar.innerHTML =
-            `<span>Legend (${datasets.length})</span><span class="legend-chevron" style="font-size:10px;transition:transform 0.2s">▲</span>`;
+            `<span>Legend (${itemsList.length})</span><span class="legend-chevron" style="font-size:10px;transition:transform 0.2s">▲</span>`;
         toggleBar.addEventListener("mouseenter", () => {
             toggleBar.style.color = isDark ? "#E4E4E7" : "#374151";
         });
@@ -2689,7 +2785,7 @@ window.dashboardRenderer = {
         body.className = "chart-legend-body";
 
         // Calculate optimal min column width from longest label
-        const maxLabelLen = Math.max(...datasets.map((ds) => (ds.label || "").length));
+        const maxLabelLen = Math.max(...itemsList.map((item) => (item.label || "").length));
         const minColWidth = Math.max(160, Math.min(320, maxLabelLen * 7.5 + 44));
 
         body.style.cssText = [
@@ -2703,7 +2799,7 @@ window.dashboardRenderer = {
         ].join(";");
 
         // ── Build items ──
-        datasets.forEach((ds, i) => {
+        itemsList.forEach((it) => {
             const item = document.createElement("div");
             item.style.cssText = [
                 "display:flex", "align-items:center", "gap:6px",
@@ -2716,30 +2812,28 @@ window.dashboardRenderer = {
 
             // Color swatch
             const swatch = document.createElement("span");
-            const swatchColor = ds.borderColor || ds.backgroundColor || "#888";
-            const isLine = ds.type === "line";
-            if (isLine) {
+            if (it.isLine) {
                 // Line swatch: short line
                 swatch.style.cssText = [
                     "display:inline-block", "width:18px", "height:3px",
                     "border-radius:2px", "flex-shrink:0",
-                    "background:" + swatchColor,
+                    "background:" + it.color,
                 ].join(";");
             } else {
-                // Bar/area swatch: small rounded rect
+                // Bar/slice swatch: small rounded rect
                 swatch.style.cssText = [
                     "display:inline-block", "width:12px", "height:12px",
                     "border-radius:2px", "flex-shrink:0",
-                    "background:" + (ds.backgroundColor || swatchColor),
-                    "border:1px solid " + (ds.borderColor || "transparent"),
+                    "background:" + it.color,
+                    "border:1px solid " + (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"),
                 ].join(";");
             }
 
             // Label
             const label = document.createElement("span");
             label.style.cssText = "overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
-            label.textContent = ds.label || `Series ${i + 1}`;
-            label.title = ds.label || `Series ${i + 1}`;
+            label.textContent = it.label;
+            label.title = it.label;
 
             item.appendChild(swatch);
             item.appendChild(label);
@@ -2752,14 +2846,22 @@ window.dashboardRenderer = {
                 item.style.background = "transparent";
             });
 
-            // Click → toggle dataset visibility
+            // Click → toggle visibility
             item.addEventListener("click", () => {
-                const meta = chart.getDatasetMeta(i);
-                meta.hidden = meta.hidden === null ? !chart.data.datasets[i].hidden : null;
-                chart.update();
-                const isHidden = meta.hidden;
-                item.style.opacity = isHidden ? "0.35" : "1";
-                label.style.textDecoration = isHidden ? "line-through" : "none";
+                if (isPie) {
+                    chart.toggleDataVisibility(it.index);
+                    chart.update();
+                    const isHidden = !chart.getDataVisibility(it.index);
+                    item.style.opacity = isHidden ? "0.35" : "1";
+                    label.style.textDecoration = isHidden ? "line-through" : "none";
+                } else {
+                    const meta = chart.getDatasetMeta(it.index);
+                    meta.hidden = meta.hidden === null ? !chart.data.datasets[it.index].hidden : null;
+                    chart.update();
+                    const isHidden = meta.hidden;
+                    item.style.opacity = isHidden ? "0.35" : "1";
+                    label.style.textDecoration = isHidden ? "line-through" : "none";
+                }
             });
 
             body.appendChild(item);
@@ -2893,6 +2995,19 @@ window.dashboardRenderer = {
                         " " +
                         yMetricName +
                         ")";
+                } else if (['pie', 'doughnut'].includes(chartType)) {
+                    const label = chart.data.labels?.[el.index] || "";
+                    let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
+                    let formattedVal = this.formatNumber(v);
+                    if (ds.currency || resultFormat?.format === "currency") {
+                        formattedVal = this.formatCurrency(v);
+                    } else if (ds.percentage || resultFormat?.format === "percentage") {
+                        formattedVal = v.toFixed(1) + "%";
+                    }
+                    const total = (ds.data || []).reduce((acc, curr) => acc + (typeof curr === 'number' ? curr : 0), 0);
+                    const pct = total > 0 ? ((v / total) * 100).toFixed(1) + "%" : "0%";
+                    val = (label ? `<span style="color:#9ca3af;margin-right:6px;">${label}:</span>` : "") +
+                          `<span style="font-weight:600;">${formattedVal}</span> <span style="color:#6b7280;font-size:11px;">(${pct})</span>`;
                 } else {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
@@ -3127,6 +3242,9 @@ window.dashboardRenderer = {
                 break;
             case "combo_chart":
                 this.renderComboChart(containerEl, data, controls);
+                break;
+            case "pie_chart":
+                this.renderPieChart(containerEl, data, controls);
                 break;
             default:
                 containerEl.innerHTML =

@@ -976,6 +976,76 @@
                                     </div>
                                 </div>
                             </template>
+
+                            {{-- Card: Pie / Donut Options (Pie chart widgets only) --}}
+                            <template x-if="widgetControlsTarget.widget_type === 'pie_chart'">
+                                <div
+                                    class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div
+                                        class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                                            </svg>
+                                            <span
+                                                class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Pie & Donut Options') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 space-y-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Chart Style') }}</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <button type="button"
+                                                        @click="widgetControlsForm.pie_style = 'donut'"
+                                                        class="py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors"
+                                                        :class="widgetControlsForm.pie_style !== 'pie' ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300' : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'">
+                                                    {{ __('Donut') }}
+                                                </button>
+                                                <button type="button"
+                                                        @click="widgetControlsForm.pie_style = 'pie'"
+                                                        class="py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors"
+                                                        :class="widgetControlsForm.pie_style === 'pie' ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300' : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'">
+                                                    {{ __('Solid Pie') }}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Composition Mode') }}</label>
+                                            <select x-model="widgetControlsForm.pie_mode"
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500">
+                                                <option value="dimension">{{ __('Dimension Breakdown (e.g. Campaign, Device)') }}</option>
+                                                <option value="asset">{{ __('Asset Share (Multiple Stores / Accounts)') }}</option>
+                                                <option value="metric">{{ __('Multi-Metric Share (e.g. New vs Returning)') }}</option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="widgetControlsForm.pie_mode === 'dimension'">
+                                                {{ __('Configure 1 metric and 1 dimension breakdown in the series panel.') }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="widgetControlsForm.pie_mode === 'asset'">
+                                                {{ __('Select 1 metric and multiple assets to compare their distribution.') }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="widgetControlsForm.pie_mode === 'metric'">
+                                                {{ __('Select multiple metrics of comparable units to display their proportions.') }}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Max Slices (Top N)') }}</label>
+                                            <select x-model.number="widgetControlsForm.pie_slice_limit"
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500">
+                                                <option :value="3">3 {{ __('slices') }}</option>
+                                                <option :value="5">5 {{ __('slices') }}</option>
+                                                <option :value="7">7 {{ __('slices') }}</option>
+                                                <option :value="10">10 {{ __('slices') }}</option>
+                                                <option :value="15">15 {{ __('slices') }}</option>
+                                                <option :value="20">20 {{ __('slices') }}</option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Remaining slices will be grouped automatically into "Other".') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
                         {{-- Right Column: Variables Configuration --}}
