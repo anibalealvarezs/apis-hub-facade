@@ -2253,9 +2253,11 @@ class DashboardWidgetDataController extends Controller
     protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
     {
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
-        $dateStart = ! empty($controls['date_start']) ? $controls['date_start'] : now()->subDays(30)->format('Y-m-d');
-        $dateEnd = ! empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
         $granularity = $controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily';
+        $dateStart = ! empty($controls['date_start']) 
+            ? $controls['date_start'] 
+            : ($granularity === 'lifetime' ? '2010-01-01' : now()->subDays(30)->format('Y-m-d'));
+        $dateEnd = ! empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
         $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
         $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
         $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
@@ -2318,7 +2320,10 @@ class DashboardWidgetDataController extends Controller
 
                 $seriesBreakdown = $series['breakdown'] ?? $controls['series_breakdown'][$sIdx] ?? null;
                 $breakdownDim = is_array($seriesBreakdown) ? ($seriesBreakdown['dimension'] ?? null) : $seriesBreakdown;
-                $breakdownLimit = is_array($seriesBreakdown) ? (int) ($seriesBreakdown['limit'] ?? 5) : 5;
+                $defaultBreakdownLimit = ($widget->widget_type === 'pie_chart' && isset($controls['pie_slice_limit']))
+                    ? (int) $controls['pie_slice_limit']
+                    : 5;
+                $breakdownLimit = is_array($seriesBreakdown) ? (int) ($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit;
                 $breakdownLimit = max(1, min(30, $breakdownLimit));
                 $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
 
@@ -2727,12 +2732,19 @@ class DashboardWidgetDataController extends Controller
                 } elseif ($op === 'is_not_null') {
                     $filterPayload = ['operator' => 'is_not_null'];
                 } elseif ($op === 'in' || $op === 'not_in') {
-                    $valArray = is_array($val) ? array_values(array_filter($val, fn ($v) => $v !== null && $v !== '')) : [$val];
+                    if (is_string($val) && str_contains($val, ',')) {
+                        $rawParts = explode(',', $val);
+                    } elseif (is_array($val)) {
+                        $rawParts = $val;
+                    } else {
+                        $rawParts = [$val];
+                    }
+                    $valArray = array_values(array_filter(array_map('trim', $rawParts), fn ($v) => $v !== ''));
                     if (! empty($valArray)) {
                         $filterPayload = ['operator' => $op, 'value' => $valArray];
                     }
                 } elseif ($val !== null && $val !== '') {
-                    $filterPayload = ['operator' => $op, 'value' => $val];
+                    $filterPayload = ['operator' => $op, 'value' => is_string($val) ? trim($val) : $val];
                 }
 
                 if ($filterPayload !== null) {

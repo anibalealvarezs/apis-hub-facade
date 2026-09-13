@@ -1033,13 +1033,14 @@
                                         <div>
                                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Max Slices (Top N)') }}</label>
                                             <select x-model.number="widgetControlsForm.pie_slice_limit"
+                                                    @change="markWidgetControlsDirty()"
                                                     class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500">
-                                                <option :value="3">3 {{ __('slices') }}</option>
-                                                <option :value="5">5 {{ __('slices') }}</option>
-                                                <option :value="7">7 {{ __('slices') }}</option>
-                                                <option :value="10">10 {{ __('slices') }}</option>
-                                                <option :value="15">15 {{ __('slices') }}</option>
-                                                <option :value="20">20 {{ __('slices') }}</option>
+                                                <option value="3">3 {{ __('slices') }}</option>
+                                                <option value="5">5 {{ __('slices') }}</option>
+                                                <option value="7">7 {{ __('slices') }}</option>
+                                                <option value="10">10 {{ __('slices') }}</option>
+                                                <option value="15">15 {{ __('slices') }}</option>
+                                                <option value="20">20 {{ __('slices') }}</option>
                                             </select>
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Remaining slices will be grouped automatically into "Other".') }}</p>
                                         </div>
@@ -2465,12 +2466,12 @@
                                         @change="markWidgetControlsDirty()"
                                         class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
                                     >
-                                        <option value="in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Contains (In)') }}</option>
-                                        <option value="not_in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Does not contain (Not In)') }}</option>
+                                        <option value="like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Contains substring (Like)') }}</option>
+                                        <option value="not_like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Does not contain substring (Not Like)') }}</option>
+                                        <option value="in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('In List (Exact match)') }}</option>
+                                        <option value="not_in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not In List (Exact match)') }}</option>
                                         <option value="eq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Equals (=)') }}</option>
                                         <option value="neq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not Equals (!=)') }}</option>
-                                        <option value="like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Matches Pattern (Like)') }}</option>
-                                        <option value="not_like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Does Not Match Pattern (Not Like)') }}</option>
                                         <option value="is_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Empty / Null') }}</option>
                                         <option value="is_not_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Not Empty / Not Null') }}</option>
                                     </select>
@@ -2483,7 +2484,7 @@
                                             type="text"
                                             x-model="flt.value"
                                             @input="markWidgetControlsDirty()"
-                                            :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated...') }}' : '{{ __('Filter value...') }}'"
+                                            :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated exact values...') }}' : (flt.operator === 'like' || flt.operator === 'not_like' ? '{{ __('Partial text or keyword (e.g. brand)...') }}' : '{{ __('Filter value...') }}')"
                                             class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-3 focus:ring-primary-500 focus:border-primary-500">
                                     </template>
                                     <template x-if="flt.operator === 'is_null' || flt.operator === 'is_not_null'">

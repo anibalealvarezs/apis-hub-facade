@@ -3836,7 +3836,9 @@ export function dashboardBuilder(config = {}) {
                     metric_namings: (s.metric_namings && typeof s.metric_namings === 'object') ? { ...s.metric_namings } : {},
                     breakdown: (s.breakdown && s.breakdown.dimension) ? {
                         dimension: s.breakdown.dimension,
-                        limit: parseInt(s.breakdown.limit, 10) || 5,
+                        limit: (this.widgetControlsTarget.widget_type === 'pie_chart' && payload.pie_slice_limit !== undefined) 
+                            ? payload.pie_slice_limit 
+                            : (parseInt(s.breakdown.limit, 10) || 5),
                         order: s.breakdown.order || 'value_desc'
                     } : null,
                     filters: Array.isArray(s.filters) ? s.filters.filter(f => f.dimension).map(f => ({
