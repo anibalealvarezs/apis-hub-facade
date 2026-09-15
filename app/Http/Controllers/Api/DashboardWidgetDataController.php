@@ -299,12 +299,25 @@ class DashboardWidgetDataController extends Controller
                             $series['dates']
                         );
 
+                        $anomalyMetric = $resolvedControls['metrics'][0]
+                            ?? ($widget->customKpi->filters['_ui_state']['dependent_metric'] ?? null);
+                        $anomalyCleanMetric = preg_replace('/^trend_(?:total|average)_/', '', (string) $anomalyMetric);
+                        $anomalyRatioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                        $anomalyCurrencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                        $isAnomalyRatio = in_array($anomalyCleanMetric, $anomalyRatioMetrics, true);
+                        $isAnomalyCurrency = in_array($anomalyCleanMetric, $anomalyCurrencyMetrics, true);
+
+                        $anomalyValues = array_map(fn ($v) => (float) ($v ?? 0), $series['values'] ?? []);
+                        if ($isAnomalyRatio) {
+                            $anomalyValues = array_map(fn ($v) => round($v * 100, 4), $anomalyValues);
+                        }
+
                         $data = [
                             'labels' => $series['dates'],
                             'datasets' => [
                                 [
                                     'label' => $widget->name ?: 'Metric',
-                                    'data' => $series['values'],
+                                    'data' => $anomalyValues,
                                     'borderColor' => '#3b82f6',
                                     'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
                                     'fill' => true,
@@ -313,6 +326,8 @@ class DashboardWidgetDataController extends Controller
                                     'pointBackgroundColor' => $pointBg,
                                     'pointBorderColor' => $pointBorder,
                                     'pointBorderWidth' => $pointBorderWidth,
+                                    'percentage' => $isAnomalyRatio,
+                                    'currency' => $isAnomalyCurrency,
                                 ],
                             ],
                             'anomaly_dates' => array_keys($anomalyDates),
