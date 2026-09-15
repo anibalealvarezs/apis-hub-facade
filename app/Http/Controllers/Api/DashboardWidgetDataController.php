@@ -1011,6 +1011,39 @@ class DashboardWidgetDataController extends Controller
                     'columns' => $columns,
                     'rows' => $rows,
                 ];
+            } elseif (in_array($effectiveWidgetType, ['tile', 'gauge']) && isset($data['labels']) && isset($data['datasets'])) {
+                $firstDataset = $data['datasets'][0] ?? null;
+                $seriesData = $firstDataset['data'] ?? [];
+                $cleanKey = $firstDataset['metric_key'] ?? $firstDataset['metric'] ?? 'value';
+                $lastValue = ! empty($seriesData) ? (float) end($seriesData) : 0.0;
+                $prevValue = count($seriesData) > 1 ? (float) $seriesData[count($seriesData) - 2] : null;
+
+                $data = [
+                    'value' => $lastValue,
+                    'current' => $lastValue,
+                    'previous' => $prevValue,
+                    'label' => $firstDataset['label'] ?? ucfirst($cleanKey),
+                ];
+
+                if (! empty($seriesData)) {
+                    $numericValues = array_filter($seriesData, fn ($v) => is_numeric($v));
+                    if (! empty($numericValues)) {
+                        $maxValue = max($numericValues);
+                        $minValue = min($numericValues);
+
+                        if (str_contains($cleanKey, 'position')) {
+                            $data['min'] = (float) $maxValue;
+                            $data['max'] = $minValue > 0 ? (float) $minValue : 1.0;
+                        } else {
+                            $data['min'] = 0.0;
+                            $data['max'] = $maxValue > 0 ? (float) $maxValue : 1.0;
+                        }
+                    }
+                }
+            } elseif ($effectiveWidgetType === 'sparkline' && isset($data['labels']) && isset($data['datasets'])) {
+                $firstDataset = $data['datasets'][0] ?? null;
+                $seriesData = $firstDataset['data'] ?? [];
+                $data = ['values' => array_map(fn ($v) => (float) ($v ?? 0), $seriesData)];
             } elseif (in_array($effectiveWidgetType, ['line_chart', 'bar_chart', 'sparkline', 'combo_chart', 'tile', 'gauge']) && isset($data['chart']) && is_array($data['chart'])) {
                 $chartData = $data['chart'];
 

@@ -11,6 +11,10 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Tile, Gauge & Sparkline Support for Filtered/Multiseries Data (2026-09-14)
+- **Problem:** When widgets of type `tile`, `gauge`, or `sparkline` used series-level filters (e.g. `dimensions.sessionDefaultChannelGroup = 'Organic Search'`) or breakdowns, `handleMetricSource()` routed the request through `handleMultiSeriesSource()`, which returns chart-shaped data (`labels` and `datasets`). In `show()`, transformation only existed for `table` and for raw `chart` arrays, leaving `tile` with raw `labels`/`datasets`. As a result, the frontend renderer looked for `data.value` / `data.current`, found `null`, and defaulted to displaying `0`.
+- **Fix:** In `DashboardWidgetDataController::show()`, added transformation branches for `tile`, `gauge`, and `sparkline` when `labels` and `datasets` are returned: extracts the latest point (`end($seriesData)`) as `value`/`current`, the previous point as `previous`, computes `min`/`max`, and formats labels properly.
+
 ### Widget Series Breakdown and Filtering Support (2026-09-08)
 - **Problem:** Dashboard widgets only supported aggregate/global time series without multidimensional segment breakdowns or granular series-level filtering.
 - **Solution:**
