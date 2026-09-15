@@ -1157,25 +1157,39 @@ class DashboardWidgetDataController extends Controller
                                 $values = array_map(fn ($v) => round($v * 100, 4), $values);
                             }
 
-                            $customMetricColor = $controls['series_metric_colors'][0][$key]
-                                ?? $controls['series_metric_colors']['0'][$key]
-                                ?? $controls['series_metric_colors'][0][$cleanKey]
-                                ?? $controls['series_metric_colors']['0'][$cleanKey]
-                                ?? ($controls['metric_colors'][$key] ?? $controls['metric_colors'][$cleanKey] ?? null);
+                            $customMetricColor = $resolvedControls['raw_series'][0]['metric_colors'][$key]
+                                ?? $resolvedControls['raw_series'][0]['metric_colors'][$cleanKey]
+                                ?? $resolvedControls['series_metric_colors'][0][$key]
+                                ?? $resolvedControls['series_metric_colors']['0'][$key]
+                                ?? $resolvedControls['series_metric_colors'][0][$cleanKey]
+                                ?? $resolvedControls['series_metric_colors']['0'][$cleanKey]
+                                ?? ($resolvedControls['metric_colors'][$key] ?? $resolvedControls['metric_colors'][$cleanKey] ?? null);
+
+                            \Illuminate\Support\Facades\Log::info('[COLOR_DEBUG] Single-series color resolution', [
+                                'widget_id' => $widget->id,
+                                'key' => $key,
+                                'cleanKey' => $cleanKey,
+                                'customMetricColor' => $customMetricColor,
+                                'has_series_metric_colors' => isset($resolvedControls['series_metric_colors']),
+                                'series_metric_colors_keys' => isset($resolvedControls['series_metric_colors']) ? array_keys($resolvedControls['series_metric_colors']) : '__NOT_SET__',
+                                'series_metric_colors_0' => $resolvedControls['series_metric_colors'][0] ?? $resolvedControls['series_metric_colors']['0'] ?? '__NOT_SET__',
+                                'has_raw_series' => isset($resolvedControls['raw_series']),
+                                'raw_series_0_metric_colors' => $resolvedControls['raw_series'][0]['metric_colors'] ?? '__NOT_SET__',
+                            ]);
 
                             $color = ! empty($customMetricColor) ? $customMetricColor : $palette[$idx % count($palette)];
 
                             $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
                             $isCurrency = in_array($cleanKey, $currencyMetrics);
 
-                            $metricNaming = $controls['series_metric_namings'][0][$key]
-                                ?? $controls['series_metric_namings']['0'][$key]
-                                ?? $controls['series_metric_namings'][0][$cleanKey]
-                                ?? $controls['series_metric_namings']['0'][$cleanKey]
-                                ?? ($controls['metric_namings'][$key] ?? $controls['metric_namings'][$cleanKey] ?? []);
+                            $metricNaming = $resolvedControls['series_metric_namings'][0][$key]
+                                ?? $resolvedControls['series_metric_namings']['0'][$key]
+                                ?? $resolvedControls['series_metric_namings'][0][$cleanKey]
+                                ?? $resolvedControls['series_metric_namings']['0'][$cleanKey]
+                                ?? ($resolvedControls['metric_namings'][$key] ?? $resolvedControls['metric_namings'][$cleanKey] ?? []);
 
-                            $channel = $controls['channel'] ?? $controls['series_channels'][0] ?? $controls['series_channels']['0'] ?? '';
-                            $dep = $controls['dependency'] ?? $controls['series_dependencies'][0] ?? $controls['series_dependencies']['0'] ?? null;
+                            $channel = $resolvedControls['channel'] ?? $resolvedControls['series_channels'][0] ?? $resolvedControls['series_channels']['0'] ?? '';
+                            $dep = $resolvedControls['dependency'] ?? $resolvedControls['series_dependencies'][0] ?? $resolvedControls['series_dependencies']['0'] ?? null;
 
                             $label = $this->formatSeriesMetricLabel(
                                 $channel,
@@ -2198,6 +2212,18 @@ class DashboardWidgetDataController extends Controller
                 || (! empty($rawSeries[0]['filters']));
         }
 
+        \Illuminate\Support\Facades\Log::info('[COLOR_DEBUG] handleMetricSource path decision', [
+            'widget_id' => $widget->id,
+            'hasMultiSeries' => $hasMultiSeries,
+            'rawSeries_count' => is_array($rawSeries) ? count($rawSeries) : 'null',
+            'rawSeries_0_type' => $rawSeries[0]['type'] ?? '__NOT_SET__',
+            'rawSeries_0_breakdown' => $rawSeries[0]['breakdown']['dimension'] ?? '__NOT_SET__',
+            'rawSeries_0_filters' => $rawSeries[0]['filters'] ?? '__NOT_SET__',
+            'rawSeries_0_metric_colors' => $rawSeries[0]['metric_colors'] ?? '__NOT_SET__',
+            'has_series_metric_colors_in_controls' => isset($controls['series_metric_colors']),
+            'series_metric_colors' => $controls['series_metric_colors'] ?? '__NOT_SET__',
+        ]);
+
         if ($hasMultiSeries) {
             return $this->handleMultiSeriesSource($project, $widget, $controls, $rawSeries);
         }
@@ -2460,6 +2486,16 @@ class DashboardWidgetDataController extends Controller
                         }
 
                         $customMetricColor = $seriesMetricColors[$metric] ?? $seriesMetricColors[$cleanMetric] ?? null;
+
+                        \Illuminate\Support\Facades\Log::info('[COLOR_DEBUG] Multi-series non-breakdown color resolution', [
+                            'widget_id' => $widget->id,
+                            'sIdx' => $sIdx,
+                            'metric' => $metric,
+                            'cleanMetric' => $cleanMetric,
+                            'customMetricColor' => $customMetricColor,
+                            'seriesMetricColors' => $seriesMetricColors,
+                            'series_metric_colors_source' => isset($series['metric_colors']) ? 'series.metric_colors' : (isset($controls['series_metric_colors'][$sIdx]) ? 'controls.smc[int]' : (isset($controls['series_metric_colors'][(string)$sIdx]) ? 'controls.smc[str]' : 'fallback_empty')),
+                        ]);
 
                         $seriesCurves[] = [
                             'label' => $formattedLabel,
