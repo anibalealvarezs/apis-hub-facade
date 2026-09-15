@@ -1038,6 +1038,7 @@ class DashboardWidgetDataController extends Controller
                     'current' => $lastValue,
                     'previous' => $prevValue,
                     'label' => $firstDataset['label'] ?? ucfirst($cleanKey),
+                    'percentage' => (bool) ($firstDataset['percentage'] ?? false),
                 ];
 
                 if (! empty($seriesData)) {
@@ -1128,6 +1129,7 @@ class DashboardWidgetDataController extends Controller
                                 'current' => $value,
                                 'previous' => $prevValue,
                                 'label' => $metricLabels[$ck] ?? ucfirst($ck),
+                                'percentage' => in_array($ck, $ratioMetrics),
                             ];
 
                             if (! empty($allValues)) {

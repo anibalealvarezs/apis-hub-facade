@@ -611,7 +611,11 @@ window.dashboardRenderer = {
         const label = data?.label ?? resultFormat?.label ?? "";
         let format = data?.format ?? resultFormat?.format ?? "number";
 
-        if (format === "percentage" && resultFormat?.multiply) {
+        if (
+            format === "percentage" &&
+            !data?.percentage &&
+            resultFormat?.multiply
+        ) {
             value = value * resultFormat.multiply;
         }
 
