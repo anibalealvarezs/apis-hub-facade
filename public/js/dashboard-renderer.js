@@ -326,6 +326,9 @@ window.dashboardRenderer = {
                     "remove_unknown",
                     "combo_chart_config",
                     "combo_series_config",
+                    "series_metric_colors",
+                    "series_metric_namings",
+                    "raw_series",
                 ];
                 const overrides = {};
                 for (const key of overrideKeys) {
