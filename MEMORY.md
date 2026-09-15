@@ -46,6 +46,18 @@
   - Frontend: `renderTile` now only multiplies when `!data?.percentage` (same contract as the chart guards).
 - **Verification:** `php -l` and `node --check` pass; diff touches only the two tile payload builders + `renderTile`. Tie into the pending color/anomaly commit once verified on prod.
 
+### Tile "Lower Is Better" Trend Coloring (2026-09-14)
+- **Problem:** In tiles, a metric falling vs the previous period was always red and a rising one always green, so "less is better" metrics (position, bounce_rate) showed the wrong signal (e.g. bounce rising → green).
+- **Root Cause:** `renderTile` (`public/js/dashboard-renderer.js`) computed `isUp = changePercent >= 0` for color/arrow and ignored `lower_is_better`. Only `renderSparkline` honored the flag; `renderTile` did not. Backend never sends the flag (no `lower_is_better` in `app/`); it is derived frontend-side from `METRIC_FORMATS` / `ratioFormats` via `getKpiResultFormat()`.
+- **Fix (uncommitted):**
+  - `renderTile` now computes `improved = lowerIsBetter ? changePercent <= 0 : changePercent >= 0`, green when improved. `lowerIsBetter` = `data?.lower_is_better ?? resultFormat?.lower_is_better ?? false`.
+  - Added `lower_is_better` to the metric catalog (`METRIC_FORMATS`): `cpc`, `cpm`, `cost_per_result`, and new `frequency` entry (FB Marketing: impressions/reach — higher = ad fatigue).
+  - Added `lower_is_better` to the KPI ratio formats: `spend/clicks` (CPC), `spend/impressions` (CPM), `spend/conversions` (CPA), `spend/results` (Cost/Result), `spend/sessions` (Cost/Session), `bounce_rate/clicks`.
+  - `position` and `bounce_rate` already had the flag; GSC/GA4 have no other lower-is-better metrics; FB Organic has none (all reach/engagement/views metrics are higher-better).
+- **Reasoned per-channel audit (no flag = higher-better/neutral):** GSC → lower: position; GA4 → lower: bounce_rate; FB Marketing → lower: cpc, cpm, cpa (spend/conversions), cost_per_result, cost/session, frequency; spend kept neutral (budget input, not efficiency); FB Organic → none lower. `purchase_roas`, `aov`, `revenue`, `ctr`, `result_rate`, `conversions`, `reach`, `impressions`, `clicks`, sessions/pageviews/duration, engagement, followers, views, etc. are higher-better.
+- **Note (not changed):** `renderGauge` colors by fill % toward max, so lower-is-better metrics would fill green at high values; it has its own `>1.0` value normalization but no `lower_is_better` inversion. Not touched (tile-scoped fix); flag for a future gauge pass.
+- **Verification:** `node --check` passes.
+
 ### Tile, Gauge & Sparkline Support for Filtered/Multiseries Data (2026-09-14)
 - **Problem:** When widgets of type `tile`, `gauge`, or `sparkline` used series-level filters (e.g. `dimensions.sessionDefaultChannelGroup = 'Organic Search'`) or breakdowns, `handleMetricSource()` routed the request through `handleMultiSeriesSource()`, which returns chart-shaped data (`labels` and `datasets`). In `show()`, transformation only existed for `table` and for raw `chart` arrays, leaving `tile` with raw `labels`/`datasets`. As a result, the frontend renderer looked for `data.value` / `data.current`, found `null`, and defaulted to displaying `0`.
 - **Fix:** In `DashboardWidgetDataController::show()`, added transformation branches for `tile`, `gauge`, and `sparkline` when `labels` and `datasets` are returned: extracts the latest point (`end($seriesData)`) as `value`/`current`, the previous point as `previous`, computes `min`/`max`, and formats labels properly.

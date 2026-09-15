@@ -9,8 +9,18 @@ window.dashboardRenderer = {
     _pinnedTooltips: new Map(),
     METRIC_FORMATS: {
         spend: { label: "Spend", format: "currency", prefix: "$" },
-        cpc: { label: "CPC", format: "currency", prefix: "$" },
-        cpm: { label: "CPM", format: "currency", prefix: "$" },
+        cpc: {
+            label: "CPC",
+            format: "currency",
+            prefix: "$",
+            lower_is_better: true,
+        },
+        cpm: {
+            label: "CPM",
+            format: "currency",
+            prefix: "$",
+            lower_is_better: true,
+        },
         revenue: { label: "Revenue", format: "currency", prefix: "$" },
         purchase_roas: { label: "ROAS", format: "currency", prefix: "$" },
         aov: { label: "AOV", format: "currency", prefix: "$" },
@@ -18,6 +28,12 @@ window.dashboardRenderer = {
             label: "Cost/Result",
             format: "currency",
             prefix: "$",
+            lower_is_better: true,
+        },
+        frequency: {
+            label: "Frequency",
+            format: "number",
+            lower_is_better: true,
         },
         result_rate: {
             label: "Result Rate",
@@ -123,31 +139,37 @@ window.dashboardRenderer = {
                     label: "Bounce Rate",
                     format: "percentage",
                     multiply: 100,
+                    lower_is_better: true,
                 },
                 "spend/clicks": {
                     label: "CPC",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/impressions": {
                     label: "CPM",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/conversions": {
                     label: "CPA",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/results": {
                     label: "Cost/Result",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/sessions": {
                     label: "Cost/Session",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "revenue/spend": {
                     label: "ROAS",
@@ -622,11 +644,16 @@ window.dashboardRenderer = {
         let trendHtml = "";
         let changePercent = null;
 
+        const lowerIsBetter =
+            data?.lower_is_better ?? resultFormat?.lower_is_better ?? false;
+
         if (previous !== null && previous !== 0) {
             changePercent = ((value - previous) / Math.abs(previous)) * 100;
-            const isUp = changePercent >= 0;
-            const arrow = isUp ? "▲" : "▼";
-            const color = isUp ? "text-green-500" : "text-red-500";
+            const improved = lowerIsBetter
+                ? changePercent <= 0
+                : changePercent >= 0;
+            const arrow = improved ? "▲" : "▼";
+            const color = improved ? "text-green-500" : "text-red-500";
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
