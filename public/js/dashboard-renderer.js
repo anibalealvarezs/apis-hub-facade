@@ -1659,7 +1659,7 @@ window.dashboardRenderer = {
                                 "",
                             label: (ctx) => {
                                 const dsLabel =
-                                    ctx.dataset.label || yMetricName;
+                                    yMetricName || ctx.dataset.label;
                                 let val = ctx.parsed.y;
                                 if (ctx.dataset?.percentage)
                                     return val.toFixed(1) + "% " + dsLabel;
