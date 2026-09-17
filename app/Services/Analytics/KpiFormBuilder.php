@@ -1021,7 +1021,7 @@ class KpiFormBuilder
                                         ->columnSpan(2)
                                         ->defaultItems(1)
                                         ->minItems(0)
-                                        ->visible(fn (Get $get) => in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger', 'calculate_macd'])),
+                                        ->visible(fn (Get $get) => in_array($get('calculation_type'), ['calculate_regression', 'calculate_elasticity', 'calculate_granger'])),
                                 ])
                                 ->columns([
                                     'sm' => 1,
