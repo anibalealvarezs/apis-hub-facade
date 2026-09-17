@@ -2418,6 +2418,143 @@
                     $seriesGeneralNaming = $series['naming'] ?? null;
 
                     if (!empty($breakdownDim)) {
+                        // If widget is a table and granularity is lifetime, replace granularity/date with the breakdown dimension
+                        // as rows, and list all requested metrics across the columns instead of fanning out curves.
+                        if ($widget->widget_type === 'table' && $granularity === 'lifetime') {
+                            $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
+                            if (!is_array($rawRows)) {
+                                $rawRows = [];
+                            }
+
+                            $dimKeysToTry = [
+                                $breakdownDim,
+                                str_replace('dimensions.', '', $breakdownDim),
+                                strtolower($breakdownDim),
+                                strtolower(str_replace('dimensions.', '', $breakdownDim)),
+                            ];
+
+                            // Group and aggregate metrics per breakdown dimension item
+                            $groupedRows = []; // [dimVal => [metric => sum]]
+                            $firstMetric = $metrics[0] ?? 'value';
+
+                            foreach ($rawRows as $row) {
+                                $dimVal = null;
+                                foreach ($dimKeysToTry as $dk) {
+                                    if (isset($row[$dk]) && $row[$dk] !== null && $row[$dk] !== '') {
+                                        $dimVal = (string)$row[$dk];
+                                        break;
+                                    }
+                                }
+
+                                if ($dimVal === null || $dimVal === 'null' || $dimVal === '(not set)') {
+                                    $dimVal = 'Unknown';
+                                } else {
+                                    $dimVal = $this->normalizeBreakdownDimensionValue($dimVal, $channel, $breakdownDim);
+                                }
+
+                                if (!isset($groupedRows[$dimVal])) {
+                                    $groupedRows[$dimVal] = [];
+                                    foreach ($metrics as $m) {
+                                        $groupedRows[$dimVal][$m] = 0.0;
+                                    }
+                                }
+
+                                foreach ($metrics as $m) {
+                                    $val = $this->findMetricValueInPoint($row, $m);
+                                    $cleanM = preg_replace('/^trend_(?:total|average)_/', '', $m);
+                                    // For position/average metrics, we keep the direct value; for cumulative metrics, sum
+                                    if (str_contains($cleanM, 'position')) {
+                                        $groupedRows[$dimVal][$m] = (float)$val;
+                                    } else {
+                                        $groupedRows[$dimVal][$m] += (float)$val;
+                                    }
+                                }
+                            }
+
+                            // Sort dimension values by order
+                            $dimValues = array_keys($groupedRows);
+                            usort($dimValues, function ($a, $b) use ($groupedRows, $firstMetric, $breakdownOrder) {
+                                $valA = $groupedRows[$a][$firstMetric] ?? 0;
+                                $valB = $groupedRows[$b][$firstMetric] ?? 0;
+                                if ($breakdownOrder === 'value_desc') {
+                                    return $valB <=> $valA;
+                                } elseif ($breakdownOrder === 'value_asc') {
+                                    return $valA <=> $valB;
+                                } elseif ($breakdownOrder === 'alpha_desc') {
+                                    return strcasecmp($b, $a);
+                                } else {
+                                    return strcasecmp($a, $b);
+                                }
+                            });
+
+                            // Apply limit
+                            $selectedDimValues = array_slice($dimValues, 0, $breakdownLimit);
+
+                            // Build table columns
+                            $cleanDimName = ucwords(str_replace(['_', 'dimensions.'], [' ', ''], $breakdownDim));
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+
+                            $columns = [
+                                [
+                                    'key'   => 'dimension',
+                                    'label' => $cleanDimName,
+                                ],
+                            ];
+
+                            foreach ($metrics as $m) {
+                                $cleanM = preg_replace('/^trend_(?:total|average)_/', '', $m);
+                                $isRatio = in_array($cleanM, $ratioMetrics, true);
+                                $isCurr = in_array($cleanM, $currencyMetrics, true);
+                                $isTime = in_array($cleanM, $timeMetrics, true);
+                                $mLabel = $metricLabels[$cleanM] ?? ucwords(str_replace('_', ' ', $cleanM));
+
+                                $naming = $seriesMetricNamings[$m] ?? $seriesMetricNamings[$cleanM] ?? [];
+                                if (!empty($naming['custom_name'])) {
+                                    $mLabel = trim($naming['custom_name']);
+                                }
+
+                                $format = 'number';
+                                if ($isRatio) {
+                                    $format = 'percentage';
+                                } elseif ($isCurr) {
+                                    $format = 'currency';
+                                } elseif ($isTime) {
+                                    $format = 'string';
+                                }
+
+                                $columns[] = [
+                                    'key'    => $cleanM,
+                                    'label'  => $isRatio ? $mLabel.' (%)' : $mLabel,
+                                    'format' => $format,
+                                ];
+                            }
+
+                            // Build table rows
+                            $rows = [];
+                            foreach ($selectedDimValues as $dimVal) {
+                                $row = ['dimension' => $dimVal];
+                                foreach ($metrics as $m) {
+                                    $cleanM = preg_replace('/^trend_(?:total|average)_/', '', $m);
+                                    $val = $groupedRows[$dimVal][$m] ?? 0.0;
+                                    if (in_array($cleanM, $ratioMetrics, true)) {
+                                        $val = round((float)$val * 100, 4);
+                                    } elseif (in_array($cleanM, $timeMetrics, true)) {
+                                        $val = gmdate('H:i:s', (int)$val);
+                                    } else {
+                                        $val = round((float)$val, 4);
+                                    }
+                                    $row[$cleanM] = $val;
+                                }
+                                $rows[] = $row;
+                            }
+
+                            return [
+                                'columns' => $columns,
+                                'rows'    => $rows,
+                            ];
+                        }
+
                         $firstMetric = $metrics[0];
                         $cleanFirstMetric = preg_replace('/^trend_(?:total|average)_/', '', $firstMetric);
                         $baseColor = $seriesMetricColors[$firstMetric]

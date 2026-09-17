@@ -833,12 +833,18 @@ export function dashboardBuilder(config = {}) {
             if (!series.breakdown.order) {
                 series.breakdown.order = 'value_desc';
             }
-            // Single-metric enforcement: if multiple metrics selected, slice to 1
-            if (Array.isArray(series.allowed_metrics) && series.allowed_metrics.length > 1) {
-                series.allowed_metrics = [series.allowed_metrics[0]];
-            }
-            if (Array.isArray(series.metrics) && series.metrics.length > 1) {
-                series.metrics = [series.metrics[0]];
+
+            const isLifetimeTable = (this.widgetControlsForm.widget_type || this.widgetControlsTarget?.widget_type) === 'table'
+                && this.widgetControlsForm.granularity === 'lifetime';
+
+            // Single-metric enforcement: if multiple metrics selected, slice to 1 (except lifetime table with breakdown)
+            if (!isLifetimeTable) {
+                if (Array.isArray(series.allowed_metrics) && series.allowed_metrics.length > 1) {
+                    series.allowed_metrics = [series.allowed_metrics[0]];
+                }
+                if (Array.isArray(series.metrics) && series.metrics.length > 1) {
+                    series.metrics = [series.metrics[0]];
+                }
             }
         },
 
