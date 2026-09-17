@@ -608,7 +608,7 @@ class PredefinedKpiRegistry
             ],
             'seo_position_structural_inertia' => [
                 'name' => 'SEO (position) Structural Inertia (Linear + SMA)',
-                'description' => 'Calculates the underlying growth trend of your organic search position by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
+                'description' => 'Calculates the underlying ranking trajectory of your organic search position by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates. Because position is inverted, a downward curve indicates improving rankings and an upward curve indicates worsening rankings.',
                 'scope' => 'asset',
                 'categories' => ['seo', 'trends', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['seo', 'impressionable'],

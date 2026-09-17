@@ -1280,14 +1280,48 @@
                         $labels[] = $point['date'] ?? $point['label'] ?? '';
                         $values[] = $point['value'] ?? $point['y'] ?? 0;
                     }
+
+                    // Determine metric and whether it has an inverted axis (lower is better, e.g. position)
+                    $trendMetric = strtolower((string)(
+                        $widget->customKpi?->filters['_ui_state']['dependent_metric']
+                        ?? ($resolvedControls['metrics'][0] ?? '')
+                    ));
+                    $isInvertedMetric = str_contains($trendMetric, 'position')
+                        || in_array($trendMetric, ['cpc', 'cpm', 'cost_per_result', 'bounce_rate']);
+
+                    // Determine direction from slope or start-to-end delta
+                    $effectiveSlope = $slope;
+                    if ($effectiveSlope === null && count($values) >= 2) {
+                        $effectiveSlope = end($values) - reset($values);
+                    }
+
+                    // Red is bad, green is good, grey is flat/neutral
+                    // For inverted metrics (like position): negative slope = improved rank = green; positive slope = worse rank = red
+                    // For standard metrics (like clicks, reach): positive slope = green; negative slope = red
+                    $eps = 0.00001;
+                    if ($effectiveSlope === null || abs($effectiveSlope) <= $eps) {
+                        $trendColor = '#6b7280'; // grey
+                        $trendBgColor = 'rgba(107, 114, 128, 0.1)';
+                    } else {
+                        $isGood = $isInvertedMetric ? ($effectiveSlope < 0) : ($effectiveSlope > 0);
+                        if ($isGood) {
+                            $trendColor = '#10b981'; // green
+                            $trendBgColor = 'rgba(16, 185, 129, 0.1)';
+                        } else {
+                            $trendColor = '#ef4444'; // red
+                            $trendBgColor = 'rgba(239, 68, 68, 0.1)';
+                        }
+                    }
+
                     $data = [
                         'labels'   => $labels,
                         'datasets' => [
                             [
                                 'label'           => $widget->name ?: 'Metric',
+                                'metric'          => $trendMetric,
                                 'data'            => $values,
-                                'borderColor'     => '#3b82f6',
-                                'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                                'borderColor'     => $trendColor,
+                                'backgroundColor' => $trendBgColor,
                                 'fill'            => true,
                                 'tension'         => 0.3,
                             ],

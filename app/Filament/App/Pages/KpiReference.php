@@ -283,10 +283,10 @@ class KpiReference extends Page
                 'interpretation' => 'A positive slope (m) confirms accelerating SEO inertia. If the trend is positive despite daily volatility, your strategy is working.',
             ],
             'seo_position_structural_inertia' => [
-                'type_label' => 'Growth Trend Baseline (Position)',
-                'explanation' => 'Calculates the underlying growth trend of your organic search position by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
+                'type_label' => 'Ranking Trajectory Baseline (Position)',
+                'explanation' => 'Calculates the underlying ranking trajectory of your organic search position by combining Linear Regression and a 28-day Simple Moving Average, filtering out minor algorithmic updates.',
                 'use_case' => 'Your average search position fluctuates daily. You need to know if your rankings are genuinely improving or deteriorating over time, ignoring short-term noise.',
-                'interpretation' => 'A negative slope (m) confirms improving ranking positions (lower is better). If the trend is negative despite daily volatility, your SEO ranking strength is increasing. A positive slope indicates your positions are slipping.',
+                'interpretation' => 'Because position is inverted (lower numbers are better), a negative slope (m, downward curve) confirms improving rankings. A positive slope (m, upward curve) indicates your positions are worsening and slipping down the search results.',
             ],
             'fb_algorithmic_inertia' => [
                 'type_label' => 'True Reach Floor',
