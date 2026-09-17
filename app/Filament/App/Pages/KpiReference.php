@@ -324,11 +324,23 @@ class KpiReference extends Page
                 'use_case' => 'Are users actually reading your 2,000-word blog post? If clicks go up but session duration plummets, users are abandoning the page quickly.',
                 'interpretation' => 'A rising trend means your content is highly engaging and retains the user\'s attention. A falling trend means you attract clicks but fail to retain them.',
             ],
-            'toxic_keyword_detector' => [
-                'type_label' => 'Toxic Keyword Identifier',
-                'explanation' => 'Identifies specific search terms with a high propensity for bouncing.',
-                'use_case' => 'Locates "low quality" search terms that generate empty traffic, negatively affecting global site metrics and wasting retention efforts.',
-                'interpretation' => 'High values flag toxic keywords. These should either be de-optimized, or the landing page content must be drastically changed to match the actual user expectation.',
+            'seo_page_ctr_efficiency' => [
+                'type_label' => 'Page CTR Efficiency Model',
+                'explanation' => 'Models the relationship between organic search impressions and clicks across landing pages using linear regression.',
+                'use_case' => 'Identifies URLs that receive high search exposure but lag in click-through rates. Points falling significantly below the regression line indicate urgent snippet (Title/Meta Description) optimization needs.',
+                'interpretation' => 'Points below the trendline represent underperforming CTR pages. Points above the trendline are high-attraction assets whose snippet formula should be replicated.',
+            ],
+            'seo_query_ctr_efficiency' => [
+                'type_label' => 'Query CTR Efficiency Model',
+                'explanation' => 'Plots keyword impressions against clicks to detect high-volume search queries that generate insufficient click yield.',
+                'use_case' => 'Detects queries with strong organic visibility where your SERP presentation fails to compel the searcher to click.',
+                'interpretation' => 'Keywords below the regression line need copy testing, rich snippet enhancement (Schema markup), or alignment with user search intent.',
+            ],
+            'seo_position_click_curve' => [
+                'type_label' => 'Ranking Click Yield Curve',
+                'explanation' => 'Plots ranking position against organic clicks to model the expected click volume per SERP rank position.',
+                'use_case' => 'Detects pages ranking in prime positions (top 1-5) that fail to capture expected organic click volumes due to competitor snippet dominance or SERP features.',
+                'interpretation' => 'High-ranking pages with low clicks signal snippet weakness or SERP displacement by Google ads/AI overviews.',
             ],
             'toxic_page_detector' => [
                 'type_label' => 'Toxic Page Identifier',

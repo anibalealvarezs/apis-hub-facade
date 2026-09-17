@@ -670,5 +670,18 @@
 - The Billing & Subscriptions onboarding pointed to `/account/manage-subscription`, which does not exist (404). The Account panel page class is `App\Filament\Account\Pages\AccountSubscription` → URL `/account/account-subscription`.
 - Fixed `routePattern` in `resources/js/tours/flows/billing-tour.js` and the 'url' for the Billing tour in `resources/views/filament/account/pages/onboarding-settings.blade.php`; rebuilt JS.
 
+### SEO Efficiency KPIs & Custom Scatter Plot Support for Metrics / Derived Metrics (2026-09-17)
+- **Predefined SEO KPIs:**
+  - Added `seo_page_ctr_efficiency` (Organic CTR vs Impressions by Page), `seo_query_ctr_efficiency` (Organic CTR vs Impressions by Query), and `seo_position_click_curve` (Clicks vs Average Position curve) to `PredefinedKpiRegistry.php`.
+  - Added visual reference documentation cards with type labels, explanations, use cases, and interpretations in `KpiReference.php`.
+- **Custom Scatter Plot Support:**
+  - Allowed `scatter_plot` as a compatible widget type for `metric` and `derived_metric` sources in `WidgetTypeRegistry.php` and `dashboard-builder.js`.
+- **Runtime Granularity & Subcase Handlers in `DashboardWidgetDataController`:**
+  - Runtime constraint: enforced `granularity = 'lifetime'` whenever `widget_type === 'scatter_plot'` in both `handleMetricSource` and `handleMultiSeriesSource`.
+  - Subcase 1 (single series with breakdown dimension and $\ge 2$ metrics): reshapes grouped items into `scatter_data` with `x`, `y`, `labels`, `x_label`, `y_label`, and `metrics: [$cleanY, $cleanX]`.
+  - Subcase 2 (multi-series or 2 curves): aligns series on intersecting keys (dates/dimensions) to produce paired `scatter_data` with metrics metadata.
+  - Resolved controls: ensured `$resolvedControls['metrics']` is auto-populated from `scatter_data['metrics']` or curve series definitions when missing.
+  - Scale constraints: position-based metrics automatically set `min: 1` with reversed axis, while impressions/volume metrics begin at zero.
+
 
 

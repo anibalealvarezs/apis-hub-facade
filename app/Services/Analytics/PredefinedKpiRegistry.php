@@ -769,6 +769,102 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
+            'seo_page_ctr_efficiency' => [
+                'name' => 'SEO Page CTR Efficiency',
+                'description' => 'Discovers landing pages with disproportionately high search impressions but low clicks via linear regression.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
+            ],
+            'seo_query_ctr_efficiency' => [
+                'name' => 'SEO Query CTR Efficiency',
+                'description' => 'Evaluates keyword click yield per search impression to isolate high-volume queries with underperforming CTR snippets.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'query',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'impressions',
+                        ],
+                    ],
+                ],
+            ],
+            'seo_position_click_curve' => [
+                'name' => 'SEO Position vs Clicks Curve',
+                'description' => 'Plots search ranking position against organic clicks to detect pages ranking in positions 1-5 that fail to generate expected click volume.',
+                'scope' => 'asset',
+                'categories' => ['seo', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
+                'required_tags' => ['seo'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'position',
+                        ],
+                    ],
+                ],
+            ],
             'toxic_page_detector' => [
                 'name' => 'Toxic Page Detector',
                 'description' => 'Identifies pages with high bounce rate despite high search visibility (impressions).',

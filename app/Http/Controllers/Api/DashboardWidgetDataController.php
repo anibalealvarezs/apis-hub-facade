@@ -273,6 +273,20 @@
                     ]);
                 }
 
+                if ($widget->widget_type === 'scatter_plot') {
+                    if (empty($resolvedControls['metrics']) || count($resolvedControls['metrics']) < 2) {
+                        if (isset($data['scatter_data']['metrics']) && is_array($data['scatter_data']['metrics'])) {
+                            $resolvedControls['metrics'] = $data['scatter_data']['metrics'];
+                        } elseif (!empty($rawSeries[0]['metrics']) && count($rawSeries[0]['metrics']) >= 2) {
+                            $resolvedControls['metrics'] = array_values(array_slice($rawSeries[0]['metrics'], 0, 2));
+                        } elseif (count($rawSeries ?? []) >= 2) {
+                            $m0 = $rawSeries[0]['metrics'][0] ?? 'y';
+                            $m1 = $rawSeries[1]['metrics'][0] ?? 'x';
+                            $resolvedControls['metrics'] = [$m0, $m1];
+                        }
+                    }
+                }
+
                 $effectiveWidgetType = $widget->widget_type;
 
                 if (isset($data['anomaly_detected'])) {
@@ -2318,7 +2332,9 @@
             $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
             $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
 
-            $granularity = $controls['granularity'] ?? $config['granularity'] ?? 'daily';
+            $granularity = ($widget->widget_type === 'scatter_plot')
+                ? 'lifetime'
+                : ($controls['granularity'] ?? $config['granularity'] ?? 'daily');
             $dependency = $controls['dependency'] ?? $config['dependency'] ?? null;
 
             $payload = [
@@ -2364,7 +2380,9 @@
         protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
-            $granularity = $controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily';
+            $granularity = ($widget->widget_type === 'scatter_plot')
+                ? 'lifetime'
+                : ($controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily');
             $dateStart = !empty($controls['date_start'])
                 ? $controls['date_start']
                 : ($granularity === 'lifetime' ? '2010-01-01' : now()->subDays(30)->format('Y-m-d'));
@@ -2602,6 +2620,111 @@
                             return [
                                 'columns' => $columns,
                                 'rows'    => $rows,
+                            ];
+                        }
+
+                        if ($widget->widget_type === 'scatter_plot' && count($metrics) >= 2) {
+                            $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
+                            if (!is_array($rawRows)) {
+                                $rawRows = [];
+                            }
+
+                            $dimKeysToTry = [
+                                $breakdownDim,
+                                str_replace('dimensions.', '', $breakdownDim),
+                                strtolower($breakdownDim),
+                                strtolower(str_replace('dimensions.', '', $breakdownDim)),
+                            ];
+
+                            $groupedRows = [];
+                            $firstMetric = $metrics[0] ?? 'value';
+
+                            foreach ($rawRows as $row) {
+                                $dimVal = null;
+                                foreach ($dimKeysToTry as $dk) {
+                                    if (isset($row[$dk]) && $row[$dk] !== null && $row[$dk] !== '') {
+                                        $dimVal = (string)$row[$dk];
+                                        break;
+                                    }
+                                }
+
+                                if ($dimVal === null || $dimVal === 'null' || $dimVal === '(not set)') {
+                                    $dimVal = 'Unknown';
+                                } else {
+                                    $dimVal = $this->normalizeBreakdownDimensionValue($dimVal, $channel, $breakdownDim);
+                                }
+
+                                if (!isset($groupedRows[$dimVal])) {
+                                    $groupedRows[$dimVal] = [];
+                                    foreach ($metrics as $m) {
+                                        $groupedRows[$dimVal][$m] = 0.0;
+                                    }
+                                }
+
+                                foreach ($metrics as $m) {
+                                    $val = $this->findMetricValueInPoint($row, $m);
+                                    $cleanM = preg_replace('/^trend_(?:total|average)_/', '', $m);
+                                    if (str_contains($cleanM, 'position')) {
+                                        $groupedRows[$dimVal][$m] = (float)$val;
+                                    } else {
+                                        $groupedRows[$dimVal][$m] += (float)$val;
+                                    }
+                                }
+                            }
+
+                            $dimValues = array_keys($groupedRows);
+                            usort($dimValues, function ($a, $b) use ($groupedRows, $firstMetric, $breakdownOrder) {
+                                $valA = $groupedRows[$a][$firstMetric] ?? 0;
+                                $valB = $groupedRows[$b][$firstMetric] ?? 0;
+                                if ($breakdownOrder === 'value_desc') {
+                                    return $valB <=> $valA;
+                                } elseif ($breakdownOrder === 'value_asc') {
+                                    return $valA <=> $valB;
+                                } elseif ($breakdownOrder === 'alpha_desc') {
+                                    return strcasecmp($b, $a);
+                                } else {
+                                    return strcasecmp($a, $b);
+                                }
+                            });
+
+                            $selectedDimValues = array_slice($dimValues, 0, $breakdownLimit);
+
+                            $mY = $metrics[0];
+                            $mX = $metrics[1];
+                            $cleanY = preg_replace('/^trend_(?:total|average)_/', '', $mY);
+                            $cleanX = preg_replace('/^trend_(?:total|average)_/', '', $mX);
+
+                            $yIsRatio = in_array($cleanY, $ratioMetrics, true);
+                            $xIsRatio = in_array($cleanX, $ratioMetrics, true);
+
+                            $namingY = $seriesMetricNamings[$mY] ?? $seriesMetricNamings[$cleanY] ?? [];
+                            $labelY = !empty($namingY['custom_name']) ? trim($namingY['custom_name']) : ($metricLabels[$cleanY] ?? ucwords(str_replace('_', ' ', $cleanY)));
+
+                            $namingX = $seriesMetricNamings[$mX] ?? $seriesMetricNamings[$cleanX] ?? [];
+                            $labelX = !empty($namingX['custom_name']) ? trim($namingX['custom_name']) : ($metricLabels[$cleanX] ?? ucwords(str_replace('_', ' ', $cleanX)));
+
+                            $xVals = [];
+                            $yVals = [];
+                            $labels = [];
+
+                            foreach ($selectedDimValues as $dimVal) {
+                                $rawXVal = (float)($groupedRows[$dimVal][$mX] ?? 0.0);
+                                $rawYVal = (float)($groupedRows[$dimVal][$mY] ?? 0.0);
+
+                                $xVals[] = $xIsRatio ? round($rawXVal * 100, 4) : round($rawXVal, 4);
+                                $yVals[] = $yIsRatio ? round($rawYVal * 100, 4) : round($rawYVal, 4);
+                                $labels[] = (string)$dimVal;
+                            }
+
+                            return [
+                                'scatter_data' => [
+                                    'x'       => $xVals,
+                                    'y'       => $yVals,
+                                    'labels'  => $labels,
+                                    'x_label' => $labelX,
+                                    'y_label' => $labelY,
+                                    'metrics' => [$cleanY, $cleanX],
+                                ],
                             ];
                         }
 
@@ -3143,6 +3266,39 @@
                         $seriesCurves[] = $curve;
                     }
                 }
+            }
+
+            // Scatter Plot Subcase 2: Multiple series / 2 curves alignment for scatter plot
+            if ($widget->widget_type === 'scatter_plot' && count($seriesCurves) >= 2) {
+                $c0 = $seriesCurves[0]; // Y axis (dependent)
+                $c1 = $seriesCurves[1]; // X axis (independent)
+                $c0Data = is_array($c0['data'] ?? null) ? $c0['data'] : [];
+                $c1Data = is_array($c1['data'] ?? null) ? $c1['data'] : [];
+                $commonKeys = array_values(array_intersect(array_keys($c0Data), array_keys($c1Data)));
+                sort($commonKeys);
+
+                $x = [];
+                $y = [];
+                $labels = [];
+                foreach ($commonKeys as $k) {
+                    $x[] = (float)($c1Data[$k] ?? 0);
+                    $y[] = (float)($c0Data[$k] ?? 0);
+                    $labels[] = (string)$k;
+                }
+
+                $mY = $c0['metric'] ?? 'y';
+                $mX = $c1['metric'] ?? 'x';
+
+                return [
+                    'scatter_data' => [
+                        'x'       => $x,
+                        'y'       => $y,
+                        'labels'  => $labels,
+                        'x_label' => $c1['label'] ?? 'X',
+                        'y_label' => $c0['label'] ?? 'Y',
+                        'metrics' => [$mY, $mX],
+                    ],
+                ];
             }
 
             // 3. Align all series across unified sorted dates
