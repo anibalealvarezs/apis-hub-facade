@@ -1327,6 +1327,22 @@
                             ],
                         ],
                     ];
+                    if (str_contains($trendMetric, 'position')) {
+                        $data['scales'] = [
+                            'y' => [
+                                'min' => 1,
+                                'suggestedMin' => 1,
+                                'reverse' => true,
+                                'beginAtZero' => false,
+                            ],
+                        ];
+                    } else {
+                        $data['scales'] = [
+                            'y' => [
+                                'beginAtZero' => true,
+                            ],
+                        ];
+                    }
                     if ($slope !== null) {
                         $data['coefficients'] = [$slope];
                     }

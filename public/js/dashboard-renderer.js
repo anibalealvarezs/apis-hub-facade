@@ -749,15 +749,32 @@ window.dashboardRenderer = {
 
         if (datasets.length === 1) {
             const backendY = data?.scales?.y || {};
+            const isPos = reverseY || isPrimaryPosition;
             chartScales.y = {
-                beginAtZero: !reverseY && backendY.beginAtZero !== false,
-                reverse: reverseY || !!backendY.reverse,
+                beginAtZero: !isPos && backendY.beginAtZero !== false,
+                reverse: isPos || !!backendY.reverse,
                 title: {
                     display: true,
                     text: backendY.title?.text || yAxisLabel,
                 },
                 ticks: { font: { size: 10 }, ...backendY.ticks },
             };
+            if (backendY.min !== undefined) {
+                chartScales.y.min = backendY.min;
+            } else if (isPos) {
+                chartScales.y.min = 1;
+            }
+            if (backendY.suggestedMin !== undefined) {
+                chartScales.y.suggestedMin = backendY.suggestedMin;
+            } else if (isPos) {
+                chartScales.y.suggestedMin = 1;
+            }
+            if (backendY.max !== undefined) {
+                chartScales.y.max = backendY.max;
+            }
+            if (backendY.suggestedMax !== undefined) {
+                chartScales.y.suggestedMax = backendY.suggestedMax;
+            }
             mappedDatasets[0].yAxisID = "y";
         } else {
             if (data?.scales) {
@@ -770,6 +787,9 @@ window.dashboardRenderer = {
                         title: { display: false },
                         ticks: { display: false },
                     };
+                    if (isPosAxis && chartScales[axisId].min === undefined) {
+                        chartScales[axisId].min = 1;
+                    }
                 }
             } else {
                 mappedDatasets.forEach((ds, idx) => {
@@ -784,6 +804,9 @@ window.dashboardRenderer = {
                             ticks: { display: false },
                             grid: { drawOnChartArea: idx === 0 },
                         };
+                        if (isPosAxis) {
+                            chartScales[ds.yAxisID].min = 1;
+                        }
                     }
                 });
             }
