@@ -203,6 +203,9 @@ window.dashboardRenderer = {
             if (f0?.format === "currency" && f1?.format === "number") {
                 return { label: f0.label, format: "currency", prefix: "$" };
             }
+            if (m0 === "position" || m1 === "position") {
+                return f0 || null;
+            }
             if (f0?.format === "number" && f1?.format === "number") {
                 return {
                     label: f0.label + "/" + f1.label,
@@ -680,8 +683,16 @@ window.dashboardRenderer = {
     renderLineChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
-        const reverseY = controls?.metrics?.[0] === "position";
-        const resultFormat = this.getKpiResultFormat(controls);
+        const resultFormatRaw = this.getKpiResultFormat(controls);
+        const isPrimaryPosition =
+            controls?.metrics?.[0] === "position" ||
+            datasets[0]?.metric === "position" ||
+            datasets[0]?.metric_key === "position" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("position"));
+        const reverseY = isPrimaryPosition;
+        const resultFormat = isPrimaryPosition && resultFormatRaw?.format === "percentage"
+            ? null
+            : resultFormatRaw;
 
         const yMetric = controls?.metrics?.[0];
         const yFmt =
@@ -703,23 +714,31 @@ window.dashboardRenderer = {
             return;
         }
 
-        const mappedDatasets = datasets.map((ds) => ({
-            ...ds,
-            currency:
-                ds.currency ??
-                (resultFormat?.format === "currency" ? true : undefined),
-            percentage:
-                ds.percentage ??
-                (resultFormat?.format === "percentage" ? true : undefined),
-            pointRadius: 6,
-            pointHoverRadius: 10,
-            pointHitRadius: 15,
-            pointBackgroundColor:
-                ds.borderColor || ds.backgroundColor || "#3B82F6",
-            pointBorderColor: ds.borderColor || ds.backgroundColor || "#3B82F6",
-            pointBorderWidth: 2,
-            pointHoverBorderWidth: 2,
-        }));
+        const isDatasetPosition = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("position") || (idx === 0 && isPrimaryPosition);
+        };
+
+        const mappedDatasets = datasets.map((ds, idx) => {
+            const isPos = isDatasetPosition(ds, idx);
+            return {
+                ...ds,
+                currency: isPos
+                    ? false
+                    : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
+                percentage: isPos
+                    ? false
+                    : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
+                pointRadius: 6,
+                pointHoverRadius: 10,
+                pointHitRadius: 15,
+                pointBackgroundColor:
+                    ds.borderColor || ds.backgroundColor || "#3B82F6",
+                pointBorderColor: ds.borderColor || ds.backgroundColor || "#3B82F6",
+                pointBorderWidth: 2,
+                pointHoverBorderWidth: 2,
+            };
+        });
 
         let chartScales = {
             x: {
@@ -731,8 +750,8 @@ window.dashboardRenderer = {
         if (datasets.length === 1) {
             const backendY = data?.scales?.y || {};
             chartScales.y = {
-                beginAtZero: !reverseY,
-                reverse: reverseY,
+                beginAtZero: !reverseY && backendY.beginAtZero !== false,
+                reverse: reverseY || !!backendY.reverse,
                 title: {
                     display: true,
                     text: backendY.title?.text || yAxisLabel,
@@ -743,8 +762,11 @@ window.dashboardRenderer = {
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
+                    const isPosAxis = axisId.toLowerCase().includes("position") || !!axisConf.reverse;
                     chartScales[axisId] = {
                         ...axisConf,
+                        reverse: isPosAxis ? true : (axisConf.reverse ?? false),
+                        beginAtZero: isPosAxis ? false : (axisConf.beginAtZero ?? true),
                         title: { display: false },
                         ticks: { display: false },
                     };
@@ -752,9 +774,12 @@ window.dashboardRenderer = {
             } else {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
+                        const isPosAxis = isDatasetPosition(ds, idx);
                         chartScales[ds.yAxisID] = {
                             type: "linear",
                             display: true,
+                            reverse: isPosAxis,
+                            beginAtZero: !isPosAxis,
                             title: { display: false },
                             ticks: { display: false },
                             grid: { drawOnChartArea: idx === 0 },
@@ -3538,16 +3563,13 @@ window.dashboardRenderer = {
                             typeof dp.raw === "object"
                                 ? (dp.raw.y ?? 0)
                                 : dp.raw;
-                        if (!dp.dataset.percentage && rFmt?.multiply) v = v * rFmt.multiply;
-                        if (
-                            dp.dataset.currency ||
-                            rFmt?.format === "currency"
-                        ) {
+                        const dsMetric = String(dp.dataset.metric || dp.dataset.metric_key || dp.dataset.key || "").toLowerCase();
+                        const isPos = dsMetric.includes("position") || (!isMulti && ctrl?.metrics?.[0] === "position");
+
+                        if (!isPos && !dp.dataset.percentage && rFmt?.multiply) v = v * rFmt.multiply;
+                        if (!isPos && (dp.dataset.currency || rFmt?.format === "currency")) {
                             val = this.formatCurrency(v);
-                        } else if (
-                            dp.dataset.percentage ||
-                            rFmt?.format === "percentage"
-                        ) {
+                        } else if (!isPos && (dp.dataset.percentage || rFmt?.format === "percentage")) {
                             val = v.toFixed(1) + "%";
                         } else {
                             val = this.formatNumber(v);

@@ -1184,17 +1184,7 @@
                                     ?? $resolvedControls['series_metric_colors']['0'][$cleanKey]
                                     ?? ($resolvedControls['metric_colors'][$key] ?? $resolvedControls['metric_colors'][$cleanKey] ?? null);
 
-                                \Illuminate\Support\Facades\Log::info('[COLOR_DEBUG] Single-series color resolution', [
-                                    'widget_id'                  => $widget->id,
-                                    'key'                        => $key,
-                                    'cleanKey'                   => $cleanKey,
-                                    'customMetricColor'          => $customMetricColor,
-                                    'has_series_metric_colors'   => isset($resolvedControls['series_metric_colors']),
-                                    'series_metric_colors_keys'  => isset($resolvedControls['series_metric_colors']) ? array_keys($resolvedControls['series_metric_colors']) : '__NOT_SET__',
-                                    'series_metric_colors_0'     => $resolvedControls['series_metric_colors'][0] ?? $resolvedControls['series_metric_colors']['0'] ?? '__NOT_SET__',
-                                    'has_raw_series'             => isset($resolvedControls['raw_series']),
-                                    'raw_series_0_metric_colors' => $resolvedControls['raw_series'][0]['metric_colors'] ?? '__NOT_SET__',
-                                ]);
+
 
                                 $color = !empty($customMetricColor) ? $customMetricColor : $palette[$idx % count($palette)];
 
@@ -1254,15 +1244,18 @@
                                 $label = $metricLabels[$cleanKey] ?? ucfirst($cleanKey);
                                 $isRatio = in_array($cleanKey, $ratioMetrics);
 
+                                $isPosition = str_contains($cleanKey, 'position');
                                 $scales['y-'.$cleanKey] = [
-                                    'type'     => 'linear',
-                                    'display'  => true,
-                                    'position' => $idx % 2 === 0 ? 'left' : 'right',
-                                    'title'    => [
+                                    'type'        => 'linear',
+                                    'display'     => true,
+                                    'position'    => $idx % 2 === 0 ? 'left' : 'right',
+                                    'reverse'     => $isPosition,
+                                    'beginAtZero' => !$isPosition,
+                                    'title'       => [
                                         'display' => true,
                                         'text'    => $isRatio ? $label.' (%)' : $label,
                                     ],
-                                    'grid'     => [
+                                    'grid'        => [
                                         'drawOnChartArea' => $idx === 0,
                                     ],
                                 ];
@@ -2231,17 +2224,7 @@
                     || (!empty($rawSeries[0]['filters']));
             }
 
-            \Illuminate\Support\Facades\Log::info('[COLOR_DEBUG] handleMetricSource path decision', [
-                'widget_id'                            => $widget->id,
-                'hasMultiSeries'                       => $hasMultiSeries,
-                'rawSeries_count'                      => is_array($rawSeries) ? count($rawSeries) : 'null',
-                'rawSeries_0_type'                     => $rawSeries[0]['type'] ?? '__NOT_SET__',
-                'rawSeries_0_breakdown'                => $rawSeries[0]['breakdown']['dimension'] ?? '__NOT_SET__',
-                'rawSeries_0_filters'                  => $rawSeries[0]['filters'] ?? '__NOT_SET__',
-                'rawSeries_0_metric_colors'            => $rawSeries[0]['metric_colors'] ?? '__NOT_SET__',
-                'has_series_metric_colors_in_controls' => isset($controls['series_metric_colors']),
-                'series_metric_colors'                 => $controls['series_metric_colors'] ?? '__NOT_SET__',
-            ]);
+
 
             if ($hasMultiSeries) {
                 return $this->handleMultiSeriesSource($project, $widget, $controls, $rawSeries);
@@ -2506,15 +2489,7 @@
 
                             $customMetricColor = $seriesMetricColors[$metric] ?? $seriesMetricColors[$cleanMetric] ?? null;
 
-                            \Illuminate\Support\Facades\Log::info('[COLOR_DEBUG] Multi-series non-breakdown color resolution', [
-                                'widget_id'                   => $widget->id,
-                                'sIdx'                        => $sIdx,
-                                'metric'                      => $metric,
-                                'cleanMetric'                 => $cleanMetric,
-                                'customMetricColor'           => $customMetricColor,
-                                'seriesMetricColors'          => $seriesMetricColors,
-                                'series_metric_colors_source' => isset($series['metric_colors']) ? 'series.metric_colors' : (isset($controls['series_metric_colors'][$sIdx]) ? 'controls.smc[int]' : (isset($controls['series_metric_colors'][(string)$sIdx]) ? 'controls.smc[str]' : 'fallback_empty')),
-                            ]);
+
 
                             $seriesCurves[] = [
                                 'label'        => $formattedLabel,
@@ -3024,15 +2999,18 @@
 
                 $axisId = 'y-'.$curve['axis_key'];
                 if (!isset($scales[$axisId])) {
+                    $isPosition = str_contains((string)($curve['metric'] ?? ''), 'position') || str_contains((string)($curve['axis_key'] ?? ''), 'position');
                     $scales[$axisId] = [
-                        'type'     => 'linear',
-                        'display'  => true,
-                        'position' => count($scales) % 2 === 0 ? 'left' : 'right',
-                        'title'    => [
+                        'type'        => 'linear',
+                        'display'     => true,
+                        'position'    => count($scales) % 2 === 0 ? 'left' : 'right',
+                        'reverse'     => $isPosition,
+                        'beginAtZero' => !$isPosition,
+                        'title'       => [
                             'display' => true,
                             'text'    => $curve['axis_title'],
                         ],
-                        'grid'     => [
+                        'grid'        => [
                             'drawOnChartArea' => count($scales) === 0,
                         ],
                     ];
