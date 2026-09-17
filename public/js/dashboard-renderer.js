@@ -1092,10 +1092,10 @@ window.dashboardRenderer = {
                 : true;
 
         let html =
-            '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;">';
+            '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;position:relative;">';
 
         if (blockFirstCol) {
-            // Fixed First Column Table
+            // Fixed First Column Table (capped at 50% width of the table container)
             const firstCol = columns[0];
             const firstKey = firstCol.key || firstCol;
             const firstRawLabel = firstCol.label || firstCol;
@@ -1109,11 +1109,11 @@ window.dashboardRenderer = {
                 : "";
 
             html +=
-                '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
+                '<div class="fixed-col-wrap" style="flex:0 1 auto;max-width:50%;min-width:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
             html +=
-                '<table style="border-collapse:separate;border-spacing:0;">';
+                '<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">';
             html += '<thead style="position:sticky;top:0;z-index:2;">';
-            html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${this.escapeHtml(firstDisplayLabel)}">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
+            html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700 data-has-tooltip" data-sort-key="${firstKey}" data-tooltip="${this.escapeHtml(firstDisplayLabel)}" title="${this.escapeHtml(firstDisplayLabel)}" style="min-width:100px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
             html += '<tbody class="bg-white dark:bg-gray-900">';
             sortedRows.forEach((row, ri) => {
                 const isEven = ri % 2 === 0;
@@ -1121,7 +1121,8 @@ window.dashboardRenderer = {
                     ? "bg-white dark:bg-gray-900"
                     : "bg-gray-50 dark:bg-gray-800";
                 const val = row[firstKey] ?? row[firstCol] ?? "";
-                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-200 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
+                const valStr = String(val);
+                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-200 ${cellBgClass} border-r border-gray-200 dark:border-gray-700 data-has-tooltip" data-tooltip="${this.escapeHtml(valStr)}" title="${this.escapeHtml(valStr)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:100px;max-width:100%;">${this.escapeHtml(valStr)}</td></tr>`;
             });
             html += "</tbody></table></div>";
         }
@@ -1134,7 +1135,7 @@ window.dashboardRenderer = {
             '<table style="width:100%;border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
-        scrollCols.forEach((col) => {
+        scrollCols.forEach((col, cIdx) => {
             const key = col.key || col;
             const rawLabel = col.label || col;
             const displayLabel = this.getMetricName(rawLabel) || rawLabel;
@@ -1149,10 +1150,13 @@ window.dashboardRenderer = {
                     : " \u25BC"
                 : "";
             const thAlign = isNumeric ? "text-right" : "text-left";
-            const thStyle = isNumeric
-                ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-                : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
-            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}" title="${this.escapeHtml(displayLabel)}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            const isFirstOfAll = !blockFirstCol && cIdx === 0;
+            const thStyle = isFirstOfAll
+                ? "max-width:50%;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                : (isNumeric
+                    ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                    : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;");
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 data-has-tooltip" data-sort-key="${key}" data-tooltip="${this.escapeHtml(displayLabel)}" title="${this.escapeHtml(displayLabel)}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += "</tr></thead>";
 
@@ -1163,7 +1167,7 @@ window.dashboardRenderer = {
                 ? "bg-white dark:bg-gray-900"
                 : "bg-gray-50 dark:bg-gray-800";
             html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800">`;
-            scrollCols.forEach((col) => {
+            scrollCols.forEach((col, cIdx) => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? "";
                 const isNumeric =
@@ -1183,9 +1187,12 @@ window.dashboardRenderer = {
                 const tdClass = isNumeric
                     ? "px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right"
                     : "px-3 py-2 text-gray-700 dark:text-gray-200";
-                const tdStyle =
-                    "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-                html += `<td class="${tdClass} ${cellBgClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
+                const isFirstOfAll = !blockFirstCol && cIdx === 0;
+                const tdStyle = isFirstOfAll
+                    ? "max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                    : "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+                const valStr = String(val);
+                html += `<td class="${tdClass} ${cellBgClass} data-has-tooltip" data-tooltip="${this.escapeHtml(valStr)}" title="${this.escapeHtml(valStr)}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += "</tr>";
         });
@@ -1207,6 +1214,9 @@ window.dashboardRenderer = {
             }
         }
 
+        // Attach custom interactive tooltip for truncated cells and headers
+        this._attachTableTruncationTooltips(containerEl);
+
         containerEl.querySelectorAll("th[data-sort-key]").forEach((th) => {
             th.addEventListener("click", () => {
                 const key = th.dataset.sortKey;
@@ -1219,6 +1229,78 @@ window.dashboardRenderer = {
                 this.renderTable(containerEl, data, controls);
             });
         });
+    },
+
+    _attachTableTruncationTooltips(containerEl) {
+        let activeTooltip = null;
+
+        const removeTooltip = () => {
+            if (activeTooltip) {
+                activeTooltip.remove();
+                activeTooltip = null;
+            }
+        };
+
+        const targets = containerEl.querySelectorAll(".data-has-tooltip");
+        targets.forEach((el) => {
+            el.addEventListener("mouseenter", () => {
+                // Check if text content is actually truncated
+                if (el.scrollWidth > el.clientWidth + 1) {
+                    removeTooltip();
+                    const text = el.dataset.tooltip || el.getAttribute("title") || el.textContent;
+                    if (!text || !text.trim()) return;
+
+                    const tip = document.createElement("div");
+                    tip.className = "dashboard-cell-tooltip";
+                    tip.textContent = text.trim();
+                    tip.style.cssText = `
+                        position: fixed;
+                        z-index: 99999;
+                        max-width: 420px;
+                        word-break: break-all;
+                        white-space: normal;
+                        background-color: #1f2937;
+                        color: #f9fafb;
+                        font-size: 11px;
+                        line-height: 1.4;
+                        font-weight: 500;
+                        padding: 6px 10px;
+                        border-radius: 6px;
+                        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.25), 0 4px 6px -2px rgba(0,0,0,0.1);
+                        pointer-events: none;
+                        opacity: 0;
+                        transition: opacity 0.12s ease-in-out;
+                    `;
+
+                    document.body.appendChild(tip);
+                    activeTooltip = tip;
+
+                    const rect = el.getBoundingClientRect();
+                    const tipRect = tip.getBoundingClientRect();
+
+                    // Calculate top/bottom placement
+                    let top = rect.top - tipRect.height - 6;
+                    if (top < 8) {
+                        top = rect.bottom + 6;
+                    }
+
+                    // Calculate left placement
+                    let left = rect.left;
+                    if (left + tipRect.width > window.innerWidth - 12) {
+                        left = Math.max(8, window.innerWidth - tipRect.width - 12);
+                    }
+
+                    tip.style.top = `${top}px`;
+                    tip.style.left = `${left}px`;
+                    tip.style.opacity = "1";
+                }
+            });
+
+            el.addEventListener("mouseleave", removeTooltip);
+        });
+
+        // Also clean up tooltip if the container or page scrolls
+        containerEl.addEventListener("scroll", removeTooltip, { capture: true, passive: true });
     },
 
     // ─── Gauge ───
