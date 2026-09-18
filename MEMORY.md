@@ -46,6 +46,13 @@
   4. In `public/js/dashboard-renderer.js` inside `renderScatterPlot()`: enabled `reverseYAxis` when `controls?.reverse_y || data?.reverse_y || controls?.metrics?.[0] === 'bounce_rate' || controls?.metrics?.[0] === 'bouncerate'`.
 - **Verification:** `php -l` passed without syntax errors.
 
+### Pie / Donut Charts Default Collapsed Legend (2026-09-18)
+- **Problem:** Pie and donut charts had their custom HTML legend expanded by default. For widgets with many slices (e.g. 9 breakdown channels), the tall legend grid compressed the canvas vertically, squishing the pie/donut into an ellipse/oval shape and distorting the chart.
+- **Fix:** In `public/js/dashboard-renderer.js` inside `_renderCustomLegend()`:
+  - Initialized `let collapsed = isPie;` (where `isPie = ['pie', 'doughnut'].includes(chart.config.type)`).
+  - When `collapsed` is true on initial render, sets the chevron to `▼` and collapses `body` (`maxHeight: 0`, `opacity: 0`, `padding: 0`, `overflow: hidden`). Users can still click the toggle bar `Legend (N)` to expand it when desired.
+  - This ensures the pie/donut maintains its circular aspect ratio without vertical distortion.
+
 ### Line Chart Custom Metric Colors Not Applied (2026-09-14)
 - **Problem:** Line chart widgets ignored user-configured custom metric colors (set via color pickers in the builder), always rendering with the default palette. Breakdown gradient colors worked correctly.
 - **Root Cause:** In `public/js/dashboard-renderer.js`, the `overrideKeys` whitelist in `renderWidget()` controlled which widget control keys were included in the POST body sent to `/api/dashboard/widget/{id}/data`. The keys `series_metric_colors`, `series_metric_namings`, and `raw_series` were missing from this list. This caused two problems:

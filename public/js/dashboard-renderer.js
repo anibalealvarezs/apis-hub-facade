@@ -3040,8 +3040,16 @@ window.dashboardRenderer = {
         });
 
         // ── Toggle collapse/expand ──
-        let collapsed = false;
+        let collapsed = isPie;
         const chevron = toggleBar.querySelector(".legend-chevron");
+        if (collapsed) {
+            chevron.textContent = "▼";
+            body.style.maxHeight = "0";
+            body.style.opacity = "0";
+            body.style.paddingTop = "0";
+            body.style.paddingBottom = "0";
+            body.style.overflow = "hidden";
+        }
         toggleBar.addEventListener("click", () => {
             collapsed = !collapsed;
             if (collapsed) {
