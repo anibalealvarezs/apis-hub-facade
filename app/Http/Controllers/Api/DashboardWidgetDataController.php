@@ -755,7 +755,21 @@
                         'r_squared'          => $rSquared,
                         'coefficients'       => [$m],
                         'baseline_intercept' => $b,
-                        'reverse_y'          => in_array($resolvedControls['metrics'][0] ?? '', ['bounce_rate', 'bouncerate', 'position'], true) || !empty($resolvedControls['reverse_y']),
+                        'reverse_y'          => (function () use ($resolvedControls) {
+                            $metric0 = $resolvedControls['metrics'][0] ?? '';
+                            $customDir = $resolvedControls['series_metric_namings'][0][$metric0]['axis_direction']
+                                ?? $resolvedControls['series_metric_namings']['0'][$metric0]['axis_direction']
+                                ?? $resolvedControls['raw_series'][0]['metric_namings'][$metric0]['axis_direction']
+                                ?? null;
+                            if ($customDir === 'inverted') {
+                                return true;
+                            }
+                            if ($customDir === 'normal') {
+                                return false;
+                            }
+
+                            return in_array($metric0, ['bounce_rate', 'bouncerate', 'position'], true) || !empty($resolvedControls['reverse_y']);
+                        })(),
                     ];
                 } elseif ($effectiveWidgetType === 'table' && isset($data['scatter_data'])) {
                     $scatter = $data['scatter_data'];

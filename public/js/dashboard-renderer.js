@@ -624,6 +624,32 @@ window.dashboardRenderer = {
         return div.innerHTML;
     },
 
+    resolveMetricAxisDirection(metricKey, seriesIdx = 0, controls = null) {
+        const mKey = String(metricKey || "").toLowerCase();
+        // 1. Check custom user configuration in controls
+        if (controls) {
+            let userDir = null;
+            // Check series_metric_namings
+            if (controls.series_metric_namings?.[seriesIdx]?.[metricKey]?.axis_direction) {
+                userDir = controls.series_metric_namings[seriesIdx][metricKey].axis_direction;
+            } else if (controls.series_metric_namings?.[String(seriesIdx)]?.[metricKey]?.axis_direction) {
+                userDir = controls.series_metric_namings[String(seriesIdx)][metricKey].axis_direction;
+            } else if (controls.raw_series?.[seriesIdx]?.metric_namings?.[metricKey]?.axis_direction) {
+                userDir = controls.raw_series[seriesIdx].metric_namings[metricKey].axis_direction;
+            }
+
+            if (userDir === "inverted") return true;
+            if (userDir === "normal") return false;
+        }
+
+        // 2. Default fallback: Auto by metric convention
+        return (
+            mKey.includes("position") ||
+            mKey.includes("bounce_rate") ||
+            mKey.includes("bouncerate")
+        );
+    },
+
     // ─── Tile ───
 
     renderTile(containerEl, data, controls) {
@@ -697,7 +723,9 @@ window.dashboardRenderer = {
             datasets[0]?.metric_key === "bounce_rate" ||
             datasets[0]?.metric_key === "bouncerate" ||
             (datasets[0]?.key && String(datasets[0].key).includes("bounce_rate"));
-        const reverseY = isPrimaryPosition || isPrimaryBounceRate || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
+        const primaryMetricKey = controls?.metrics?.[0] || datasets[0]?.metric || datasets[0]?.metric_key || datasets[0]?.key || "";
+        const primaryIsReverse = this.resolveMetricAxisDirection(primaryMetricKey, 0, controls);
+        const reverseY = primaryIsReverse || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
         const resultFormat = isPrimaryPosition && resultFormatRaw?.format === "percentage"
             ? null
             : resultFormatRaw;
@@ -731,7 +759,8 @@ window.dashboardRenderer = {
             return m.includes("bounce_rate") || m.includes("bouncerate") || (idx === 0 && isPrimaryBounceRate);
         };
         const isDatasetReverse = (ds, idx) => {
-            return isDatasetPosition(ds, idx) || isDatasetBounceRate(ds, idx);
+            const m = ds.metric || ds.metric_key || ds.key || controls?.metrics?.[idx] || "";
+            return this.resolveMetricAxisDirection(m, idx, controls);
         };
 
         const mappedDatasets = datasets.map((ds, idx) => {
@@ -900,7 +929,9 @@ window.dashboardRenderer = {
             datasets[0]?.metric_key === "bounce_rate" ||
             datasets[0]?.metric_key === "bouncerate" ||
             (datasets[0]?.key && String(datasets[0].key).includes("bounce_rate"));
-        const reverseY = isPrimaryPosition || isPrimaryBounceRate || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
+        const primaryMetricKey = controls?.metrics?.[0] || datasets[0]?.metric || datasets[0]?.metric_key || datasets[0]?.key || "";
+        const primaryIsReverse = this.resolveMetricAxisDirection(primaryMetricKey, 0, controls);
+        const reverseY = primaryIsReverse || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
 
         const resultFormat = this.getKpiResultFormat(controls);
 
@@ -919,7 +950,8 @@ window.dashboardRenderer = {
             return m.includes("bounce_rate") || m.includes("bouncerate") || (idx === 0 && isPrimaryBounceRate);
         };
         const isDatasetReverse = (ds, idx) => {
-            return isDatasetPosition(ds, idx) || isDatasetBounceRate(ds, idx);
+            const m = ds.metric || ds.metric_key || ds.key || controls?.metrics?.[idx] || "";
+            return this.resolveMetricAxisDirection(m, idx, controls);
         };
 
         const mappedDatasets = datasets.map((ds) => ({
@@ -1938,16 +1970,19 @@ window.dashboardRenderer = {
         ];
         const reverseYColor = higherIsWorse.includes(controls?.metrics?.[0]);
         const reverseXColor = higherIsWorse.includes(controls?.metrics?.[1]);
+        const yMetric = controls?.metrics?.[0] || "";
+        const xMetric = controls?.metrics?.[1] || "";
+        const customReverseY = this.resolveMetricAxisDirection(yMetric, 0, controls);
+        const customReverseX = this.resolveMetricAxisDirection(xMetric, 1, controls);
+
         const reverseYAxis =
             controls?.reverse_y ||
             data?.reverse_y ||
-            controls?.metrics?.[0] === "position" ||
-            controls?.metrics?.[0] === "bounce_rate" ||
-            controls?.metrics?.[0] === "bouncerate";
+            customReverseY;
         const reverseXAxis =
             controls?.reverse_x ||
             data?.reverse_x ||
-            controls?.metrics?.[1] === "position";
+            customReverseX;
 
         const resultFormat = this.getKpiResultFormat(controls);
         const xFmt = controls?.metrics?.[1]
@@ -2560,24 +2595,19 @@ window.dashboardRenderer = {
                 }
             }
 
-            const isPos =
-                labelLower.includes("position") ||
-                keyLower.includes("position");
-            const isBounce =
-                labelLower.includes("bounce_rate") ||
-                labelLower.includes("bouncerate") ||
-                keyLower.includes("bounce_rate") ||
-                keyLower.includes("bouncerate");
+            const dsMetricKey = ds.metric || ds.metric_key || ds.key || controls?.metrics?.[idx] || "";
+            const isReverseForDs = this.resolveMetricAxisDirection(dsMetricKey, idx, controls);
+
             if (yAxisID === "y1") {
                 hasRightAxis = true;
-                if (isPos || isBounce) rightAxisReverse = true;
+                if (isReverseForDs) rightAxisReverse = true;
                 if (!rightAxisUnit) {
                     if (isRateOrPercentage) rightAxisUnit = "%";
                     else if (isCurrency) rightAxisUnit = "$";
                 }
             } else {
                 hasLeftAxis = true;
-                if (isPos || isBounce) leftAxisReverse = true;
+                if (isReverseForDs) leftAxisReverse = true;
                 if (!leftAxisUnit) {
                     if (isCurrency) leftAxisUnit = "$";
                     else if (isRateOrPercentage) leftAxisUnit = "%";

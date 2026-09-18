@@ -2639,6 +2639,57 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Axis Direction / Inversion Card --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            {{ __('Axis Direction / Scale') }}
+                        </label>
+                        <span class="text-2xs text-gray-400 dark:text-gray-500" x-text="namingModalForm.axis_direction === 'inverted' ? '{{ __('0 / Min at top (reversed)') }}' : (namingModalForm.axis_direction === 'normal' ? '{{ __('0 / Min at bottom (standard)') }}' : '{{ __('Auto by metric rule') }}')"></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button
+                            type="button"
+                            @click="namingModalForm.axis_direction = 'auto'; markWidgetControlsDirty()"
+                            class="px-3 py-2 text-xs font-medium rounded-lg border transition-all flex flex-col items-center gap-1 text-center"
+                            :class="(namingModalForm.axis_direction || 'auto') === 'auto'
+                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 ring-1 ring-primary-500 font-semibold'
+                                : 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        >
+                            <span class="text-sm">⚡</span>
+                            <span>{{ __('Auto') }}</span>
+                            <span class="text-4xs opacity-75 font-normal">{{ __('Metric Default') }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="namingModalForm.axis_direction = 'normal'; markWidgetControlsDirty()"
+                            class="px-3 py-2 text-xs font-medium rounded-lg border transition-all flex flex-col items-center gap-1 text-center"
+                            :class="namingModalForm.axis_direction === 'normal'
+                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 ring-1 ring-primary-500 font-semibold'
+                                : 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        >
+                            <span class="text-sm">⬆️</span>
+                            <span>{{ __('Normal') }}</span>
+                            <span class="text-4xs opacity-75 font-normal">{{ __('Bottom to Top') }}</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="namingModalForm.axis_direction = 'inverted'; markWidgetControlsDirty()"
+                            class="px-3 py-2 text-xs font-medium rounded-lg border transition-all flex flex-col items-center gap-1 text-center"
+                            :class="namingModalForm.axis_direction === 'inverted'
+                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 ring-1 ring-primary-500 font-semibold'
+                                : 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                        >
+                            <span class="text-sm">⬇️</span>
+                            <span>{{ __('Inverted') }}</span>
+                            <span class="text-4xs opacity-75 font-normal">{{ __('Top to Bottom') }}</span>
+                        </button>
+                    </div>
+                    <p class="text-2xs text-gray-500 dark:text-gray-400">
+                        {{ __('Choose whether this metric\'s axis starts with lower values at the bottom (Normal), at the top (Inverted, recommended for bounce rate, rankings), or adapts automatically.') }}
+                    </p>
+                </div>
             </div>
         </x-confirm-modal>
 

@@ -3389,7 +3389,8 @@ export function dashboardBuilder(config = {}) {
             return !!(naming.custom_name && naming.custom_name.trim() !== '') ||
                 naming.show_channel === false ||
                 naming.show_breakdown === false ||
-                naming.show_unit === false;
+                naming.show_unit === false ||
+                (naming.axis_direction && naming.axis_direction !== 'auto');
         },
 
         openMetricNamingModal(seriesIndex, metricKey) {
@@ -3404,7 +3405,8 @@ export function dashboardBuilder(config = {}) {
                 custom_name: current.custom_name || '',
                 show_channel: current.show_channel !== undefined ? !!current.show_channel : true,
                 show_breakdown: current.show_breakdown !== undefined ? !!current.show_breakdown : true,
-                show_unit: current.show_unit !== undefined ? !!current.show_unit : true
+                show_unit: current.show_unit !== undefined ? !!current.show_unit : true,
+                axis_direction: current.axis_direction || 'auto'
             };
             this.showMetricNamingModal = true;
         },
@@ -3420,7 +3422,8 @@ export function dashboardBuilder(config = {}) {
                     custom_name: (this.namingModalForm.custom_name || '').trim(),
                     show_channel: !!this.namingModalForm.show_channel,
                     show_breakdown: !!this.namingModalForm.show_breakdown,
-                    show_unit: !!this.namingModalForm.show_unit
+                    show_unit: !!this.namingModalForm.show_unit,
+                    axis_direction: this.namingModalForm.axis_direction || 'auto'
                 };
                 // Also assign to series.naming if only one metric
                 if ((series.metrics || []).length <= 1) {

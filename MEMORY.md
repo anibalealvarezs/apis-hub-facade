@@ -61,6 +61,26 @@
      - Single metric trendline scales (`show()`): enabled `'reverse' => true, 'beginAtZero' => false` for `bounce_rate`.
 - **Verification:** `php -l` passed without syntax errors.
 
+### Configurable Metric Axis Direction (Auto, Normal, Inverted) (2026-09-18)
+- **Problem & Goal:** Axis direction for inverted metrics (such as `bounce_rate` and `position`) was previously hardcoded. The user requested making the axis direction configurable per metric in the Dashboard Builder, integrated contextually into the metric customization modal so only metrics of active channels are exposed.
+- **Fix:**
+  1. **Dashboard Builder View (`dashboard-builder.blade.php`):**
+     - In `showMetricNamingModal`, added an **Axis Direction / Scale** card offering three options:
+       - **Auto** (⚡ Metric Default): Respects natural metric convention (e.g. `bounce_rate` and `position` inverted; others standard).
+       - **Normal** (⬆️ Bottom to Top): Standard axis starting at 0 or min at the bottom.
+       - **Inverted** (⬇️ Top to Bottom): Inverted axis starting at 0 or min at the top.
+  2. **Dashboard Builder Logic (`dashboard-builder.js`):**
+     - `openMetricNamingModal()`: Loads `axis_direction: current.axis_direction || 'auto'`.
+     - `saveMetricNamingModal()`: Saves `axis_direction` into `series.metric_namings[metricKey]`.
+     - `hasCustomMetricNaming()`: Marks the metric chip as customized when `axis_direction !== 'auto'`.
+     - Serialization in `confirmWidgetControls()` and snapshot detection preserve `axis_direction` in `series_metric_namings` and `raw_series`.
+  3. **Dashboard Renderer (`public/js/dashboard-renderer.js`):**
+     - Added `resolveMetricAxisDirection(metricKey, seriesIdx, controls)` helper. Checks `controls.series_metric_namings` or `controls.raw_series` for `'inverted'` (`true`) or `'normal'` (`false`), falling back to auto detection (`isBounceRate || isPosition`).
+     - Integrated into `renderLineChart()`, `renderBarChart()`, `renderComboChart()`, and `renderScatterPlot()`.
+  4. **Backend (`DashboardWidgetDataController.php`):**
+     - Updated scatter plot `reverse_y` calculation to respect user-configured `axis_direction` from `series_metric_namings` / `raw_series`.
+- **Verification:** Frontend assets compiled successfully with `npm run build` (vite v7.3.1).
+
 ### Pie / Donut Charts Default Collapsed Legend (2026-09-18)
 - **Problem:** Pie and donut charts had their custom HTML legend expanded by default. For widgets with many slices (e.g. 9 breakdown channels), the tall legend grid compressed the canvas vertically, squishing the pie/donut into an ellipse/oval shape and distorting the chart.
 - **Fix:** In `public/js/dashboard-renderer.js` inside `_renderCustomLegend()`:
