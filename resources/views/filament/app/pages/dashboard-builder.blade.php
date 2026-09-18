@@ -2652,38 +2652,38 @@
                         <button
                             type="button"
                             @click="namingModalForm.axis_direction = 'auto'; markWidgetControlsDirty()"
-                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center min-h-[34px]"
+                            class="py-2 px-2.5 text-xs font-medium rounded-lg border text-center transition-colors flex items-center justify-center gap-1.5"
                             :class="(namingModalForm.axis_direction || 'auto') === 'auto'
-                                ? 'bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-600 ring-1 ring-primary-500 font-semibold shadow-xs'
-                                : 'bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
+                                ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300 font-semibold'
+                                : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'"
                         >
                             <span class="text-xs">⚡</span>
                             <span>{{ __('Auto') }}</span>
-                            <span class="text-3xs text-gray-400 dark:text-gray-500 font-normal">({{ __('Default') }})</span>
+                            <span class="text-3xs opacity-70 font-normal">({{ __('Default') }})</span>
                         </button>
                         <button
                             type="button"
                             @click="namingModalForm.axis_direction = 'normal'; markWidgetControlsDirty()"
-                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center min-h-[34px]"
+                            class="py-2 px-2.5 text-xs font-medium rounded-lg border text-center transition-colors flex items-center justify-center gap-1.5"
                             :class="namingModalForm.axis_direction === 'normal'
-                                ? 'bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-600 ring-1 ring-primary-500 font-semibold shadow-xs'
-                                : 'bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
+                                ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300 font-semibold'
+                                : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'"
                         >
                             <span class="text-xs">⬆️</span>
                             <span>{{ __('Normal') }}</span>
-                            <span class="text-3xs text-gray-400 dark:text-gray-500 font-normal">({{ __('0 at bottom') }})</span>
+                            <span class="text-3xs opacity-70 font-normal">({{ __('0 at bottom') }})</span>
                         </button>
                         <button
                             type="button"
                             @click="namingModalForm.axis_direction = 'inverted'; markWidgetControlsDirty()"
-                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center min-h-[34px]"
+                            class="py-2 px-2.5 text-xs font-medium rounded-lg border text-center transition-colors flex items-center justify-center gap-1.5"
                             :class="namingModalForm.axis_direction === 'inverted'
-                                ? 'bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-600 ring-1 ring-primary-500 font-semibold shadow-xs'
-                                : 'bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
+                                ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300 font-semibold'
+                                : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'"
                         >
                             <span class="text-xs">⬇️</span>
                             <span>{{ __('Inverted') }}</span>
-                            <span class="text-3xs text-gray-400 dark:text-gray-500 font-normal">({{ __('0 at top') }})</span>
+                            <span class="text-3xs opacity-70 font-normal">({{ __('0 at top') }})</span>
                         </button>
                     </div>
                     <p class="text-2xs text-gray-500 dark:text-gray-400">
