@@ -29,6 +29,23 @@
   7. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data`.
 - **Verification:** `php -l` passed without syntax errors.
 
+### Scatter Plot Bounce Rate Axis Inversion & Values > 100% Fix (2026-09-18)
+- **Problem:**
+  1. The bounce rate axis in scatter plots showed values in standard ascending order (0% at bottom to 100% at top). SEO convention and user preference require an inverted scale for bounce rate (low bounce rate is better, higher up).
+  2. Values for bounce rate exceeded 100% (e.g. 200%, 157.3%, 125%).
+- **Root Cause:**
+  1. In `fanOutBreakdownSeries()` (and table breakdown aggregation), when a channel response returned multiple rows for the same breakdown dimension (e.g. Across multiple days or secondary segments), the code accumulated values using `$groupedData[$dimVal][$date] += (float)$val;`. For cumulative metrics like clicks/impressions summing is correct, but for ratio metrics (`bounce_rate`, `ctr`, etc.) and position, summing multiple rows multiplied the rate (e.g. 1.0 + 1.0 = 2.0 = 200%).
+  2. In `public/js/dashboard-renderer.js` inside `renderScatterPlot()`, `reverseYAxis` was only enabled for `position`, ignoring `bounce_rate` and `reverse_y`.
+- **Fix:**
+  1. In `fanOutBreakdownSeries()` of `DashboardWidgetDataController.php`:
+     - Added row counts per dimension and date.
+     - For ratio metrics (`ctr`, `bounce_rate`, `result_rate`) and `position`, average across rows (`$accVal / $c`) instead of accumulating sums.
+     - Clamped ratio values between `0.0` and `100.0` (or `0.0` and `1.0` in scatter plots).
+  2. In `handleMultiSeriesSource()` table aggregation: averaged ratio and position metrics across rows.
+  3. In `show()` for `scatter_plot`: passed `'reverse_y' => in_array($resolvedControls['metrics'][0] ?? '', ['bounce_rate', 'bouncerate', 'position'], true) || !empty($resolvedControls['reverse_y'])`.
+  4. In `public/js/dashboard-renderer.js` inside `renderScatterPlot()`: enabled `reverseYAxis` when `controls?.reverse_y || data?.reverse_y || controls?.metrics?.[0] === 'bounce_rate' || controls?.metrics?.[0] === 'bouncerate'`.
+- **Verification:** `php -l` passed without syntax errors.
+
 ### Line Chart Custom Metric Colors Not Applied (2026-09-14)
 - **Problem:** Line chart widgets ignored user-configured custom metric colors (set via color pickers in the builder), always rendering with the default palette. Breakdown gradient colors worked correctly.
 - **Root Cause:** In `public/js/dashboard-renderer.js`, the `overrideKeys` whitelist in `renderWidget()` controlled which widget control keys were included in the POST body sent to `/api/dashboard/widget/{id}/data`. The keys `series_metric_colors`, `series_metric_namings`, and `raw_series` were missing from this list. This caused two problems:

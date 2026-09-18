@@ -1853,8 +1853,16 @@ window.dashboardRenderer = {
         ];
         const reverseYColor = higherIsWorse.includes(controls?.metrics?.[0]);
         const reverseXColor = higherIsWorse.includes(controls?.metrics?.[1]);
-        const reverseYAxis = controls?.metrics?.[0] === "position";
-        const reverseXAxis = controls?.metrics?.[1] === "position";
+        const reverseYAxis =
+            controls?.reverse_y ||
+            data?.reverse_y ||
+            controls?.metrics?.[0] === "position" ||
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate";
+        const reverseXAxis =
+            controls?.reverse_x ||
+            data?.reverse_x ||
+            controls?.metrics?.[1] === "position";
 
         const resultFormat = this.getKpiResultFormat(controls);
         const xFmt = controls?.metrics?.[1]

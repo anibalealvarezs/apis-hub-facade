@@ -755,6 +755,7 @@
                         'r_squared'          => $rSquared,
                         'coefficients'       => [$m],
                         'baseline_intercept' => $b,
+                        'reverse_y'          => in_array($resolvedControls['metrics'][0] ?? '', ['bounce_rate', 'bouncerate', 'position'], true) || !empty($resolvedControls['reverse_y']),
                     ];
                 } elseif ($effectiveWidgetType === 'table' && isset($data['scatter_data'])) {
                     $scatter = $data['scatter_data'];
@@ -2530,22 +2531,35 @@
 
                                 if (!isset($groupedRows[$dimVal])) {
                                     $groupedRows[$dimVal] = [];
+                                    $groupedRowCounts[$dimVal] = [];
                                     foreach ($metrics as $m) {
                                         $groupedRows[$dimVal][$m] = 0.0;
+                                        $groupedRowCounts[$dimVal][$m] = 0;
                                     }
                                 }
 
                                 foreach ($metrics as $m) {
                                     $val = $this->findMetricValueInPoint($row, $m);
                                     $cleanM = preg_replace('/^trend_(?:total|average)_/', '', $m);
-                                    // For position/average metrics, we keep the direct value; for cumulative metrics, sum
-                                    if (str_contains($cleanM, 'position')) {
-                                        $groupedRows[$dimVal][$m] = (float)$val;
-                                    } else {
-                                        $groupedRows[$dimVal][$m] += (float)$val;
-                                    }
+                                    $groupedRows[$dimVal][$m] += (float)$val;
+                                    $groupedRowCounts[$dimVal][$m]++;
                                 }
                             }
+
+                            // For ratio or position metrics, compute the average across rows
+                            foreach ($groupedRows as $dVal => &$mValues) {
+                                foreach ($mValues as $m => &$accVal) {
+                                    $cleanM = preg_replace('/^trend_(?:total|average)_/', '', $m);
+                                    if (in_array($cleanM, $ratioMetrics, true) || str_contains($cleanM, 'position')) {
+                                        $cnt = $groupedRowCounts[$dVal][$m] ?? 1;
+                                        if ($cnt > 1) {
+                                            $accVal = $accVal / $cnt;
+                                        }
+                                    }
+                                }
+                                unset($accVal);
+                            }
+                            unset($mValues);
 
                             // Sort dimension values by order
                             $dimValues = array_keys($groupedRows);
@@ -3363,11 +3377,17 @@
                             $rawY = is_array($yData) ? (isset($yData['Lifetime']) ? (float)$yData['Lifetime'] : (float)array_sum($yData)) : 0.0;
 
                             // Scale ratios to 0.0 - 1.0 if returned scaled (e.g. 27.0 -> 0.27) so frontend formatMetricValue displays 27.0%
-                            if (!empty($xCurveSample['percentage']) && $rawX > 1.0) {
-                                $rawX = $rawX / 100.0;
+                            if (!empty($xCurveSample['percentage'])) {
+                                if ($rawX > 1.0) {
+                                    $rawX = $rawX / 100.0;
+                                }
+                                $rawX = min(1.0, max(0.0, $rawX));
                             }
-                            if (!empty($yCurveSample['percentage']) && $rawY > 1.0) {
-                                $rawY = $rawY / 100.0;
+                            if (!empty($yCurveSample['percentage'])) {
+                                if ($rawY > 1.0) {
+                                    $rawY = $rawY / 100.0;
+                                }
+                                $rawY = min(1.0, max(0.0, $rawY));
                             }
 
                             $xVals[] = round($rawX, 4);
@@ -3403,11 +3423,17 @@
                         $rawX = (float)($c1Data[$k] ?? 0);
                         $rawY = (float)($c0Data[$k] ?? 0);
 
-                        if (!empty($c1['percentage']) && $rawX > 1.0) {
-                            $rawX = $rawX / 100.0;
+                        if (!empty($c1['percentage'])) {
+                            if ($rawX > 1.0) {
+                                $rawX = $rawX / 100.0;
+                            }
+                            $rawX = min(1.0, max(0.0, $rawX));
                         }
-                        if (!empty($c0['percentage']) && $rawY > 1.0) {
-                            $rawY = $rawY / 100.0;
+                        if (!empty($c0['percentage'])) {
+                            if ($rawY > 1.0) {
+                                $rawY = $rawY / 100.0;
+                            }
+                            $rawY = min(1.0, max(0.0, $rawY));
                         }
 
                         $x[] = round($rawX, 4);
@@ -3749,7 +3775,10 @@
 
             // Group rows by breakdown value
             $groupedData = []; // [dimValue => [date => value]]
+            $groupedCounts = []; // [dimValue => [date => count]]
             $totals = [];      // [dimValue => sumValue]
+            $totalCounts = []; // [dimValue => count]
+            $isAverageMetric = $isRatio || str_contains($cleanMetric, 'position');
 
             foreach ($rawRows as $row) {
                 $date = $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? null;
@@ -3778,11 +3807,33 @@
 
                 if (!isset($groupedData[$dimVal])) {
                     $groupedData[$dimVal] = [];
+                    $groupedCounts[$dimVal] = [];
                     $totals[$dimVal] = 0.0;
+                    $totalCounts[$dimVal] = 0;
                 }
 
                 $groupedData[$dimVal][$date] = ($groupedData[$dimVal][$date] ?? 0.0) + (float)$val;
+                $groupedCounts[$dimVal][$date] = ($groupedCounts[$dimVal][$date] ?? 0) + 1;
                 $totals[$dimVal] += (float)$val;
+                $totalCounts[$dimVal]++;
+            }
+
+            // If metric is a ratio or average metric (like position), average across multiple rows for the same date/lifetime
+            if ($isAverageMetric) {
+                foreach ($groupedData as $dVal => &$datesMap) {
+                    foreach ($datesMap as $dt => &$accVal) {
+                        $c = $groupedCounts[$dVal][$dt] ?? 1;
+                        if ($c > 1) {
+                            $accVal = $accVal / $c;
+                        }
+                    }
+                    unset($accVal);
+                    $tc = $totalCounts[$dVal] ?? 1;
+                    if ($tc > 1) {
+                        $totals[$dVal] = $totals[$dVal] / $tc;
+                    }
+                }
+                unset($datesMap);
             }
 
             // Sort breakdown keys according to order
@@ -3813,7 +3864,7 @@
                 }
 
                 if ($isRatio) {
-                    $timeSeries = array_map(fn($v) => round((float)$v * 100, 4), $timeSeries);
+                    $timeSeries = array_map(fn($v) => min(100.0, max(0.0, round((float)$v * 100, 4))), $timeSeries);
                 }
 
                 $dimSlug = preg_replace('/[^a-zA-Z0-9_]/', '_', strtolower($dimVal));
