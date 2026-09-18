@@ -12,17 +12,20 @@
 - Laravel business layer for SaaS management and operational workflows.
 
 ### Multi-Series Breakdown Scatter Plot Alignment & Axis Scaling (2026-09-17)
-- **Problem:** Multi-series scatter plot widgets with breakdown dimensions (such as Widget #26 "Intent Match - Rebote vs Clics" crossing GSC `clicks` by `dimensions.page` with GA4 `bounce_rate` by `dimensions.landing_page`) displayed only a single point labeled "Lifetime" at `(x: 27, y: 274)`, inverted the axes (Bounce Rate on X, Clics on Y), and scaled bounce rate to `2700.0%`.
+- **Problem:** Multi-series scatter plot widgets with breakdown dimensions (such as Widget #26 "Intent Match - Rebote vs Clics" crossing GSC `clicks` by `dimensions.page` with GA4 `bounce_rate` by `dimensions.landing_page`) displayed only a single point labeled "Lifetime" at `(x: 27, y: 274)`, inverted the axes (Bounce Rate on X, Clics on Y), and scaled bounce rate to `2700.0%`. After initial subcase 2 indexing, only 2 points were returned.
 - **Root Cause:**
-  1. `fanOutBreakdownSeries()` generated individual curves for each broken-down dimension item (e.g. 30 GSC page curves and 30 GA4 page curves) grouped flat in `$seriesCurves`.
-  2. The previous Subcase 2 handler took `$c0 = $seriesCurves[0]` and `$c1 = $seriesCurves[1]`, which were simply the 1st and 2nd curves of Series 0 (GSC). Because granularity was `lifetime`, each curve had only `['Lifetime' => val]`, resulting in an intersection of 1 single point labeled "Lifetime".
-  3. Axes were tied to curve order rather than metric nature, placing the ratio metric on X and volume metric on Y.
-  4. In `fanOutBreakdownSeries()`, ratio metrics were multiplied by 100 (`$v * 100`), but in the frontend renderer `METRIC_FORMATS[metric].multiply = 100` multiplied it again when `format === 'percentage'`, resulting in `2700%`.
+  1. `fanOutBreakdownSeries()` generated individual curves for each broken-down dimension item grouped flat in `$seriesCurves`.
+  2. The previous Subcase 2 handler took `$c0 = $seriesCurves[0]` and `$c1 = $seriesCurves[1]`, which were simply the 1st and 2nd curves of Series 0 (GSC).
+  3. `$breakdownLimit` was hard-capped at 30 items per series before intersection (`max(1, min(30, $breakdownLimit))`). GA4 sorted by `bounce_rate` descending (taking 30 long-tail 100% bounce rate pages) while GSC sorted by `clicks` descending. Only 2 URLs overlapped between the two top-30 lists!
+  4. GSC page paths often have trailing slashes (`/contacto/`), while GA4 landing pages often omit them (`/contacto`), causing exact string key comparison in `array_intersect` to miss matching URLs.
+  5. `$hardFloor = 3` dropped any points with fewer than 3 clicks.
 - **Fix:** In `DashboardWidgetDataController.php`:
-  1. Updated Subcase 2 to group curves by `series_index` (`$s0Curves` and `$s1Curves`). When breakdown values exist on both series, index them by their canonical normalized dimension value (`normalizeBreakdownDimensionValue()`) and calculate the intersection of keys across series.
-  2. Classified metrics by volume (`clicks`, `impressions`, `sessions`, etc.) vs ratio/rate (`bounce_rate`, `ctr`, etc.), ensuring the independent volume variable is assigned to the X-axis and the dependent ratio/efficiency variable is assigned to the Y-axis.
-  3. Scaled ratio metric values back to decimal fraction (`<= 1.0`) when returned scaled so the frontend renderer and formatters display authentic percentages (`27.0%`).
-  4. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data` so regression lines, trend lines, and tooltips align seamlessly.
+  1. Updated Subcase 2 to group curves by `series_index` (`$s0Curves` and `$s1Curves`), index them by canonical breakdown value, and calculate the key intersection.
+  2. In `handleMultiSeriesSource()`, increased `$maxBreakdownLimit` to 250 for `scatter_plot` so the intersection evaluates all points returned by channel endpoints rather than just the top 30.
+  3. In `normalizeBreakdownDimensionValue()`, canonicalized page dimension values by stripping trailing slashes (except root `/`) so `/page/` and `/page` resolve to the same canonical path.
+  4. Made `$hardFloor` configurable via `$resolvedControls['hard_floor']` and set default to 1 for small sample sizes (`$totalN < 10`).
+  5. Scaled ratio metrics back to decimal fraction (`<= 1.0`) so the frontend displays authentic percentages (`27.0%`).
+  6. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data`.
 - **Verification:** `php -l` passed without syntax errors.
 
 ### Line Chart Custom Metric Colors Not Applied (2026-09-14)

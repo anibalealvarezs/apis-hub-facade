@@ -587,8 +587,10 @@
                     $totalN = count($rawX);
 
                     if ($isVolumeMetric) {
-                        if ($xMetric === 'clicks') {
-                            $hardFloor = 3;
+                        if (isset($resolvedControls['hard_floor'])) {
+                            $hardFloor = (float)$resolvedControls['hard_floor'];
+                        } elseif ($xMetric === 'clicks') {
+                            $hardFloor = ($totalN < 10) ? 1 : 3;
                         } else {
                             $hardFloor = 5;
                         }
@@ -2451,9 +2453,10 @@
                     $breakdownDim = is_array($seriesBreakdown) ? ($seriesBreakdown['dimension'] ?? null) : $seriesBreakdown;
                     $defaultBreakdownLimit = ($widget->widget_type === 'pie_chart' && isset($controls['pie_slice_limit']))
                         ? (int)$controls['pie_slice_limit']
-                        : 5;
+                        : (($widget->widget_type === 'scatter_plot') ? 250 : 5);
+                    $maxBreakdownLimit = ($widget->widget_type === 'scatter_plot') ? 250 : 30;
                     $breakdownLimit = is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit;
-                    $breakdownLimit = max(1, min(30, $breakdownLimit));
+                    $breakdownLimit = max(1, min($maxBreakdownLimit, $breakdownLimit));
                     $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
 
                     if (!empty($breakdownDim)) {
@@ -3575,6 +3578,11 @@
                     }
                 } elseif (!str_starts_with($dimVal, '/') && $isPageDimension) {
                     $dimVal = '/'.$dimVal;
+                }
+
+                // Canonicalize trailing slashes so '/page/' and '/page' match across GSC and GA4
+                if ($isPageDimension && $dimVal !== '/' && str_ends_with($dimVal, '/')) {
+                    $dimVal = rtrim($dimVal, '/');
                 }
             }
 
