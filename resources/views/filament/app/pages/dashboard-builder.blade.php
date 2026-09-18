@@ -2648,42 +2648,42 @@
                         </label>
                         <span class="text-2xs text-gray-400 dark:text-gray-500" x-text="namingModalForm.axis_direction === 'inverted' ? '{{ __('0 / Min at top (reversed)') }}' : (namingModalForm.axis_direction === 'normal' ? '{{ __('0 / Min at bottom (standard)') }}' : '{{ __('Auto by metric rule') }}')"></span>
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
                             type="button"
                             @click="namingModalForm.axis_direction = 'auto'; markWidgetControlsDirty()"
-                            class="px-3 py-2 text-xs font-medium rounded-lg border transition-all flex flex-col items-center gap-1 text-center"
+                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center min-h-[34px]"
                             :class="(namingModalForm.axis_direction || 'auto') === 'auto'
-                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 ring-1 ring-primary-500 font-semibold'
-                                : 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                                ? 'bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-600 ring-1 ring-primary-500 font-semibold shadow-xs'
+                                : 'bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
                         >
-                            <span class="text-sm">⚡</span>
+                            <span class="text-xs">⚡</span>
                             <span>{{ __('Auto') }}</span>
-                            <span class="text-4xs opacity-75 font-normal">{{ __('Metric Default') }}</span>
+                            <span class="text-3xs text-gray-400 dark:text-gray-500 font-normal">({{ __('Default') }})</span>
                         </button>
                         <button
                             type="button"
                             @click="namingModalForm.axis_direction = 'normal'; markWidgetControlsDirty()"
-                            class="px-3 py-2 text-xs font-medium rounded-lg border transition-all flex flex-col items-center gap-1 text-center"
+                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center min-h-[34px]"
                             :class="namingModalForm.axis_direction === 'normal'
-                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 ring-1 ring-primary-500 font-semibold'
-                                : 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                                ? 'bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-600 ring-1 ring-primary-500 font-semibold shadow-xs'
+                                : 'bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
                         >
-                            <span class="text-sm">⬆️</span>
+                            <span class="text-xs">⬆️</span>
                             <span>{{ __('Normal') }}</span>
-                            <span class="text-4xs opacity-75 font-normal">{{ __('Bottom to Top') }}</span>
+                            <span class="text-3xs text-gray-400 dark:text-gray-500 font-normal">({{ __('0 at bottom') }})</span>
                         </button>
                         <button
                             type="button"
                             @click="namingModalForm.axis_direction = 'inverted'; markWidgetControlsDirty()"
-                            class="px-3 py-2 text-xs font-medium rounded-lg border transition-all flex flex-col items-center gap-1 text-center"
+                            class="px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 text-center min-h-[34px]"
                             :class="namingModalForm.axis_direction === 'inverted'
-                                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700 ring-1 ring-primary-500 font-semibold'
-                                : 'bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                                ? 'bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-600 ring-1 ring-primary-500 font-semibold shadow-xs'
+                                : 'bg-gray-50 dark:bg-gray-900/60 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'"
                         >
-                            <span class="text-sm">⬇️</span>
+                            <span class="text-xs">⬇️</span>
                             <span>{{ __('Inverted') }}</span>
-                            <span class="text-4xs opacity-75 font-normal">{{ __('Top to Bottom') }}</span>
+                            <span class="text-3xs text-gray-400 dark:text-gray-500 font-normal">({{ __('0 at top') }})</span>
                         </button>
                     </div>
                     <p class="text-2xs text-gray-500 dark:text-gray-400">
