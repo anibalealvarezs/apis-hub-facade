@@ -21,11 +21,12 @@
   5. `$hardFloor = 3` dropped any points with fewer than 3 clicks.
 - **Fix:** In `DashboardWidgetDataController.php`:
   1. Updated Subcase 2 to group curves by `series_index` (`$s0Curves` and `$s1Curves`), index them by canonical breakdown value, and calculate the key intersection.
-  2. In `handleMultiSeriesSource()`, increased `$maxBreakdownLimit` to 250 for `scatter_plot` so the intersection evaluates all points returned by channel endpoints rather than just the top 30.
+  2. In `handleMultiSeriesSource()`, forced `$breakdownLimit` to 250 for `scatter_plot` (bypassing the series-level `limit: 30` config stored in `raw_series`) so the intersection evaluates all points returned by channel endpoints rather than truncating before the cross-channel merge.
   3. In `normalizeBreakdownDimensionValue()`, canonicalized page dimension values by stripping trailing slashes (except root `/`) so `/page/` and `/page` resolve to the same canonical path.
   4. Made `$hardFloor` configurable via `$resolvedControls['hard_floor']` and set default to 1 for small sample sizes (`$totalN < 10`).
-  5. Scaled ratio metrics back to decimal fraction (`<= 1.0`) so the frontend displays authentic percentages (`27.0%`).
-  6. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data`.
+  5. Set `$displayPercentile` default to `1.0` (all points) when not explicitly configured, preventing the aggressive default 15% top-percentile cut.
+  6. Scaled ratio metrics back to decimal fraction (`<= 1.0`) so the frontend displays authentic percentages (`27.0%`).
+  7. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data`.
 - **Verification:** `php -l` passed without syntax errors.
 
 ### Line Chart Custom Metric Colors Not Applied (2026-09-14)

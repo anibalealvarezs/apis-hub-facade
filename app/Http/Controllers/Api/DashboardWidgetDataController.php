@@ -662,7 +662,10 @@
 
                     // Top percentile cap for chart readability — keep only the top N%
                     // of points by x value (highest impressions, best positions).
-                    $displayPercentile = (float)($resolvedControls['display_percentile'] ?? 0.15);
+                    // Default to 1.0 (keep all points) unless display_percentile is explicitly configured.
+                    $displayPercentile = isset($resolvedControls['display_percentile'])
+                        ? (float)$resolvedControls['display_percentile']
+                        : 1.0;
                     $pointsBeforeCap = count($points);
                     if ($displayPercentile < 1.0 && $pointsBeforeCap > 10) {
                         $nKeep = max(2, (int)ceil($pointsBeforeCap * $displayPercentile));
@@ -2455,7 +2458,9 @@
                         ? (int)$controls['pie_slice_limit']
                         : (($widget->widget_type === 'scatter_plot') ? 250 : 5);
                     $maxBreakdownLimit = ($widget->widget_type === 'scatter_plot') ? 250 : 30;
-                    $breakdownLimit = is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit;
+                    $breakdownLimit = ($widget->widget_type === 'scatter_plot')
+                        ? 250
+                        : (is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit);
                     $breakdownLimit = max(1, min($maxBreakdownLimit, $breakdownLimit));
                     $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
 
