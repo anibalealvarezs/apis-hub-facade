@@ -1265,12 +1265,14 @@
                                 $isRatio = in_array($cleanKey, $ratioMetrics);
 
                                 $isPosition = str_contains($cleanKey, 'position');
+                                $isBounceRate = in_array($cleanKey, ['bounce_rate', 'bouncerate'], true);
+                                $isReverseAxis = $isPosition || $isBounceRate;
                                 $scales['y-'.$cleanKey] = [
                                     'type'        => 'linear',
                                     'display'     => true,
                                     'position'    => $idx % 2 === 0 ? 'left' : 'right',
-                                    'reverse'     => $isPosition,
-                                    'beginAtZero' => !$isPosition,
+                                    'reverse'     => $isReverseAxis,
+                                    'beginAtZero' => !$isReverseAxis,
                                     'title'       => [
                                         'display' => true,
                                         'text'    => $isRatio ? $label.' (%)' : $label,
@@ -1352,6 +1354,13 @@
                             'y' => [
                                 'min' => 1,
                                 'suggestedMin' => 1,
+                                'reverse' => true,
+                                'beginAtZero' => false,
+                            ],
+                        ];
+                    } elseif (in_array($trendMetric, ['bounce_rate', 'bouncerate'], true)) {
+                        $data['scales'] = [
+                            'y' => [
                                 'reverse' => true,
                                 'beginAtZero' => false,
                             ],
@@ -3499,12 +3508,14 @@
                 $axisId = 'y-'.$curve['axis_key'];
                 if (!isset($scales[$axisId])) {
                     $isPosition = str_contains((string)($curve['metric'] ?? ''), 'position') || str_contains((string)($curve['axis_key'] ?? ''), 'position');
+                    $isBounceRate = in_array((string)($curve['metric'] ?? ''), ['bounce_rate', 'bouncerate'], true) || in_array((string)($curve['axis_key'] ?? ''), ['bounce_rate', 'bouncerate'], true);
+                    $isReverseAxis = $isPosition || $isBounceRate;
                     $scales[$axisId] = [
                         'type'        => 'linear',
                         'display'     => true,
                         'position'    => count($scales) % 2 === 0 ? 'left' : 'right',
-                        'reverse'     => $isPosition,
-                        'beginAtZero' => !$isPosition,
+                        'reverse'     => $isReverseAxis,
+                        'beginAtZero' => !$isReverseAxis,
                         'title'       => [
                             'display' => true,
                             'text'    => $curve['axis_title'],

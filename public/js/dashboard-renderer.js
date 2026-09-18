@@ -689,7 +689,15 @@ window.dashboardRenderer = {
             datasets[0]?.metric === "position" ||
             datasets[0]?.metric_key === "position" ||
             (datasets[0]?.key && String(datasets[0].key).includes("position"));
-        const reverseY = isPrimaryPosition;
+        const isPrimaryBounceRate =
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate" ||
+            datasets[0]?.metric === "bounce_rate" ||
+            datasets[0]?.metric === "bouncerate" ||
+            datasets[0]?.metric_key === "bounce_rate" ||
+            datasets[0]?.metric_key === "bouncerate" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("bounce_rate"));
+        const reverseY = isPrimaryPosition || isPrimaryBounceRate || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
         const resultFormat = isPrimaryPosition && resultFormatRaw?.format === "percentage"
             ? null
             : resultFormatRaw;
@@ -717,6 +725,13 @@ window.dashboardRenderer = {
         const isDatasetPosition = (ds, idx) => {
             const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
             return m.includes("position") || (idx === 0 && isPrimaryPosition);
+        };
+        const isDatasetBounceRate = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("bounce_rate") || m.includes("bouncerate") || (idx === 0 && isPrimaryBounceRate);
+        };
+        const isDatasetReverse = (ds, idx) => {
+            return isDatasetPosition(ds, idx) || isDatasetBounceRate(ds, idx);
         };
 
         const mappedDatasets = datasets.map((ds, idx) => {
@@ -749,10 +764,11 @@ window.dashboardRenderer = {
 
         if (datasets.length === 1) {
             const backendY = data?.scales?.y || {};
-            const isPos = reverseY || isPrimaryPosition;
+            const isPos = isPrimaryPosition;
+            const isReverseScale = reverseY || isPos || isPrimaryBounceRate || !!backendY.reverse;
             chartScales.y = {
-                beginAtZero: !isPos && backendY.beginAtZero !== false,
-                reverse: isPos || !!backendY.reverse,
+                beginAtZero: !isReverseScale && backendY.beginAtZero !== false,
+                reverse: isReverseScale,
                 title: {
                     display: true,
                     text: backendY.title?.text || yAxisLabel,
@@ -779,11 +795,13 @@ window.dashboardRenderer = {
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
-                    const isPosAxis = axisId.toLowerCase().includes("position") || !!axisConf.reverse;
+                    const isPosAxis = axisId.toLowerCase().includes("position");
+                    const isBounceAxis = axisId.toLowerCase().includes("bounce_rate") || axisId.toLowerCase().includes("bouncerate");
+                    const isRevAxis = isPosAxis || isBounceAxis || !!axisConf.reverse;
                     chartScales[axisId] = {
                         ...axisConf,
-                        reverse: isPosAxis ? true : (axisConf.reverse ?? false),
-                        beginAtZero: isPosAxis ? false : (axisConf.beginAtZero ?? true),
+                        reverse: isRevAxis ? true : (axisConf.reverse ?? false),
+                        beginAtZero: isRevAxis ? false : (axisConf.beginAtZero ?? true),
                         title: { display: false },
                         ticks: { display: false },
                     };
@@ -795,11 +813,12 @@ window.dashboardRenderer = {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
                         const isPosAxis = isDatasetPosition(ds, idx);
+                        const isRevAxis = isDatasetReverse(ds, idx);
                         chartScales[ds.yAxisID] = {
                             type: "linear",
                             display: true,
-                            reverse: isPosAxis,
-                            beginAtZero: !isPosAxis,
+                            reverse: isRevAxis,
+                            beginAtZero: !isRevAxis,
                             title: { display: false },
                             ticks: { display: false },
                             grid: { drawOnChartArea: idx === 0 },
@@ -868,7 +887,20 @@ window.dashboardRenderer = {
     renderBarChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
-        const reverseY = controls?.metrics?.[0] === "position";
+        const isPrimaryPosition =
+            controls?.metrics?.[0] === "position" ||
+            datasets[0]?.metric === "position" ||
+            datasets[0]?.metric_key === "position" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("position"));
+        const isPrimaryBounceRate =
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate" ||
+            datasets[0]?.metric === "bounce_rate" ||
+            datasets[0]?.metric === "bouncerate" ||
+            datasets[0]?.metric_key === "bounce_rate" ||
+            datasets[0]?.metric_key === "bouncerate" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("bounce_rate"));
+        const reverseY = isPrimaryPosition || isPrimaryBounceRate || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
 
         const resultFormat = this.getKpiResultFormat(controls);
 
@@ -877,6 +909,18 @@ window.dashboardRenderer = {
                 '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
+
+        const isDatasetPosition = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("position") || (idx === 0 && isPrimaryPosition);
+        };
+        const isDatasetBounceRate = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("bounce_rate") || m.includes("bouncerate") || (idx === 0 && isPrimaryBounceRate);
+        };
+        const isDatasetReverse = (ds, idx) => {
+            return isDatasetPosition(ds, idx) || isDatasetBounceRate(ds, idx);
+        };
 
         const mappedDatasets = datasets.map((ds) => ({
             ...ds,
@@ -894,32 +938,65 @@ window.dashboardRenderer = {
 
         if (datasets.length === 1) {
             const backendY = data?.scales?.y || {};
+            const isPos = isPrimaryPosition;
+            const isReverseScale = reverseY || isPos || isPrimaryBounceRate || !!backendY.reverse;
             chartScales.y = {
-                beginAtZero: !reverseY,
-                reverse: reverseY,
+                beginAtZero: !isReverseScale && backendY.beginAtZero !== false,
+                reverse: isReverseScale,
                 title: { display: true, text: backendY.title?.text || "" },
                 ticks: { font: { size: 10 }, ...backendY.ticks },
             };
+            if (backendY.min !== undefined) {
+                chartScales.y.min = backendY.min;
+            } else if (isPos) {
+                chartScales.y.min = 1;
+            }
+            if (backendY.suggestedMin !== undefined) {
+                chartScales.y.suggestedMin = backendY.suggestedMin;
+            } else if (isPos) {
+                chartScales.y.suggestedMin = 1;
+            }
+            if (backendY.max !== undefined) {
+                chartScales.y.max = backendY.max;
+            }
+            if (backendY.suggestedMax !== undefined) {
+                chartScales.y.suggestedMax = backendY.suggestedMax;
+            }
             mappedDatasets[0].yAxisID = "y";
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
+                    const isPosAxis = axisId.toLowerCase().includes("position");
+                    const isBounceAxis = axisId.toLowerCase().includes("bounce_rate") || axisId.toLowerCase().includes("bouncerate");
+                    const isRevAxis = isPosAxis || isBounceAxis || !!axisConf.reverse;
                     chartScales[axisId] = {
                         ...axisConf,
+                        reverse: isRevAxis ? true : (axisConf.reverse ?? false),
+                        beginAtZero: isRevAxis ? false : (axisConf.beginAtZero ?? true),
                         title: { display: false },
                         ticks: { display: false },
                     };
+                    if (isPosAxis && chartScales[axisId].min === undefined) {
+                        chartScales[axisId].min = 1;
+                    }
                 }
             } else {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
+                        const isPosAxis = isDatasetPosition(ds, idx);
+                        const isRevAxis = isDatasetReverse(ds, idx);
                         chartScales[ds.yAxisID] = {
                             type: "linear",
                             display: true,
+                            reverse: isRevAxis,
+                            beginAtZero: !isRevAxis,
                             title: { display: false },
                             ticks: { display: false },
                             grid: { drawOnChartArea: idx === 0 },
                         };
+                        if (isPosAxis) {
+                            chartScales[ds.yAxisID].min = 1;
+                        }
                     }
                 });
             }
@@ -1691,7 +1768,15 @@ window.dashboardRenderer = {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
         const anomalyDates = data?.anomaly_dates ?? [];
-        const reverseY = controls?.metrics?.[0] === "position";
+        const reverseY =
+            controls?.metrics?.[0] === "position" ||
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate" ||
+            datasets[0]?.metric === "position" ||
+            datasets[0]?.metric === "bounce_rate" ||
+            datasets[0]?.metric === "bouncerate" ||
+            !!controls?.reverse_y ||
+            !!data?.reverse_y;
 
         const resultFormat = this.getKpiResultFormat(controls);
 
@@ -2332,6 +2417,8 @@ window.dashboardRenderer = {
         let hasRightAxis = false;
         let leftAxisUnit = "";
         let rightAxisUnit = "";
+        let leftAxisReverse = false;
+        let rightAxisReverse = false;
 
         const mappedDatasets = data.datasets.map((ds, idx) => {
             const labelLower = (ds.label || "").toLowerCase();
@@ -2473,14 +2560,24 @@ window.dashboardRenderer = {
                 }
             }
 
+            const isPos =
+                labelLower.includes("position") ||
+                keyLower.includes("position");
+            const isBounce =
+                labelLower.includes("bounce_rate") ||
+                labelLower.includes("bouncerate") ||
+                keyLower.includes("bounce_rate") ||
+                keyLower.includes("bouncerate");
             if (yAxisID === "y1") {
                 hasRightAxis = true;
+                if (isPos || isBounce) rightAxisReverse = true;
                 if (!rightAxisUnit) {
                     if (isRateOrPercentage) rightAxisUnit = "%";
                     else if (isCurrency) rightAxisUnit = "$";
                 }
             } else {
                 hasLeftAxis = true;
+                if (isPos || isBounce) leftAxisReverse = true;
                 if (!leftAxisUnit) {
                     if (isCurrency) leftAxisUnit = "$";
                     else if (isRateOrPercentage) leftAxisUnit = "%";
@@ -2517,7 +2614,8 @@ window.dashboardRenderer = {
                 type: "linear",
                 display: hasLeftAxis || !hasRightAxis,
                 position: "left",
-                beginAtZero: true,
+                reverse: leftAxisReverse,
+                beginAtZero: !leftAxisReverse,
                 grid: { color: "rgba(156, 163, 175, 0.15)" },
                 ticks: {
                     font: { size: 10 },
@@ -2539,7 +2637,8 @@ window.dashboardRenderer = {
                 type: "linear",
                 display: true,
                 position: "right",
-                beginAtZero: true,
+                reverse: rightAxisReverse,
+                beginAtZero: !rightAxisReverse,
                 grid: { drawOnChartArea: false }, // Avoid duplicate gridlines
                 ticks: {
                     font: { size: 10 },

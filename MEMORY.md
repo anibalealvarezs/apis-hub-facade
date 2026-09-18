@@ -46,6 +46,21 @@
   4. In `public/js/dashboard-renderer.js` inside `renderScatterPlot()`: enabled `reverseYAxis` when `controls?.reverse_y || data?.reverse_y || controls?.metrics?.[0] === 'bounce_rate' || controls?.metrics?.[0] === 'bouncerate'`.
 - **Verification:** `php -l` passed without syntax errors.
 
+### Inverted Axis Consistency for Bounce Rate & Position Across All Chart Types (2026-09-18)
+- **Scope & Problem:** The inverted axis (lower is better, where 0% / rank 1 is at the top) was only partially applied to `position` in line/bar charts and was completely missing for `bounce_rate` in line charts, bar charts, anomaly charts, and combo charts.
+- **Fix:**
+  1. In `public/js/dashboard-renderer.js`:
+     - **`renderLineChart()`**: Expanded primary axis and multi-dataset axis checks to invert scale (`reverse: true`, `beginAtZero: false`) whenever the metric is `position`, `bounce_rate`, or `bouncerate`, or when `reverse_y` is specified.
+     - **`renderBarChart()`**: Added full inverted scale support for single-series and multi-dataset bar charts for `position`, `bounce_rate`, `bouncerate`, or `reverse_y`.
+     - **`renderAnomalyChart()`**: Updated `reverseY` to reverse the Y-axis for `bounce_rate` and `position`.
+     - **`renderComboChart()`**: Detected whether left or right Y-axes contain `position` or `bounce_rate`, setting `reverse: true` and `beginAtZero: false` for the corresponding axis.
+     - **`renderScatterPlot()`**: Already updated with `reverse_y` for `bounce_rate` and `position`.
+  2. In `DashboardWidgetDataController.php`:
+     - Single-series line/bar chart scales: set `'reverse' => true, 'beginAtZero' => false` for `bounce_rate` and `position`.
+     - Multi-series line/bar chart scales (`handleMultiSeriesSource()`): set `'reverse' => true, 'beginAtZero' => false` for `bounce_rate` and `position`.
+     - Single metric trendline scales (`show()`): enabled `'reverse' => true, 'beginAtZero' => false` for `bounce_rate`.
+- **Verification:** `php -l` passed without syntax errors.
+
 ### Pie / Donut Charts Default Collapsed Legend (2026-09-18)
 - **Problem:** Pie and donut charts had their custom HTML legend expanded by default. For widgets with many slices (e.g. 9 breakdown channels), the tall legend grid compressed the canvas vertically, squishing the pie/donut into an ellipse/oval shape and distorting the chart.
 - **Fix:** In `public/js/dashboard-renderer.js` inside `_renderCustomLegend()`:
