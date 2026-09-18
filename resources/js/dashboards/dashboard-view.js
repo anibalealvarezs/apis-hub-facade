@@ -679,6 +679,7 @@ export function dashboardView(config = {}) {
         },
 
         refreshAll() {
+            window.dashboardRenderer?.clearStorageCache?.();
             this.loadedCount = 0;
             this._loadedWidgets = {};
             const widgets = document.querySelectorAll(
@@ -731,6 +732,7 @@ export function dashboardView(config = {}) {
         },
 
         reloadWidget(widgetId, controls) {
+            window.dashboardRenderer?.clearStorageCache?.(widgetId);
             const widgetItem = document.querySelector(
                 `.grid-stack-item[gs-id="${widgetId}"]`,
             );
@@ -1253,6 +1255,18 @@ export function dashboardView(config = {}) {
             this._popOutAnimating = true;
             this.popOutActive = true;
 
+            const executePopOut = () => {
+                const renderer = window.dashboardRenderer;
+                if (!renderer) return;
+                const target = this.$refs.popOutContent;
+                if (!target) return;
+                const contentEl = document.querySelector(
+                    `.grid-stack-item[gs-id="${widgetId}"] .widget-content`,
+                );
+                if (!contentEl) return;
+                renderer.popOutWidget(contentEl, target);
+            };
+
             this.$nextTick(() => {
                 const card = this.$refs.popOutCard;
                 if (card && rect) {
@@ -1278,36 +1292,22 @@ export function dashboardView(config = {}) {
                     card.style.transform = "scale(1)";
                     card.style.opacity = "1";
 
-                    card.addEventListener(
-                        "transitionend",
-                        () => {
-                            this._popOutAnimating = false;
-                            card.style.transition = "";
-                            card.style.transform = "";
-                            card.style.opacity = "";
+                    let finished = false;
+                    const onEnd = () => {
+                        if (finished) return;
+                        finished = true;
+                        this._popOutAnimating = false;
+                        card.style.transition = "";
+                        card.style.transform = "";
+                        card.style.opacity = "";
+                        executePopOut();
+                    };
 
-                            const renderer = window.dashboardRenderer;
-                            if (!renderer) return;
-                            const target = this.$refs.popOutContent;
-                            if (!target) return;
-                            const contentEl = document.querySelector(
-                                `.grid-stack-item[gs-id="${widgetId}"] .widget-content`,
-                            );
-                            if (!contentEl) return;
-                            renderer.popOutWidget(contentEl, target);
-                        },
-                        { once: true },
-                    );
+                    card.addEventListener("transitionend", onEnd, { once: true });
+                    setTimeout(onEnd, 450);
                 } else {
-                    const renderer = window.dashboardRenderer;
-                    if (!renderer) return;
-                    const target = this.$refs.popOutContent;
-                    if (!target) return;
-                    const contentEl = document.querySelector(
-                        `.grid-stack-item[gs-id="${widgetId}"] .widget-content`,
-                    );
-                    if (!contentEl) return;
-                    renderer.popOutWidget(contentEl, target);
+                    this._popOutAnimating = false;
+                    executePopOut();
                 }
             });
         },
@@ -1358,23 +1358,25 @@ export function dashboardView(config = {}) {
                 card.style.transform = "scale(0.25)";
                 card.style.opacity = "0";
 
-                card.addEventListener(
-                    "transitionend",
-                    () => {
-                        this._popFromRect = null;
-                        this._popOutAnimating = false;
-                        this.popOutActive = false;
-                        this.popOutWidgetId = null;
-                        this.popOutTitle = "";
-                        if (
-                            window.isEmbedded &&
-                            typeof window.pvNotifyPopOut === "function"
-                        ) {
-                            window.pvNotifyPopOut(false);
-                        }
-                    },
-                    { once: true },
-                );
+                let finished = false;
+                const onEnd = () => {
+                    if (finished) return;
+                    finished = true;
+                    this._popFromRect = null;
+                    this._popOutAnimating = false;
+                    this.popOutActive = false;
+                    this.popOutWidgetId = null;
+                    this.popOutTitle = "";
+                    if (
+                        window.isEmbedded &&
+                        typeof window.pvNotifyPopOut === "function"
+                    ) {
+                        window.pvNotifyPopOut(false);
+                    }
+                };
+
+                card.addEventListener("transitionend", onEnd, { once: true });
+                setTimeout(onEnd, 450);
             } else {
                 this._popFromRect = null;
                 this.popOutActive = false;

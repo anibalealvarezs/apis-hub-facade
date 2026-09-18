@@ -15,6 +15,7 @@
     'secondaryIcon' => null,
     'onSecondary' => null,
     'closeOnSecondary' => true,
+    'maxWidth' => null,
 ])
 
 @php
@@ -34,13 +35,13 @@
     };
 
     $onCancel = trim($onCancel ?? $open . ' = false;');
-    $onConfirm = trim($onConfirm ?? '');
-    $onSecondary = trim($onSecondary ?? '');
+    $onConfirm = trim($onConfirm ?? '', " \t\n\r\0\x0B;");
+    $onSecondary = trim($onSecondary ?? '', " \t\n\r\0\x0B;");
     $confirmClick = $closeOnConfirm
-        ? trim($onConfirm . '; ' . $open . ' = false;')
+        ? ($onConfirm !== '' ? $onConfirm . '; ' . $open . ' = false;' : $open . ' = false;')
         : $onConfirm;
     $secondaryClick = $closeOnSecondary
-        ? trim($onSecondary . '; ' . $open . ' = false;')
+        ? ($onSecondary !== '' ? $onSecondary . '; ' . $open . ' = false;' : $open . ' = false;')
         : $onSecondary;
 
     $confirmLabel = $confirmLabel ?? __('Confirm');
@@ -60,7 +61,7 @@
         <div class="confirm-modal-backdrop" @click="{{ $onCancel }}"></div>
 
         <div
-            class="confirm-modal-panel"
+            class="confirm-modal-panel{{ $maxWidth ? ' ' . $maxWidth : '' }}"
             x-show="{{ $open }}"
             x-transition:enter="ease-out duration-300"
             x-transition:enter-start="opacity-0 scale-95"

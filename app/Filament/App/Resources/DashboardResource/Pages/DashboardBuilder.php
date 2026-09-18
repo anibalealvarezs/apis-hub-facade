@@ -301,6 +301,11 @@ class DashboardBuilder extends Page
         return \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($channel);
     }
 
+    public function getBreakdownsForChannel(string $channel, ?string $dependency = null): array
+    {
+        return \App\Services\Analytics\ChannelBreakdownRegistry::getBreakdownsForChannel($channel, $dependency);
+    }
+
     public static function parseLocalizedValue(mixed $value, ?string $locale = null): string
     {
         if (empty($value)) return '';

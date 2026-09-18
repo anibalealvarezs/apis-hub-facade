@@ -976,6 +976,77 @@
                                     </div>
                                 </div>
                             </template>
+
+                            {{-- Card: Pie / Donut Options (Pie chart widgets only) --}}
+                            <template x-if="widgetControlsTarget.widget_type === 'pie_chart'">
+                                <div
+                                    class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden flex-shrink-0">
+                                    <div
+                                        class="flex items-center justify-between px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                                            </svg>
+                                            <span
+                                                class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Pie & Donut Options') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-6 space-y-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Chart Style') }}</label>
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <button type="button"
+                                                        @click="widgetControlsForm.pie_style = 'donut'"
+                                                        class="py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors"
+                                                        :class="widgetControlsForm.pie_style !== 'pie' ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300' : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'">
+                                                    {{ __('Donut') }}
+                                                </button>
+                                                <button type="button"
+                                                        @click="widgetControlsForm.pie_style = 'pie'"
+                                                        class="py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors"
+                                                        :class="widgetControlsForm.pie_style === 'pie' ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300' : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300'">
+                                                    {{ __('Solid Pie') }}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Composition Mode') }}</label>
+                                            <select x-model="widgetControlsForm.pie_mode"
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500">
+                                                <option value="dimension">{{ __('Dimension Breakdown (e.g. Campaign, Device)') }}</option>
+                                                <option value="asset">{{ __('Asset Share (Multiple Stores / Accounts)') }}</option>
+                                                <option value="metric">{{ __('Multi-Metric Share (e.g. New vs Returning)') }}</option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="widgetControlsForm.pie_mode === 'dimension'">
+                                                {{ __('Configure 1 metric and 1 dimension breakdown in the series panel.') }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="widgetControlsForm.pie_mode === 'asset'">
+                                                {{ __('Select 1 metric and multiple assets to compare their distribution.') }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" x-show="widgetControlsForm.pie_mode === 'metric'">
+                                                {{ __('Select multiple metrics of comparable units to display their proportions.') }}
+                                            </p>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Max Slices (Top N)') }}</label>
+                                            <select x-model.number="widgetControlsForm.pie_slice_limit"
+                                                    @change="markWidgetControlsDirty()"
+                                                    class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500">
+                                                <option value="3">3 {{ __('slices') }}</option>
+                                                <option value="5">5 {{ __('slices') }}</option>
+                                                <option value="7">7 {{ __('slices') }}</option>
+                                                <option value="10">10 {{ __('slices') }}</option>
+                                                <option value="15">15 {{ __('slices') }}</option>
+                                                <option value="20">20 {{ __('slices') }}</option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ __('Remaining slices will be grouped automatically into "Other".') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
 
                         {{-- Right Column: Variables Configuration --}}
@@ -1037,17 +1108,42 @@
                                                             <div>
                                                                 <div class="flex items-center justify-between mb-2">
                                                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metric') }}</label>
-                                                                    <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
+                                                                    <div class="flex items-center gap-1.5 shrink-0">
+                                                                        {{-- Metric Color Picker for Derived Metric --}}
+                                                                        <div class="relative flex items-center" :title="'{{ __('Metric Color') }}'">
+                                                                            <input type="color"
+                                                                                   class="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+                                                                                   :value="getMetricColor(index, series.metrics?.[0] || 'dm')"
+                                                                                   @input="setMetricColor(index, series.metrics?.[0] || 'dm', $event.target.value)">
+                                                                            <span class="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 shadow-xs flex items-center justify-center transition-transform hover:scale-110 cursor-pointer pointer-events-none"
+                                                                                  :style="'background-color: ' + getMetricColor(index, series.metrics?.[0] || 'dm')"></span>
+                                                                        </div>
+
+                                                                        {{-- Metric Display / Naming Modal Button for Derived Metric --}}
                                                                         <button type="button"
-                                                                                @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
-                                                                                :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
-                                                                                :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
-                                                                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                                                                                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
-                                                                            <span x-text="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
+                                                                                @click.stop="openMetricNamingModal(index, series.metrics?.[0] || 'dm')"
+                                                                                :title="hasCustomMetricNaming(index, series.metrics?.[0] || 'dm') ? '{{ __('Custom metric display name active (click to edit)') }}' : '{{ __('Customize metric display & naming pattern') }}'"
+                                                                                class="p-1 rounded-md transition-colors border shadow-xs flex items-center justify-center"
+                                                                                :class="hasCustomMetricNaming(index, series.metrics?.[0] || 'dm')
+                                                                                    ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border-primary-300 dark:border-primary-700'
+                                                                                    : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 border-gray-200 dark:border-gray-700'">
+                                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                                            </svg>
                                                                         </button>
-                                                                    </template>
+
+                                                                        <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
+                                                                            <button type="button"
+                                                                                    @click.stop="toggleRawMetricComboType(index, series.metrics?.[0] || 'dm')"
+                                                                                    :title="'{{ __('Switch between Bar and Line chart representation') }}'"
+                                                                                    class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
+                                                                                    :class="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar'
+                                                                                        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                                                                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
+                                                                                <span x-text="getRawMetricComboType(index, series.metrics?.[0] || 'dm') === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
+                                                                            </button>
+                                                                        </template>
+                                                                    </div>
                                                                 </div>
                                                                 <div class="bd-dm-fixed-field">
                                                                     <span x-text="(allChannelMetrics[series.channel] || {})[series.metrics?.[0]] || series.metrics?.[0] || series.label || '—'"></span>
@@ -1059,200 +1155,411 @@
                                                     {{-- Channel & Metric (Editable for Raw Metric Series) --}}
                                                     <template x-if="series.type !== 'derived_metric'">
                                                         <div class="flex flex-col gap-4">
-                                                            <div>
-                                                                <label
-                                                                    class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
-                                                                <x-ui.select-input x-model="series.channel"
-                                                                                   x-on:change="onWidgetRawChannelChange(index)"
-                                                                                   x-init="$nextTick(() => { $el.value = series.channel })"
-                                                                                   class="w-full">
-                                                                    <x-ui.select-option
-                                                                        value="">{{ __('Select a channel...') }}</x-ui.select-option>
-                                                                    <template x-for="(label, key) in channels" :key="key">
-                                                                        <x-ui.select-option x-bind:value="key"
-                                                                                            x-text="label"></x-ui.select-option>
-                                                                    </template>
-                                                                </x-ui.select-input>
-                                                            </div>
+                                                             {{-- Channel & Scope Row (Side-by-side) --}}
+                                                             <div class="flex flex-row items-start gap-3">
+                                                                 <div :class="(series.channel && ((allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0) || isSeriesDependenciesLoading(series.channel))) ? 'w-1/2 flex-1 min-w-0' : 'w-full'">
+                                                                     <label
+                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Channel') }}</label>
+                                                                     <x-ui.select-input x-model="series.channel"
+                                                                                        x-on:change="onWidgetRawChannelChange(index)"
+                                                                                        x-init="$nextTick(() => { $el.value = series.channel })"
+                                                                                        class="w-full">
+                                                                         <x-ui.select-option
+                                                                             value="">{{ __('Select a channel...') }}</x-ui.select-option>
+                                                                         <template x-for="(label, key) in channels" :key="key">
+                                                                             <x-ui.select-option x-bind:value="key"
+                                                                                                 x-text="label"></x-ui.select-option>
+                                                                         </template>
+                                                                     </x-ui.select-input>
+                                                                 </div>
 
-                                                            {{-- Data Scope / Matrix (Per-Series) --}}
-                                                            <template x-if="series.channel && allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0">
-                                                                <div>
-                                                                    <label
-                                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Data Scope / Matrix') }}</label>
-                                                                    <x-ui.select-input x-model="series.dependency"
-                                                                                       x-on:change="onWidgetRawSeriesDependencyChange(index)"
-                                                                                       x-init="$nextTick(() => { if (series.dependency) $el.value = series.dependency })"
-                                                                                       class="w-full">
-                                                                        <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
-                                                                            <x-ui.select-option x-bind:value="key"
-                                                                                                x-bind:selected="series.dependency === key"
-                                                                                                x-text="label"></x-ui.select-option>
-                                                                        </template>
-                                                                    </x-ui.select-input>
-                                                                </div>
-                                                            </template>
+                                                                 {{-- Data Scope / Matrix (Per-Series) --}}
+                                                                 <div x-show="series.channel && ((allChannelDependencies[series.channel] && Object.keys(allChannelDependencies[series.channel]).length > 0) || isSeriesDependenciesLoading(series.channel))"
+                                                                      x-cloak
+                                                                      class="w-1/2 flex-1 min-w-0">
+                                                                     <label
+                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
+                                                                         <span>{{ __('Data Scope / Matrix') }}</span>
+                                                                         <span x-show="isSeriesDependenciesLoading(series.channel)"
+                                                                               class="inline-flex items-center text-primary-500">
+                                                                             <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                             </svg>
+                                                                         </span>
+                                                                     </label>
+                                                                     <x-ui.select-input x-model="series.dependency"
+                                                                                        x-on:change="onWidgetRawSeriesDependencyChange(index)"
+                                                                                        x-init="$nextTick(() => { if (series.dependency) $el.value = series.dependency })"
+                                                                                        class="w-full">
+                                                                         <template x-if="isSeriesDependenciesLoading(series.channel)">
+                                                                             <x-ui.select-option value="" disabled selected>{{ __('Loading options...') }}</x-ui.select-option>
+                                                                         </template>
+                                                                         <template x-for="(label, key) in allChannelDependencies[series.channel]" :key="key">
+                                                                             <x-ui.select-option x-bind:value="key"
+                                                                                                 x-bind:selected="series.dependency === key"
+                                                                                                 x-text="label"></x-ui.select-option>
+                                                                         </template>
+                                                                     </x-ui.select-input>
+                                                                 </div>
+                                                             </div>
 
-                                                            <div class="my-1 flex flex-col shrink-0">
-                                                                <div class="flex items-center justify-between mb-2">
-                                                                    <label
-                                                                        class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Leave empty for All Metrics)') }}</label>
-                                                                    <template x-if="series.channel">
-                                                                        <div class="flex gap-3">
-                                                                            <button @click="selectAllRawMetrics(index)"
-                                                                                    class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                            <button @click="clearAllRawMetrics(index)"
-                                                                                    class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
-                                                                        </div>
-                                                                    </template>
-                                                                </div>
-                                                                <div
-                                                                    class="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shrink-0"
-                                                                    style="height: 140px; min-height: 140px;">
-                                                                    <div
-                                                                        class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
-                                                                        <template
-                                                                            x-for="(label, key) in ((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})"
-                                                                            :key="key">
-                                                                            <div
-                                                                                class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
-                                                                                :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : true) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                                <div @click="toggleRawMetricIncluded(index, key)"
-                                                                                     class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
-                                                                                    <div
-                                                                                        class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                        :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : false) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                        <svg
-                                                                                            x-show="series.allowed_metrics && series.allowed_metrics.includes(key)"
-                                                                                            class="w-3 h-3 text-white" fill="none"
-                                                                                            viewBox="0 0 24 24" stroke-width="3"
-                                                                                            stroke="currentColor">
-                                                                                            <path stroke-linecap="round"
-                                                                                                  stroke-linejoin="round"
-                                                                                                  d="m4.5 12.75 6 6 9-13.5"/>
-                                                                                        </svg>
-                                                                                    </div>
-                                                                                    <span class="truncate font-medium text-gray-700 dark:text-gray-200"
-                                                                                          :class="(series.allowed_metrics && series.allowed_metrics.includes(key)) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
-                                                                                          x-text="label"></span>
-                                                                                </div>
-                                                                                {{-- Badge for Default Active on Load --}}
-                                                                                 <template x-if="series.allowed_metrics && series.allowed_metrics.includes(key)">
-                                                                                     <div class="flex items-center gap-1.5 shrink-0">
-                                                                                         {{-- Combo Chart Type Toggle (Bar / Line) --}}
-                                                                                         <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
-                                                                                             <button type="button"
-                                                                                                     @click.stop="toggleRawMetricComboType(index, key)"
-                                                                                                     :title="'{{ __('Switch between Bar and Line chart representation') }}'"
-                                                                                                     class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
-                                                                                                     :class="getRawMetricComboType(index, key) === 'bar'
-                                                                                                         ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                                                                                                         : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
-                                                                                                 <span x-text="getRawMetricComboType(index, key) === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
-                                                                                             </button>
+                                                             <div class="my-1 flex flex-col shrink-0">
+                                                                 <div class="flex items-center justify-between mb-2">
+                                                                     <label
+                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Leave empty for All Metrics)') }}</label>
+                                                                     <template x-if="series.channel && !isSeriesMetricsLoading(index)">
+                                                                         <div class="flex gap-3">
+                                                                             <button @click="selectAllRawMetrics(index)"
+                                                                                     class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                             <button @click="clearAllRawMetrics(index)"
+                                                                                     class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                         </div>
+                                                                     </template>
+                                                                 </div>
+                                                                 <div
+                                                                     class="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shrink-0"
+                                                                     style="height: 140px; min-height: 140px;">
+                                                                     <div
+                                                                         class="absolute inset-0 flex flex-col gap-1 overflow-y-auto p-1 custom-scrollbar">
+                                                                         {{-- Loading State --}}
+                                                                         <template x-if="series.channel && isSeriesMetricsLoading(index)">
+                                                                             <div class="flex flex-col items-center justify-center h-full gap-2 py-4">
+                                                                                 <svg class="animate-spin h-5 w-5 text-primary-600 dark:text-primary-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                 </svg>
+                                                                                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Loading metrics...') }}</span>
+                                                                             </div>
+                                                                         </template>
+
+                                                                         {{-- Loaded Metrics List --}}
+                                                                         <template x-if="!isSeriesMetricsLoading(index)">
+                                                                             <div class="flex flex-col gap-1 w-full">
+                                                                                 <template
+                                                                                     x-for="(label, key) in ((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})"
+                                                                                     :key="key">
+                                                                                     <div
+                                                                                         class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                                         :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : true) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                         <div @click="toggleRawMetricIncluded(index, key)"
+                                                                                              class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                                             <div
+                                                                                                 class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                                                 :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : false) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                                 <svg
+                                                                                                     x-show="series.allowed_metrics && series.allowed_metrics.includes(key)"
+                                                                                                     class="w-3 h-3 text-white" fill="none"
+                                                                                                     viewBox="0 0 24 24" stroke-width="3"
+                                                                                                     stroke="currentColor">
+                                                                                                     <path stroke-linecap="round"
+                                                                                                           stroke-linejoin="round"
+                                                                                                           d="m4.5 12.75 6 6 9-13.5"/>
+                                                                                                 </svg>
+                                                                                             </div>
+                                                                                             <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                                                   :class="(series.allowed_metrics && series.allowed_metrics.includes(key)) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                                                   x-text="label"></span>
+                                                                                         </div>
+                                                                                         {{-- Badge for Default Active on Load --}}
+                                                                                         <template x-if="series.allowed_metrics && series.allowed_metrics.includes(key)">
+                                                                                             <div class="flex items-center gap-1.5 shrink-0">
+                                                                                                 {{-- Metric Color Picker --}}
+                                                                                                 <div class="relative flex items-center" :title="'{{ __('Metric Color') }}'">
+                                                                                                     <input type="color"
+                                                                                                            class="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10"
+                                                                                                            :value="getMetricColor(index, key)"
+                                                                                                            @input="setMetricColor(index, key, $event.target.value)">
+                                                                                                     <span class="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600 shadow-xs flex items-center justify-center transition-transform hover:scale-110 cursor-pointer pointer-events-none"
+                                                                                                           :style="'background-color: ' + getMetricColor(index, key)"></span>
+                                                                                                 </div>
+
+                                                                                                 {{-- Metric Display / Naming Modal Button --}}
+                                                                                                 <button type="button"
+                                                                                                         @click.stop="openMetricNamingModal(index, key)"
+                                                                                                         :title="hasCustomMetricNaming(index, key) ? '{{ __('Custom metric display name active (click to edit)') }}' : '{{ __('Customize metric display & naming pattern') }}'"
+                                                                                                         class="p-1 rounded-md transition-colors border shadow-xs flex items-center justify-center"
+                                                                                                         :class="hasCustomMetricNaming(index, key)
+                                                                                                             ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 border-primary-300 dark:border-primary-700'
+                                                                                                             : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 border-gray-200 dark:border-gray-700'">
+                                                                                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                                                                                     </svg>
+                                                                                                 </button>
+
+                                                                                                 {{-- Combo Chart Type Toggle (Bar / Line) --}}
+                                                                                                 <template x-if="(widgetControlsForm.widget_type || widgetControlsTarget.widget_type) === 'combo_chart'">
+                                                                                                     <button type="button"
+                                                                                                             @click.stop="toggleRawMetricComboType(index, key)"
+                                                                                                             :title="'{{ __('Switch between Bar and Line chart representation') }}'"
+                                                                                                             class="bd-badge-combo bd-text-2xs font-bold py-0.5 rounded-md transition-all border shadow-xs"
+                                                                                                             :class="getRawMetricComboType(index, key) === 'bar'
+                                                                                                                 ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                                                                                                                 : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'">
+                                                                                                         <span x-text="getRawMetricComboType(index, key) === 'bar' ? '📊 {{ __('Bar') }}' : '📈 {{ __('Line') }}'"></span>
+                                                                                                     </button>
+                                                                                                 </template>
+
+                                                                                                 <button type="button"
+                                                                                                         @click.stop="toggleRawMetricDefaultActive(index, key)"
+                                                                                                         :title="(series.metrics || []).includes(key) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                                         class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
+                                                                                                         :class="(series.metrics || []).includes(key)
+                                                                                                             ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                                             : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                                                     <span x-text="(series.metrics || []).includes(key) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                                                 </button>
+                                                                                             </div>
                                                                                          </template>
+                                                                                     </div>
+                                                                                 </template>
+                                                                                 <template
+                                                                                     x-if="!series.channel || Object.keys(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})).length === 0">
+                                                                                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2"
+                                                                                        x-text="series.channel ? '{{ __('No metrics available for this channel.') }}' : '{{ __('Select a channel first.') }}'"></p>
+                                                                                 </template>
+                                                                             </div>
+                                                                         </template>
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                     </template>
 
+                                                     <div class="gap-3 flex-1 flex flex-col min-h-0 mt-3">
+                                                         <div class="flex items-center justify-between">
+                                                             <label
+                                                                 class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
+                                                             <template x-if="series.channel && !isSeriesAssetsLoading(series.channel)">
+                                                                 <div class="flex gap-3">
+                                                                     <button @click="selectAllRawAssets(index)"
+                                                                             class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                     <button @click="clearAllRawAssets(index)"
+                                                                             class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                 </div>
+                                                             </template>
+                                                         </div>
+                                                         <div class="relative">
+                                                             <div
+                                                                 class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
+                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                                      viewBox="0 0 24 24" stroke-width="2"
+                                                                      stroke="currentColor"
+                                                                      class="w-4 h-4 text-gray-400">
+                                                                     <path stroke-linecap="round" stroke-linejoin="round"
+                                                                           d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+                                                                 </svg>
+                                                             </div>
+                                                             <input type="text" x-model="searchQueries['raw_' + index]"
+                                                                    :placeholder="'{{ __('Search assets...') }}'"
+                                                                    class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
+                                                         </div>
+                                                         <div class="flex-1 relative min-h-0">
+                                                             <div
+                                                                 class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
+                                                                 {{-- Loading State --}}
+                                                                 <template x-if="series.channel && isSeriesAssetsLoading(series.channel)">
+                                                                     <div class="flex flex-col items-center justify-center h-full gap-2 py-6">
+                                                                         <svg class="animate-spin h-5 w-5 text-primary-600 dark:text-primary-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                         </svg>
+                                                                         <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Loading assets...') }}</span>
+                                                                     </div>
+                                                                 </template>
+
+                                                                 {{-- Loaded Assets List --}}
+                                                                 <template x-if="!isSeriesAssetsLoading(series.channel)">
+                                                                     <div class="flex flex-col gap-1 w-full">
+                                                                         <template
+                                                                             x-for="(name, id) in allChannelAssets[series.channel] || {}"
+                                                                             :key="id">
+                                                                             <div
+                                                                                 x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
+                                                                                 class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
+                                                                                 :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                 <div @click="toggleRawAssetIncluded(index, id)"
+                                                                                      class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                                     <div
+                                                                                         class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
+                                                                                         :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                         <svg
+                                                                                             x-show="series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)"
+                                                                                             class="w-3 h-3 text-white" fill="none"
+                                                                                             viewBox="0 0 24 24" stroke-width="3"
+                                                                                             stroke="currentColor">
+                                                                                             <path stroke-linecap="round"
+                                                                                                   stroke-linejoin="round"
+                                                                                                   d="m4.5 12.75 6 6 9-13.5"/>
+                                                                                         </svg>
+                                                                                     </div>
+                                                                                     <span class="truncate font-medium text-gray-700 dark:text-gray-200"
+                                                                                           :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
+                                                                                           x-text="name"></span>
+                                                                                 </div>
+                                                                                 {{-- Badge for Default Active on Load --}}
+                                                                                 <template x-if="series.allowed_assets && series.allowed_assets.includes(String(id))">
+                                                                                     <div class="flex items-center gap-1.5 shrink-0 ml-2">
                                                                                          <button type="button"
-                                                                                                @click.stop="toggleRawMetricDefaultActive(index, key)"
-                                                                                                :title="(series.metrics || []).includes(key) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                                class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
-                                                                                                :class="(series.metrics || []).includes(key)
-                                                                                                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
-                                                                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
-                                                                                            <span x-text="(series.metrics || []).includes(key) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
-                                                                                        </button>
+                                                                                                 @click.stop="toggleRawAssetDefaultActive(index, id)"
+                                                                                                 :title="(series.assets || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
+                                                                                                 class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
+                                                                                                 :class="(series.assets || []).includes(String(id))
+                                                                                                     ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
+                                                                                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
+                                                                                             <span x-text="(series.assets || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
+                                                                                         </button>
+                                                                                     </div>
+                                                                                 </template>
+                                                                             </div>
+                                                                         </template>
+                                                                         <template
+                                                                             x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
+                                                                             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"
+                                                                                x-text="series.channel ? '{{ __('No assets loaded for this channel.') }}' : '{{ __('Select a channel first.') }}'"></p>
+                                                                         </template>
+                                                                     </div>
+                                                                 </template>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+
+                                                     {{-- Breakdown & Filters Row (Side-by-side, half width each) --}}
+                                                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex flex-row items-start gap-4">
+                                                         {{-- Breakdown Configuration --}}
+                                                         <div class="w-1/2 flex-1 min-w-0">
+                                                             <template x-if="series.channel">
+                                                                 <div>
+                                                                     <div class="flex items-center justify-between mb-2">
+                                                                         <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                                                             <span>{{ __('Breakdown') }} ({{ __('Split series') }})</span>
+                                                                             <span x-show="isSeriesBreakdownsLoading(series.channel, series.dependency)"
+                                                                                   class="inline-flex items-center text-primary-500">
+                                                                                 <svg class="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                 </svg>
+                                                                             </span>
+                                                                         </label>
+                                                                         <template x-if="series.breakdown && series.breakdown.dimension">
+                                                                             <button type="button"
+                                                                                     @click="series.breakdown = null; markWidgetControlsDirty()"
+                                                                                     :title="'{{ __('Remove Breakdown') }}'"
+                                                                                     class="text-gray-400 hover:text-red-500 p-0.5 rounded transition-colors">
+                                                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                                                      stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                                                                     <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                           d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                                                                                 </svg>
+                                                                             </button>
+                                                                         </template>
+                                                                     </div>
+
+                                                                     <div class="space-y-4">
+                                                                         <div>
+                                                                             <x-ui.select-input
+                                                                                 x-bind:value="series.breakdown ? series.breakdown.dimension : ''"
+                                                                                 x-on:change="if (!$event.target.value) { series.breakdown = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.dimension = $event.target.value; onSeriesBreakdownDimensionChange(series); }"
+                                                                                 class="w-full">
+                                                                                 <template x-if="isSeriesBreakdownsLoading(series.channel, series.dependency)">
+                                                                                     <x-ui.select-option value="" disabled selected>{{ __('Loading breakdowns...') }}</x-ui.select-option>
+                                                                                 </template>
+                                                                                 <x-ui.select-option value="">{{ __('None (Standard series)') }}</x-ui.select-option>
+                                                                                 <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
+                                                                                     <x-ui.select-option x-bind:value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" x-bind:selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
+                                                                                 </template>
+                                                                             </x-ui.select-input>
+                                                                         </div>
+
+                                                                        {{-- Breakdown Options: Limit & Order (Side-by-side row) --}}
+                                                                        <template x-if="series.breakdown && series.breakdown.dimension">
+                                                                            <div class="space-y-3">
+                                                                                <div class="flex flex-row items-start gap-3">
+                                                                                    <div class="w-1/2 flex-1 min-w-0">
+                                                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Max Items') }}</label>
+                                                                                        <x-ui.select-input
+                                                                                            x-model.number="series.breakdown.limit"
+                                                                                            x-on:change="markWidgetControlsDirty()"
+                                                                                            class="w-full">
+                                                                                            <x-ui.select-option value="3">Top 3</x-ui.select-option>
+                                                                                            <x-ui.select-option value="5">Top 5</x-ui.select-option>
+                                                                                            <x-ui.select-option value="10">Top 10</x-ui.select-option>
+                                                                                            <x-ui.select-option value="15">Top 15</x-ui.select-option>
+                                                                                            <x-ui.select-option value="20">Top 20</x-ui.select-option>
+                                                                                            <x-ui.select-option value="25">Top 25</x-ui.select-option>
+                                                                                            <x-ui.select-option value="30">Top 30</x-ui.select-option>
+                                                                                        </x-ui.select-input>
                                                                                     </div>
-                                                                                </template>
+                                                                                    <div class="w-1/2 flex-1 min-w-0">
+                                                                                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Sorting') }}</label>
+                                                                                        <x-ui.select-input
+                                                                                            x-model="series.breakdown.order"
+                                                                                            x-on:change="markWidgetControlsDirty()"
+                                                                                            class="w-full">
+                                                                                            <x-ui.select-option value="value_desc">{{ __('Highest Value') }}</x-ui.select-option>
+                                                                                            <x-ui.select-option value="value_asc">{{ __('Lowest Value') }}</x-ui.select-option>
+                                                                                            <x-ui.select-option value="alpha_asc">{{ __('Alphabetical (A-Z)') }}</x-ui.select-option>
+                                                                                            <x-ui.select-option value="alpha_desc">{{ __('Alphabetical (Z-A)') }}</x-ui.select-option>
+                                                                                        </x-ui.select-input>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {{-- Chart type hint/recommendation when breakdown produces many curves --}}
+                                                                                <div x-show="series.breakdown && (widgetControlsForm.widget_type === 'line' || widgetControlsForm.widget_type === 'area') && series.breakdown.limit > 5">
+                                                                                    <span class="inline-flex items-center gap-1 text-2xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50">
+                                                                                        💡 {{ __('Bar or Table charts may read clearer than line charts for many breakdown items.') }}
+                                                                                    </span>
+                                                                                </div>
                                                                             </div>
                                                                         </template>
-                                                                        <template
-                                                                            x-if="!series.channel || Object.keys(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})).length === 0">
-                                                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2">{{ __('Select a channel first.') }}</p>
-                                                                        </template>
                                                                     </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </template>
-
-                                                    <div class="gap-3 flex-1 flex flex-col min-h-0 mt-3">
-                                                        <div class="flex items-center justify-between">
-                                                            <label
-                                                                class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Assets (Leave empty for All Assets)') }}</label>
-                                                            <template x-if="series.channel">
-                                                                <div class="flex gap-3">
-                                                                    <button @click="selectAllRawAssets(index)"
-                                                                            class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                    <button @click="clearAllRawAssets(index)"
-                                                                            class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
                                                                 </div>
                                                             </template>
                                                         </div>
-                                                        <div class="relative">
-                                                            <div
-                                                                class="absolute inset-y-0 left-0 w-10 flex items-center justify-center pointer-events-none">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                     viewBox="0 0 24 24" stroke-width="2"
-                                                                     stroke="currentColor"
-                                                                     class="w-4 h-4 text-gray-400">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                                          d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                                                                </svg>
+
+                                                        {{-- Filters Section (Compact Badge List with Modal Config) --}}
+                                                        <div class="w-1/2 flex-1 min-w-0">
+                                                            <div class="flex items-center justify-between mb-2">
+                                                                <div class="flex items-center gap-1.5">
+                                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Series Filters') }}</label>
+                                                                    <template x-if="Array.isArray(series.filters) && series.filters.length > 0">
+                                                                        <span class="text-2xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-bold px-1.5 py-0.5 rounded-full border border-primary-200 dark:border-primary-800"
+                                                                              x-text="series.filters.length"></span>
+                                                                    </template>
+                                                                </div>
+                                                                <button type="button"
+                                                                        @click="openSeriesFiltersModal('raw', index)"
+                                                                        class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline flex items-center gap-1">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                                                                    </svg>
+                                                                    <span>{{ __('Configure Rules') }}</span>
+                                                                </button>
                                                             </div>
-                                                            <input type="text" x-model="searchQueries['raw_' + index]"
-                                                                   :placeholder="'{{ __('Search assets...') }}'"
-                                                                   class="bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 bd-search-input">
-                                                        </div>
-                                                        <div class="flex-1 relative min-h-0">
-                                                            <div
-                                                                class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                                                                <template
-                                                                    x-for="(name, id) in allChannelAssets[series.channel] || {}"
-                                                                    :key="id">
-                                                                    <div
-                                                                        x-show="(isAssetAllowedByGroups(null, series.channel, id)) && ((searchQueries['raw_' + index] || '') === '' || name.toLowerCase().includes((searchQueries['raw_' + index] || '').toLowerCase()))"
-                                                                        class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
-                                                                        :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
-                                                                        <div @click="toggleRawAssetIncluded(index, id)"
-                                                                             class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
-                                                                            <div
-                                                                                class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
-                                                                                <svg
-                                                                                    x-show="series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)"
-                                                                                    class="w-3 h-3 text-white" fill="none"
-                                                                                    viewBox="0 0 24 24" stroke-width="3"
-                                                                                    stroke="currentColor">
-                                                                                    <path stroke-linecap="round"
-                                                                                          stroke-linejoin="round"
-                                                                                          d="m4.5 12.75 6 6 9-13.5"/>
+
+                                                            <template x-if="!Array.isArray(series.filters) || series.filters.length === 0">
+                                                                <p class="text-2xs text-gray-400 dark:text-gray-500 italic">{{ __('No filters applied to this series.') }}</p>
+                                                            </template>
+
+                                                            {{-- Compact List of Rule Names --}}
+                                                            <template x-if="Array.isArray(series.filters) && series.filters.length > 0">
+                                                                <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar p-1 bg-gray-50/60 dark:bg-gray-900/40 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
+                                                                    <template x-for="(flt, fIdx) in (series.filters || [])" :key="fIdx">
+                                                                        <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-2xs hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
+                                                                            <span class="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0"></span>
+                                                                            <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx)" :title="getFilterDisplayName(flt, fIdx)"></span>
+                                                                            <button type="button"
+                                                                                    @click.stop="removeSeriesFilter(series.filters, fIdx)"
+                                                                                    :title="'{{ __('Remove rule') }}'"
+                                                                                    class="text-gray-400 hover:text-red-500 shrink-0">
+                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                                                                 </svg>
-                                                                            </div>
-                                                                            <span class="truncate font-medium text-gray-700 dark:text-gray-200"
-                                                                                  :class="(series.allowed_assets && series.allowed_assets.length > 0 ? series.allowed_assets.includes(String(id)) : (series.assets && series.assets.length > 0 ? series.assets.includes(String(id)) : false)) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"
-                                                                                  x-text="name"></span>
+                                                                            </button>
                                                                         </div>
-                                                                        {{-- Badge for Default Active on Load --}}
-                                                                        <template x-if="series.allowed_assets && series.allowed_assets.includes(String(id))">
-                                                                            <div class="flex items-center gap-1.5 shrink-0 ml-2">
-                                                                                <button type="button"
-                                                                                        @click.stop="toggleRawAssetDefaultActive(index, id)"
-                                                                                        :title="(series.assets || []).includes(String(id)) ? '{{ __('Active by default on widget load') }}' : '{{ __('Available (inactive on load)') }}'"
-                                                                                        class="bd-badge-active bd-text-2xs font-semibold py-0.5 rounded-full transition-all"
-                                                                                        :class="(series.assets || []).includes(String(id))
-                                                                                            ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 border border-primary-300 dark:border-primary-700'
-                                                                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:text-gray-600 dark:hover:text-gray-200'">
-                                                                                    <span x-text="(series.assets || []).includes(String(id)) ? '★ {{ __('Active') }}' : '☆ {{ __('Available') }}'"></span>
-                                                                                </button>
-                                                                            </div>
-                                                                        </template>
-                                                                    </div>
-                                                                </template>
-                                                                <template
-                                                                    x-if="!series.channel || Object.keys(allChannelAssets[series.channel] || {}).length === 0">
-                                                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Select a channel first.') }}</p>
-                                                                </template>
-                                                            </div>
+                                                                    </template>
+                                                                </div>
+                                                            </template>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1401,6 +1708,51 @@
                                                             <p class="text-xs text-gray-400 dark:text-gray-500">{{ __('No assets loaded for this channel.') }}</p>
                                                         </template>
                                                     </div>
+                                                </div>
+
+                                                {{-- KPI Dependent Series Filters (Compact Badge List with Modal Config) --}}
+                                                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <div class="flex items-center gap-1.5">
+                                                            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Series Filters') }}</label>
+                                                            <template x-if="Array.isArray(widgetControlsForm.series_filters?.dependent) && widgetControlsForm.series_filters.dependent.length > 0">
+                                                                <span class="text-2xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-bold px-1.5 py-0.5 rounded-full border border-primary-200 dark:border-primary-800"
+                                                                      x-text="widgetControlsForm.series_filters.dependent.length"></span>
+                                                            </template>
+                                                        </div>
+                                                        <button type="button"
+                                                                @click="openSeriesFiltersModal('kpi_dependent')"
+                                                                class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline flex items-center gap-1">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                                                            </svg>
+                                                            <span>{{ __('Configure Rules') }}</span>
+                                                        </button>
+                                                    </div>
+
+                                                    <template x-if="!Array.isArray(widgetControlsForm.series_filters?.dependent) || widgetControlsForm.series_filters.dependent.length === 0">
+                                                        <p class="text-2xs text-gray-400 dark:text-gray-500 italic">{{ __('No filters applied to this series.') }}</p>
+                                                    </template>
+
+                                                    {{-- Compact List of Rule Names --}}
+                                                    <template x-if="Array.isArray(widgetControlsForm.series_filters?.dependent) && widgetControlsForm.series_filters.dependent.length > 0">
+                                                        <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar p-1 bg-gray-50/60 dark:bg-gray-900/40 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
+                                                            <template x-for="(flt, fIdx) in (widgetControlsForm.series_filters?.dependent || [])" :key="fIdx">
+                                                                <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-2xs hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
+                                                                    <span class="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0"></span>
+                                                                    <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx)" :title="getFilterDisplayName(flt, fIdx)"></span>
+                                                                    <button type="button"
+                                                                            @click.stop="removeSeriesFilter(widgetControlsForm.series_filters.dependent, fIdx)"
+                                                                            :title="'{{ __('Remove rule') }}'"
+                                                                            class="text-gray-400 hover:text-red-500 shrink-0">
+                                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            </template>
+                                                        </div>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </div>
@@ -1823,6 +2175,51 @@
                                                                                 </template>
                                                                             </div>
                                                                         </div>
+
+                                                                        {{-- KPI Independent Series Filters (Compact Badge List with Modal Config) --}}
+                                                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                                                            <div class="flex items-center justify-between mb-2">
+                                                                                <div class="flex items-center gap-1.5">
+                                                                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Series Filters') }}</label>
+                                                                                    <template x-if="Array.isArray(widgetControlsForm.series_filters?.['independent_' + idx]) && widgetControlsForm.series_filters['independent_' + idx].length > 0">
+                                                                                        <span class="text-2xs bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-bold px-1.5 py-0.5 rounded-full border border-primary-200 dark:border-primary-800"
+                                                                                              x-text="widgetControlsForm.series_filters['independent_' + idx].length"></span>
+                                                                                    </template>
+                                                                                </div>
+                                                                                <button type="button"
+                                                                                        @click="openSeriesFiltersModal('kpi_independent', idx)"
+                                                                                        class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline flex items-center gap-1">
+                                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                                                                                    </svg>
+                                                                                    <span>{{ __('Configure Rules') }}</span>
+                                                                                </button>
+                                                                            </div>
+
+                                                                            <template x-if="!Array.isArray(widgetControlsForm.series_filters?.['independent_' + idx]) || widgetControlsForm.series_filters['independent_' + idx].length === 0">
+                                                                                <p class="text-2xs text-gray-400 dark:text-gray-500 italic">{{ __('No filters applied to this series.') }}</p>
+                                                                            </template>
+
+                                                                            {{-- Compact List of Rule Names --}}
+                                                                            <template x-if="Array.isArray(widgetControlsForm.series_filters?.['independent_' + idx]) && widgetControlsForm.series_filters['independent_' + idx].length > 0">
+                                                                                <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar p-1 bg-gray-50/60 dark:bg-gray-900/40 rounded-lg border border-gray-200/80 dark:border-gray-700/80">
+                                                                                    <template x-for="(flt, fIdx) in (widgetControlsForm.series_filters?.['independent_' + idx] || [])" :key="fIdx">
+                                                                                        <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-2xs hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
+                                                                                            <span class="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0"></span>
+                                                                                            <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx)" :title="getFilterDisplayName(flt, fIdx)"></span>
+                                                                                            <button type="button"
+                                                                                                    @click.stop="removeSeriesFilter(widgetControlsForm.series_filters['independent_' + idx], fIdx)"
+                                                                                                    :title="'{{ __('Remove rule') }}'"
+                                                                                                    class="text-gray-400 hover:text-red-500 shrink-0">
+                                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                                                </svg>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </template>
+                                                                                </div>
+                                                                            </template>
+                                                                        </div>
                                                                     </div>
                                                             </div>
                                                         </div>
@@ -1970,6 +2367,331 @@
                 </div>
             </div>
         </div>
+
+        {{-- ============================================================ --}}
+        {{-- SERIES FILTERS CONFIGURATION MODAL                           --}}
+        {{-- ============================================================ --}}
+        <x-confirm-modal
+            open="showSeriesFiltersModal"
+            title="{{ __('Filtering Rules') }}"
+            icon="heroicon-o-adjustments-horizontal"
+            color="primary"
+            confirm-label="{{ __('Done') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-check"
+            cancel-label="{{ __('Close') }}"
+            max-width="!max-w-2xl"
+        >
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 font-medium"
+                       x-text="filterModalSeriesTitle ? ('{{ __('Target: ') }}' + filterModalSeriesTitle) : '{{ __('Configure criteria for this series') }}'"></p>
+                    <x-filament::button
+                        color="primary"
+                        icon="heroicon-o-plus"
+                        size="xs"
+                        @click="addSeriesFilter(getFilterModalList())"
+                    >
+                        {{ __('Add Rule') }}
+                    </x-filament::button>
+                </div>
+
+                {{-- List of Rules --}}
+                <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+                    <template x-if="getFilterModalList().length === 0">
+                        <div class="text-center py-8 px-4 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-xl">
+                            <div class="w-10 h-10 mx-auto mb-2.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+                                </svg>
+                            </div>
+                            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('No filtering rules defined yet.') }}</p>
+                            <p class="text-2xs text-gray-500 dark:text-gray-400 mt-1 max-w-xs mx-auto">{{ __('Filter rules allow scoping the metrics to specific dimensions, tags, regions or statuses.') }}</p>
+                            <div class="mt-3">
+                                <x-filament::button
+                                    color="primary"
+                                    icon="heroicon-o-plus"
+                                    size="xs"
+                                    @click="addSeriesFilter(getFilterModalList())"
+                                >
+                                    {{ __('Add First Rule') }}
+                                </x-filament::button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-for="(flt, fIdx) in getFilterModalList()" :key="fIdx">
+                        <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-4 relative group transition-all">
+                            {{-- Top row: Rule Name & Remove button --}}
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex-1 flex items-center gap-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400" x-text="'#' + (fIdx + 1)"></span>
+                                    <input
+                                        type="text"
+                                        x-model="flt.name"
+                                        @input="markWidgetControlsDirty()"
+                                        :placeholder="'{{ __('Rule name (e.g. Brand Campaigns, US Region)...') }}'"
+                                        class="flex-1 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-1.5 px-3 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <button type="button"
+                                        @click="removeSeriesFilter(getFilterModalList(), fIdx)"
+                                        :title="'{{ __('Remove this rule') }}'"
+                                        class="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {{-- Bottom row: Dimension, Operator, Value --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-gray-100 dark:border-gray-700/60">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Dimension') }}</label>
+                                    <select
+                                        x-model="flt.dimension"
+                                        @change="markWidgetControlsDirty()"
+                                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
+                                    >
+                                        <option value="" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Select Dimension...') }}</option>
+                                        <template x-for="(bDef, bKey) in getBreakdownsForSeries(filterModalChannel, filterModalDependency)" :key="bKey">
+                                            <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                        </template>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Operator') }}</label>
+                                    <select
+                                        x-model="flt.operator"
+                                        @change="markWidgetControlsDirty()"
+                                        class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
+                                    >
+                                        <option value="like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Contains substring (Like)') }}</option>
+                                        <option value="not_like" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Does not contain substring (Not Like)') }}</option>
+                                        <option value="in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('In List (Exact match)') }}</option>
+                                        <option value="not_in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not In List (Exact match)') }}</option>
+                                        <option value="eq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Equals (=)') }}</option>
+                                        <option value="neq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not Equals (!=)') }}</option>
+                                        <option value="is_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Empty / Null') }}</option>
+                                        <option value="is_not_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Not Empty / Not Null') }}</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Value') }}</label>
+                                    <template x-if="flt.operator !== 'is_null' && flt.operator !== 'is_not_null'">
+                                        <input
+                                            type="text"
+                                            x-model="flt.value"
+                                            @input="markWidgetControlsDirty()"
+                                            :placeholder="flt.operator === 'in' || flt.operator === 'not_in' ? '{{ __('Comma-separated exact values...') }}' : (flt.operator === 'like' || flt.operator === 'not_like' ? '{{ __('Partial text or keyword (e.g. brand)...') }}' : '{{ __('Filter value...') }}')"
+                                            class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2.5 px-3 focus:ring-primary-500 focus:border-primary-500">
+                                    </template>
+                                    <template x-if="flt.operator === 'is_null' || flt.operator === 'is_not_null'">
+                                        <div class="h-[42px] flex items-center px-3 text-xs text-gray-400 dark:text-gray-500 italic bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+                                            {{ __('No value required') }}
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </x-confirm-modal>
+
+        {{-- ============================================================ --}}
+        {{-- METRIC DISPLAY & NAMING MODAL                                --}}
+        {{-- ============================================================ --}}
+        <x-confirm-modal
+            open="showMetricNamingModal"
+            title="{{ __('Metric Display & Naming') }}"
+            icon="heroicon-o-tag"
+            color="primary"
+            confirm-label="{{ __('Done') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-check"
+            on-confirm="saveMetricNamingModal()"
+            cancel-label="{{ __('Cancel') }}"
+            max-width="!max-w-xl"
+        >
+            <div class="space-y-4">
+                {{-- Live Preview Box --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold uppercase tracking-wider text-primary-600 dark:text-primary-400">{{ __('Live Preview') }}</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ __('Chart legend format') }}</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 px-4 py-3 min-h-[44px] rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <template x-if="getNamingModalPreviewParts().channel">
+                            <span class="text-primary-600 dark:text-primary-400 font-semibold" x-text="getNamingModalPreviewParts().channel"></span>
+                        </template>
+                        <template x-if="getNamingModalPreviewParts().channel">
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                        </template>
+
+                        <span class="font-bold text-gray-900 dark:text-white" x-text="getNamingModalPreviewParts().metric"></span>
+
+                        <template x-if="getNamingModalPreviewParts().breakdown">
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                        </template>
+                        <template x-if="getNamingModalPreviewParts().breakdown">
+                            <span class="italic text-gray-600 dark:text-gray-300" x-text="getNamingModalPreviewParts().breakdown"></span>
+                        </template>
+
+                        <template x-if="getNamingModalPreviewParts().unit">
+                            <span class="text-gray-400 dark:text-gray-500">-</span>
+                        </template>
+                        <template x-if="getNamingModalPreviewParts().unit">
+                            <span class="text-gray-500 dark:text-gray-400" x-text="getNamingModalPreviewParts().unit"></span>
+                        </template>
+                    </div>
+                    <p class="text-2xs text-gray-500 dark:text-gray-400">
+                        {{ __('Pattern format: [channel] - metric - breakdown - (unit). Omitted parts are excluded from the legend.') }}
+                    </p>
+                </div>
+
+                {{-- Custom Name Card --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-2">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {{ __('Custom Metric Name') }}
+                    </label>
+                    <input
+                        type="text"
+                        x-model="namingModalForm.custom_name"
+                        @input="markWidgetControlsDirty()"
+                        :placeholder="getNamingModalDefaultMetricName() || '{{ __('Enter custom name...') }}'"
+                        class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 py-2 px-3 focus:ring-primary-500 focus:border-primary-500"
+                    >
+                    <p class="text-2xs text-gray-500 dark:text-gray-400">
+                        {{ __('Replaces the default metric name in chart legends and tooltips. Leave empty to use default.') }}
+                    </p>
+                </div>
+
+                {{-- Pattern Components Card --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {{ __('Naming Pattern Elements') }}
+                    </label>
+
+                    <div class="space-y-2">
+                        {{-- Show Channel --}}
+                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/50">
+                            <div class="flex items-center gap-2 cursor-pointer select-none" @click="namingModalForm.show_channel = !namingModalForm.show_channel; markWidgetControlsDirty()">
+                                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Channel') }}</span>
+                                <span class="text-2xs font-mono font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-1.5 py-0.5 rounded">[channel]</span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="namingModalForm.show_channel.toString()"
+                                @click="namingModalForm.show_channel = !namingModalForm.show_channel; markWidgetControlsDirty()"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                :class="namingModalForm.show_channel ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    :class="namingModalForm.show_channel ? 'translate-x-5' : 'translate-x-0'"
+                                ></span>
+                            </button>
+                        </div>
+
+                        {{-- Show Breakdown Value --}}
+                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/50">
+                            <div class="flex items-center gap-2 cursor-pointer select-none" @click="namingModalForm.show_breakdown = !namingModalForm.show_breakdown; markWidgetControlsDirty()">
+                                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Breakdown Value') }}</span>
+                                <span class="text-2xs italic font-medium text-gray-600 dark:text-gray-300 bg-gray-200/70 dark:bg-gray-700/70 px-1.5 py-0.5 rounded">breakdown</span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="namingModalForm.show_breakdown.toString()"
+                                @click="namingModalForm.show_breakdown = !namingModalForm.show_breakdown; markWidgetControlsDirty()"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                :class="namingModalForm.show_breakdown ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    :class="namingModalForm.show_breakdown ? 'translate-x-5' : 'translate-x-0'"
+                                ></span>
+                            </button>
+                        </div>
+
+                        {{-- Show Unit --}}
+                        <div class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/50">
+                            <div class="flex items-center gap-2 cursor-pointer select-none" @click="namingModalForm.show_unit = !namingModalForm.show_unit; markWidgetControlsDirty()">
+                                <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ __('Show Unit') }}</span>
+                                <span class="text-2xs font-mono font-medium text-gray-600 dark:text-gray-300 bg-gray-200/70 dark:bg-gray-700/70 px-1.5 py-0.5 rounded">(unit)</span>
+                            </div>
+                            <button
+                                type="button"
+                                role="switch"
+                                :aria-checked="namingModalForm.show_unit.toString()"
+                                @click="namingModalForm.show_unit = !namingModalForm.show_unit; markWidgetControlsDirty()"
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                :class="namingModalForm.show_unit ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-700'"
+                            >
+                                <span
+                                    class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                    :class="namingModalForm.show_unit ? 'translate-x-5' : 'translate-x-0'"
+                                ></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Axis Direction / Inversion Card --}}
+                <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            {{ __('Axis Direction / Scale') }}
+                        </label>
+                        <span class="text-2xs text-gray-400 dark:text-gray-500" x-text="namingModalForm.axis_direction === 'inverted' ? '{{ __('0 / Min at top (reversed)') }}' : (namingModalForm.axis_direction === 'normal' ? '{{ __('0 / Min at bottom (standard)') }}' : '{{ __('Auto by metric rule') }}')"></span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <button
+                            type="button"
+                            @click="namingModalForm.axis_direction = 'auto'; markWidgetControlsDirty()"
+                            class="py-2 px-2.5 text-xs font-medium rounded-lg border text-center transition-colors flex items-center justify-center gap-1.5"
+                            :class="(namingModalForm.axis_direction || 'auto') === 'auto'
+                                ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300 font-semibold'
+                                : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'"
+                        >
+                            <span class="text-xs">⚡</span>
+                            <span>{{ __('Auto') }}</span>
+                            <span class="text-3xs opacity-70 font-normal">({{ __('Default') }})</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="namingModalForm.axis_direction = 'normal'; markWidgetControlsDirty()"
+                            class="py-2 px-2.5 text-xs font-medium rounded-lg border text-center transition-colors flex items-center justify-center gap-1.5"
+                            :class="namingModalForm.axis_direction === 'normal'
+                                ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300 font-semibold'
+                                : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'"
+                        >
+                            <span class="text-xs">⬆️</span>
+                            <span>{{ __('Normal') }}</span>
+                            <span class="text-3xs opacity-70 font-normal">({{ __('0 at bottom') }})</span>
+                        </button>
+                        <button
+                            type="button"
+                            @click="namingModalForm.axis_direction = 'inverted'; markWidgetControlsDirty()"
+                            class="py-2 px-2.5 text-xs font-medium rounded-lg border text-center transition-colors flex items-center justify-center gap-1.5"
+                            :class="namingModalForm.axis_direction === 'inverted'
+                                ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-950 dark:border-primary-400 dark:text-primary-300 font-semibold'
+                                : 'bg-white border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'"
+                        >
+                            <span class="text-xs">⬇️</span>
+                            <span>{{ __('Inverted') }}</span>
+                            <span class="text-3xs opacity-70 font-normal">({{ __('0 at top') }})</span>
+                        </button>
+                    </div>
+                    <p class="text-2xs text-gray-500 dark:text-gray-400">
+                        {{ __('Choose whether this metric\'s axis starts with lower values at the bottom (Normal), at the top (Inverted, recommended for bounce rate, rankings), or adapts automatically.') }}
+                    </p>
+                </div>
+            </div>
+        </x-confirm-modal>
 
         {{-- ============================================================ --}}
         {{-- ADD SERIES CONFIRMATION MODAL                                --}}

@@ -23,6 +23,10 @@ class FacebookOrganicController extends Controller
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable|array',
             'breakdownTab' => 'nullable|string',
+            'breakdown' => 'nullable|string',
+            'groupBy' => 'nullable|array',
+            'groupBy.*' => 'nullable|string',
+            'filters' => 'nullable|array',
             'tableMode' => 'nullable|string|in:posts,breakdown',
             'metrics' => 'nullable|array',
             'metrics.*' => 'nullable|string',
@@ -647,11 +651,31 @@ class FacebookOrganicController extends Controller
                 }
             }
 
+            // Merge custom series filters if provided
+            if (! empty($validated['filters']) && is_array($validated['filters'])) {
+                foreach ($validated['filters'] as $fKey => $fVal) {
+                    $baseFilters[$fKey] = $fVal;
+                }
+            }
+
             // Trend aliases are required only for post-level charts (snapshot-delta rendering).
             $useTrendAliases = ! empty($validated['postId']);
             $aggregations = $this->buildChartAggregations($defaultAggregations, $useTrendAliases);
 
             $chartGroupBy = ['daily'];
+            $hasBreakdown = false;
+            if (! empty($validated['groupBy'])) {
+                $chartGroupBy = $validated['groupBy'];
+                $hasBreakdown = count($chartGroupBy) > 1 || (! in_array('daily', $chartGroupBy, true) && ! empty($chartGroupBy));
+            } elseif (! empty($validated['breakdown'])) {
+                $chartGroupBy = ['daily', $validated['breakdown']];
+                $hasBreakdown = true;
+            }
+
+            // If a dimension breakdown or filter is active for Instagram, ensure dimensionSet is not forcing is_null
+            if ($hasBreakdown || ! empty($validated['filters'])) {
+                unset($baseFilters['dimensionSet']);
+            }
 
             $payloads = [
                 'chart' => [
@@ -660,6 +684,7 @@ class FacebookOrganicController extends Controller
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
+                    'limit' => 5000,
                 ],
             ];
 
@@ -681,7 +706,7 @@ class FacebookOrganicController extends Controller
             ]);
             $chartData = $results['chart']['data'] ?? [];
 
-            if ($validated['activeTab'] === 'facebook' && is_array($chartData)) {
+            if ($validated['activeTab'] === 'facebook' && is_array($chartData) && ! $hasBreakdown) {
                 $chartData = $this->collapseRowsByDate($chartData, array_keys($defaultAggregations));
             }
 

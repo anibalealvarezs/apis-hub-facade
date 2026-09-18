@@ -11,6 +11,142 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Multi-Series Breakdown Scatter Plot Alignment & Axis Scaling (2026-09-17)
+- **Problem:** Multi-series scatter plot widgets with breakdown dimensions (such as Widget #26 "Intent Match - Rebote vs Clics" crossing GSC `clicks` by `dimensions.page` with GA4 `bounce_rate` by `dimensions.landing_page`) displayed only a single point labeled "Lifetime" at `(x: 27, y: 274)`, inverted the axes (Bounce Rate on X, Clics on Y), and scaled bounce rate to `2700.0%`. After initial subcase 2 indexing, only 2 points were returned.
+- **Root Cause:**
+  1. `fanOutBreakdownSeries()` generated individual curves for each broken-down dimension item grouped flat in `$seriesCurves`.
+  2. The previous Subcase 2 handler took `$c0 = $seriesCurves[0]` and `$c1 = $seriesCurves[1]`, which were simply the 1st and 2nd curves of Series 0 (GSC).
+  3. `$breakdownLimit` was hard-capped at 30 items per series before intersection (`max(1, min(30, $breakdownLimit))`). GA4 sorted by `bounce_rate` descending (taking 30 long-tail 100% bounce rate pages) while GSC sorted by `clicks` descending. Only 2 URLs overlapped between the two top-30 lists!
+  4. GSC page paths often have trailing slashes (`/contacto/`), while GA4 landing pages often omit them (`/contacto`), causing exact string key comparison in `array_intersect` to miss matching URLs.
+  5. `$hardFloor = 3` dropped any points with fewer than 3 clicks.
+- **Fix:** In `DashboardWidgetDataController.php`:
+  1. Updated Subcase 2 to group curves by `series_index` (`$s0Curves` and `$s1Curves`), index them by canonical breakdown value, and calculate the key intersection.
+  2. In `handleMultiSeriesSource()`, forced `$breakdownLimit` to 250 for `scatter_plot` (bypassing the series-level `limit: 30` config stored in `raw_series`) so the intersection evaluates all points returned by channel endpoints rather than truncating before the cross-channel merge.
+  3. In `normalizeBreakdownDimensionValue()`, canonicalized page dimension values by stripping trailing slashes (except root `/`) so `/page/` and `/page` resolve to the same canonical path.
+  4. Made `$hardFloor` configurable via `$resolvedControls['hard_floor']` and set default to 1 for small sample sizes (`$totalN < 10`).
+  5. Set `$displayPercentile` default to `1.0` (all points) when not explicitly configured, preventing the aggressive default 15% top-percentile cut.
+  6. Scaled ratio metrics back to decimal fraction (`<= 1.0`) so the frontend displays authentic percentages (`27.0%`).
+  7. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data`.
+- **Verification:** `php -l` passed without syntax errors.
+
+### Scatter Plot Bounce Rate Axis Inversion & Values > 100% Fix (2026-09-18)
+- **Problem:**
+  1. The bounce rate axis in scatter plots showed values in standard ascending order (0% at bottom to 100% at top). SEO convention and user preference require an inverted scale for bounce rate (low bounce rate is better, higher up).
+  2. Values for bounce rate exceeded 100% (e.g. 200%, 157.3%, 125%).
+- **Root Cause:**
+  1. In `fanOutBreakdownSeries()` (and table breakdown aggregation), when a channel response returned multiple rows for the same breakdown dimension (e.g. Across multiple days or secondary segments), the code accumulated values using `$groupedData[$dimVal][$date] += (float)$val;`. For cumulative metrics like clicks/impressions summing is correct, but for ratio metrics (`bounce_rate`, `ctr`, etc.) and position, summing multiple rows multiplied the rate (e.g. 1.0 + 1.0 = 2.0 = 200%).
+  2. In `public/js/dashboard-renderer.js` inside `renderScatterPlot()`, `reverseYAxis` was only enabled for `position`, ignoring `bounce_rate` and `reverse_y`.
+- **Fix:**
+  1. In `fanOutBreakdownSeries()` of `DashboardWidgetDataController.php`:
+     - Added row counts per dimension and date.
+     - For ratio metrics (`ctr`, `bounce_rate`, `result_rate`) and `position`, average across rows (`$accVal / $c`) instead of accumulating sums.
+     - Clamped ratio values between `0.0` and `100.0` (or `0.0` and `1.0` in scatter plots).
+  2. In `handleMultiSeriesSource()` table aggregation: averaged ratio and position metrics across rows.
+  3. In `show()` for `scatter_plot`: passed `'reverse_y' => in_array($resolvedControls['metrics'][0] ?? '', ['bounce_rate', 'bouncerate', 'position'], true) || !empty($resolvedControls['reverse_y'])`.
+  4. In `public/js/dashboard-renderer.js` inside `renderScatterPlot()`: enabled `reverseYAxis` when `controls?.reverse_y || data?.reverse_y || controls?.metrics?.[0] === 'bounce_rate' || controls?.metrics?.[0] === 'bouncerate'`.
+- **Verification:** `php -l` passed without syntax errors.
+
+### Inverted Axis Consistency for Bounce Rate & Position Across All Chart Types (2026-09-18)
+- **Scope & Problem:** The inverted axis (lower is better, where 0% / rank 1 is at the top) was only partially applied to `position` in line/bar charts and was completely missing for `bounce_rate` in line charts, bar charts, anomaly charts, and combo charts.
+- **Fix:**
+  1. In `public/js/dashboard-renderer.js`:
+     - **`renderLineChart()`**: Expanded primary axis and multi-dataset axis checks to invert scale (`reverse: true`, `beginAtZero: false`) whenever the metric is `position`, `bounce_rate`, or `bouncerate`, or when `reverse_y` is specified.
+     - **`renderBarChart()`**: Added full inverted scale support for single-series and multi-dataset bar charts for `position`, `bounce_rate`, `bouncerate`, or `reverse_y`.
+     - **`renderAnomalyChart()`**: Updated `reverseY` to reverse the Y-axis for `bounce_rate` and `position`.
+     - **`renderComboChart()`**: Detected whether left or right Y-axes contain `position` or `bounce_rate`, setting `reverse: true` and `beginAtZero: false` for the corresponding axis.
+     - **`renderScatterPlot()`**: Already updated with `reverse_y` for `bounce_rate` and `position`.
+  2. In `DashboardWidgetDataController.php`:
+     - Single-series line/bar chart scales: set `'reverse' => true, 'beginAtZero' => false` for `bounce_rate` and `position`.
+     - Multi-series line/bar chart scales (`handleMultiSeriesSource()`): set `'reverse' => true, 'beginAtZero' => false` for `bounce_rate` and `position`.
+     - Single metric trendline scales (`show()`): enabled `'reverse' => true, 'beginAtZero' => false` for `bounce_rate`.
+- **Verification:** `php -l` passed without syntax errors.
+
+### Configurable Metric Axis Direction (Auto, Normal, Inverted) (2026-09-18)
+- **Problem & Goal:** Axis direction for inverted metrics (such as `bounce_rate` and `position`) was previously hardcoded. The user requested making the axis direction configurable per metric in the Dashboard Builder, integrated contextually into the metric customization modal so only metrics of active channels are exposed.
+- **Fix:**
+  1. **Dashboard Builder View (`dashboard-builder.blade.php`):**
+     - In `showMetricNamingModal`, added an **Axis Direction / Scale** card offering three options:
+       - **Auto** (⚡ Metric Default): Respects natural metric convention (e.g. `bounce_rate` and `position` inverted; others standard).
+       - **Normal** (⬆️ Bottom to Top): Standard axis starting at 0 or min at the bottom.
+       - **Inverted** (⬇️ Top to Bottom): Inverted axis starting at 0 or min at the top.
+  2. **Dashboard Builder Logic (`dashboard-builder.js`):**
+     - `openMetricNamingModal()`: Loads `axis_direction: current.axis_direction || 'auto'`.
+     - `saveMetricNamingModal()`: Saves `axis_direction` into `series.metric_namings[metricKey]`.
+     - `hasCustomMetricNaming()`: Marks the metric chip as customized when `axis_direction !== 'auto'`.
+     - Serialization in `confirmWidgetControls()` and snapshot detection preserve `axis_direction` in `series_metric_namings` and `raw_series`.
+  3. **Dashboard Renderer (`public/js/dashboard-renderer.js`):**
+     - Added `resolveMetricAxisDirection(metricKey, seriesIdx, controls)` helper. Checks `controls.series_metric_namings` or `controls.raw_series` for `'inverted'` (`true`) or `'normal'` (`false`), falling back to auto detection (`isBounceRate || isPosition`).
+     - Integrated into `renderLineChart()`, `renderBarChart()`, `renderComboChart()`, and `renderScatterPlot()`.
+  4. **Backend (`DashboardWidgetDataController.php`):**
+     - Updated scatter plot `reverse_y` calculation to respect user-configured `axis_direction` from `series_metric_namings` / `raw_series`.
+- **Verification:** Frontend assets compiled successfully with `npm run build` (vite v7.3.1).
+
+### Pie / Donut Charts Default Collapsed Legend (2026-09-18)
+- **Problem:** Pie and donut charts had their custom HTML legend expanded by default. For widgets with many slices (e.g. 9 breakdown channels), the tall legend grid compressed the canvas vertically, squishing the pie/donut into an ellipse/oval shape and distorting the chart.
+- **Fix:** In `public/js/dashboard-renderer.js` inside `_renderCustomLegend()`:
+  - Initialized `let collapsed = isPie;` (where `isPie = ['pie', 'doughnut'].includes(chart.config.type)`).
+  - When `collapsed` is true on initial render, sets the chevron to `▼` and collapses `body` (`maxHeight: 0`, `opacity: 0`, `padding: 0`, `overflow: hidden`). Users can still click the toggle bar `Legend (N)` to expand it when desired.
+  - This ensures the pie/donut maintains its circular aspect ratio without vertical distortion.
+
+### Line Chart Custom Metric Colors Not Applied (2026-09-14)
+- **Problem:** Line chart widgets ignored user-configured custom metric colors (set via color pickers in the builder), always rendering with the default palette. Breakdown gradient colors worked correctly.
+- **Root Cause:** In `public/js/dashboard-renderer.js`, the `overrideKeys` whitelist in `renderWidget()` controlled which widget control keys were included in the POST body sent to `/api/dashboard/widget/{id}/data`. The keys `series_metric_colors`, `series_metric_namings`, and `raw_series` were missing from this list. This caused two problems:
+  1. **Stale localStorage cache:** The cache key (hashed from `JSON.stringify(body)`) did not include color data, so after changing colors, the cached response with old/default colors was served.
+  2. **Timing on builder preview:** After saving widget controls, `renderWidget()` fires in `$nextTick` potentially before the Livewire async save completes. The backend then used old stored controls (without new colors) because the request didn't send them explicitly.
+- **Fix:** Added `"series_metric_colors"`, `"series_metric_namings"`, and `"raw_series"` to the `overrideKeys` array in `public/js/dashboard-renderer.js` (line ~329). This ensures:
+  - The POST body includes color configuration, making it authoritative regardless of DB timing.
+  - The localStorage cache key changes when colors change, invalidating stale cached responses.
+- **Backend color resolution (reference):**
+  - Single-series path (`show()`, line ~1160): `$controls['series_metric_colors'][0][$key]`
+  - Multi-series path (`handleMultiSeriesSource`, line ~2380): `$series['metric_colors']` from `raw_series`, then fallback to `$controls['series_metric_colors'][$sIdx]`
+  - Breakdown path: Uses `$seriesMetricColors[$firstMetric]` → `generateMetricShades($baseColor, ...)` — this worked because `raw_series` was loaded from stored widget controls.
+- **Follow-up root cause (2026-09-14, fix awaiting user verification):** Although the renderer fix shipped, single-series widgets STILL ignored colors while multi-series widgets worked. Reproduction clue from user: adding a 2nd series made the 1st series colors work; removing it made them stop.
+  - **Root cause:** In `DashboardWidgetDataController::show()` the single-series line/bar chart branch (line ~1160) referenced `$controls` — a variable that is **never defined** in `show()`'s scope (there is no `$controls = ...` anywhere in the file; `$controls` only exists as a *parameter* of methods like `handleMetricSource()`/`handleMultiSeriesSource()`). Because the reads sat inside `??` chains, the undefined variable silently evaluated to `null`, so `$customMetricColor` was always `null` and the color fell back to the palette.
+  - **Why the reproduction makes sense:** a single raw-metric series → `hasMultiSeries=false` → the broken `show()` branch; two series → `hasMultiSeries=true` → `handleMultiSeriesSource()`, where `$controls` is a real parameter and colors resolve correctly.
+  - **Fix (uncommitted, to verify on prod):** In the single-series branch, replaced `$controls` with the in-scope `$resolvedControls` for the color, metric-naming, channel, and dependency lookups, and prepended the `raw_series[0]['metric_colors'][$key|$cleanKey]` lookup (mirroring the multi-series priority). `php -l` passes.
+  - **Note:** `$resolvedControls` holds the merged DB + request controls in `show()` (line ~70). Debug `[COLOR_DEBUG]` logs are still present and must be removed once the fix is confirmed.
+
+### Anomaly Chart Ratio Metrics Not Displayed as Percentages (2026-09-14)
+- **Problem:** Anomaly chart widgets (KPI `calculate_anomaly` on a ratio metric like CTR) plotted the raw fraction values (e.g. 0.0123) instead of percentages (1.23%), even though the renderer labels the y-axis `%`.
+- **Root Cause:** In `DashboardWidgetDataController::show()` the anomaly chart dataset branch (line ~302) copied `$series['values']` straight from the analytics engine response without the `* 100` ratio conversion and without the `percentage`/`currency` dataset flags that every other chart branch sets. The renderer (`renderAnomalyChart`) formats whatever value it receives; the custom HTML tooltip only multiplies when the `percentage` flag is absent, so scaling had to happen in the backend.
+- **Fix (uncommitted):** In the anomaly dataset build, resolve the dependent metric from `$resolvedControls['metrics'][0]` (fallback `$widget->customKpi->filters['_ui_state']['dependent_metric']`), strip the `trend_(total|average)_` prefix, and when the clean metric is in `['ctr', 'bounce_rate', 'result_rate']` map values through `round($v * 100, 4)`; set `'percentage'`/`'currency'` flags mirroring the metric lists used by the other chart branches. `php -l` passes.
+
+### Tile Ratio Metrics Double-100x (Bounce Rate) (2026-09-14)
+- **Problem:** The GA4 bounce_rate tile displayed a wrong percentage (e.g. `6250.0%`), i.e. multiplied by 100 one extra time.
+- **Root Cause:** Two end-to-end paths produced the double multiply because the backend already converted ratio metrics to percentages (×100) but the tile payload carried no `percentage` flag:
+  1. Metric-source tile (chart action): `show()` chart-path tile/gauge transform (`DashboardWidgetDataController.php` ~1107-1109) does `round($value * 100, 4)` for `['ctr','bounce_rate','result_rate']` but built the `$data` payload without any flag.
+  2. Multiseries/filtered tile: `handleMultiSeriesSource()` datasets already hold ×100 values with `'percentage' => $isRatio` (line ~2524), but the `labels`+`datasets` → tile transform (`show()` ~1029-1041) dropped the flag.
+  - Meanwhile `renderTile` (`public/js/dashboard-renderer.js` ~614) unconditionally multiplied when `format === "percentage" && resultFormat?.multiply` (`METRIC_FORMATS.bounce_rate.multiply = 100`). Sparkline never multiplies, and `renderGauge` normalizes `> 1.0` back to a ratio, so only tiles were broken.
+- **Same class of bug already fixed elsewhere:** `4860f0d2` guarded every chart tooltip/axis multiply with `!ds.percentage`; `63a8a3f7` added the ×100 + flag in the anomaly dataset. Tiles were the remaining path.
+- **Fix (uncommitted, awaiting prod verification):**
+  - Backend: set `'percentage' => in_array($ck, $ratioMetrics)` in the chart-path tile/gauge payload, and `'percentage' => (bool)($firstDataset['percentage'] ?? false)` in the labels+datasets tile transform (mirrors the dataset flag).
+  - Frontend: `renderTile` now only multiplies when `!data?.percentage` (same contract as the chart guards).
+- **Verification:** `php -l` and `node --check` pass; diff touches only the two tile payload builders + `renderTile`. Tie into the pending color/anomaly commit once verified on prod.
+
+### Tile "Lower Is Better" Trend Coloring (2026-09-14)
+- **Problem:** In tiles, a metric falling vs the previous period was always red and a rising one always green, so "less is better" metrics (position, bounce_rate) showed the wrong signal (e.g. bounce rising → green).
+- **Root Cause:** `renderTile` (`public/js/dashboard-renderer.js`) computed `isUp = changePercent >= 0` for color/arrow and ignored `lower_is_better`. Only `renderSparkline` honored the flag; `renderTile` did not. Backend never sends the flag (no `lower_is_better` in `app/`); it is derived frontend-side from `METRIC_FORMATS` / `ratioFormats` via `getKpiResultFormat()`.
+- **Fix (uncommitted):**
+  - `renderTile` now computes `improved = lowerIsBetter ? changePercent <= 0 : changePercent >= 0`, green when improved. `lowerIsBetter` = `data?.lower_is_better ?? resultFormat?.lower_is_better ?? false`.
+  - Added `lower_is_better` to the metric catalog (`METRIC_FORMATS`): `cpc`, `cpm`, `cost_per_result`, and new `frequency` entry (FB Marketing: impressions/reach — higher = ad fatigue).
+  - Added `lower_is_better` to the KPI ratio formats: `spend/clicks` (CPC), `spend/impressions` (CPM), `spend/conversions` (CPA), `spend/results` (Cost/Result), `spend/sessions` (Cost/Session), `bounce_rate/clicks`.
+  - `position` and `bounce_rate` already had the flag; GSC/GA4 have no other lower-is-better metrics; FB Organic has none (all reach/engagement/views metrics are higher-better).
+- **Reasoned per-channel audit (no flag = higher-better/neutral):** GSC → lower: position; GA4 → lower: bounce_rate; FB Marketing → lower: cpc, cpm, cpa (spend/conversions), cost_per_result, cost/session, frequency; spend kept neutral (budget input, not efficiency); FB Organic → none lower. `purchase_roas`, `aov`, `revenue`, `ctr`, `result_rate`, `conversions`, `reach`, `impressions`, `clicks`, sessions/pageviews/duration, engagement, followers, views, etc. are higher-better.
+- **Note (not changed):** `renderGauge` colors by fill % toward max, so lower-is-better metrics would fill green at high values; it has its own `>1.0` value normalization but no `lower_is_better` inversion. Not touched (tile-scoped fix); flag for a future gauge pass.
+- **Verification:** `node --check` passes.
+
+### Tile, Gauge & Sparkline Support for Filtered/Multiseries Data (2026-09-14)
+- **Problem:** When widgets of type `tile`, `gauge`, or `sparkline` used series-level filters (e.g. `dimensions.sessionDefaultChannelGroup = 'Organic Search'`) or breakdowns, `handleMetricSource()` routed the request through `handleMultiSeriesSource()`, which returns chart-shaped data (`labels` and `datasets`). In `show()`, transformation only existed for `table` and for raw `chart` arrays, leaving `tile` with raw `labels`/`datasets`. As a result, the frontend renderer looked for `data.value` / `data.current`, found `null`, and defaulted to displaying `0`.
+- **Fix:** In `DashboardWidgetDataController::show()`, added transformation branches for `tile`, `gauge`, and `sparkline` when `labels` and `datasets` are returned: extracts the latest point (`end($seriesData)`) as `value`/`current`, the previous point as `previous`, computes `min`/`max`, and formats labels properly.
+
+### Widget Series Breakdown and Filtering Support (2026-09-08)
+- **Problem:** Dashboard widgets only supported aggregate/global time series without multidimensional segment breakdowns or granular series-level filtering.
+- **Solution:**
+  - Created `ChannelBreakdownRegistry` to provide a unified source of truth for channel-specific breakdowns, dimensions, operators, and types across all 4 channels (`facebook_organic`, `facebook_marketing`, `google_analytics`, `google_search_console`).
+  - Added breakdown and filter configurators into `DashboardBuilder` (modal UI and JS state manager), supporting single-metric series breakdown splitting (with configurable limit, order, and manual value selection) and multi-condition query filters (`=`, `!=`, `in`, `not_in`, `like`).
+  - Updated `DashboardWidgetDataController` to query breakdowns, split series dynamically, apply series-level filters to queries, and resolve localized labels.
+  - Aligned data explorer controllers (`FacebookOrganicController`, `FacebookMarketingController`, `GoogleAnalyticsController`, `GoogleSearchConsoleController`) to leverage `ChannelBreakdownRegistry` for consistent dimension options and Spanish localization (`lang/es.json`).
+
 ### Graceful Un-deployed Project & Remote Server Offline Error Handling (2026-08-13)
 - **Problem:** When a project has never been deployed (`last_deployed_at === null`), background telemetry polls and remote engine calls triggered Guzzle requests resulting in 500 / 502 / connection errors that logged full `production.ERROR` stack traces to `laravel.log`.
 - **Fix:**
@@ -610,6 +746,19 @@
 ### Subscription onboarding URL fix (2026-08-27)
 - The Billing & Subscriptions onboarding pointed to `/account/manage-subscription`, which does not exist (404). The Account panel page class is `App\Filament\Account\Pages\AccountSubscription` → URL `/account/account-subscription`.
 - Fixed `routePattern` in `resources/js/tours/flows/billing-tour.js` and the 'url' for the Billing tour in `resources/views/filament/account/pages/onboarding-settings.blade.php`; rebuilt JS.
+
+### SEO Efficiency KPIs & Custom Scatter Plot Support for Metrics / Derived Metrics (2026-09-17)
+- **Predefined SEO KPIs:**
+  - Added `seo_page_ctr_efficiency` (Organic CTR vs Impressions by Page), `seo_query_ctr_efficiency` (Organic CTR vs Impressions by Query), and `seo_position_click_curve` (Clicks vs Average Position curve) to `PredefinedKpiRegistry.php`.
+  - Added visual reference documentation cards with type labels, explanations, use cases, and interpretations in `KpiReference.php`.
+- **Custom Scatter Plot Support:**
+  - Allowed `scatter_plot` as a compatible widget type for `metric` and `derived_metric` sources in `WidgetTypeRegistry.php` and `dashboard-builder.js`.
+- **Runtime Granularity & Subcase Handlers in `DashboardWidgetDataController`:**
+  - Runtime constraint: enforced `granularity = 'lifetime'` whenever `widget_type === 'scatter_plot'` in both `handleMetricSource` and `handleMultiSeriesSource`.
+  - Subcase 1 (single series with breakdown dimension and $\ge 2$ metrics): reshapes grouped items into `scatter_data` with `x`, `y`, `labels`, `x_label`, `y_label`, and `metrics: [$cleanY, $cleanX]`.
+  - Subcase 2 (multi-series or 2 curves): aligns series on intersecting keys (dates/dimensions) to produce paired `scatter_data` with metrics metadata.
+  - Resolved controls: ensured `$resolvedControls['metrics']` is auto-populated from `scatter_data['metrics']` or curve series definitions when missing.
+  - Scale constraints: position-based metrics automatically set `min: 1` with reversed axis, while impressions/volume metrics begin at zero.
 
 
 

@@ -82,7 +82,7 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 'panels::styles.after',
                 fn () => \Illuminate\Support\Facades\Blade::render('
-                    @vite([\'resources/css/driver-theme.css\'])
+                    <link rel="stylesheet" href="' . \Illuminate\Support\Facades\Vite::asset('resources/css/driver-theme.css') . '">
                     <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=20260825.1">
                     <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=20260825.1">
                     <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=20260825.1">

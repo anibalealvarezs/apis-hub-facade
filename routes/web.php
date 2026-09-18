@@ -95,6 +95,13 @@ Route::post('/api/ga4/table', [\App\Http\Controllers\Api\GoogleAnalyticsControll
 Route::post('/api/ga4/list-properties', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'listProperties'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
 
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
+Route::get('/api/analytics/breakdowns', function (\Illuminate\Http\Request $request) {
+    $channel = $request->query('channel', '');
+    $dependency = $request->query('dependency');
+    return response()->json([
+        'breakdowns' => \App\Services\Analytics\ChannelBreakdownRegistry::getBreakdownsForChannel($channel, $dependency),
+    ]);
+})->middleware(['web', 'auth']);
 
 Route::post('/api/derived-metrics/preview', [\App\Http\Controllers\Api\DerivedMetricPreviewController::class, 'preview'])->middleware(['web', 'auth']);
 

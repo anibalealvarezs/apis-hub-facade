@@ -19,7 +19,10 @@ class GoogleAnalyticsController extends Controller
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:campaigns,adgroups,channels,sources,traffic_pages,traffic_countries,traffic_devices,acquisition_channels,events,adtouchpoints_adgroups,adtouchpoints_terms,adtouchpoints_content',
             'activeFilters' => 'nullable|array',
-            'activeFilters.*' => 'nullable|array',
+            'activeFilters.*' => 'nullable',
+            'filters' => 'nullable|array',
+            'breakdown' => 'nullable|string',
+            'groupBy' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string',
             'dependency' => 'nullable|string',
@@ -433,6 +436,13 @@ class GoogleAnalyticsController extends Controller
             $service = app(RemoteEngineService::class);
 
             $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
+            if (!empty($validated['filters'])) {
+                foreach ($validated['filters'] as $fk => $fv) {
+                    if ($fv !== null && $fv !== '') {
+                        $baseFilters[$fk] = $fv;
+                    }
+                }
+            }
 
             $requestedMetrics = $validated['metrics'] ?? [];
             \Illuminate\Support\Facades\Log::error("GA4 Chart: Input metrics from validated request:", ['metrics' => $requestedMetrics]);
@@ -474,6 +484,9 @@ class GoogleAnalyticsController extends Controller
                 $this->metricsForScope('ad_touchpoint_matrix')
             ));
 
+            $breakdownDim = $validated['breakdown'] ?? null;
+            $customGroupBy = $validated['groupBy'] ?? ($breakdownDim ? ['daily', $breakdownDim] : ['daily']);
+
             foreach ($scopesToQuery as $scope) {
                 if (empty($unassignedMetrics)) break;
 
@@ -492,11 +505,11 @@ class GoogleAnalyticsController extends Controller
                 if (!empty($intersect)) {
                     $payloads["chart_{$scope}"] = [
                         'aggregations' => $this->buildAggregations($intersect),
-                        'groupBy' => ['daily'],
+                        'groupBy' => $customGroupBy,
                         'filters' => array_merge($baseFilters, ['dimensions.scope' => $scope]),
                         'startDate' => $validated['dateStart'],
                         'endDate' => $validated['dateEnd'],
-                        'limit' => 1000,
+                        'limit' => 5000,
                     ];
                     $unassignedMetrics = array_diff($unassignedMetrics, $intersect);
                 }
@@ -505,6 +518,26 @@ class GoogleAnalyticsController extends Controller
             \Illuminate\Support\Facades\Log::error("GA4 Chart Payload:", $payloads);
             $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
             \Illuminate\Support\Facades\Log::error("GA4 Chart Results:", $results);
+
+            if ($breakdownDim) {
+                // Return rows directly with date and breakdown value intact
+                $flatRows = [];
+                foreach ($scopesToQuery as $scope) {
+                    $rows = $results["chart_{$scope}"]['data'] ?? [];
+                    foreach ($rows as $row) {
+                        $mappedRow = [];
+                        foreach ($row as $k => $v) {
+                            $mappedKey = $this->mapFromGa4($k);
+                            $mappedRow[$mappedKey] = is_numeric($v) && !in_array($k, ['daily', 'date', 'metric_date', $breakdownDim]) ? (float) $v : $v;
+                        }
+                        $flatRows[] = $mappedRow;
+                    }
+                }
+                return response()->json([
+                    'chart' => $flatRows,
+                    'debug_results' => config('app.debug') ? $results : null,
+                ]);
+            }
 
             $mergedByDate = [];
             foreach ($scopesToQuery as $scope) {

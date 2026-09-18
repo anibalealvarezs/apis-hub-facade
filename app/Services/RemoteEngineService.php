@@ -315,7 +315,7 @@ class RemoteEngineService
         unset($logPayload['admin_api_key']);
         \Illuminate\Support\Facades\Log::info('RemoteEngine KPI payload', $logPayload);
 
-        $result = $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload));
+        $result = $this->execute($project, fn (ApisHubApi $client) => $client->computeKpi($payload), 30);
         \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi AFTER execute", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
         \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => is_array($result['data'] ?? null) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);

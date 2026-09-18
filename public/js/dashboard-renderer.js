@@ -9,8 +9,18 @@ window.dashboardRenderer = {
     _pinnedTooltips: new Map(),
     METRIC_FORMATS: {
         spend: { label: "Spend", format: "currency", prefix: "$" },
-        cpc: { label: "CPC", format: "currency", prefix: "$" },
-        cpm: { label: "CPM", format: "currency", prefix: "$" },
+        cpc: {
+            label: "CPC",
+            format: "currency",
+            prefix: "$",
+            lower_is_better: true,
+        },
+        cpm: {
+            label: "CPM",
+            format: "currency",
+            prefix: "$",
+            lower_is_better: true,
+        },
         revenue: { label: "Revenue", format: "currency", prefix: "$" },
         purchase_roas: { label: "ROAS", format: "currency", prefix: "$" },
         aov: { label: "AOV", format: "currency", prefix: "$" },
@@ -18,6 +28,12 @@ window.dashboardRenderer = {
             label: "Cost/Result",
             format: "currency",
             prefix: "$",
+            lower_is_better: true,
+        },
+        frequency: {
+            label: "Frequency",
+            format: "number",
+            lower_is_better: true,
         },
         result_rate: {
             label: "Result Rate",
@@ -123,31 +139,37 @@ window.dashboardRenderer = {
                     label: "Bounce Rate",
                     format: "percentage",
                     multiply: 100,
+                    lower_is_better: true,
                 },
                 "spend/clicks": {
                     label: "CPC",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/impressions": {
                     label: "CPM",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/conversions": {
                     label: "CPA",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/results": {
                     label: "Cost/Result",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "spend/sessions": {
                     label: "Cost/Session",
                     format: "currency",
                     prefix: "$",
+                    lower_is_better: true,
                 },
                 "revenue/spend": {
                     label: "ROAS",
@@ -181,6 +203,9 @@ window.dashboardRenderer = {
             if (f0?.format === "currency" && f1?.format === "number") {
                 return { label: f0.label, format: "currency", prefix: "$" };
             }
+            if (m0 === "position" || m1 === "position") {
+                return f0 || null;
+            }
             if (f0?.format === "number" && f1?.format === "number") {
                 return {
                     label: f0.label + "/" + f1.label,
@@ -193,6 +218,96 @@ window.dashboardRenderer = {
 
         return f0 || null;
     },
+    _concurrencyLimit: 4,
+    _activeRequests: 0,
+    _queue: [],
+
+    _enqueue(fn) {
+        return new Promise((resolve, reject) => {
+            this._queue.push({ fn, resolve, reject });
+            this._dequeue();
+        });
+    },
+
+    _dequeue() {
+        if (this._activeRequests >= this._concurrencyLimit || this._queue.length === 0) {
+            return;
+        }
+        this._activeRequests++;
+        const { fn, resolve, reject } = this._queue.shift();
+        fn()
+            .then(resolve)
+            .catch(reject)
+            .finally(() => {
+                this._activeRequests--;
+                this._dequeue();
+            });
+    },
+
+    _hashString(str) {
+        let hash = 5381;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) + hash) + str.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash).toString(36);
+    },
+
+    _getStorageCache(widgetId, effectiveTenant, body, lang) {
+        try {
+            const keySuffix = this._hashString(JSON.stringify(body) + "|" + (lang || ""));
+            const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
+            const item = localStorage.getItem(cacheKey);
+            if (!item) return null;
+            const parsed = JSON.parse(item);
+            // 30 minute TTL
+            if (Date.now() - (parsed.timestamp || 0) > 30 * 60 * 1000) {
+                localStorage.removeItem(cacheKey);
+                return null;
+            }
+            return parsed.data;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    _setStorageCache(widgetId, effectiveTenant, body, lang, data) {
+        try {
+            const keySuffix = this._hashString(JSON.stringify(body) + "|" + (lang || ""));
+            const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
+            localStorage.setItem(
+                cacheKey,
+                JSON.stringify({
+                    timestamp: Date.now(),
+                    data: data,
+                }),
+            );
+        } catch (e) {
+            // Storage quota exceeded or disabled
+        }
+    },
+
+    clearStorageCache(widgetId) {
+        try {
+            const prefix = widgetId !== undefined && widgetId !== null
+                ? `db_widget_`
+                : "db_widget_";
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key) continue;
+                if (widgetId !== undefined && widgetId !== null) {
+                    if (key.startsWith("db_widget_") && key.includes(`_${widgetId}_`)) {
+                        keysToRemove.push(key);
+                    }
+                } else if (key.startsWith("db_widget_")) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach((k) => localStorage.removeItem(k));
+        } catch (e) {}
+    },
+
     /**
      * Fetch data for a single widget and render into its container.
      * Data fetch happens immediately; Chart.js rendering is deferred until
@@ -236,6 +351,9 @@ window.dashboardRenderer = {
                     "remove_unknown",
                     "combo_chart_config",
                     "combo_series_config",
+                    "series_metric_colors",
+                    "series_metric_namings",
+                    "raw_series",
                 ];
                 const overrides = {};
                 for (const key of overrideKeys) {
@@ -249,34 +367,96 @@ window.dashboardRenderer = {
                 document.documentElement.lang ||
                 window.Filament?.locale ||
                 "en";
-            const response = await fetch(
-                "/api/dashboard/widget/" +
-                    widgetId +
-                    "/data?lang=" +
-                    encodeURIComponent(currentLang),
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Accept: "application/json",
-                        "X-CSRF-TOKEN":
-                            document.querySelector('meta[name="csrf-token"]')
-                                ?.content || "",
-                    },
-                    body: JSON.stringify(body),
-                },
-            );
 
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || "HTTP " + response.status);
+            // Check localStorage cache first
+            const cachedData = this._getStorageCache(
+                widgetId,
+                effectiveTenant,
+                body,
+                currentLang,
+            );
+            if (cachedData) {
+                if (cachedData.missing_assets || cachedData.data?._missing_assets) {
+                    containerEl.innerHTML = this.emptyAssetState();
+                    this._widgetData.set(containerEl, cachedData);
+                    return;
+                }
+                this._widgetData.set(containerEl, cachedData);
+                this._lazyRenderWhenVisible(containerEl, cachedData);
+                return;
             }
 
-            const json = await response.json();
+            // Enqueue request (max 4 concurrent) with exponential backoff
+            const json = await this._enqueue(async () => {
+                const maxAttempts = 3;
+                let lastError = null;
+
+                for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    try {
+                        const response = await fetch(
+                            "/api/dashboard/widget/" +
+                                widgetId +
+                                "/data?lang=" +
+                                encodeURIComponent(currentLang),
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    Accept: "application/json",
+                                    "X-CSRF-TOKEN":
+                                        document.querySelector('meta[name="csrf-token"]')
+                                            ?.content || "",
+                                },
+                                body: JSON.stringify(body),
+                            },
+                        );
+
+                        if (!response.ok) {
+                            const err = await response.json().catch(() => ({}));
+                            const status = response.status;
+                            const errMsg = err.error || "HTTP " + status;
+                            // Retry on server errors or gateway timeouts
+                            if (attempt < maxAttempts && (status >= 500 || status === 429)) {
+                                throw new Error(errMsg);
+                            }
+                            throw new Error(errMsg);
+                        }
+
+                        const resJson = await response.json();
+
+                        if (!resJson.success) {
+                            const errMsg = resJson.message || resJson.error || "Unknown error";
+                            if (attempt < maxAttempts && (errMsg.includes("timed out") || errMsg.includes("timeout") || errMsg.includes("cURL error 28"))) {
+                                throw new Error(errMsg);
+                            }
+                            return resJson;
+                        }
+
+                        return resJson;
+                    } catch (err) {
+                        lastError = err;
+                        if (attempt < maxAttempts) {
+                            // Exponential backoff: 1000ms, then 2500ms
+                            const delayMs = attempt === 1 ? 1000 : 2500;
+                            await new Promise((r) => setTimeout(r, delayMs));
+                        }
+                    }
+                }
+                throw lastError || new Error("Failed to load widget data");
+            });
 
             if (!json.success) {
                 throw new Error(json.message || json.error || "Unknown error");
             }
+
+            // Save to localStorage cache
+            this._setStorageCache(
+                widgetId,
+                effectiveTenant,
+                body,
+                currentLang,
+                json,
+            );
 
             if (json.missing_assets || json.data?._missing_assets) {
                 containerEl.innerHTML = this.emptyAssetState();
@@ -444,6 +624,32 @@ window.dashboardRenderer = {
         return div.innerHTML;
     },
 
+    resolveMetricAxisDirection(metricKey, seriesIdx = 0, controls = null) {
+        const mKey = String(metricKey || "").toLowerCase();
+        // 1. Check custom user configuration in controls
+        if (controls) {
+            let userDir = null;
+            // Check series_metric_namings
+            if (controls.series_metric_namings?.[seriesIdx]?.[metricKey]?.axis_direction) {
+                userDir = controls.series_metric_namings[seriesIdx][metricKey].axis_direction;
+            } else if (controls.series_metric_namings?.[String(seriesIdx)]?.[metricKey]?.axis_direction) {
+                userDir = controls.series_metric_namings[String(seriesIdx)][metricKey].axis_direction;
+            } else if (controls.raw_series?.[seriesIdx]?.metric_namings?.[metricKey]?.axis_direction) {
+                userDir = controls.raw_series[seriesIdx].metric_namings[metricKey].axis_direction;
+            }
+
+            if (userDir === "inverted") return true;
+            if (userDir === "normal") return false;
+        }
+
+        // 2. Default fallback: Auto by metric convention
+        return (
+            mKey.includes("position") ||
+            mKey.includes("bounce_rate") ||
+            mKey.includes("bouncerate")
+        );
+    },
+
     // ─── Tile ───
 
     renderTile(containerEl, data, controls) {
@@ -456,18 +662,27 @@ window.dashboardRenderer = {
         const label = data?.label ?? resultFormat?.label ?? "";
         let format = data?.format ?? resultFormat?.format ?? "number";
 
-        if (format === "percentage" && resultFormat?.multiply) {
+        if (
+            format === "percentage" &&
+            !data?.percentage &&
+            resultFormat?.multiply
+        ) {
             value = value * resultFormat.multiply;
         }
 
         let trendHtml = "";
         let changePercent = null;
 
+        const lowerIsBetter =
+            data?.lower_is_better ?? resultFormat?.lower_is_better ?? false;
+
         if (previous !== null && previous !== 0) {
             changePercent = ((value - previous) / Math.abs(previous)) * 100;
-            const isUp = changePercent >= 0;
-            const arrow = isUp ? "▲" : "▼";
-            const color = isUp ? "text-green-500" : "text-red-500";
+            const improved = lowerIsBetter
+                ? changePercent <= 0
+                : changePercent >= 0;
+            const arrow = improved ? "▲" : "▼";
+            const color = improved ? "text-green-500" : "text-red-500";
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
@@ -494,8 +709,26 @@ window.dashboardRenderer = {
     renderLineChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
-        const reverseY = controls?.metrics?.[0] === "position";
-        const resultFormat = this.getKpiResultFormat(controls);
+        const resultFormatRaw = this.getKpiResultFormat(controls);
+        const isPrimaryPosition =
+            controls?.metrics?.[0] === "position" ||
+            datasets[0]?.metric === "position" ||
+            datasets[0]?.metric_key === "position" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("position"));
+        const isPrimaryBounceRate =
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate" ||
+            datasets[0]?.metric === "bounce_rate" ||
+            datasets[0]?.metric === "bouncerate" ||
+            datasets[0]?.metric_key === "bounce_rate" ||
+            datasets[0]?.metric_key === "bouncerate" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("bounce_rate"));
+        const primaryMetricKey = controls?.metrics?.[0] || datasets[0]?.metric || datasets[0]?.metric_key || datasets[0]?.key || "";
+        const primaryIsReverse = this.resolveMetricAxisDirection(primaryMetricKey, 0, controls);
+        const reverseY = primaryIsReverse || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
+        const resultFormat = isPrimaryPosition && resultFormatRaw?.format === "percentage"
+            ? null
+            : resultFormatRaw;
 
         const yMetric = controls?.metrics?.[0];
         const yFmt =
@@ -517,23 +750,39 @@ window.dashboardRenderer = {
             return;
         }
 
-        const mappedDatasets = datasets.map((ds) => ({
-            ...ds,
-            currency:
-                ds.currency ??
-                (resultFormat?.format === "currency" ? true : undefined),
-            percentage:
-                ds.percentage ??
-                (resultFormat?.format === "percentage" ? true : undefined),
-            pointRadius: 6,
-            pointHoverRadius: 10,
-            pointHitRadius: 15,
-            pointBackgroundColor:
-                ds.borderColor || ds.backgroundColor || "#3B82F6",
-            pointBorderColor: ds.borderColor || ds.backgroundColor || "#3B82F6",
-            pointBorderWidth: 2,
-            pointHoverBorderWidth: 2,
-        }));
+        const isDatasetPosition = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("position") || (idx === 0 && isPrimaryPosition);
+        };
+        const isDatasetBounceRate = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("bounce_rate") || m.includes("bouncerate") || (idx === 0 && isPrimaryBounceRate);
+        };
+        const isDatasetReverse = (ds, idx) => {
+            const m = ds.metric || ds.metric_key || ds.key || controls?.metrics?.[idx] || "";
+            return this.resolveMetricAxisDirection(m, idx, controls);
+        };
+
+        const mappedDatasets = datasets.map((ds, idx) => {
+            const isPos = isDatasetPosition(ds, idx);
+            return {
+                ...ds,
+                currency: isPos
+                    ? false
+                    : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
+                percentage: isPos
+                    ? false
+                    : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
+                pointRadius: 6,
+                pointHoverRadius: 10,
+                pointHitRadius: 15,
+                pointBackgroundColor:
+                    ds.borderColor || ds.backgroundColor || "#3B82F6",
+                pointBorderColor: ds.borderColor || ds.backgroundColor || "#3B82F6",
+                pointBorderWidth: 2,
+                pointHoverBorderWidth: 2,
+            };
+        });
 
         let chartScales = {
             x: {
@@ -544,35 +793,68 @@ window.dashboardRenderer = {
 
         if (datasets.length === 1) {
             const backendY = data?.scales?.y || {};
+            const isPos = isPrimaryPosition;
+            const isReverseScale = reverseY || isPos || isPrimaryBounceRate || !!backendY.reverse;
             chartScales.y = {
-                beginAtZero: !reverseY,
-                reverse: reverseY,
+                beginAtZero: !isReverseScale && backendY.beginAtZero !== false,
+                reverse: isReverseScale,
                 title: {
                     display: true,
                     text: backendY.title?.text || yAxisLabel,
                 },
                 ticks: { font: { size: 10 }, ...backendY.ticks },
             };
+            if (backendY.min !== undefined) {
+                chartScales.y.min = backendY.min;
+            } else if (isPos) {
+                chartScales.y.min = 1;
+            }
+            if (backendY.suggestedMin !== undefined) {
+                chartScales.y.suggestedMin = backendY.suggestedMin;
+            } else if (isPos) {
+                chartScales.y.suggestedMin = 1;
+            }
+            if (backendY.max !== undefined) {
+                chartScales.y.max = backendY.max;
+            }
+            if (backendY.suggestedMax !== undefined) {
+                chartScales.y.suggestedMax = backendY.suggestedMax;
+            }
             mappedDatasets[0].yAxisID = "y";
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
+                    const isPosAxis = axisId.toLowerCase().includes("position");
+                    const isBounceAxis = axisId.toLowerCase().includes("bounce_rate") || axisId.toLowerCase().includes("bouncerate");
+                    const isRevAxis = isPosAxis || isBounceAxis || !!axisConf.reverse;
                     chartScales[axisId] = {
                         ...axisConf,
+                        reverse: isRevAxis ? true : (axisConf.reverse ?? false),
+                        beginAtZero: isRevAxis ? false : (axisConf.beginAtZero ?? true),
                         title: { display: false },
                         ticks: { display: false },
                     };
+                    if (isPosAxis && chartScales[axisId].min === undefined) {
+                        chartScales[axisId].min = 1;
+                    }
                 }
             } else {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
+                        const isPosAxis = isDatasetPosition(ds, idx);
+                        const isRevAxis = isDatasetReverse(ds, idx);
                         chartScales[ds.yAxisID] = {
                             type: "linear",
                             display: true,
+                            reverse: isRevAxis,
+                            beginAtZero: !isRevAxis,
                             title: { display: false },
                             ticks: { display: false },
                             grid: { drawOnChartArea: idx === 0 },
                         };
+                        if (isPosAxis) {
+                            chartScales[ds.yAxisID].min = 1;
+                        }
                     }
                 });
             }
@@ -596,11 +878,7 @@ window.dashboardRenderer = {
                         : "default";
                 },
                 plugins: {
-                    legend: {
-                        display: datasets.length > 1,
-                        position: "bottom",
-                        labels: { boxWidth: 12, padding: 12 },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             title: (ctx) =>
@@ -638,7 +916,22 @@ window.dashboardRenderer = {
     renderBarChart(containerEl, data, controls) {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
-        const reverseY = controls?.metrics?.[0] === "position";
+        const isPrimaryPosition =
+            controls?.metrics?.[0] === "position" ||
+            datasets[0]?.metric === "position" ||
+            datasets[0]?.metric_key === "position" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("position"));
+        const isPrimaryBounceRate =
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate" ||
+            datasets[0]?.metric === "bounce_rate" ||
+            datasets[0]?.metric === "bouncerate" ||
+            datasets[0]?.metric_key === "bounce_rate" ||
+            datasets[0]?.metric_key === "bouncerate" ||
+            (datasets[0]?.key && String(datasets[0].key).includes("bounce_rate"));
+        const primaryMetricKey = controls?.metrics?.[0] || datasets[0]?.metric || datasets[0]?.metric_key || datasets[0]?.key || "";
+        const primaryIsReverse = this.resolveMetricAxisDirection(primaryMetricKey, 0, controls);
+        const reverseY = primaryIsReverse || !!controls?.reverse_y || !!data?.reverse_y || !!data?.scales?.y?.reverse;
 
         const resultFormat = this.getKpiResultFormat(controls);
 
@@ -647,6 +940,19 @@ window.dashboardRenderer = {
                 '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
             return;
         }
+
+        const isDatasetPosition = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("position") || (idx === 0 && isPrimaryPosition);
+        };
+        const isDatasetBounceRate = (ds, idx) => {
+            const m = String(ds.metric || ds.metric_key || ds.key || "").toLowerCase();
+            return m.includes("bounce_rate") || m.includes("bouncerate") || (idx === 0 && isPrimaryBounceRate);
+        };
+        const isDatasetReverse = (ds, idx) => {
+            const m = ds.metric || ds.metric_key || ds.key || controls?.metrics?.[idx] || "";
+            return this.resolveMetricAxisDirection(m, idx, controls);
+        };
 
         const mappedDatasets = datasets.map((ds) => ({
             ...ds,
@@ -664,32 +970,65 @@ window.dashboardRenderer = {
 
         if (datasets.length === 1) {
             const backendY = data?.scales?.y || {};
+            const isPos = isPrimaryPosition;
+            const isReverseScale = reverseY || isPos || isPrimaryBounceRate || !!backendY.reverse;
             chartScales.y = {
-                beginAtZero: !reverseY,
-                reverse: reverseY,
+                beginAtZero: !isReverseScale && backendY.beginAtZero !== false,
+                reverse: isReverseScale,
                 title: { display: true, text: backendY.title?.text || "" },
                 ticks: { font: { size: 10 }, ...backendY.ticks },
             };
+            if (backendY.min !== undefined) {
+                chartScales.y.min = backendY.min;
+            } else if (isPos) {
+                chartScales.y.min = 1;
+            }
+            if (backendY.suggestedMin !== undefined) {
+                chartScales.y.suggestedMin = backendY.suggestedMin;
+            } else if (isPos) {
+                chartScales.y.suggestedMin = 1;
+            }
+            if (backendY.max !== undefined) {
+                chartScales.y.max = backendY.max;
+            }
+            if (backendY.suggestedMax !== undefined) {
+                chartScales.y.suggestedMax = backendY.suggestedMax;
+            }
             mappedDatasets[0].yAxisID = "y";
         } else {
             if (data?.scales) {
                 for (const [axisId, axisConf] of Object.entries(data.scales)) {
+                    const isPosAxis = axisId.toLowerCase().includes("position");
+                    const isBounceAxis = axisId.toLowerCase().includes("bounce_rate") || axisId.toLowerCase().includes("bouncerate");
+                    const isRevAxis = isPosAxis || isBounceAxis || !!axisConf.reverse;
                     chartScales[axisId] = {
                         ...axisConf,
+                        reverse: isRevAxis ? true : (axisConf.reverse ?? false),
+                        beginAtZero: isRevAxis ? false : (axisConf.beginAtZero ?? true),
                         title: { display: false },
                         ticks: { display: false },
                     };
+                    if (isPosAxis && chartScales[axisId].min === undefined) {
+                        chartScales[axisId].min = 1;
+                    }
                 }
             } else {
                 mappedDatasets.forEach((ds, idx) => {
                     if (ds.yAxisID) {
+                        const isPosAxis = isDatasetPosition(ds, idx);
+                        const isRevAxis = isDatasetReverse(ds, idx);
                         chartScales[ds.yAxisID] = {
                             type: "linear",
                             display: true,
+                            reverse: isRevAxis,
+                            beginAtZero: !isRevAxis,
                             title: { display: false },
                             ticks: { display: false },
                             grid: { drawOnChartArea: idx === 0 },
                         };
+                        if (isPosAxis) {
+                            chartScales[ds.yAxisID].min = 1;
+                        }
                     }
                 });
             }
@@ -702,16 +1041,12 @@ window.dashboardRenderer = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: datasets.length > 1,
-                        position: "bottom",
-                        labels: { boxWidth: 12, padding: 12 },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
                                 let val = ctx.parsed.y;
-                                if (resultFormat?.multiply)
+                                if (!ctx.dataset?.percentage && resultFormat?.multiply)
                                     val = val * resultFormat.multiply;
                                 if (ctx.dataset?.currency)
                                     return this.formatCurrency(val);
@@ -725,6 +1060,90 @@ window.dashboardRenderer = {
                 scales: chartScales,
             },
         };
+        this._setAnimation(config, false);
+        this.renderChart(containerEl, config);
+    },
+
+    // ─── Pie & Donut Chart ───
+
+    renderPieChart(containerEl, data, controls) {
+        const labels = data?.labels ?? [];
+        const datasets = data?.datasets ?? [];
+        const resultFormat = this.getKpiResultFormat(controls);
+
+        if (!labels.length || !datasets.length || !datasets[0]?.data?.length) {
+            containerEl.innerHTML =
+                '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+            return;
+        }
+
+        const pieStyle = data?.pie_style || controls?.pie_style || "donut";
+        const isDonut = pieStyle !== "pie";
+        const total = (datasets[0].data || []).reduce((acc, curr) => acc + (typeof curr === "number" ? curr : 0), 0);
+
+        const mappedDatasets = datasets.map((ds) => ({
+            ...ds,
+            currency: ds.currency ?? (resultFormat?.format === "currency" ? true : undefined),
+            percentage: ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined),
+            borderWidth: 2,
+            borderColor: document.documentElement.classList.contains("dark") ? "#1f2937" : "#ffffff",
+        }));
+
+        const isCurrency = mappedDatasets[0]?.currency;
+        const isPercentage = mappedDatasets[0]?.percentage;
+
+        // Custom plugin to draw center text in Donut charts
+        const centerTextPlugin = {
+            id: "centerTextPlugin_" + Math.random().toString(36).substr(2, 9),
+            beforeDraw: (chart) => {
+                if (!isDonut) return;
+                const { ctx, chartArea } = chart;
+                if (!chartArea) return;
+                const centerX = (chartArea.left + chartArea.right) / 2;
+                const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+                ctx.save();
+                const isDark = document.documentElement.classList.contains("dark");
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                // Subtitle: Total
+                ctx.font = "600 11px Inter, system-ui, sans-serif";
+                ctx.fillStyle = isDark ? "#9ca3af" : "#6b7280";
+                ctx.fillText("TOTAL", centerX, centerY - 10);
+
+                // Value
+                let formattedTotal = this.formatNumber(total);
+                if (isCurrency) {
+                    formattedTotal = this.formatCurrency(total);
+                } else if (isPercentage) {
+                    formattedTotal = total.toFixed(1) + "%";
+                }
+                ctx.font = "700 16px Inter, system-ui, sans-serif";
+                ctx.fillStyle = isDark ? "#f3f4f6" : "#111827";
+                ctx.fillText(formattedTotal, centerX, centerY + 10);
+                ctx.restore();
+            },
+        };
+
+        const config = {
+            type: isDonut ? "doughnut" : "pie",
+            data: { labels, datasets: mappedDatasets },
+            plugins: isDonut ? [centerTextPlugin] : [],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: isDonut ? "65%" : "0%",
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: false,
+                        external: (ctx) => this._externalTooltipHandler(ctx),
+                    },
+                },
+            },
+        };
+
         this._setAnimation(config, false);
         this.renderChart(containerEl, config);
     },
@@ -805,10 +1224,10 @@ window.dashboardRenderer = {
                 : true;
 
         let html =
-            '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;">';
+            '<div class="table-outer-wrap" style="display:flex;width:100%;height:100%;border-radius:inherit;overflow:hidden;position:relative;">';
 
         if (blockFirstCol) {
-            // Fixed First Column Table
+            // Fixed First Column Table (capped at 50% width of the table container)
             const firstCol = columns[0];
             const firstKey = firstCol.key || firstCol;
             const firstRawLabel = firstCol.label || firstCol;
@@ -822,11 +1241,11 @@ window.dashboardRenderer = {
                 : "";
 
             html +=
-                '<div class="fixed-col-wrap" style="flex-shrink:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
+                '<div class="fixed-col-wrap" style="flex:0 1 auto;max-width:50%;min-width:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
             html +=
-                '<table style="border-collapse:separate;border-spacing:0;">';
+                '<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">';
             html += '<thead style="position:sticky;top:0;z-index:2;">';
-            html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700" data-sort-key="${firstKey}" style="min-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${this.escapeHtml(firstDisplayLabel)}">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
+            html += `<tr class="bg-gray-50 dark:bg-gray-800"><th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 border-r border-gray-200 dark:border-gray-700 data-has-tooltip" data-sort-key="${firstKey}" data-tooltip="${this.escapeHtml(firstDisplayLabel)}" title="${this.escapeHtml(firstDisplayLabel)}" style="min-width:100px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${this.escapeHtml(firstDisplayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${firstArrow}</span></th></tr></thead>`;
             html += '<tbody class="bg-white dark:bg-gray-900">';
             sortedRows.forEach((row, ri) => {
                 const isEven = ri % 2 === 0;
@@ -834,7 +1253,8 @@ window.dashboardRenderer = {
                     ? "bg-white dark:bg-gray-900"
                     : "bg-gray-50 dark:bg-gray-800";
                 const val = row[firstKey] ?? row[firstCol] ?? "";
-                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-200 ${cellBgClass} border-r border-gray-200 dark:border-gray-700" title="${this.escapeHtml(String(val))}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:140px;">${this.escapeHtml(String(val))}</td></tr>`;
+                const valStr = String(val);
+                html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800"><td class="px-3 py-2 text-gray-700 dark:text-gray-200 ${cellBgClass} border-r border-gray-200 dark:border-gray-700 data-has-tooltip" data-tooltip="${this.escapeHtml(valStr)}" title="${this.escapeHtml(valStr)}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:100px;max-width:100%;">${this.escapeHtml(valStr)}</td></tr>`;
             });
             html += "</tbody></table></div>";
         }
@@ -847,7 +1267,7 @@ window.dashboardRenderer = {
             '<table style="width:100%;border-collapse:separate;border-spacing:0;">';
         html += '<thead style="position:sticky;top:0;z-index:1;">';
         html += '<tr class="bg-gray-50 dark:bg-gray-800">';
-        scrollCols.forEach((col) => {
+        scrollCols.forEach((col, cIdx) => {
             const key = col.key || col;
             const rawLabel = col.label || col;
             const displayLabel = this.getMetricName(rawLabel) || rawLabel;
@@ -862,10 +1282,13 @@ window.dashboardRenderer = {
                     : " \u25BC"
                 : "";
             const thAlign = isNumeric ? "text-right" : "text-left";
-            const thStyle = isNumeric
-                ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-                : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
-            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200" data-sort-key="${key}" style="${thStyle}" title="${this.escapeHtml(displayLabel)}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
+            const isFirstOfAll = !blockFirstCol && cIdx === 0;
+            const thStyle = isFirstOfAll
+                ? "max-width:50%;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                : (isNumeric
+                    ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                    : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;");
+            html += `<th class="px-3 py-2 ${thAlign} font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200 data-has-tooltip" data-sort-key="${key}" data-tooltip="${this.escapeHtml(displayLabel)}" title="${this.escapeHtml(displayLabel)}" style="${thStyle}">${this.escapeHtml(displayLabel)}<span class="sort-arrow" style="font-size:10px;margin-left:2px;">${arrow}</span></th>`;
         });
         html += "</tr></thead>";
 
@@ -876,7 +1299,7 @@ window.dashboardRenderer = {
                 ? "bg-white dark:bg-gray-900"
                 : "bg-gray-50 dark:bg-gray-800";
             html += `<tr class="${cellBgClass} border-t border-gray-200 dark:border-gray-800">`;
-            scrollCols.forEach((col) => {
+            scrollCols.forEach((col, cIdx) => {
                 const key = col.key || col;
                 const val = row[key] ?? row[col] ?? "";
                 const isNumeric =
@@ -896,9 +1319,12 @@ window.dashboardRenderer = {
                 const tdClass = isNumeric
                     ? "px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right"
                     : "px-3 py-2 text-gray-700 dark:text-gray-200";
-                const tdStyle =
-                    "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-                html += `<td class="${tdClass} ${cellBgClass}" title="${this.escapeHtml(String(val))}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
+                const isFirstOfAll = !blockFirstCol && cIdx === 0;
+                const tdStyle = isFirstOfAll
+                    ? "max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                    : "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+                const valStr = String(val);
+                html += `<td class="${tdClass} ${cellBgClass} data-has-tooltip" data-tooltip="${this.escapeHtml(valStr)}" title="${this.escapeHtml(valStr)}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
             });
             html += "</tr>";
         });
@@ -920,6 +1346,9 @@ window.dashboardRenderer = {
             }
         }
 
+        // Attach custom interactive tooltip for truncated cells and headers
+        this._attachTableTruncationTooltips(containerEl);
+
         containerEl.querySelectorAll("th[data-sort-key]").forEach((th) => {
             th.addEventListener("click", () => {
                 const key = th.dataset.sortKey;
@@ -932,6 +1361,78 @@ window.dashboardRenderer = {
                 this.renderTable(containerEl, data, controls);
             });
         });
+    },
+
+    _attachTableTruncationTooltips(containerEl) {
+        let activeTooltip = null;
+
+        const removeTooltip = () => {
+            if (activeTooltip) {
+                activeTooltip.remove();
+                activeTooltip = null;
+            }
+        };
+
+        const targets = containerEl.querySelectorAll(".data-has-tooltip");
+        targets.forEach((el) => {
+            el.addEventListener("mouseenter", () => {
+                // Check if text content is actually truncated
+                if (el.scrollWidth > el.clientWidth + 1) {
+                    removeTooltip();
+                    const text = el.dataset.tooltip || el.getAttribute("title") || el.textContent;
+                    if (!text || !text.trim()) return;
+
+                    const tip = document.createElement("div");
+                    tip.className = "dashboard-cell-tooltip";
+                    tip.textContent = text.trim();
+                    tip.style.cssText = `
+                        position: fixed;
+                        z-index: 99999;
+                        max-width: 420px;
+                        word-break: break-all;
+                        white-space: normal;
+                        background-color: #1f2937;
+                        color: #f9fafb;
+                        font-size: 11px;
+                        line-height: 1.4;
+                        font-weight: 500;
+                        padding: 6px 10px;
+                        border-radius: 6px;
+                        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.25), 0 4px 6px -2px rgba(0,0,0,0.1);
+                        pointer-events: none;
+                        opacity: 0;
+                        transition: opacity 0.12s ease-in-out;
+                    `;
+
+                    document.body.appendChild(tip);
+                    activeTooltip = tip;
+
+                    const rect = el.getBoundingClientRect();
+                    const tipRect = tip.getBoundingClientRect();
+
+                    // Calculate top/bottom placement
+                    let top = rect.top - tipRect.height - 6;
+                    if (top < 8) {
+                        top = rect.bottom + 6;
+                    }
+
+                    // Calculate left placement
+                    let left = rect.left;
+                    if (left + tipRect.width > window.innerWidth - 12) {
+                        left = Math.max(8, window.innerWidth - tipRect.width - 12);
+                    }
+
+                    tip.style.top = `${top}px`;
+                    tip.style.left = `${left}px`;
+                    tip.style.opacity = "1";
+                }
+            });
+
+            el.addEventListener("mouseleave", removeTooltip);
+        });
+
+        // Also clean up tooltip if the container or page scrolls
+        containerEl.addEventListener("scroll", removeTooltip, { capture: true, passive: true });
     },
 
     // ─── Gauge ───
@@ -1299,7 +1800,15 @@ window.dashboardRenderer = {
         const labels = data?.labels ?? [];
         const datasets = data?.datasets ?? [];
         const anomalyDates = data?.anomaly_dates ?? [];
-        const reverseY = controls?.metrics?.[0] === "position";
+        const reverseY =
+            controls?.metrics?.[0] === "position" ||
+            controls?.metrics?.[0] === "bounce_rate" ||
+            controls?.metrics?.[0] === "bouncerate" ||
+            datasets[0]?.metric === "position" ||
+            datasets[0]?.metric === "bounce_rate" ||
+            datasets[0]?.metric === "bouncerate" ||
+            !!controls?.reverse_y ||
+            !!data?.reverse_y;
 
         const resultFormat = this.getKpiResultFormat(controls);
 
@@ -1461,8 +1970,19 @@ window.dashboardRenderer = {
         ];
         const reverseYColor = higherIsWorse.includes(controls?.metrics?.[0]);
         const reverseXColor = higherIsWorse.includes(controls?.metrics?.[1]);
-        const reverseYAxis = controls?.metrics?.[0] === "position";
-        const reverseXAxis = controls?.metrics?.[1] === "position";
+        const yMetric = controls?.metrics?.[0] || "";
+        const xMetric = controls?.metrics?.[1] || "";
+        const customReverseY = this.resolveMetricAxisDirection(yMetric, 0, controls);
+        const customReverseX = this.resolveMetricAxisDirection(xMetric, 1, controls);
+
+        const reverseYAxis =
+            controls?.reverse_y ||
+            data?.reverse_y ||
+            customReverseY;
+        const reverseXAxis =
+            controls?.reverse_x ||
+            data?.reverse_x ||
+            customReverseX;
 
         const resultFormat = this.getKpiResultFormat(controls);
         const xFmt = controls?.metrics?.[1]
@@ -1932,6 +2452,8 @@ window.dashboardRenderer = {
         let hasRightAxis = false;
         let leftAxisUnit = "";
         let rightAxisUnit = "";
+        let leftAxisReverse = false;
+        let rightAxisReverse = false;
 
         const mappedDatasets = data.datasets.map((ds, idx) => {
             const labelLower = (ds.label || "").toLowerCase();
@@ -2073,14 +2595,19 @@ window.dashboardRenderer = {
                 }
             }
 
+            const dsMetricKey = ds.metric || ds.metric_key || ds.key || controls?.metrics?.[idx] || "";
+            const isReverseForDs = this.resolveMetricAxisDirection(dsMetricKey, idx, controls);
+
             if (yAxisID === "y1") {
                 hasRightAxis = true;
+                if (isReverseForDs) rightAxisReverse = true;
                 if (!rightAxisUnit) {
                     if (isRateOrPercentage) rightAxisUnit = "%";
                     else if (isCurrency) rightAxisUnit = "$";
                 }
             } else {
                 hasLeftAxis = true;
+                if (isReverseForDs) leftAxisReverse = true;
                 if (!leftAxisUnit) {
                     if (isCurrency) leftAxisUnit = "$";
                     else if (isRateOrPercentage) leftAxisUnit = "%";
@@ -2117,7 +2644,8 @@ window.dashboardRenderer = {
                 type: "linear",
                 display: hasLeftAxis || !hasRightAxis,
                 position: "left",
-                beginAtZero: true,
+                reverse: leftAxisReverse,
+                beginAtZero: !leftAxisReverse,
                 grid: { color: "rgba(156, 163, 175, 0.15)" },
                 ticks: {
                     font: { size: 10 },
@@ -2139,7 +2667,8 @@ window.dashboardRenderer = {
                 type: "linear",
                 display: true,
                 position: "right",
-                beginAtZero: true,
+                reverse: rightAxisReverse,
+                beginAtZero: !rightAxisReverse,
                 grid: { drawOnChartArea: false }, // Avoid duplicate gridlines
                 ticks: {
                     font: { size: 10 },
@@ -2168,62 +2697,14 @@ window.dashboardRenderer = {
                 },
                 scales: scalesConfig,
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: "bottom",
-                        labels: {
-                            usePointStyle: true,
-                            pointStyleWidth: 18,
-                            font: { size: 11 },
-                            padding: 12,
-                            color: document.documentElement.classList.contains(
-                                "dark",
-                            )
-                                ? "#E4E4E7"
-                                : "#374151",
-                            generateLabels: (chart) => {
-                                const isDark =
-                                    document.documentElement.classList.contains(
-                                        "dark",
-                                    );
-                                const labelColor =
-                                    chart.options?.plugins?.legend?.labels
-                                        ?.color ||
-                                    (isDark ? "#E4E4E7" : "#374151");
-                                return (chart.data.datasets || []).map(
-                                    (ds, i) => {
-                                        const isHidden =
-                                            !chart.isDatasetVisible(i);
-                                        const isLine = ds.type === "line";
-                                        return {
-                                            text: ds.label,
-                                            fillStyle: isLine
-                                                ? ds.borderColor
-                                                : ds.backgroundColor ||
-                                                  ds.borderColor,
-                                            strokeStyle: ds.borderColor,
-                                            lineWidth: isLine ? 2.5 : 1,
-                                            fontColor: labelColor,
-                                            color: labelColor,
-                                            hidden: isHidden,
-                                            datasetIndex: i,
-                                            pointStyle: isLine
-                                                ? "line"
-                                                : "rectRounded",
-                                            pointStyleWidth: isLine ? 20 : 12,
-                                        };
-                                    },
-                                );
-                            },
-                        },
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => {
                                 const ds = ctx.dataset || {};
                                 const label = ds.label || "Value";
                                 let val = ctx.parsed.y;
-                                if (resultFormat?.multiply)
+                                if (!ds.percentage && resultFormat?.multiply)
                                     val = val * resultFormat.multiply;
                                 if (ds.currency)
                                     return `${label}: ${this.formatCurrency(val)}`;
@@ -2380,6 +2861,59 @@ window.dashboardRenderer = {
         window.addEventListener("theme-changed", () => this.updateTheme());
     },
 
+    _crosshairInitialized: false,
+    _isCrosshairActive: false,
+
+    _lastMousePos: null,
+
+    _initCrosshairListeners() {
+        if (this._crosshairInitialized || typeof window === "undefined") return;
+        this._crosshairInitialized = true;
+
+        window.addEventListener(
+            "mousemove",
+            (e) => {
+                this._lastMousePos = {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    target: e.target,
+                };
+            },
+            { passive: true },
+        );
+
+        const handleKey = (e, isDown) => {
+            if (e.key !== "Control" && e.key !== "Shift") return;
+            if (this._isCrosshairActive === isDown) return;
+            this._isCrosshairActive = isDown;
+            this._applyCrosshairModeToAllCharts();
+        };
+
+        window.addEventListener("keydown", (e) => handleKey(e, true));
+        window.addEventListener("keyup", (e) => handleKey(e, false));
+        window.addEventListener("blur", () => {
+            if (this._isCrosshairActive) {
+                this._isCrosshairActive = false;
+                this._applyCrosshairModeToAllCharts();
+            }
+        });
+    },
+
+    _applyCrosshairModeToAllCharts() {
+        if (!this._lastMousePos) return;
+        const { clientX, clientY } = this._lastMousePos;
+        const elem = document.elementFromPoint(clientX, clientY);
+        if (elem && elem.tagName === "CANVAS") {
+            const evt = new MouseEvent("mousemove", {
+                clientX,
+                clientY,
+                bubbles: true,
+                cancelable: true,
+            });
+            elem.dispatchEvent(evt);
+        }
+    },
+
     updateTheme() {
         const isDark = document.documentElement.classList.contains("dark");
         const legendColor = isDark ? "#E4E4E7" : "#374151";
@@ -2396,19 +2930,34 @@ window.dashboardRenderer = {
                     if (axis.grid) axis.grid.color = gridColor;
                 }
             }
-            if (chart.options.plugins?.legend?.labels) {
-                chart.options.plugins.legend.labels.color = legendColor;
-            }
+            // Skipping native legend color — native legend is disabled
             try {
                 chart.update("none");
             } catch (e) {
                 // Ignore transient update errors during navigation
             }
         });
+
+        // Update custom HTML legend colors
+        this._updateCustomLegendTheme(isDark);
+    },
+
+    _updateCustomLegendTheme(isDark) {
+        document.querySelectorAll(".custom-chart-legend").forEach((wrapper) => {
+            const toggle = wrapper.querySelector(".chart-legend-toggle");
+            if (toggle) {
+                toggle.style.borderTopColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+                toggle.style.color = isDark ? "#A1A1AA" : "#9CA3AF";
+            }
+            wrapper.querySelectorAll(".chart-legend-body > div").forEach((item) => {
+                item.style.color = isDark ? "#D4D4D8" : "#374151";
+            });
+        });
     },
 
     renderChart(containerEl, config) {
         this._initThemeObserver();
+        this._initCrosshairListeners();
         this._pinnedTooltips.delete(containerEl);
         const isDark = document.documentElement.classList.contains("dark");
         if (config.options && config.options.scales) {
@@ -2423,15 +2972,19 @@ window.dashboardRenderer = {
                 }
             }
         }
-        if (config.options?.plugins?.legend?.labels) {
-            config.options.plugins.legend.labels.color = isDark
-                ? "#E4E4E7"
-                : "#374151";
-        }
+        // Native legend disabled; custom HTML legend handles theming
 
         config.options = config.options || {};
+        config.options.interaction = config.options.interaction || {};
+        config.options.interaction.mode = "nearest";
+        config.options.interaction.axis = "x";
+        config.options.interaction.intersect = false;
+
         config.options.plugins = config.options.plugins || {};
         config.options.plugins.tooltip = config.options.plugins.tooltip || {};
+        config.options.plugins.tooltip.mode = "nearest";
+        config.options.plugins.tooltip.axis = "x";
+        config.options.plugins.tooltip.intersect = false;
         config.options.plugins.tooltip.enabled = false;
         config.options.plugins.tooltip.external = (ctx) =>
             this._externalTooltipHandler(ctx);
@@ -2451,6 +3004,17 @@ window.dashboardRenderer = {
         const canvas = document.createElement("canvas");
         const existingCanvas = containerEl.querySelector("canvas");
         if (existingCanvas) existingCanvas.remove();
+        // Remove any stale custom legend from a previous render
+        const existingLegend = containerEl.querySelector(".custom-chart-legend");
+        if (existingLegend) existingLegend.remove();
+
+        // Ensure flex-column layout so legend sits below the canvas
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.overflow = "hidden";
+        canvas.style.flex = "1 1 0";
+        canvas.style.minHeight = "0";
+
         containerEl.appendChild(canvas);
 
         const createChart = () => {
@@ -2460,9 +3024,185 @@ window.dashboardRenderer = {
             canvas.addEventListener("dblclick", () => {
                 if (chart.options?.plugins?.zoom) chart.resetZoom();
             });
+            // Build custom HTML legend for multi-dataset charts or pie/donut charts
+            if ((chart.data.datasets && chart.data.datasets.length > 1) || (['pie', 'doughnut'].includes(chart.config.type) && chart.data.labels?.length > 1)) {
+                this._renderCustomLegend(chart, containerEl);
+            }
         };
 
         this._ensureZoomPlugin(createChart);
+    },
+
+    /**
+     * Build a custom HTML legend below the chart canvas.
+     * - CSS Grid with equal-width columns sized to the longest label.
+     * - Collapsible toggle bar showing series/slice count + chevron.
+     * - Click items to toggle dataset/slice visibility.
+     */
+    _renderCustomLegend(chart, containerEl) {
+        const datasets = chart.data.datasets || [];
+        if (datasets.length === 0) return;
+        const isPie = ['pie', 'doughnut'].includes(chart.config.type);
+        const labels = chart.data.labels || [];
+        const isDark = document.documentElement.classList.contains("dark");
+
+        // ── Wrapper ──
+        const wrapper = document.createElement("div");
+        wrapper.className = "custom-chart-legend";
+        wrapper.style.cssText = "width:100%; flex-shrink:0; user-select:none;";
+
+        // ── Toggle bar ──
+        const toggleBar = document.createElement("div");
+        toggleBar.className = "chart-legend-toggle";
+        toggleBar.style.cssText = [
+            "display:flex", "align-items:center", "justify-content:space-between",
+            "cursor:pointer", "font-size:11px", "padding:3px 6px",
+            "border-top:1px solid " + (isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"),
+            "color:" + (isDark ? "#A1A1AA" : "#9CA3AF"),
+            "transition:color 0.15s",
+        ].join(";");
+        const itemsList = isPie
+            ? labels.map((l, i) => {
+                const bg = Array.isArray(datasets[0]?.backgroundColor) ? datasets[0].backgroundColor[i] : '#888';
+                return { label: l || `Slice ${i + 1}`, color: bg, index: i };
+            })
+            : datasets.map((ds, i) => {
+                const isLine = ds.type === 'line';
+                const swatchColor = ds.borderColor || ds.backgroundColor || '#888';
+                return { label: ds.label || `Series ${i + 1}`, color: swatchColor, isLine, index: i, ds };
+            });
+
+        toggleBar.innerHTML =
+            `<span>Legend (${itemsList.length})</span><span class="legend-chevron" style="font-size:10px;transition:transform 0.2s">▲</span>`;
+        toggleBar.addEventListener("mouseenter", () => {
+            toggleBar.style.color = isDark ? "#E4E4E7" : "#374151";
+        });
+        toggleBar.addEventListener("mouseleave", () => {
+            toggleBar.style.color = isDark ? "#A1A1AA" : "#9CA3AF";
+        });
+
+        // ── Legend body (grid) ──
+        const body = document.createElement("div");
+        body.className = "chart-legend-body";
+
+        // Calculate optimal min column width from longest label
+        const maxLabelLen = Math.max(...itemsList.map((item) => (item.label || "").length));
+        const minColWidth = Math.max(160, Math.min(320, maxLabelLen * 7.5 + 44));
+
+        body.style.cssText = [
+            "display:grid",
+            `grid-template-columns:repeat(auto-fill, minmax(${minColWidth}px, 1fr))`,
+            "gap:4px 10px",
+            "padding:4px 6px 6px",
+            "max-height:7.5rem",
+            "overflow-y:auto",
+            "transition:max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease",
+        ].join(";");
+
+        // ── Build items ──
+        itemsList.forEach((it) => {
+            const item = document.createElement("div");
+            item.style.cssText = [
+                "display:flex", "align-items:center", "gap:6px",
+                "cursor:pointer", "padding:2px 4px", "border-radius:4px",
+                "white-space:nowrap", "overflow:hidden", "text-overflow:ellipsis",
+                "transition:opacity 0.15s, background 0.15s",
+                "font-size:11px",
+                "color:" + (isDark ? "#D4D4D8" : "#374151"),
+            ].join(";");
+
+            // Color swatch
+            const swatch = document.createElement("span");
+            if (it.isLine) {
+                // Line swatch: short line
+                swatch.style.cssText = [
+                    "display:inline-block", "width:18px", "height:3px",
+                    "border-radius:2px", "flex-shrink:0",
+                    "background:" + it.color,
+                ].join(";");
+            } else {
+                // Bar/slice swatch: small rounded rect
+                swatch.style.cssText = [
+                    "display:inline-block", "width:12px", "height:12px",
+                    "border-radius:2px", "flex-shrink:0",
+                    "background:" + it.color,
+                    "border:1px solid " + (isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"),
+                ].join(";");
+            }
+
+            // Label
+            const label = document.createElement("span");
+            label.style.cssText = "overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            label.textContent = it.label;
+            label.title = it.label;
+
+            item.appendChild(swatch);
+            item.appendChild(label);
+
+            // Hover
+            item.addEventListener("mouseenter", () => {
+                item.style.background = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
+            });
+            item.addEventListener("mouseleave", () => {
+                item.style.background = "transparent";
+            });
+
+            // Click → toggle visibility
+            item.addEventListener("click", () => {
+                if (isPie) {
+                    chart.toggleDataVisibility(it.index);
+                    chart.update();
+                    const isHidden = !chart.getDataVisibility(it.index);
+                    item.style.opacity = isHidden ? "0.35" : "1";
+                    label.style.textDecoration = isHidden ? "line-through" : "none";
+                } else {
+                    const meta = chart.getDatasetMeta(it.index);
+                    meta.hidden = meta.hidden === null ? !chart.data.datasets[it.index].hidden : null;
+                    chart.update();
+                    const isHidden = meta.hidden;
+                    item.style.opacity = isHidden ? "0.35" : "1";
+                    label.style.textDecoration = isHidden ? "line-through" : "none";
+                }
+            });
+
+            body.appendChild(item);
+        });
+
+        // ── Toggle collapse/expand ──
+        let collapsed = isPie;
+        const chevron = toggleBar.querySelector(".legend-chevron");
+        if (collapsed) {
+            chevron.textContent = "▼";
+            body.style.maxHeight = "0";
+            body.style.opacity = "0";
+            body.style.paddingTop = "0";
+            body.style.paddingBottom = "0";
+            body.style.overflow = "hidden";
+        }
+        toggleBar.addEventListener("click", () => {
+            collapsed = !collapsed;
+            if (collapsed) {
+                body.style.maxHeight = "0";
+                body.style.opacity = "0";
+                body.style.paddingTop = "0";
+                body.style.paddingBottom = "0";
+                body.style.overflow = "hidden";
+                chevron.textContent = "▼";
+            } else {
+                body.style.maxHeight = "7.5rem";
+                body.style.opacity = "1";
+                body.style.paddingTop = "4px";
+                body.style.paddingBottom = "6px";
+                body.style.overflow = "auto";
+                chevron.textContent = "▲";
+            }
+            // Let Chart.js reclaim/release the space
+            requestAnimationFrame(() => chart.resize());
+        });
+
+        wrapper.appendChild(toggleBar);
+        wrapper.appendChild(body);
+        containerEl.appendChild(wrapper);
     },
 
     _attachTooltipPin(chart, canvas, containerEl) {
@@ -2480,13 +3220,38 @@ window.dashboardRenderer = {
                 }
                 return;
             }
-            const elements = chart.getElementsAtEventForMode(
+            const mode = this._isCrosshairActive ? "index" : "nearest";
+            const intersect = !this._isCrosshairActive;
+            let elements = chart.getElementsAtEventForMode(
                 e,
-                "nearest",
-                { intersect: true },
+                mode,
+                { axis: "x", intersect },
                 false,
             );
             if (elements.length === 0) return;
+
+            if (
+                this._isCrosshairActive &&
+                (chart.config.type === "line" || chart.config.type === "bar")
+            ) {
+                const targetIdx = elements[0].index;
+                const synthesized = [];
+                chart.data.datasets.forEach((ds, dsIndex) => {
+                    const meta = chart.getDatasetMeta(dsIndex);
+                    if (meta.hidden || ds.hidden) return;
+                    if (ds.data[targetIdx] !== undefined && ds.data[targetIdx] !== null) {
+                        synthesized.push({
+                            element: meta.data?.[targetIdx],
+                            datasetIndex: dsIndex,
+                            index: targetIdx,
+                        });
+                    }
+                });
+                if (synthesized.length > 0) {
+                    elements = synthesized;
+                }
+            }
+
             const widgetJson = this._widgetData.get(container);
             const controls = widgetJson?.controls;
             const resultFormat = this.getKpiResultFormat(controls);
@@ -2500,6 +3265,19 @@ window.dashboardRenderer = {
                 : null;
 
             let html = "";
+            const isMulti = elements.length > 1;
+            if (isMulti && chartType !== "scatter") {
+                const headerLabel = chart.data.labels?.[elements[0].index] || "";
+                if (headerLabel) {
+                    html +=
+                        '<div style="font-weight:700;font-size:12px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid ' +
+                        (document.documentElement.classList.contains("dark") ? "#374151" : "#E5E7EB") +
+                        ';">' +
+                        headerLabel +
+                        '</div>';
+                }
+            }
+
             elements.forEach((el) => {
                 const ds = chart.data.datasets[el.datasetIndex];
                 const raw = ds.data[el.index];
@@ -2526,10 +3304,23 @@ window.dashboardRenderer = {
                         " " +
                         yMetricName +
                         ")";
+                } else if (['pie', 'doughnut'].includes(chartType)) {
+                    const label = chart.data.labels?.[el.index] || "";
+                    let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
+                    let formattedVal = this.formatNumber(v);
+                    if (ds.currency || resultFormat?.format === "currency") {
+                        formattedVal = this.formatCurrency(v);
+                    } else if (ds.percentage || resultFormat?.format === "percentage") {
+                        formattedVal = v.toFixed(1) + "%";
+                    }
+                    const total = (ds.data || []).reduce((acc, curr) => acc + (typeof curr === 'number' ? curr : 0), 0);
+                    const pct = total > 0 ? ((v / total) * 100).toFixed(1) + "%" : "0%";
+                    val = (label ? `<span style="color:#9ca3af;margin-right:6px;">${label}:</span>` : "") +
+                          `<span style="font-weight:600;">${formattedVal}</span> <span style="color:#6b7280;font-size:11px;">(${pct})</span>`;
                 } else {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
-                    if (resultFormat?.multiply) v = v * resultFormat.multiply;
+                    if (!ds.percentage && resultFormat?.multiply) v = v * resultFormat.multiply;
                     if (ds.currency || resultFormat?.format === "currency") {
                         val = this.formatCurrency(v);
                     } else if (
@@ -2541,7 +3332,11 @@ window.dashboardRenderer = {
                         val = this.formatNumber(v);
                     }
                     const dsLabel = ds.label || yMetricName;
-                    val = (label ? label + " — " : "") + val + " " + dsLabel;
+                    if (isMulti) {
+                        val = '<span style="color:#9ca3af;margin-right:6px;">' + dsLabel + ':</span>' + val;
+                    } else {
+                        val = (label ? label + " — " : "") + val + " " + dsLabel;
+                    }
                 }
                 const isLine = ds.type === "line";
                 const color = ds.borderColor || ds.backgroundColor || "#3B82F6";
@@ -2551,7 +3346,7 @@ window.dashboardRenderer = {
                     '<span style="width:8px;height:8px;border-radius:50%;background:' +
                     colorStr +
                     ';flex-shrink:0;"></span>' +
-                    (isLine
+                    (isLine && !isMulti
                         ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
                         : "") +
                     '<span style="font-weight:600;">' +
@@ -2584,14 +3379,29 @@ window.dashboardRenderer = {
      * Pop a widget's canvas/chart into a different container (fullscreen modal).
      */
     popOutWidget(containerEl, targetEl) {
-        const json = this._widgetData.get(containerEl);
-        if (!json) return;
+        let json = this._widgetData.get(containerEl);
+        if (!json && containerEl.dataset.widgetId) {
+            const wid = String(containerEl.dataset.widgetId);
+            for (const [, val] of this._widgetData.entries()) {
+                if (val && String(val.id) === wid) {
+                    json = val;
+                    this._widgetData.set(containerEl, json);
+                    break;
+                }
+            }
+        }
 
         // Ensure the chart is rendered before moving its canvas
         this.flushRender(containerEl);
 
+        if (!json) {
+            json = this._widgetData.get(containerEl);
+        }
+
         // Transfer widget data and pinned tooltip to the modal container
-        this._widgetData.set(targetEl, json);
+        if (json) {
+            this._widgetData.set(targetEl, json);
+        }
         if (this._pinnedTooltips.has(containerEl)) {
             this._pinnedTooltips.set(
                 targetEl,
@@ -2613,7 +3423,10 @@ window.dashboardRenderer = {
             while (containerEl.children.length > 0) {
                 targetEl.appendChild(containerEl.children[0]);
             }
-            const chart = this._chartInstances.get(containerEl);
+            let chart = this._chartInstances.get(containerEl);
+            if (!chart && window.Chart?.getChart) {
+                chart = window.Chart.getChart(canvas);
+            }
             if (chart) {
                 this._chartInstances.set(targetEl, chart);
                 this._chartInstances.delete(containerEl);
@@ -2738,6 +3551,9 @@ window.dashboardRenderer = {
                 break;
             case "combo_chart":
                 this.renderComboChart(containerEl, data, controls);
+                break;
+            case "pie_chart":
+                this.renderPieChart(containerEl, data, controls);
                 break;
             default:
                 containerEl.innerHTML =
@@ -2919,11 +3735,52 @@ window.dashboardRenderer = {
                 ? new Set(anomalyDates)
                 : null;
 
-            let html = "";
+            const isCrosshair = this._isCrosshairActive;
+            let dataPoints = tooltip.dataPoints || [];
+            if (
+                isCrosshair &&
+                (chartType === "line" || chartType === "bar") &&
+                dataPoints.length > 0
+            ) {
+                const targetIndex = dataPoints[0].dataIndex;
+                const synthesized = [];
+                chart.data.datasets.forEach((ds, dsIndex) => {
+                    const meta = chart.getDatasetMeta(dsIndex);
+                    if (meta.hidden || ds.hidden) return;
+                    const raw = ds.data[targetIndex];
+                    if (raw === undefined || raw === null) return;
+                    synthesized.push({
+                        chart,
+                        dataset: ds,
+                        datasetIndex: dsIndex,
+                        dataIndex: targetIndex,
+                        raw,
+                        formattedValue:
+                            typeof raw === "object" ? raw.y ?? 0 : raw,
+                    });
+                });
+                if (synthesized.length > 0) {
+                    dataPoints = synthesized;
+                }
+            }
 
-            if (tooltip.body?.length) {
-                tooltip.body.forEach((body, i) => {
-                    const dp = tooltip.dataPoints?.[i];
+            let html = "";
+            const isMulti = (dataPoints.length || 0) > 1;
+            if (isMulti && chartType !== "scatter" && dataPoints.length > 0) {
+                const headerLabel =
+                    chart.data.labels?.[dataPoints[0].dataIndex] || "";
+                if (headerLabel) {
+                    html +=
+                        '<div style="font-weight:700;font-size:12px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid ' +
+                        borderColor +
+                        ';">' +
+                        headerLabel +
+                        '</div>';
+                }
+            }
+
+            if (dataPoints.length) {
+                dataPoints.forEach((dp) => {
                     if (!dp) return;
                     let val;
                     if (chartType === "scatter") {
@@ -2956,23 +3813,23 @@ window.dashboardRenderer = {
                             typeof dp.raw === "object"
                                 ? (dp.raw.y ?? 0)
                                 : dp.raw;
-                        if (rFmt?.multiply) v = v * rFmt.multiply;
-                        if (
-                            dp.dataset.currency ||
-                            rFmt?.format === "currency"
-                        ) {
+                        const dsMetric = String(dp.dataset.metric || dp.dataset.metric_key || dp.dataset.key || "").toLowerCase();
+                        const isPos = dsMetric.includes("position") || (!isMulti && ctrl?.metrics?.[0] === "position");
+
+                        if (!isPos && !dp.dataset.percentage && rFmt?.multiply) v = v * rFmt.multiply;
+                        if (!isPos && (dp.dataset.currency || rFmt?.format === "currency")) {
                             val = this.formatCurrency(v);
-                        } else if (
-                            dp.dataset.percentage ||
-                            rFmt?.format === "percentage"
-                        ) {
+                        } else if (!isPos && (dp.dataset.percentage || rFmt?.format === "percentage")) {
                             val = v.toFixed(1) + "%";
                         } else {
                             val = this.formatNumber(v);
                         }
                         const dsLabel = dp.dataset.label || yMN;
-                        val =
-                            (label ? label + " — " : "") + val + " " + dsLabel;
+                        if (isMulti) {
+                            val = '<span style="color:#9ca3af;margin-right:6px;">' + dsLabel + ':</span>' + val;
+                        } else {
+                            val = (label ? label + " — " : "") + val + " " + dsLabel;
+                        }
                     }
                     const isLine = dp.dataset.type === "line";
                     const color =
@@ -2984,7 +3841,7 @@ window.dashboardRenderer = {
                         '<span style="width:8px;height:8px;border-radius:50%;background:' +
                         color +
                         ';flex-shrink:0;"></span>' +
-                        (isLine
+                        (isLine && !isMulti
                             ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
                             : "") +
                         '<span style="font-weight:600;">' +

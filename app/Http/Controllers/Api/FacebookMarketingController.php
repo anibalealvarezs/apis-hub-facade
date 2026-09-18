@@ -21,14 +21,25 @@ class FacebookMarketingController extends Controller
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age,gender',
             'activeFilters' => 'nullable|array',
-            'activeFilters.*' => 'nullable|array',
+            'activeFilters.*' => 'nullable',
+            'filters' => 'nullable|array',
+            'breakdown' => 'nullable|string',
+            'groupBy' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'nullable|string',
         ]);
     }
 
-    private function applyDynamicFilters(array &$filters, ?array $activeFilters): void
+    private function applyDynamicFilters(array &$filters, ?array $activeFilters, ?array $explicitFilters = null): void
     {
+        if (!empty($explicitFilters)) {
+            foreach ($explicitFilters as $k => $v) {
+                if ($v !== null && $v !== '') {
+                    $filters[$k] = $v;
+                }
+            }
+        }
+
         if (empty($activeFilters)) {
             return;
         }
@@ -175,7 +186,7 @@ class FacebookMarketingController extends Controller
                 }
             }
 
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $defaultAggregations = [
                 'spend' => 'spend',
@@ -206,14 +217,21 @@ class FacebookMarketingController extends Controller
                 }
             }
 
+            $groupBy = ['daily'];
+            if (!empty($validated['groupBy'])) {
+                $groupBy = $validated['groupBy'];
+            } elseif (!empty($validated['breakdown'])) {
+                $groupBy = ['daily', $validated['breakdown']];
+            }
+
             $payloads = [
                 'chart' => [
                     'aggregations' => $aggregations,
-                    'groupBy' => ['daily'],
+                    'groupBy' => $groupBy,
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
-                    'limit' => 1000
+                    'limit' => 5000
                 ]
             ];
 
