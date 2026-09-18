@@ -11,6 +11,20 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Multi-Series Breakdown Scatter Plot Alignment & Axis Scaling (2026-09-17)
+- **Problem:** Multi-series scatter plot widgets with breakdown dimensions (such as Widget #26 "Intent Match - Rebote vs Clics" crossing GSC `clicks` by `dimensions.page` with GA4 `bounce_rate` by `dimensions.landing_page`) displayed only a single point labeled "Lifetime" at `(x: 27, y: 274)`, inverted the axes (Bounce Rate on X, Clics on Y), and scaled bounce rate to `2700.0%`.
+- **Root Cause:**
+  1. `fanOutBreakdownSeries()` generated individual curves for each broken-down dimension item (e.g. 30 GSC page curves and 30 GA4 page curves) grouped flat in `$seriesCurves`.
+  2. The previous Subcase 2 handler took `$c0 = $seriesCurves[0]` and `$c1 = $seriesCurves[1]`, which were simply the 1st and 2nd curves of Series 0 (GSC). Because granularity was `lifetime`, each curve had only `['Lifetime' => val]`, resulting in an intersection of 1 single point labeled "Lifetime".
+  3. Axes were tied to curve order rather than metric nature, placing the ratio metric on X and volume metric on Y.
+  4. In `fanOutBreakdownSeries()`, ratio metrics were multiplied by 100 (`$v * 100`), but in the frontend renderer `METRIC_FORMATS[metric].multiply = 100` multiplied it again when `format === 'percentage'`, resulting in `2700%`.
+- **Fix:** In `DashboardWidgetDataController.php`:
+  1. Updated Subcase 2 to group curves by `series_index` (`$s0Curves` and `$s1Curves`). When breakdown values exist on both series, index them by their canonical normalized dimension value (`normalizeBreakdownDimensionValue()`) and calculate the intersection of keys across series.
+  2. Classified metrics by volume (`clicks`, `impressions`, `sessions`, etc.) vs ratio/rate (`bounce_rate`, `ctr`, etc.), ensuring the independent volume variable is assigned to the X-axis and the dependent ratio/efficiency variable is assigned to the Y-axis.
+  3. Scaled ratio metric values back to decimal fraction (`<= 1.0`) when returned scaled so the frontend renderer and formatters display authentic percentages (`27.0%`).
+  4. Synced `$resolvedControls['metrics']` in `show()` with the oriented `[$mY, $mX]` metrics from `scatter_data` so regression lines, trend lines, and tooltips align seamlessly.
+- **Verification:** `php -l` passed without syntax errors.
+
 ### Line Chart Custom Metric Colors Not Applied (2026-09-14)
 - **Problem:** Line chart widgets ignored user-configured custom metric colors (set via color pickers in the builder), always rendering with the default palette. Breakdown gradient colors worked correctly.
 - **Root Cause:** In `public/js/dashboard-renderer.js`, the `overrideKeys` whitelist in `renderWidget()` controlled which widget control keys were included in the POST body sent to `/api/dashboard/widget/{id}/data`. The keys `series_metric_colors`, `series_metric_namings`, and `raw_series` were missing from this list. This caused two problems:

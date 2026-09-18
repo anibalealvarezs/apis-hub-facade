@@ -274,10 +274,10 @@
                 }
 
                 if ($widget->widget_type === 'scatter_plot') {
-                    if (empty($resolvedControls['metrics']) || count($resolvedControls['metrics']) < 2) {
-                        if (isset($data['scatter_data']['metrics']) && is_array($data['scatter_data']['metrics'])) {
-                            $resolvedControls['metrics'] = $data['scatter_data']['metrics'];
-                        } elseif (!empty($rawSeries[0]['metrics']) && count($rawSeries[0]['metrics']) >= 2) {
+                    if (isset($data['scatter_data']['metrics']) && is_array($data['scatter_data']['metrics']) && count($data['scatter_data']['metrics']) >= 2) {
+                        $resolvedControls['metrics'] = $data['scatter_data']['metrics'];
+                    } elseif (empty($resolvedControls['metrics']) || count($resolvedControls['metrics']) < 2) {
+                        if (!empty($rawSeries[0]['metrics']) && count($rawSeries[0]['metrics']) >= 2) {
                             $resolvedControls['metrics'] = array_values(array_slice($rawSeries[0]['metrics'], 0, 2));
                         } elseif (count($rawSeries ?? []) >= 2) {
                             $m0 = $rawSeries[0]['metrics'][0] ?? 'y';
@@ -3268,37 +3268,159 @@
                 }
             }
 
-            // Scatter Plot Subcase 2: Multiple series / 2 curves alignment for scatter plot
+            // Scatter Plot Subcase 2: Multiple series alignment for scatter plot
             if ($widget->widget_type === 'scatter_plot' && count($seriesCurves) >= 2) {
-                $c0 = $seriesCurves[0]; // Y axis (dependent)
-                $c1 = $seriesCurves[1]; // X axis (independent)
-                $c0Data = is_array($c0['data'] ?? null) ? $c0['data'] : [];
-                $c1Data = is_array($c1['data'] ?? null) ? $c1['data'] : [];
-                $commonKeys = array_values(array_intersect(array_keys($c0Data), array_keys($c1Data)));
-                sort($commonKeys);
-
-                $x = [];
-                $y = [];
-                $labels = [];
-                foreach ($commonKeys as $k) {
-                    $x[] = (float)($c1Data[$k] ?? 0);
-                    $y[] = (float)($c0Data[$k] ?? 0);
-                    $labels[] = (string)$k;
+                // Group curves by series index (e.g., Series 0 and Series 1)
+                $curvesBySeries = [];
+                foreach ($seriesCurves as $curve) {
+                    $sIndex = $curve['series_index'] ?? 0;
+                    $curvesBySeries[$sIndex][] = $curve;
                 }
 
-                $mY = $c0['metric'] ?? 'y';
-                $mX = $c1['metric'] ?? 'x';
+                $sKeys = array_keys($curvesBySeries);
+                $hasDimensionalBreakdown = false;
 
-                return [
-                    'scatter_data' => [
-                        'x'       => $x,
-                        'y'       => $y,
-                        'labels'  => $labels,
-                        'x_label' => $c1['label'] ?? 'X',
-                        'y_label' => $c0['label'] ?? 'Y',
-                        'metrics' => [$mY, $mX],
-                    ],
-                ];
+                if (count($sKeys) >= 2) {
+                    $s0Curves = $curvesBySeries[$sKeys[0]];
+                    $s1Curves = $curvesBySeries[$sKeys[1]];
+
+                    // Check if curves have breakdown values (e.g., page paths)
+                    $s0HasBreakdown = !empty($s0Curves[0]['breakdown_value']);
+                    $s1HasBreakdown = !empty($s1Curves[0]['breakdown_value']);
+
+                    if ($s0HasBreakdown && $s1HasBreakdown) {
+                        $hasDimensionalBreakdown = true;
+
+                        // Index curves by canonical breakdown value
+                        $s0Map = [];
+                        foreach ($s0Curves as $c) {
+                            $bv = $c['breakdown_value'] ?? null;
+                            if ($bv !== null && $bv !== '') {
+                                $s0Map[(string)$bv] = $c;
+                            }
+                        }
+
+                        $s1Map = [];
+                        foreach ($s1Curves as $c) {
+                            $bv = $c['breakdown_value'] ?? null;
+                            if ($bv !== null && $bv !== '') {
+                                $s1Map[(string)$bv] = $c;
+                            }
+                        }
+
+                        // Determine which series represents the independent variable (X = volume) vs dependent (Y = ratio / performance)
+                        $m0 = $s0Curves[0]['metric'] ?? 'y';
+                        $m1 = $s1Curves[0]['metric'] ?? 'x';
+
+                        $volumeMetrics = ['impressions', 'clicks', 'reach', 'engaged_users', 'sessions', 'new_users', 'pageviews', 'link_clicks', 'followers', 'spend', 'orders'];
+                        $isM0Volume = in_array($m0, $volumeMetrics, true);
+                        $isM1Volume = in_array($m1, $volumeMetrics, true);
+
+                        // If Series 0 is volume and Series 1 is not (e.g. clicks vs bounce_rate), map Series 0 to X and Series 1 to Y
+                        if ($isM0Volume && !$isM1Volume) {
+                            $xMap = $s0Map;
+                            $yMap = $s1Map;
+                            $mX = $m0;
+                            $mY = $m1;
+                            $xCurveSample = $s0Curves[0];
+                            $yCurveSample = $s1Curves[0];
+                        } else {
+                            $xMap = $s1Map;
+                            $yMap = $s0Map;
+                            $mX = $m1;
+                            $mY = $m0;
+                            $xCurveSample = $s1Curves[0];
+                            $yCurveSample = $s0Curves[0];
+                        }
+
+                        $commonKeys = array_values(array_intersect(array_keys($xMap), array_keys($yMap)));
+
+                        // Sort keys by X metric descending
+                        usort($commonKeys, function ($a, $b) use ($xMap) {
+                            $valA = is_array($xMap[$a]['data'] ?? null) ? (float)array_sum($xMap[$a]['data']) : 0.0;
+                            $valB = is_array($xMap[$b]['data'] ?? null) ? (float)array_sum($xMap[$b]['data']) : 0.0;
+                            return $valB <=> $valA;
+                        });
+
+                        $xVals = [];
+                        $yVals = [];
+                        $labels = [];
+
+                        foreach ($commonKeys as $key) {
+                            $xData = $xMap[$key]['data'] ?? [];
+                            $yData = $yMap[$key]['data'] ?? [];
+
+                            // For lifetime granularity, data has 1 entry ('Lifetime' => val). For daily, take sum or average.
+                            $rawX = is_array($xData) ? (isset($xData['Lifetime']) ? (float)$xData['Lifetime'] : (float)array_sum($xData)) : 0.0;
+                            $rawY = is_array($yData) ? (isset($yData['Lifetime']) ? (float)$yData['Lifetime'] : (float)array_sum($yData)) : 0.0;
+
+                            // Scale ratios to 0.0 - 1.0 if returned scaled (e.g. 27.0 -> 0.27) so frontend formatMetricValue displays 27.0%
+                            if (!empty($xCurveSample['percentage']) && $rawX > 1.0) {
+                                $rawX = $rawX / 100.0;
+                            }
+                            if (!empty($yCurveSample['percentage']) && $rawY > 1.0) {
+                                $rawY = $rawY / 100.0;
+                            }
+
+                            $xVals[] = round($rawX, 4);
+                            $yVals[] = round($rawY, 4);
+                            $labels[] = (string)$key;
+                        }
+
+                        return [
+                            'scatter_data' => [
+                                'x'       => $xVals,
+                                'y'       => $yVals,
+                                'labels'  => $labels,
+                                'x_label' => $xCurveSample['label'] ?? ucfirst($mX),
+                                'y_label' => $yCurveSample['label'] ?? ucfirst($mY),
+                                'metrics' => [$mY, $mX],
+                            ],
+                        ];
+                    }
+                }
+
+                if (!$hasDimensionalBreakdown) {
+                    $c0 = $seriesCurves[0]; // Y axis (dependent)
+                    $c1 = $seriesCurves[1]; // X axis (independent)
+                    $c0Data = is_array($c0['data'] ?? null) ? $c0['data'] : [];
+                    $c1Data = is_array($c1['data'] ?? null) ? $c1['data'] : [];
+                    $commonKeys = array_values(array_intersect(array_keys($c0Data), array_keys($c1Data)));
+                    sort($commonKeys);
+
+                    $x = [];
+                    $y = [];
+                    $labels = [];
+                    foreach ($commonKeys as $k) {
+                        $rawX = (float)($c1Data[$k] ?? 0);
+                        $rawY = (float)($c0Data[$k] ?? 0);
+
+                        if (!empty($c1['percentage']) && $rawX > 1.0) {
+                            $rawX = $rawX / 100.0;
+                        }
+                        if (!empty($c0['percentage']) && $rawY > 1.0) {
+                            $rawY = $rawY / 100.0;
+                        }
+
+                        $x[] = round($rawX, 4);
+                        $y[] = round($rawY, 4);
+                        $labels[] = (string)$k;
+                    }
+
+                    $mY = $c0['metric'] ?? 'y';
+                    $mX = $c1['metric'] ?? 'x';
+
+                    return [
+                        'scatter_data' => [
+                            'x'       => $x,
+                            'y'       => $y,
+                            'labels'  => $labels,
+                            'x_label' => $c1['label'] ?? 'X',
+                            'y_label' => $c0['label'] ?? 'Y',
+                            'metrics' => [$mY, $mX],
+                        ],
+                    ];
+                }
             }
 
             // 3. Align all series across unified sorted dates
