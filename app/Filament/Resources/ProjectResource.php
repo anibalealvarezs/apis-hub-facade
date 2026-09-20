@@ -569,10 +569,14 @@ class ProjectResource extends Resource
                     ->url(fn (Project $record): string => route('filament.admin.resources.users.edit', ['record' => $record->user_id])),
                 Tables\Columns\TextColumn::make('billingProfile.reference_name')
                     ->label(__('Billing Profile'))
-                    ->formatStateUsing(fn (?string $state) => $state)
+                    ->formatStateUsing(fn (?string $state, Project $record) => $state ?: __('No Billing Profile'))
+                    ->badge(fn (Project $record): bool => empty($record->billing_profile_id))
+                    ->color(fn (Project $record): ?string => empty($record->billing_profile_id) ? 'warning' : null)
                     ->searchable()
                     ->sortable()
-                    ->url(fn (Project $record): string => route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id])),
+                    ->url(fn (Project $record): ?string => $record->billing_profile_id
+                        ? route('filament.admin.resources.billing-profiles.view', ['record' => $record->billing_profile_id])
+                        : null),
                 Tables\Columns\TextColumn::make('billingProfile.tier')
                     ->label(__('Tier'))
                     ->badge()
