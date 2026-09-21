@@ -641,4 +641,25 @@ class DashboardBuilder extends Page
 
         $this->redirect(DashboardResource::getUrl('builder', ['record' => $clone]));
     }
+
+    public function getClassificationCoverage(): ?array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if (!$project || !$project->hasActiveAiAcceleration()) {
+            return null;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(3)
+                ->get(rtrim($project->url ?? '', '/') . '/api/v1/classification-coverage');
+
+            if ($response->successful()) {
+                return $response->json('data');
+            }
+        } catch (\Throwable $e) {
+            // Resilient fallback if tenant node is busy or unreachable
+        }
+
+        return null;
+    }
 }

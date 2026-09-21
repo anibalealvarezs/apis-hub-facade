@@ -1314,6 +1314,57 @@
                                 })->toArray();
                                 $component->state($newState);
                             }),
+                        \Filament\Forms\Components\Actions\Action::make('configureAiContext')
+                            ->label(__('Configure AI Context'))
+                            ->button()
+                            ->color('primary')
+                            ->icon('heroicon-m-sparkles')
+                            ->visible(fn() => $this->activeChannel === 'google_search_console' 
+                                && \Illuminate\Support\Facades\Auth::user()->can('manage_channels')
+                                && Filament::getTenant()?->supportsAiClassification())
+                            ->form([
+                                \Filament\Forms\Components\TextInput::make('brand')
+                                    ->label(__('Brand Name / Main Trademark'))
+                                    ->placeholder(__('e.g. Mabe, Nike, Acronis'))
+                                    ->helperText(__('Used to classify queries into Brand vs. Non-Brand vs. Competitors.')),
+
+                                \Filament\Forms\Components\Textarea::make('description')
+                                    ->label(__('Business Context & Value Proposition'))
+                                    ->placeholder(__('e.g. Retailer of domestic home appliances, washing machines, and refrigerator repair services in Mexico.'))
+                                    ->helperText(__('Used by TypeSafe AI to evaluate Business Relevance (Core vs. Adjacent vs. Irrelevant).'))
+                                    ->rows(3),
+
+                                \Filament\Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Toggle::make('infer_geo')
+                                            ->label(__('Geo / Location Detection'))
+                                            ->helperText(__('Infer city/region markers for local intent.'))
+                                            ->default(true),
+                                        Toggle::make('infer_transactional')
+                                            ->label(__('Distinguish E-Commerce / Bookings'))
+                                            ->helperText(__('Identify transactional purchasing or appointment intent.'))
+                                            ->default(true),
+                                    ]),
+                            ])
+                            ->action(function (\Filament\Forms\Components\Repeater $component, array $data) {
+                                $state = $component->getState();
+                                $newState = collect($state)->map(function ($item) use ($data) {
+                                    $item['ai_context'] = [
+                                        'brand' => $data['brand'] ?? '',
+                                        'description' => $data['description'] ?? '',
+                                        'infer_geo' => (bool) ($data['infer_geo'] ?? true),
+                                        'infer_transactional' => (bool) ($data['infer_transactional'] ?? true),
+                                    ];
+                                    return $item;
+                                })->toArray();
+                                $component->state($newState);
+
+                                \Filament\Notifications\Notification::make()
+                                    ->title(__('AI Context Configured'))
+                                    ->body(__('Business context applied to Search Console assets.'))
+                                    ->success()
+                                    ->send();
+                            }),
                     ])
                     ->schema([
                         \Filament\Forms\Components\Group::make([

@@ -482,6 +482,9 @@ EOT;
             // 4. Execute Migration Sequencer in an isolated container (bypassing entrypoint.sh so crons/workers don't start)
             "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
             
+            // 4.5. Run non-blocking historical query semantic classification backfill
+            "docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true",
+
             // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
             "bash bin/full-deploy.sh"
         ];

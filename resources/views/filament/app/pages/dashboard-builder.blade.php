@@ -58,6 +58,21 @@
                     <span>{{ __('Layout saved') }}</span>
                 </div>
 
+                @php
+                    $coverageData = $this->getClassificationCoverage();
+                @endphp
+                @if($coverageData && isset($coverageData['traffic_coverage_pct']))
+                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/60 text-xs font-medium text-indigo-700 dark:text-indigo-300"
+                         title="{{ __('Query classification status for this tenant node') }}">
+                        <x-filament::icon name="heroicon-m-sparkles" class="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400"/>
+                        <span>{{ __('AI Classification: :pct% traffic (:classified/:total queries)', [
+                            'pct' => $coverageData['traffic_coverage_pct'],
+                            'classified' => number_format($coverageData['classified_queries'] ?? 0),
+                            'total' => number_format($coverageData['total_queries'] ?? 0)
+                        ]) }}</span>
+                    </div>
+                @endif
+
                 <x-filament::button
                     x-on:click="saveLayout()"
                     ::color="isDirty ? 'warning' : 'primary'"
