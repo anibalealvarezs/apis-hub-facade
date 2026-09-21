@@ -67,7 +67,7 @@ class ManageAiSettings extends SettingsPage
         if (!empty($settings->typesafe_admin_api_key)) {
             try {
                 $client = new TypeSafeApi(apiKey: $settings->typesafe_admin_api_key);
-                $res = $client->evaluateBoolean(
+                $res = $client->evaluateNoul(
                     state: 'test query',
                     questionId: 'health_check',
                     instructions: 'Is this a valid test query?'
