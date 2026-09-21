@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "076a42a11789e4be5051a82414d35f84",
+    "content-hash": "255413baf13655076d4ca11a25ad5b66",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
@@ -15372,9 +15372,7 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {
-        "anibalealvarezs/typesafe-api": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
