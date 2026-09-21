@@ -88,8 +88,17 @@ class DeployerService
     /**
      * Generate the .env content dynamically based on Project credentials and config.
      */
-    protected function generateEnvContent(Project $project): string
+    protected function generateEnvContent(Project $project, ?\App\Models\ApisHubRelease $targetRelease = null): string
     {
+        $release = $targetRelease ?? $project->apisHubRelease;
+        $supportsAi = false;
+        if ($release) {
+            $version = ltrim($release->version_tag, 'v');
+            $supportsAi = version_compare($version, '1.16.0', '>=');
+        } elseif (!$project->apis_hub_release_id) {
+            $supportsAi = true;
+        }
+
         $fbAppId = config('services.facebook.client_id');
         $fbAppSecret = config('services.facebook.client_secret');
         $googleClientId = config('services.google.client_id');
@@ -104,8 +113,8 @@ class DeployerService
         $tokenAuthorityUrl = config('app.url') . '/api/token-authority/refresh';
         $tokenAuthorityEnabled = 'true';
 
-        $typesafeApiKey = $project->supportsAiClassification() ? ($project->getEffectiveTypesafeApiKey() ?? '') : '';
-        $typesafeBaseUrl = $project->supportsAiClassification() ? 'https://api.typesafe.ai/v1/' : '';
+        $typesafeApiKey = $supportsAi ? ($project->getEffectiveTypesafeApiKey() ?? '') : '';
+        $typesafeBaseUrl = $supportsAi ? 'https://api.typesafe.ai/v1/' : '';
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
         $apiRateLimit = app(\App\Services\BillingLifecycleService::class)
@@ -481,7 +490,7 @@ EOT;
             "docker compose stop",
             
             // 2.5. Update .env with fresh variables (including TYPESAFE_API_KEY)
-            "echo '{$this->generateEnvContent($project)}' > {$path}/.env",
+            "echo '{$this->generateEnvContent($project, $targetRelease)}' > {$path}/.env",
 
             // 3. Build the new images based on the target version
             "docker compose build",
