@@ -104,8 +104,8 @@ class DeployerService
         $tokenAuthorityUrl = config('app.url') . '/api/token-authority/refresh';
         $tokenAuthorityEnabled = 'true';
 
-        $typesafeApiKey = $project->getEffectiveTypesafeApiKey() ?? '';
-        $typesafeBaseUrl = 'https://api.typesafe.ai/v1/';
+        $typesafeApiKey = $project->supportsAiClassification() ? ($project->getEffectiveTypesafeApiKey() ?? '') : '';
+        $typesafeBaseUrl = $project->supportsAiClassification() ? 'https://api.typesafe.ai/v1/' : '';
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
         $apiRateLimit = app(\App\Services\BillingLifecycleService::class)

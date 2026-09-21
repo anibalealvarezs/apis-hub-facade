@@ -19,10 +19,11 @@ class RevokeSharedAiKeyJob implements ShouldQueue
     {
         Log::info('[RevokeSharedAiKeyJob] Starting revocation of shared AI credentials across borrowing tenants.');
 
-        // Find all active projects that do NOT have their own dedicated key
+        // Find all active projects that do NOT have their own dedicated key and support AI (v1.16.0+)
         $borrowingProjects = Project::where('is_active', true)
             ->whereNull('typesafe_api_key')
-            ->get();
+            ->get()
+            ->filter(fn (Project $p) => $p->supportsAiClassification());
 
         $revokedCount = 0;
         foreach ($borrowingProjects as $project) {
