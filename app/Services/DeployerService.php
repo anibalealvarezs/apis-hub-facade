@@ -486,10 +486,13 @@ EOT;
             "docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true",
 
             // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
-            "bash bin/full-deploy.sh"
+            "bash bin/full-deploy.sh",
+
+            // 6. Force-recreate master to ensure the new code and build are running immediately
+            "docker compose up -d --force-recreate --remove-orphans master"
         ];
 
-        return $this->runSshCommands($project->server, $commands, timeout: 900);
+        return $this->runSshCommands($project->server, $commands, timeout: 1100);
     }
 
     /**

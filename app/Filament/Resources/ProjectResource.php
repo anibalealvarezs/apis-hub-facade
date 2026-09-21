@@ -1096,6 +1096,15 @@ class ProjectResource extends Resource
                             return;
                         }
 
+                        if ($record->health_status === 'upgrading') {
+                            Notification::make()
+                                ->title(__('Upgrade Already in Progress'))
+                                ->body(__('An upgrade is currently running for this project. Please wait for it to complete.'))
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
                         // Already deployed: trigger full upgrade deployment
                         \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target);
 
