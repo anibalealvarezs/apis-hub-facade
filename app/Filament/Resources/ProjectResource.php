@@ -210,6 +210,63 @@ class ProjectResource extends Resource
                             ]),
                     ]),
 
+                Forms\Components\Section::make(__('AI & Semantic Classification (TypeSafe)'))
+                    ->description(__('Configure credentials for TypeSafe AI (JEV System One) semantic query classification.'))
+                    ->collapsible()
+                    ->collapsed(fn (?Project $record) => $record?->hasActiveAiAcceleration())
+                    ->schema([
+                        Forms\Components\Placeholder::make('ai_status_banner')
+                            ->label('')
+                            ->content(function (?Project $record) {
+                                if (!$record) {
+                                    return '';
+                                }
+
+                                if (!$record->supportsAiClassification()) {
+                                    $currentVersion = $record->apisHubRelease ? $record->apisHubRelease->version_tag : 'v1.15.0 or older';
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            <span><strong>' . __('Upgrade Required') . ':</strong> ' . __('Tenant instance is running :version. TypeSafe AI Semantic Classification requires APIs Hub tenant v1.16.0 or higher.', ['version' => $currentVersion]) . '</span>
+                                        </div>
+                                    ');
+                                }
+
+                                if ($record->isUsingSharedAiKey()) {
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="p-3 bg-success-50 border border-success-200 rounded-lg text-success-800 text-sm flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-success-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <span><strong>' . __('Platform AI Acceleration Active') . ':</strong> ' . __('This project is using the shared platform license. Semantic classification is fully enabled for Search Console.') . '</span>
+                                        </div>
+                                    ');
+                                }
+
+                                if (!empty($record->typesafe_api_key)) {
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="p-3 bg-primary-50 border border-primary-200 rounded-lg text-primary-800 text-sm flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-primary-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                            <span><strong>' . __('Dedicated Project License Active') . ':</strong> ' . __('Custom TypeSafe API key configured specifically for this instance.') . '</span>
+                                        </div>
+                                    ');
+                                }
+
+                                return new \Illuminate\Support\HtmlString('
+                                    <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 text-sm flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        <span><strong>' . __('AI Acceleration Inactive') . ':</strong> ' . __('No project or shared platform TypeSafe key is currently available.') . '</span>
+                                    </div>
+                                ');
+                            })
+                            ->columnSpanFull(),
+
+                        Forms\Components\TextInput::make('typesafe_api_key')
+                            ->label(__('Project TypeSafe API Key (Overrides Shared License)'))
+                            ->password()
+                            ->revealable()
+                            ->placeholder(fn (?Project $record) => $record?->isUsingSharedAiKey() ? __('Inheriting shared platform license') : 'apikey_...')
+                            ->helperText(__('Leave blank to inherit the global platform license (if enabled by admin). Entering a key here will use dedicated quotas for this project.')),
+                    ]),
+
                 Forms\Components\Section::make('Associated Billing Profile')
                     ->description(__('Current billing profile linked to this project.'))
                     ->schema([

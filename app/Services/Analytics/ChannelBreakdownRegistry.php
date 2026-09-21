@@ -79,7 +79,7 @@ class ChannelBreakdownRegistry
             ];
         }
 
-        return [
+        $breakdowns = [
             'query' => [
                 'label' => __('Query / Keyword'),
                 'type' => 'dimension',
@@ -101,6 +101,30 @@ class ChannelBreakdownRegistry
                 'operators' => $defaultOperators,
             ],
         ];
+
+        // Guard: Only expose semantic dimensions if the active project tenant is on v1.16.0+
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant instanceof \App\Models\Project && !$tenant->supportsAiClassification()) {
+            return $breakdowns;
+        }
+
+        $breakdowns['dimensions.intent'] = [
+            'label' => __('Search Intent (AI)'),
+            'type' => 'dimension',
+            'operators' => $defaultOperators,
+        ];
+        $breakdowns['dimensions.brand_relation'] = [
+            'label' => __('Brand Relation (AI)'),
+            'type' => 'dimension',
+            'operators' => $defaultOperators,
+        ];
+        $breakdowns['dimensions.business_relevance'] = [
+            'label' => __('Business Relevance (AI)'),
+            'type' => 'dimension',
+            'operators' => $defaultOperators,
+        ];
+
+        return $breakdowns;
     }
 
     private static function getGa4Breakdowns(?string $dependency, array $defaultOperators): array

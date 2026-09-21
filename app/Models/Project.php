@@ -63,6 +63,7 @@ class Project extends Model
         'google_profile_id',
         'facebook_profile_id',
         'supported_locales',
+        'typesafe_api_key',
     ];
 
     /**
@@ -230,6 +231,19 @@ class Project extends Model
     }
 
     /**
+     * Check if the project release version supports TypeSafe AI Query Classification (v1.16.0+).
+     */
+    public function supportsAiClassification(): bool
+    {
+        if (!$this->apisHubRelease) {
+            return true;
+        }
+
+        $version = ltrim($this->apisHubRelease->version_tag, 'v');
+        return version_compare($version, '1.16.0', '>=');
+    }
+
+    /**
      * Boot logic for automatically generating monitoring tokens.
      */
     protected static function boot()
@@ -283,7 +297,55 @@ class Project extends Model
         'remote_app_api_key' => 'encrypted',
         'public_api_key' => 'encrypted',
         'supported_locales' => 'array',
+        'typesafe_api_key' => 'encrypted',
     ];
+
+    /**
+     * Resolve the effective TypeSafe API key for this project.
+     * Hierarchy: Project Key > Global Shared Admin Key > null.
+     */
+    public function getEffectiveTypesafeApiKey(): ?string
+    {
+        if (!empty($this->typesafe_api_key)) {
+            return $this->typesafe_api_key;
+        }
+
+        try {
+            $aiSettings = app(\App\Settings\AiSettings::class);
+            if ($aiSettings->typesafe_admin_share_enabled && !empty($aiSettings->typesafe_admin_api_key)) {
+                return $aiSettings->typesafe_admin_api_key;
+            }
+        } catch (\Throwable $e) {
+            // Fallback if settings table is not yet migrated
+        }
+
+        return null;
+    }
+
+    /**
+     * Check whether AI acceleration/semantic classification is active for this project.
+     */
+    public function hasActiveAiAcceleration(): bool
+    {
+        return $this->supportsAiClassification() && !empty($this->getEffectiveTypesafeApiKey());
+    }
+
+    /**
+     * Check whether this project is borrowing the global shared admin key.
+     */
+    public function isUsingSharedAiKey(): bool
+    {
+        if (!empty($this->typesafe_api_key)) {
+            return false;
+        }
+
+        try {
+            $aiSettings = app(\App\Settings\AiSettings::class);
+            return $aiSettings->typesafe_admin_share_enabled && !empty($aiSettings->typesafe_admin_api_key);
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 
     public static function getSupportedLanguageCatalog(): array
     {
