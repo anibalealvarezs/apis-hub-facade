@@ -104,6 +104,9 @@ class DeployerService
         $tokenAuthorityUrl = config('app.url') . '/api/token-authority/refresh';
         $tokenAuthorityEnabled = 'true';
 
+        $typesafeApiKey = $project->getEffectiveTypesafeApiKey() ?? '';
+        $typesafeBaseUrl = 'https://api.typesafe.ai/v1/';
+
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
         $apiRateLimit = app(\App\Services\BillingLifecycleService::class)
             ->getApiRateLimitForTier($project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE);
@@ -175,6 +178,10 @@ MONITOR_FACADE_URL={$facadeUrl}
 ALERT_FACADE_URL={$alertFacadeUrl}
 MONITOR_TOKEN={$project->monitoring_token}
 MONITOR_ENABLED=true
+
+# TypeSafe AI Semantic Intelligence
+TYPESAFE_API_KEY={$typesafeApiKey}
+TYPESAFE_BASE_URL={$typesafeBaseUrl}
 EOT;
     }
 
@@ -473,6 +480,9 @@ EOT;
             // 2. Kill current active workers instantly
             "docker compose stop",
             
+            // 2.5. Update .env with fresh variables (including TYPESAFE_API_KEY)
+            "echo '{$this->generateEnvContent($project)}' > {$path}/.env",
+
             // 3. Build the new images based on the target version
             "docker compose build",
             
