@@ -58,9 +58,11 @@ class ManageAiSettings extends SettingsPage
     {
         $settings = app(AiSettings::class);
 
-        // If admin sharing was disabled, dispatch job to revoke/scrub credentials from all borrowing tenants
+        // If admin sharing was disabled, revoke/scrub credentials; if enabled, push to all borrowing tenants
         if (!$settings->typesafe_admin_share_enabled) {
             dispatch(new RevokeSharedAiKeyJob());
+        } elseif (!empty($settings->typesafe_admin_api_key)) {
+            dispatch(new \App\Jobs\SyncSharedAiKeyJob());
         }
 
         // Validate key if provided
