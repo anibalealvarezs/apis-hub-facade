@@ -1255,6 +1255,76 @@
                 }
             }
 
+            // If this is Search Console and tenant supports AI, add an Asset-Specific AI Context button
+            if ($this->activeChannel === 'google_search_console' && Filament::getTenant()?->supportsAiClassification()) {
+                $itemComponents[] = \Filament\Forms\Components\Actions::make([
+                    \Filament\Forms\Components\Actions\Action::make('configureAssetAiContext')
+                        ->label(__('AI Context'))
+                        ->tooltip(__('Configure specific Brand, Description, and Competitors for this website'))
+                        ->icon('heroicon-m-sparkles')
+                        ->size('xs')
+                        ->color('primary')
+                        ->button()
+                        ->modalHeading(fn(\Filament\Forms\Get $get) => __('AI Business Context: :title', ['title' => $get('title') ?? $get('name') ?? $get('url')]))
+                        ->modalDescription(__('Individual context is concatenated with any global context. Leave empty to use inferred website data.'))
+                        ->fillForm(function (\Filament\Forms\Get $get): array {
+                            $existing = $get('data.ai_context') ?? $get('ai_context') ?? [];
+                            $url = $get('url') ?? '';
+                            $cleanDomain = preg_replace('/^(sc-domain:|https?:\/\/|www\.)/i', '', (string)$url);
+                            $cleanDomain = rtrim($cleanDomain, '/');
+                            $brandBase = preg_replace('/\.(com|org|net|es|ec|io|co|me|cloud|ai|dev)(\.[a-z]{2})?$/i', '', $cleanDomain);
+                            $inferredBrand = ucwords(str_replace(['-', '.', '_'], ' ', $brandBase));
+
+                            return [
+                                'brand' => $existing['brand'] ?? '',
+                                'inferred_brand_hint' => !empty($inferredBrand) ? "{$inferredBrand} ({$cleanDomain})" : '',
+                                'description' => $existing['description'] ?? '',
+                                'competitors' => $existing['competitors'] ?? [],
+                            ];
+                        })
+                        ->form([
+                            \Filament\Forms\Components\TextInput::make('brand')
+                                ->label(__('Asset Brand Name / Trademark'))
+                                ->placeholder(fn(\Filament\Forms\Get $get) => $get('inferred_brand_hint') ?: 'e.g. Mabe')
+                                ->helperText(__('Specific brand for this asset. If empty, auto-inferred from the website domain.')),
+
+                            \Filament\Forms\Components\Textarea::make('description')
+                                ->label(__('Asset-Specific Context & Products/Services'))
+                                ->placeholder(__('e.g. Official distributor of spare parts and home appliances in Guadalajara, Mexico.'))
+                                ->helperText(__('Specific business description. Will be concatenated to any global project context. If both are empty, auto-inferred from live homepage.'))
+                                ->rows(3),
+
+                            \Filament\Forms\Components\TagsInput::make('competitors')
+                                ->label(__('Direct Competitor Brands / Domains'))
+                                ->placeholder(__('Add competitor and press Enter'))
+                                ->helperText(__('Competitors specific to this asset (e.g. whirlpool, lg, samsung). Combined with global competitors.'))
+                                ->separator(','),
+                        ])
+                        ->action(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, array $data) {
+                            $assetAiContext = [
+                                'brand' => trim((string)($data['brand'] ?? '')),
+                                'description' => trim((string)($data['description'] ?? '')),
+                                'competitors' => is_array($data['competitors'] ?? null) ? array_values(array_filter(array_map('trim', $data['competitors']))) : [],
+                            ];
+
+                            $currentData = $get('data') ?? [];
+                            if (!is_array($currentData)) {
+                                $currentData = [];
+                            }
+                            $currentData['ai_context'] = $assetAiContext;
+
+                            $set('data', $currentData);
+                            $set('ai_context', $assetAiContext);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('Asset AI Context Updated'))
+                                ->body(__('Specific context saved for this asset. Click "Save Changes" to persist.'))
+                                ->success()
+                                ->send();
+                        }),
+                ]);
+            }
+
             $rowSchema = $headerComponents;
             if (!empty($itemComponents)) {
                 $rowSchema[] = \Filament\Forms\Components\Group::make()->schema($itemComponents)
@@ -1315,41 +1385,43 @@
                                 $component->state($newState);
                             }),
                         \Filament\Forms\Components\Actions\Action::make('configureAiContext')
-                            ->label(__('Configure AI Context'))
+                            ->label(__('Global AI Context'))
+                            ->tooltip(__('Configure project-wide business context that applies to all websites'))
                             ->button()
-                            ->color('primary')
-                            ->icon('heroicon-m-sparkles')
+                            ->color('gray')
+                            ->icon('heroicon-m-globe-alt')
                             ->visible(fn() => $this->activeChannel === 'google_search_console' 
                                 && \Illuminate\Support\Facades\Auth::user()->can('manage_channels')
                                 && Filament::getTenant()?->supportsAiClassification())
-                            ->fillForm(function (\Filament\Forms\Components\Repeater $component): array {
-                                $state = $component->getState();
-                                $first = collect($state)->first(fn($i) => !empty($i['data']['ai_context']) || !empty($i['ai_context']));
-                                $ctx = $first['data']['ai_context'] ?? $first['ai_context'] ?? [];
+                            ->modalHeading(__('Global Project AI Context'))
+                            ->modalDescription(__('This context applies across all websites in this project. Individual asset contexts are concatenated to this global context.'))
+                            ->fillForm(function (): array {
+                                $tenant = Filament::getTenant();
+                                $globalCtx = $tenant->sync_config['google_search_console']['ai_context'] ?? [];
                                 return [
-                                    'brand' => $ctx['brand'] ?? '',
-                                    'description' => $ctx['description'] ?? '',
-                                    'competitors' => $ctx['competitors'] ?? [],
-                                    'infer_geo' => (bool) ($ctx['infer_geo'] ?? true),
-                                    'infer_transactional' => (bool) ($ctx['infer_transactional'] ?? true),
+                                    'brand' => $globalCtx['brand'] ?? '',
+                                    'description' => $globalCtx['description'] ?? '',
+                                    'competitors' => $globalCtx['competitors'] ?? [],
+                                    'infer_geo' => (bool) ($globalCtx['infer_geo'] ?? true),
+                                    'infer_transactional' => (bool) ($globalCtx['infer_transactional'] ?? true),
                                 ];
                             })
                             ->form([
                                 \Filament\Forms\Components\TextInput::make('brand')
-                                    ->label(__('Brand Name / Main Trademark'))
-                                    ->placeholder(__('e.g. Mabe, Nike, Acronis'))
-                                    ->helperText(__('Used to classify queries into Brand vs. Non-Brand vs. Competitors.')),
+                                    ->label(__('Global Brand / Parent Company Name'))
+                                    ->placeholder(__('e.g. Mabe Group, Acronis International'))
+                                    ->helperText(__('Parent brand or group name. Asset-specific brands will complement this.')),
 
                                 \Filament\Forms\Components\Textarea::make('description')
-                                    ->label(__('Business Context & Value Proposition'))
-                                    ->placeholder(__('e.g. Retailer of domestic home appliances, washing machines, and refrigerator repair services in Mexico.'))
-                                    ->helperText(__('Used by TypeSafe AI to evaluate Business Relevance (Core vs. Adjacent vs. Irrelevant).'))
+                                    ->label(__('Global Business Context & Core Industry'))
+                                    ->placeholder(__('e.g. Manufacturer and distributor of major home appliances and HVAC equipment across Latin America.'))
+                                    ->helperText(__('Global industry and business proposition. Asset-specific descriptions will be concatenated to this.'))
                                     ->rows(3),
 
                                 \Filament\Forms\Components\TagsInput::make('competitors')
-                                    ->label(__('Competitor Brands / Domains'))
+                                    ->label(__('Global Competitor Brands'))
                                     ->placeholder(__('Add competitor and press Enter'))
-                                    ->helperText(__('Explicit rivals or competing brands to accurately categorize competitor queries.'))
+                                    ->helperText(__('Platform-wide competitors (e.g. whirlpool, lg, samsung). Asset-specific competitors will be merged with this list.'))
                                     ->separator(','),
 
                                 \Filament\Forms\Components\Grid::make(2)
@@ -1364,28 +1436,29 @@
                                             ->default(true),
                                     ]),
                             ])
-                            ->action(function (\Filament\Forms\Components\Repeater $component, array $data) {
-                                $state = $component->getState();
-                                $aiContext = [
-                                    'brand' => $data['brand'] ?? '',
-                                    'description' => $data['description'] ?? '',
+                            ->action(function (array $data) {
+                                $tenant = Filament::getTenant();
+                                $syncConfig = $tenant->sync_config ?? [];
+                                $globalAiContext = [
+                                    'brand' => trim((string)($data['brand'] ?? '')),
+                                    'description' => trim((string)($data['description'] ?? '')),
                                     'competitors' => is_array($data['competitors'] ?? null) ? array_values(array_filter(array_map('trim', $data['competitors']))) : [],
                                     'infer_geo' => (bool) ($data['infer_geo'] ?? true),
                                     'infer_transactional' => (bool) ($data['infer_transactional'] ?? true),
                                 ];
-                                $newState = collect($state)->map(function ($item) use ($aiContext) {
-                                    $item['ai_context'] = $aiContext;
-                                    if (!isset($item['data']) || !is_array($item['data'])) {
-                                        $item['data'] = [];
-                                    }
-                                    $item['data']['ai_context'] = $aiContext;
-                                    return $item;
-                                })->toArray();
-                                $component->state($newState);
+
+                                if (!isset($syncConfig['google_search_console']) || !is_array($syncConfig['google_search_console'])) {
+                                    $syncConfig['google_search_console'] = [];
+                                }
+                                $syncConfig['google_search_console']['ai_context'] = $globalAiContext;
+                                $tenant->update(['sync_config' => $syncConfig]);
+
+                                // Also reflect in in-memory form state
+                                $this->data['google_search_console']['ai_context'] = $globalAiContext;
 
                                 \Filament\Notifications\Notification::make()
-                                    ->title(__('AI Context Configured'))
-                                    ->body(__('Business context applied to Search Console assets.'))
+                                    ->title(__('Global AI Context Updated'))
+                                    ->body(__('Global business context saved for Google Search Console.'))
                                     ->success()
                                     ->send();
                             }),

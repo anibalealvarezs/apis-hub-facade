@@ -260,11 +260,14 @@ class ProjectResource extends Resource
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('typesafe_api_key')
-                            ->label(__('Project TypeSafe API Key (Overrides Shared License)'))
+                            ->label(__('Project TypeSafe API Key'))
                             ->password()
-                            ->revealable()
-                            ->placeholder(fn (?Project $record) => $record?->isUsingSharedAiKey() ? __('Inheriting shared platform license') : 'apikey_...')
-                            ->helperText(__('Leave blank to inherit the global platform license (if enabled by admin). Entering a key here will use dedicated quotas for this project.')),
+                            ->revealable(false)
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->formatStateUsing(fn ($state) => !empty($state) ? '••••••••••••••••••••••••••••••••' : '')
+                            ->placeholder(__('No custom key configured'))
+                            ->helperText(__('For client security and privacy, custom API keys cannot be read from the Admin portal. Clients manage their key in their Project Settings.')),
                     ]),
 
                 Forms\Components\Section::make('Associated Billing Profile')

@@ -176,6 +176,7 @@ class ProjectSettings extends Page
             ->fillForm(fn () => [
                 'timezone' => $project->timezone ?? 'UTC',
                 'supported_locales' => $project->supported_locales ?? ['en', 'es'],
+                'typesafe_api_key' => $project->typesafe_api_key ?? '',
             ])
             ->form([
                 \Filament\Forms\Components\ViewField::make('timezone')
@@ -195,18 +196,63 @@ class ProjectSettings extends Page
                     ->required()
                     ->minItems(1)
                     ->helperText(__('Target languages enabled for dashboard reports and widget texts across this project. This is separate from the application interface language.')),
+                \Filament\Forms\Components\Section::make(__('AI Semantic Classification (TypeSafe)'))
+                    ->description(__('Configure your dedicated TypeSafe API key for Search Console query classification (Intent, Brand, Relevance).'))
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('ai_status_banner')
+                            ->hiddenLabel()
+                            ->content(function () use ($project) {
+                                if ($project->isUsingSharedAiKey()) {
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="p-2.5 bg-success-50 border border-success-200 rounded-md text-success-800 text-xs flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-success-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <span><strong>' . __('Platform License Active') . ':</strong> ' . __('Currently using the shared platform license. Adding your own key below will override this with dedicated quotas.') . '</span>
+                                        </div>
+                                    ');
+                                }
+                                return null;
+                            }),
+                        \Filament\Forms\Components\TextInput::make('typesafe_api_key')
+                            ->label(__('TypeSafe API Key'))
+                            ->password()
+                            ->revealable()
+                            ->placeholder($project->isUsingSharedAiKey() ? __('Inheriting platform license (leave blank to keep)') : 'apikey_...')
+                            ->helperText(__('Enter your TypeSafe API key. It will be stored securely and applied directly to your tenant synchronization engine.')),
+                    ])
+                    ->collapsed(false),
             ])
             ->action(function (array $data) use ($project) {
+                $newApiKey = !empty($data['typesafe_api_key']) ? trim($data['typesafe_api_key']) : null;
                 $project->update([
                     'timezone' => $data['timezone'],
                     'supported_locales' => array_values($data['supported_locales'] ?? ['en', 'es']),
+                    'typesafe_api_key' => $newApiKey,
                 ]);
+
+                // Hot-push the effective API key to the tenant worker .env
+                if (!empty($project->remote_admin_api_key) && $project->supportsAiClassification()) {
+                    try {
+                        $effectiveKey = $project->getEffectiveTypesafeApiKey() ?? '';
+                        $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                        $scheme = config('app.env') === 'local' ? 'http' : 'https';
+                        $hubUrl = "{$scheme}://{$project->subdomain}.{$domain}";
+
+                        $client = new \Anibalealvarezs\ApisHubApi\ApisHubApi(
+                            baseUrl: $hubUrl,
+                            apiKey: $project->remote_admin_api_key
+                        );
+                        $client->updateCredentials([
+                            'TYPESAFE_API_KEY' => $effectiveKey,
+                        ]);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("Could not push TypeSafe API key to tenant {$project->id}: " . $e->getMessage());
+                    }
+                }
 
                 Notification::make()
                     ->title(__('Preferences Updated'))
-                    ->body(__('Your configuration has been saved. Please manually redeploy the project to apply these changes to the synchronization engine.'))
-                    ->warning()
-                    ->persistent()
+                    ->body(__('Your configuration has been saved and applied to your synchronization engine.'))
+                    ->success()
                     ->send();
 
                 return redirect(request()->header('Referer'));

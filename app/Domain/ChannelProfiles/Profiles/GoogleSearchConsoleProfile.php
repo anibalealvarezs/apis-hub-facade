@@ -40,7 +40,9 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                 'feature_toggles' => $this->systemField('object', [
                     'cache_aggregations' => true,
                 ]),
-                
+                'ai_context' => $this->configurableField('object', [], null, [
+                    'user_configurable' => false,
+                ]),
                 'assets' => $this->configurableField('object', [], null, [
                     'schema' => [
                         'sites' => [
