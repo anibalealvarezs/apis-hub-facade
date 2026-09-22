@@ -54,6 +54,7 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                                 'target_countries' => ['type' => 'object', 'default' => []],
                                 'target_keywords' => ['type' => 'object', 'default' => []],
                                 'lost_access' => ['type' => 'boolean', 'default' => false],
+                                'ai_context' => ['type' => 'object', 'default' => []],
                                 'data' => ['type' => 'object']
                             ]
                         ]

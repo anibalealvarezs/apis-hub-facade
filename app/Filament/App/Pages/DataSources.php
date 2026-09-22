@@ -1322,6 +1322,18 @@
                             ->visible(fn() => $this->activeChannel === 'google_search_console' 
                                 && \Illuminate\Support\Facades\Auth::user()->can('manage_channels')
                                 && Filament::getTenant()?->supportsAiClassification())
+                            ->fillForm(function (\Filament\Forms\Components\Repeater $component): array {
+                                $state = $component->getState();
+                                $first = collect($state)->first(fn($i) => !empty($i['data']['ai_context']) || !empty($i['ai_context']));
+                                $ctx = $first['data']['ai_context'] ?? $first['ai_context'] ?? [];
+                                return [
+                                    'brand' => $ctx['brand'] ?? '',
+                                    'description' => $ctx['description'] ?? '',
+                                    'competitors' => $ctx['competitors'] ?? [],
+                                    'infer_geo' => (bool) ($ctx['infer_geo'] ?? true),
+                                    'infer_transactional' => (bool) ($ctx['infer_transactional'] ?? true),
+                                ];
+                            })
                             ->form([
                                 \Filament\Forms\Components\TextInput::make('brand')
                                     ->label(__('Brand Name / Main Trademark'))
@@ -1333,6 +1345,12 @@
                                     ->placeholder(__('e.g. Retailer of domestic home appliances, washing machines, and refrigerator repair services in Mexico.'))
                                     ->helperText(__('Used by TypeSafe AI to evaluate Business Relevance (Core vs. Adjacent vs. Irrelevant).'))
                                     ->rows(3),
+
+                                \Filament\Forms\Components\TagsInput::make('competitors')
+                                    ->label(__('Competitor Brands / Domains'))
+                                    ->placeholder(__('Add competitor and press Enter'))
+                                    ->helperText(__('Explicit rivals or competing brands to accurately categorize competitor queries.'))
+                                    ->separator(','),
 
                                 \Filament\Forms\Components\Grid::make(2)
                                     ->schema([
@@ -1348,13 +1366,19 @@
                             ])
                             ->action(function (\Filament\Forms\Components\Repeater $component, array $data) {
                                 $state = $component->getState();
-                                $newState = collect($state)->map(function ($item) use ($data) {
-                                    $item['ai_context'] = [
-                                        'brand' => $data['brand'] ?? '',
-                                        'description' => $data['description'] ?? '',
-                                        'infer_geo' => (bool) ($data['infer_geo'] ?? true),
-                                        'infer_transactional' => (bool) ($data['infer_transactional'] ?? true),
-                                    ];
+                                $aiContext = [
+                                    'brand' => $data['brand'] ?? '',
+                                    'description' => $data['description'] ?? '',
+                                    'competitors' => is_array($data['competitors'] ?? null) ? array_values(array_filter(array_map('trim', $data['competitors']))) : [],
+                                    'infer_geo' => (bool) ($data['infer_geo'] ?? true),
+                                    'infer_transactional' => (bool) ($data['infer_transactional'] ?? true),
+                                ];
+                                $newState = collect($state)->map(function ($item) use ($aiContext) {
+                                    $item['ai_context'] = $aiContext;
+                                    if (!isset($item['data']) || !is_array($item['data'])) {
+                                        $item['data'] = [];
+                                    }
+                                    $item['data']['ai_context'] = $aiContext;
                                     return $item;
                                 })->toArray();
                                 $component->state($newState);
