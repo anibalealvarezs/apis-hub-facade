@@ -17,7 +17,8 @@ class UpgradeProjectReleaseJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 600;
+    public int $tries = 1;
+    public int $timeout = 1200; // 20 minutes maximum
 
     public function __construct(
         protected Project $project,
@@ -53,9 +54,10 @@ class UpgradeProjectReleaseJob implements ShouldQueue
                 return;
             }
 
+            $newHealthStatus = $this->project->hasBeenDeployed() ? 'online' : ($this->project->health_status === 'upgrading' ? 'offline' : $this->project->health_status);
             $this->project->update([
                 'apis_hub_release_id' => $this->targetRelease->id,
-                'health_status' => 'online',
+                'health_status' => $newHealthStatus,
             ]);
 
             \App\Models\ProjectStatusLog::create([
@@ -78,5 +80,25 @@ class UpgradeProjectReleaseJob implements ShouldQueue
 
             Log::error("Upgrade exception for project {$this->project->id}", ['exception' => $e]);
         }
+    }
+
+    /**
+     * Handle a job failure if the worker times out or receives a fatal termination.
+     */
+    public function failed(?\Throwable $exception): void
+    {
+        $this->project->update(['health_status' => 'error']);
+
+        ProjectDeploymentLog::where('project_id', $this->project->id)
+            ->where('status', 'running')
+            ->latest('id')
+            ->first()
+            ?->update([
+                'status' => 'failed',
+                'output' => "FATAL ERROR / TIMEOUT: The upgrade process exceeded the queue execution limit or was terminated by the worker.\n\n" . ($exception?->getMessage() ?? 'Unknown error'),
+                'completed_at' => now(),
+            ]);
+
+        Log::error("UpgradeProjectReleaseJob permanently failed for project {$this->project->id}: " . ($exception?->getMessage() ?? 'Unknown error'));
     }
 }

@@ -88,8 +88,17 @@ class DeployerService
     /**
      * Generate the .env content dynamically based on Project credentials and config.
      */
-    protected function generateEnvContent(Project $project): string
+    protected function generateEnvContent(Project $project, ?\App\Models\ApisHubRelease $targetRelease = null): string
     {
+        $release = $targetRelease ?? $project->apisHubRelease;
+        $supportsAi = false;
+        if ($release) {
+            $version = ltrim($release->version_tag, 'v');
+            $supportsAi = version_compare($version, '1.16.0', '>=');
+        } elseif (!$project->apis_hub_release_id) {
+            $supportsAi = true;
+        }
+
         $fbAppId = config('services.facebook.client_id');
         $fbAppSecret = config('services.facebook.client_secret');
         $googleClientId = config('services.google.client_id');
@@ -103,6 +112,9 @@ class DeployerService
 
         $tokenAuthorityUrl = config('app.url') . '/api/token-authority/refresh';
         $tokenAuthorityEnabled = 'true';
+
+        $typesafeApiKey = $supportsAi ? ($project->getEffectiveTypesafeApiKey() ?? '') : '';
+        $typesafeBaseUrl = $supportsAi ? 'https://api.typesafe.ai/v1/' : '';
 
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
         $apiRateLimit = app(\App\Services\BillingLifecycleService::class)
@@ -175,6 +187,10 @@ MONITOR_FACADE_URL={$facadeUrl}
 ALERT_FACADE_URL={$alertFacadeUrl}
 MONITOR_TOKEN={$project->monitoring_token}
 MONITOR_ENABLED=true
+
+# TypeSafe AI Semantic Intelligence
+TYPESAFE_API_KEY={$typesafeApiKey}
+TYPESAFE_BASE_URL={$typesafeBaseUrl}
 EOT;
     }
 
@@ -452,6 +468,17 @@ EOT;
      */
     public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
     {
+        // If the project has never been deployed, do not attempt to run remote Docker/migration commands.
+        // The target version is simply recorded in the database, and full deployment & migrations will execute on initial deployment.
+        if (!$project->hasBeenDeployed()) {
+            Log::info("Skipping remote upgrade commands for undeployed project {$project->name} (subdomain: {$project->subdomain}). Version pinned to {$targetRelease->version_tag}.");
+
+            return [
+                'status' => 'success',
+                'output' => "Project has never been deployed. Target release pinned to {$targetRelease->version_tag}. Full deployment and migrations will occur during initial deployment.",
+            ];
+        }
+
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         $targetTag = escapeshellarg($targetRelease->version_tag);
         
@@ -473,6 +500,9 @@ EOT;
             // 2. Kill current active workers instantly
             "docker compose stop",
             
+            // 2.5. Update .env with fresh variables (including TYPESAFE_API_KEY)
+            "echo '{$this->generateEnvContent($project, $targetRelease)}' > {$path}/.env",
+
             // 3. Build the new images based on the target version
             "docker compose build",
             
@@ -486,10 +516,13 @@ EOT;
             "docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true",
 
             // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
-            "bash bin/full-deploy.sh"
+            "bash bin/full-deploy.sh",
+
+            // 6. Force-recreate master to ensure the new code and build are running immediately
+            "docker compose up -d --force-recreate --remove-orphans master"
         ];
 
-        return $this->runSshCommands($project->server, $commands, timeout: 900);
+        return $this->runSshCommands($project->server, $commands, timeout: 1100);
     }
 
     /**

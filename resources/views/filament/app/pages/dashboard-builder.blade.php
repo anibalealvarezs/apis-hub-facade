@@ -60,16 +60,37 @@
 
                 @php
                     $coverageData = $this->getClassificationCoverage();
+                    $trafficPct = $coverageData['traffic_coverage_percentage'] ?? $coverageData['traffic_coverage_pct'] ?? null;
+                    $isFullyClassified = $coverageData['is_fully_classified'] ?? false;
                 @endphp
-                @if($coverageData && isset($coverageData['traffic_coverage_pct']))
-                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/60 text-xs font-medium text-indigo-700 dark:text-indigo-300"
-                         title="{{ __('Query classification status for this tenant node') }}">
-                        <x-filament::icon name="heroicon-m-sparkles" class="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400"/>
-                        <span>{{ __('AI Classification: :pct% traffic (:classified/:total queries)', [
-                            'pct' => $coverageData['traffic_coverage_pct'],
-                            'classified' => number_format($coverageData['classified_queries'] ?? 0),
-                            'total' => number_format($coverageData['total_queries'] ?? 0)
-                        ]) }}</span>
+                @if($coverageData && $trafficPct !== null)
+                    @php
+                        $badgeBg = $isFullyClassified || $trafficPct >= 99.9 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                            : ($trafficPct >= 90.0
+                                ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300'
+                                : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300');
+                        $iconColor = $isFullyClassified || $trafficPct >= 99.9
+                            ? 'text-emerald-500 dark:text-emerald-400'
+                            : ($trafficPct >= 90.0
+                                ? 'text-sky-500 dark:text-sky-400'
+                                : 'text-amber-500 dark:text-amber-400');
+                    @endphp
+                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium {{ $badgeBg }}"
+                         title="{{ __('Query classification coverage: :pct% of traffic volume (:classified/:total unique queries categorized)', [
+                             'pct' => $trafficPct,
+                             'classified' => number_format($coverageData['classified_queries'] ?? 0),
+                             'total' => number_format($coverageData['total_queries'] ?? 0)
+                         ]) }}">
+                        <x-filament::icon name="heroicon-m-sparkles" class="w-3.5 h-3.5 {{ $iconColor }}"/>
+                        @if($isFullyClassified || $trafficPct >= 99.9)
+                            <span>{{ __('AI Classification: 100% complete') }}</span>
+                        @else
+                            <span>{{ __('AI Classification: :pct% traffic (:pending tail queries pending)', [
+                                'pct' => $trafficPct,
+                                'pending' => number_format($coverageData['unclassified_queries'] ?? 0)
+                            ]) }}</span>
+                        @endif
                     </div>
                 @endif
 

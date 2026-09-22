@@ -331,6 +331,50 @@ class Project extends Model
     }
 
     /**
+     * Get the external URL for this project's tenant node.
+     */
+    public function getUrlAttribute(): string
+    {
+        $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+        $scheme = config('app.env') === 'local' ? 'http' : 'https';
+
+        return "{$scheme}://{$this->subdomain}.{$domain}";
+    }
+
+    /**
+     * Retrieve query classification coverage telemetry from the tenant node.
+     */
+    public function getClassificationCoverage(): ?array
+    {
+        if (!$this->hasActiveAiAcceleration()) {
+            return null;
+        }
+
+        try {
+            $apiKey = $this->remote_app_api_key ?? $this->app_api_key ?? $this->remote_admin_api_key;
+            $request = \Illuminate\Support\Facades\Http::timeout(4);
+            if ($apiKey) {
+                $request = $request->withHeaders([
+                    'X-API-KEY' => $apiKey,
+                ]);
+            }
+
+            $baseUrl = $this->url ?? ('https://' . $this->subdomain . '.apis-hub.cloud');
+            $response = $request->get(rtrim($baseUrl, '/') . '/api/v1/classification-coverage');
+
+            if ($response->successful()) {
+                return $response->json('data');
+            }
+
+            \Illuminate\Support\Facades\Log::debug("Classification coverage endpoint returned {$response->status()} for tenant {$this->subdomain}: " . $response->body());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::debug("Classification coverage check failed for tenant {$this->subdomain}: " . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
      * Check whether this project is borrowing the global shared admin key.
      */
     public function isUsingSharedAiKey(): bool

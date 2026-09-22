@@ -176,6 +176,7 @@ class ProjectSettings extends Page
             ->fillForm(fn () => [
                 'timezone' => $project->timezone ?? 'UTC',
                 'supported_locales' => $project->supported_locales ?? ['en', 'es'],
+                'typesafe_api_key' => $project->typesafe_api_key ?? '',
             ])
             ->form([
                 \Filament\Forms\Components\ViewField::make('timezone')
@@ -195,18 +196,103 @@ class ProjectSettings extends Page
                     ->required()
                     ->minItems(1)
                     ->helperText(__('Target languages enabled for dashboard reports and widget texts across this project. This is separate from the application interface language.')),
+                \Filament\Forms\Components\Section::make(__('AI Semantic Classification (TypeSafe)'))
+                    ->description(__('Configure your dedicated TypeSafe API key for Search Console query classification (Intent, Brand, Relevance).'))
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('ai_status_banner')
+                            ->hiddenLabel()
+                            ->content(function () use ($project) {
+                                $html = '';
+                                if ($project->isUsingSharedAiKey()) {
+                                    $html .= '
+                                        <div class="p-2.5 bg-success-50 dark:bg-success-950/40 border border-success-200 dark:border-success-800 rounded-md text-success-800 dark:text-success-200 text-xs flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-success-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            <span><strong>' . __('Platform License Active') . ':</strong> ' . __('Currently using the shared platform license. Adding your own key below will override this with dedicated quotas.') . '</span>
+                                        </div>
+                                    ';
+                                }
+
+                                $coverageData = $project->getClassificationCoverage();
+                                $trafficPct = $coverageData['traffic_coverage_percentage'] ?? $coverageData['traffic_coverage_pct'] ?? null;
+                                $isFullyClassified = $coverageData['is_fully_classified'] ?? false;
+
+                                if ($coverageData && $trafficPct !== null) {
+                                    $badgeBg = $isFullyClassified || $trafficPct >= 99.9
+                                        ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                                        : ($trafficPct >= 90.0
+                                            ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300'
+                                            : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300');
+                                    $iconColor = $isFullyClassified || $trafficPct >= 99.9
+                                        ? 'text-emerald-500 dark:text-emerald-400'
+                                        : ($trafficPct >= 90.0
+                                            ? 'text-sky-500 dark:text-sky-400'
+                                            : 'text-amber-500 dark:text-amber-400');
+
+                                    $badgeText = ($isFullyClassified || $trafficPct >= 99.9)
+                                        ? __('AI Classification: 100% complete')
+                                        : __('AI Classification: :pct% traffic (:pending tail queries pending)', [
+                                            'pct' => $trafficPct,
+                                            'pending' => number_format($coverageData['unclassified_queries'] ?? 0)
+                                        ]);
+
+                                    $badgeTitle = __('Query classification coverage: :pct% of traffic volume (:classified/:total unique queries categorized)', [
+                                        'pct' => $trafficPct,
+                                        'classified' => number_format($coverageData['classified_queries'] ?? 0),
+                                        'total' => number_format($coverageData['total_queries'] ?? 0)
+                                    ]);
+
+                                    $html .= '
+                                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ' . $badgeBg . ' mt-2" title="' . e($badgeTitle) . '">
+                                            <svg class="w-4 h-4 ' . $iconColor . ' flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                                            <span>' . e($badgeText) . '</span>
+                                        </div>
+                                    ';
+                                }
+
+                                return $html !== '' ? new \Illuminate\Support\HtmlString($html) : null;
+                            }),
+                        \Filament\Forms\Components\TextInput::make('typesafe_api_key')
+                            ->label(__('TypeSafe API Key'))
+                            ->password()
+                            ->revealable()
+                            ->placeholder($project->isUsingSharedAiKey() ? __('Inheriting platform license (leave blank to keep)') : 'apikey_...')
+                            ->helperText(__('Enter your TypeSafe API key. It will be stored securely and applied directly to your tenant synchronization engine.')),
+                    ])
+                    ->visible(fn () => $project->supportsAiClassification())
+                    ->collapsed(false),
             ])
             ->action(function (array $data) use ($project) {
+                $newApiKey = !empty($data['typesafe_api_key']) ? trim($data['typesafe_api_key']) : null;
                 $project->update([
                     'timezone' => $data['timezone'],
                     'supported_locales' => array_values($data['supported_locales'] ?? ['en', 'es']),
+                    'typesafe_api_key' => $newApiKey,
                 ]);
+
+                // Hot-push the effective API key to the tenant worker .env
+                if (!empty($project->remote_admin_api_key) && $project->supportsAiClassification()) {
+                    try {
+                        $effectiveKey = $project->getEffectiveTypesafeApiKey() ?? '';
+                        $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                        $scheme = config('app.env') === 'local' ? 'http' : 'https';
+                        $hubUrl = "{$scheme}://{$project->subdomain}.{$domain}";
+
+                        $client = new \Anibalealvarezs\ApisHubApi\ApisHubApi(
+                            baseUrl: $hubUrl,
+                            apiKey: $project->remote_admin_api_key
+                        );
+                        $client->updateCredentials([
+                            'TYPESAFE_API_KEY' => $effectiveKey,
+                        ]);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning("Could not push TypeSafe API key to tenant {$project->id}: " . $e->getMessage());
+                    }
+                }
 
                 Notification::make()
                     ->title(__('Preferences Updated'))
-                    ->body(__('Your configuration has been saved. Please manually redeploy the project to apply these changes to the synchronization engine.'))
-                    ->warning()
-                    ->persistent()
+                    ->body(__('Your configuration has been saved and applied to your synchronization engine.'))
+                    ->success()
                     ->send();
 
                 return redirect(request()->header('Referer'));
@@ -608,6 +694,15 @@ class ProjectSettings extends Page
                             ->success()
                             ->send();
 
+                        return;
+                    }
+
+                    if ($project->health_status === 'upgrading') {
+                        Notification::make()
+                            ->title(__('Upgrade Already in Progress'))
+                            ->body(__('An upgrade is currently running for this project. Please wait for it to complete.'))
+                            ->warning()
+                            ->send();
                         return;
                     }
 

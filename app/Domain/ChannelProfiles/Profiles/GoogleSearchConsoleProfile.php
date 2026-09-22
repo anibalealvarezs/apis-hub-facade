@@ -40,7 +40,9 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                 'feature_toggles' => $this->systemField('object', [
                     'cache_aggregations' => true,
                 ]),
-                
+                'ai_context' => $this->configurableField('object', [], null, [
+                    'user_configurable' => false,
+                ]),
                 'assets' => $this->configurableField('object', [], null, [
                     'schema' => [
                         'sites' => [
@@ -54,6 +56,7 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                                 'target_countries' => ['type' => 'object', 'default' => []],
                                 'target_keywords' => ['type' => 'object', 'default' => []],
                                 'lost_access' => ['type' => 'boolean', 'default' => false],
+                                'ai_context' => ['type' => 'object', 'default' => []],
                                 'data' => ['type' => 'object']
                             ]
                         ]

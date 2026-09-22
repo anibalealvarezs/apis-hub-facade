@@ -13,7 +13,7 @@
         "anibalealvarezs/apis-hub-api": "^0.1.1",
         "anibalealvarezs/facebook-graph-api": "^1.0.0",
         "anibalealvarezs/google-api": "^1.0.0",
-        "anibalealvarezs/typesafe-api": "^0.1.0@dev",
+        "anibalealvarezs/typesafe-api": "^0.1.0",
         "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-language-switch": "^3.1",
         "bezhansalleh/filament-shield": "^3.2",
