@@ -651,20 +651,23 @@ class DashboardBuilder extends Page
 
         try {
             $apiKey = $project->remote_app_api_key ?? $project->app_api_key ?? $project->remote_admin_api_key;
-            $request = \Illuminate\Support\Facades\Http::timeout(3);
+            $request = \Illuminate\Support\Facades\Http::timeout(4);
             if ($apiKey) {
                 $request = $request->withHeaders([
                     'X-API-KEY' => $apiKey,
                 ]);
             }
 
-            $response = $request->get(rtrim($project->url ?? '', '/') . '/api/v1/classification-coverage');
+            $baseUrl = $project->url ?? ('https://' . $project->subdomain . '.apis-hub.cloud');
+            $response = $request->get(rtrim($baseUrl, '/') . '/api/v1/classification-coverage');
 
             if ($response->successful()) {
                 return $response->json('data');
             }
+
+            \Illuminate\Support\Facades\Log::debug("Classification coverage endpoint returned {$response->status()} for tenant {$project->subdomain}: " . $response->body());
         } catch (\Throwable $e) {
-            // Resilient fallback if tenant node is busy or unreachable
+            \Illuminate\Support\Facades\Log::debug("Classification coverage check failed for tenant {$project->subdomain}: " . $e->getMessage());
         }
 
         return null;

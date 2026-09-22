@@ -331,6 +331,17 @@ class Project extends Model
     }
 
     /**
+     * Get the external URL for this project's tenant node.
+     */
+    public function getUrlAttribute(): string
+    {
+        $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+        $scheme = config('app.env') === 'local' ? 'http' : 'https';
+
+        return "{$scheme}://{$this->subdomain}.{$domain}";
+    }
+
+    /**
      * Check whether this project is borrowing the global shared admin key.
      */
     public function isUsingSharedAiKey(): bool
