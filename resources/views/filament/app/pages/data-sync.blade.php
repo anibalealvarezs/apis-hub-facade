@@ -416,6 +416,172 @@
                 @endforeach
             </div>
 
+            {{-- 🟣 Layer 4: TypeSafe AI Query Classification Telemetry (GSC Only) --}}
+            @php
+                $project = filament()->getTenant();
+                $isGscEnabled = $project && $project->supportsAiClassification() && $this->isGscConfigured($project);
+            @endphp
+            @if($isGscEnabled)
+                @php
+                    $cov = $classificationCoverage;
+                    $trafficPct = $cov['traffic_coverage_percentage'] ?? $cov['traffic_coverage_pct'] ?? null;
+                    $queryPct = $cov['query_coverage_percentage'] ?? null;
+                    $isFullyClassified = $cov['is_fully_classified'] ?? false;
+                    $classifiedQueries = $cov['classified_queries'] ?? 0;
+                    $totalQueries = $cov['total_queries'] ?? 0;
+                    $unclassifiedQueries = $cov['unclassified_queries'] ?? max(0, $totalQueries - $classifiedQueries);
+
+                    $statusBadgeClass = ($isFullyClassified || ($trafficPct !== null && $trafficPct >= 99.9))
+                        ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-400 dark:ring-emerald-400/30'
+                        : (($trafficPct !== null && $trafficPct >= 90.0)
+                            ? 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-400/10 dark:text-sky-400 dark:ring-sky-400/30'
+                            : 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:ring-amber-400/30');
+
+                    $statusText = ($isFullyClassified || ($trafficPct !== null && $trafficPct >= 99.9))
+                        ? __('100% Classified')
+                        : (($trafficPct !== null && $trafficPct >= 90.0)
+                            ? __('Near Complete (:pct% Traffic)', ['pct' => number_format((float)$trafficPct, 1)])
+                            : __('In Progress (:pct% Traffic)', ['pct' => number_format((float)($trafficPct ?? 0), 1)]));
+                @endphp
+
+                <div id="telemetry-ai-classification"
+                     class="mt-6 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 p-6 md:p-8">
+                    
+                    {{-- Section Header --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 dark:border-white/5">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2.5 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 shrink-0">
+                                <x-heroicon-o-sparkles class="w-6 h-6"/>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+                                        {{ __('AI Semantic Classification Telemetry') }}
+                                    </h2>
+                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset {{ $statusBadgeClass }}">
+                                        {{ $statusText }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {{ __('Search Intent, Brand Relation & Business Relevance powered by TypeSafe AI (JEV System One)') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Channel Indicator --}}
+                        <div class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-gray-200/60 dark:border-white/5 self-start sm:self-auto">
+                            <span class="w-2 h-2 rounded-full bg-success-500"></span>
+                            <span>{{ __('Google Search Console') }}</span>
+                        </div>
+                    </div>
+
+                    @if($cov !== null && $trafficPct !== null)
+                        {{-- Metric Cards Grid --}}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                            {{-- Traffic Volume Coverage --}}
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        {{ __('Traffic Coverage') }}
+                                    </span>
+                                    <x-heroicon-m-chart-bar class="w-4 h-4 text-purple-500"/>
+                                </div>
+                                <div class="mt-2 flex items-baseline gap-2">
+                                    <span class="text-2xl font-black text-gray-900 dark:text-white">
+                                        {{ number_format((float)$trafficPct, 1) }}%
+                                    </span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ __('of impression volume') }}
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-3">
+                                    <div class="h-1.5 rounded-full bg-purple-500 transition-all duration-500"
+                                         style="width: {{ min(100, max(0, (float)$trafficPct)) }}%"></div>
+                                </div>
+                            </div>
+
+                            {{-- Unique Queries Classified --}}
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        {{ __('Unique Keywords') }}
+                                    </span>
+                                    <x-heroicon-m-check-badge class="w-4 h-4 text-emerald-500"/>
+                                </div>
+                                <div class="mt-2 flex items-baseline gap-2">
+                                    <span class="text-2xl font-black text-gray-900 dark:text-white">
+                                        {{ number_format($classifiedQueries) }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        / {{ number_format($totalQueries) }} ({{ number_format((float)($queryPct ?? 0), 1) }}%)
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-3">
+                                    <div class="h-1.5 rounded-full bg-emerald-500 transition-all duration-500"
+                                         style="width: {{ min(100, max(0, (float)($queryPct ?? 0))) }}%"></div>
+                                </div>
+                            </div>
+
+                            {{-- Pending Tail Queries --}}
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        {{ __('Pending Tail Queries') }}
+                                    </span>
+                                    <x-heroicon-m-clock class="w-4 h-4 text-amber-500"/>
+                                </div>
+                                <div class="mt-2 flex items-baseline gap-2">
+                                    <span class="text-2xl font-black text-gray-900 dark:text-white">
+                                        {{ number_format($unclassifiedQueries) }}
+                                    </span>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ __('low-volume keywords') }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">
+                                    {{ __('Processed incrementally during scheduled syncs') }}
+                                </p>
+                            </div>
+
+                            {{-- Semantic Pipeline Status --}}
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                                <div class="flex justify-between items-start">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                        {{ __('Engine Status') }}
+                                    </span>
+                                    <x-heroicon-m-cpu-chip class="w-4 h-4 text-primary-500"/>
+                                </div>
+                                <div class="mt-2 flex items-baseline gap-2">
+                                    <span class="text-2xl font-black text-gray-900 dark:text-white">
+                                        {{ ($cov['has_active_key'] ?? true) ? __('Active') : __('Key Missing') }}
+                                    </span>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-2">
+                                    {{ $isFullyClassified ? __('All discovered keywords categorized') : __('Next sync will process pending batches') }}
+                                </p>
+                            </div>
+                        </div>
+                    @else
+                        <div class="py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <p>{{ __('Classification telemetry data is currently being calculated or synchronization has not started yet.') }}</p>
+                        </div>
+                    @endif
+
+                    {{-- ℹ️ Informative Architecture Note --}}
+                    <div class="mt-6 flex items-start gap-3 p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/30 text-xs text-purple-900 dark:text-purple-200">
+                        <x-heroicon-m-information-circle class="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5"/>
+                        <div class="space-y-1">
+                            <p class="font-semibold text-purple-950 dark:text-purple-100">
+                                {{ __('About AI Query Classification Scope') }}
+                            </p>
+                            <p class="leading-relaxed opacity-90">
+                                {{ __('This telemetry currently applies specifically to keywords collected through Google Search Console. Query classification is fully automated and personalized per website asset: while search intent is universal, brand relation (brand, non-brand, competitor) and business relevance (core, adjacent, irrelevant) are evaluated against each individual asset\'s configured business context.') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- 🛑 Asset Nuclear Resync Confirmation Modal --}}
             <x-confirm-modal
                 open="confirmModalOpen"

@@ -36,6 +36,7 @@ class DataSync extends Page
     protected static ?string $slug = 'telemetry';
 
     public array $syncData = [];
+    public ?array $classificationCoverage = null;
     public bool $isLoading = true;
 
     public function mount(): void
@@ -152,24 +153,33 @@ class DataSync extends Page
                 $this->syncData = $response;
             } else {
                 $this->syncData = [];
-                // Temporarily disabled while the Explorer's Status page is being reworked.
-                /*
-                Notification::make()
-                    ->title(__('Explorers status unavailable'))
-                    ->body(function() use ($response) {
-                        if (empty($response)) return 'The remote server returned an empty response.';
-                        return $response['message'] ?? $response['error'] ?? 'Node responded with success: false. Data might not be ready yet.';
-                    })
-                    ->warning()
-                    ->send();
-                */
+            }
+
+            // Fetch AI classification coverage if project supports AI and GSC is configured
+            if ($tenant && $tenant->supportsAiClassification() && $this->isGscConfigured($tenant)) {
+                $this->classificationCoverage = $tenant->getClassificationCoverage();
+            } else {
+                $this->classificationCoverage = null;
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("DataSync refreshData Exception: ".$e->getMessage());
             $this->syncData = [];
+            $this->classificationCoverage = null;
         }
 
         $this->isLoading = false;
+    }
+
+    public function isGscConfigured(\App\Models\Project $project): bool
+    {
+        $syncConfig = $project->sync_config ?? [];
+        $gscConfig = $syncConfig['google_search_console'] ?? null;
+
+        if (!$gscConfig || empty($gscConfig['enabled'])) {
+            return false;
+        }
+
+        return $project->isChannelConnected('google_search_console');
     }
 
     protected function getHeaderActions(): array
