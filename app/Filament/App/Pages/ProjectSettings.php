@@ -258,6 +258,7 @@ class ProjectSettings extends Page
                             ->placeholder($project->isUsingSharedAiKey() ? __('Inheriting platform license (leave blank to keep)') : 'apikey_...')
                             ->helperText(__('Enter your TypeSafe API key. It will be stored securely and applied directly to your tenant synchronization engine.')),
                     ])
+                    ->visible(fn () => $project->supportsAiClassification())
                     ->collapsed(false),
             ])
             ->action(function (array $data) use ($project) {
