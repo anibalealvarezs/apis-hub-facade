@@ -469,7 +469,7 @@
                         </div>
 
                         {{-- Channel Indicator --}}
-                        <div class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/[0.03] px-3 py-1.5 rounded-lg border border-gray-200/60 dark:border-white/5 self-start sm:self-auto">
+                        <div class="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 self-start sm:self-auto">
                             <span class="w-2 h-2 rounded-full bg-success-500"></span>
                             <span>{{ __('Google Search Console') }}</span>
                         </div>
@@ -479,7 +479,7 @@
                         {{-- Metric Cards Grid --}}
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                             {{-- Traffic Volume Coverage --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Traffic Coverage') }}
@@ -494,14 +494,14 @@
                                         {{ __('of impression volume') }}
                                     </span>
                                 </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-3">
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-3">
                                     <div class="h-1.5 rounded-full bg-purple-500 transition-all duration-500"
                                          style="width: {{ min(100, max(0, (float)$trafficPct)) }}%"></div>
                                 </div>
                             </div>
 
                             {{-- Unique Queries Classified --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Unique Keywords') }}
@@ -516,14 +516,14 @@
                                         / {{ number_format($totalQueries) }} ({{ number_format((float)($queryPct ?? 0), 1) }}%)
                                     </span>
                                 </div>
-                                <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 mt-3">
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-3">
                                     <div class="h-1.5 rounded-full bg-emerald-500 transition-all duration-500"
                                          style="width: {{ min(100, max(0, (float)($queryPct ?? 0))) }}%"></div>
                                 </div>
                             </div>
 
                             {{-- Pending Tail Queries --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Pending Tail Queries') }}
@@ -538,13 +538,13 @@
                                         {{ __('low-volume keywords') }}
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-2">
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
                                     {{ __('Processed incrementally during scheduled syncs') }}
                                 </p>
                             </div>
 
                             {{-- Semantic Pipeline Status --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-white/[0.02] border border-gray-100 dark:border-white/5">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Engine Status') }}
@@ -556,7 +556,7 @@
                                         {{ ($cov['has_active_key'] ?? true) ? __('Active') : __('Key Missing') }}
                                     </span>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-2">
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
                                     {{ $isFullyClassified ? __('All discovered keywords categorized') : __('Next sync will process pending batches') }}
                                 </p>
                             </div>
@@ -568,13 +568,13 @@
                     @endif
 
                     {{-- ℹ️ Informative Architecture Note --}}
-                    <div class="mt-6 flex items-start gap-3 p-4 rounded-xl bg-purple-50/50 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/30 text-xs text-purple-900 dark:text-purple-200">
+                    <div class="mt-6 flex items-start gap-3 p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/40 text-xs text-purple-900 dark:text-purple-200">
                         <x-heroicon-m-information-circle class="w-5 h-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5"/>
                         <div class="space-y-1">
                             <p class="font-semibold text-purple-950 dark:text-purple-100">
                                 {{ __('About AI Query Classification Scope') }}
                             </p>
-                            <p class="leading-relaxed opacity-90">
+                            <p class="leading-relaxed text-purple-900 dark:text-purple-200/90">
                                 {{ __('This telemetry currently applies specifically to keywords collected through Google Search Console. Query classification is fully automated and personalized per website asset: while search intent is universal, brand relation (brand, non-brand, competitor) and business relevance (core, adjacent, irrelevant) are evaluated against each individual asset\'s configured business context.') }}
                             </p>
                         </div>
