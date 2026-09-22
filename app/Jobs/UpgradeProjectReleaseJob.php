@@ -54,9 +54,10 @@ class UpgradeProjectReleaseJob implements ShouldQueue
                 return;
             }
 
+            $newHealthStatus = $this->project->hasBeenDeployed() ? 'online' : ($this->project->health_status === 'upgrading' ? 'offline' : $this->project->health_status);
             $this->project->update([
                 'apis_hub_release_id' => $this->targetRelease->id,
-                'health_status' => 'online',
+                'health_status' => $newHealthStatus,
             ]);
 
             \App\Models\ProjectStatusLog::create([

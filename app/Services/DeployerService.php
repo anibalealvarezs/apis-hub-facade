@@ -468,6 +468,17 @@ EOT;
      */
     public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
     {
+        // If the project has never been deployed, do not attempt to run remote Docker/migration commands.
+        // The target version is simply recorded in the database, and full deployment & migrations will execute on initial deployment.
+        if (!$project->hasBeenDeployed()) {
+            Log::info("Skipping remote upgrade commands for undeployed project {$project->name} (subdomain: {$project->subdomain}). Version pinned to {$targetRelease->version_tag}.");
+
+            return [
+                'status' => 'success',
+                'output' => "Project has never been deployed. Target release pinned to {$targetRelease->version_tag}. Full deployment and migrations will occur during initial deployment.",
+            ];
+        }
+
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         $targetTag = escapeshellarg($targetRelease->version_tag);
         
