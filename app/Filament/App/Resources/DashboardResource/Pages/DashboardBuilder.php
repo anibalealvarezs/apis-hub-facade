@@ -650,8 +650,15 @@ class DashboardBuilder extends Page
         }
 
         try {
-            $response = \Illuminate\Support\Facades\Http::timeout(3)
-                ->get(rtrim($project->url ?? '', '/') . '/api/v1/classification-coverage');
+            $apiKey = $project->remote_app_api_key ?? $project->app_api_key ?? $project->remote_admin_api_key;
+            $request = \Illuminate\Support\Facades\Http::timeout(3);
+            if ($apiKey) {
+                $request = $request->withHeaders([
+                    'X-API-KEY' => $apiKey,
+                ]);
+            }
+
+            $response = $request->get(rtrim($project->url ?? '', '/') . '/api/v1/classification-coverage');
 
             if ($response->successful()) {
                 return $response->json('data');
