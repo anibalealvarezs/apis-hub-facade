@@ -645,31 +645,6 @@ class DashboardBuilder extends Page
     public function getClassificationCoverage(): ?array
     {
         $project = \Filament\Facades\Filament::getTenant();
-        if (!$project || !$project->hasActiveAiAcceleration()) {
-            return null;
-        }
-
-        try {
-            $apiKey = $project->remote_app_api_key ?? $project->app_api_key ?? $project->remote_admin_api_key;
-            $request = \Illuminate\Support\Facades\Http::timeout(4);
-            if ($apiKey) {
-                $request = $request->withHeaders([
-                    'X-API-KEY' => $apiKey,
-                ]);
-            }
-
-            $baseUrl = $project->url ?? ('https://' . $project->subdomain . '.apis-hub.cloud');
-            $response = $request->get(rtrim($baseUrl, '/') . '/api/v1/classification-coverage');
-
-            if ($response->successful()) {
-                return $response->json('data');
-            }
-
-            \Illuminate\Support\Facades\Log::debug("Classification coverage endpoint returned {$response->status()} for tenant {$project->subdomain}: " . $response->body());
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::debug("Classification coverage check failed for tenant {$project->subdomain}: " . $e->getMessage());
-        }
-
-        return null;
+        return $project?->getClassificationCoverage();
     }
 }
