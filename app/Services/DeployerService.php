@@ -91,13 +91,9 @@ class DeployerService
     protected function generateEnvContent(Project $project, ?\App\Models\ApisHubRelease $targetRelease = null): string
     {
         $release = $targetRelease ?? $project->apisHubRelease;
-        $supportsAi = false;
-        if ($release) {
-            $version = ltrim($release->version_tag, 'v');
-            $supportsAi = version_compare($version, '1.16.0', '>=');
-        } elseif (!$project->apis_hub_release_id) {
-            $supportsAi = true;
-        }
+        // Only provision the key when the release is positively identified as v1.16.0+.
+        // Unknown/unassigned release versions are NOT eligible (matches Project::supportsAiClassification()).
+        $supportsAi = $release && version_compare(ltrim($release->version_tag, 'v'), '1.16.0', '>=');
 
         $fbAppId = config('services.facebook.client_id');
         $fbAppSecret = config('services.facebook.client_secret');
