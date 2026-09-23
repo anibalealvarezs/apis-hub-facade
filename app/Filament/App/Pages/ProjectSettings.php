@@ -205,8 +205,8 @@ class ProjectSettings extends Page
                                 $html = '';
                                 if ($project->isUsingSharedAiKey()) {
                                     $html .= '
-                                        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-md text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2">
-                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div style="--c-50:#ecfdf5;--c-100:#d1fae5;--c-300:#6ee7b7;--c-400:#34d399;--c-500:#10b981;--c-600:#059669;--c-700:#047857" class="p-4 bg-custom-50 text-custom-700 border border-gray-200 dark:bg-custom-500 dark:text-white dark:border-gray-600 rounded-lg text-xs flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-custom-600 dark:text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <span><strong>' . __('Platform License Active') . ':</strong> ' . __('Currently using the shared platform license. Adding your own key below will override this with dedicated quotas.') . '</span>
                                         </div>
                                     ';
@@ -217,16 +217,13 @@ class ProjectSettings extends Page
                                 $isFullyClassified = $coverageData['is_fully_classified'] ?? false;
 
                                 if ($coverageData && $trafficPct !== null) {
-                                    $badgeBg = $isFullyClassified || $trafficPct >= 99.9
-                                        ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                                    $badgeStyle = $isFullyClassified || $trafficPct >= 99.9
+                                        ? '--c-50:#ecfdf5;--c-300:#6ee7b7;--c-400:#34d399;--c-500:#10b981;--c-600:#059669;--c-700:#047857'
                                         : ($trafficPct >= 90.0
-                                            ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300'
-                                            : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300');
-                                    $iconColor = $isFullyClassified || $trafficPct >= 99.9
-                                        ? 'text-emerald-500 dark:text-emerald-400'
-                                        : ($trafficPct >= 90.0
-                                            ? 'text-sky-500 dark:text-sky-400'
-                                            : 'text-amber-500 dark:text-amber-400');
+                                            ? '--c-50:#f0f9ff;--c-300:#7dd3fc;--c-400:#38bdf8;--c-500:#0ea5e9;--c-600:#0284c7;--c-700:#0369a1'
+                                            : '--c-50:#fffbeb;--c-300:#fcd34d;--c-400:#fbbf24;--c-500:#f59e0b;--c-600:#d97706;--c-700:#b45309');
+                                    $badgeBg = 'bg-custom-50 text-custom-700 border border-gray-200 dark:bg-custom-500 dark:text-white dark:border-gray-600';
+                                    $iconColor = 'text-custom-600 dark:text-white';
 
                                     $badgeText = ($isFullyClassified || $trafficPct >= 99.9)
                                         ? __('AI Classification: 100% complete')
@@ -242,8 +239,8 @@ class ProjectSettings extends Page
                                     ]);
 
                                     $html .= '
-                                        <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ' . $badgeBg . ' mt-2" title="' . e($badgeTitle) . '">
-                                            <svg class="w-4 h-4 ' . $iconColor . ' flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                                        <div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium ' . $badgeBg . ' mt-2" style="' . $badgeStyle . '" title="' . e($badgeTitle) . '">
+                                            <svg class="w-4 h-4 ' . $iconColor . ' shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                                             <span>' . e($badgeText) . '</span>
                                         </div>
                                     ';
