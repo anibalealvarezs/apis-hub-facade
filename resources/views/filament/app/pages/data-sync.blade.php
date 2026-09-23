@@ -479,7 +479,7 @@
                         {{-- Metric Cards Grid --}}
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                             {{-- Traffic Volume Coverage --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Traffic Coverage') }}
@@ -501,7 +501,7 @@
                             </div>
 
                             {{-- Unique Queries Classified --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Unique Keywords') }}
@@ -523,7 +523,7 @@
                             </div>
 
                             {{-- Pending Tail Queries --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Pending Tail Queries') }}
@@ -544,7 +544,7 @@
                             </div>
 
                             {{-- Semantic Pipeline Status --}}
-                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200/80 dark:border-white/10">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10">
                                 <div class="flex justify-between items-start">
                                     <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                         {{ __('Engine Status') }}
