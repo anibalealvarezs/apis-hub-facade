@@ -205,8 +205,8 @@ class ProjectSettings extends Page
                                 $html = '';
                                 if ($project->isUsingSharedAiKey()) {
                                     $html .= '
-                                        <div class="p-2.5 bg-success-50 dark:bg-success-950/40 border border-success-200 dark:border-success-800 rounded-md text-success-800 dark:text-success-200 text-xs flex items-center gap-2">
-                                            <svg class="w-4 h-4 text-success-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-md text-emerald-800 dark:text-emerald-200 text-xs flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                             <span><strong>' . __('Platform License Active') . ':</strong> ' . __('Currently using the shared platform license. Adding your own key below will override this with dedicated quotas.') . '</span>
                                         </div>
                                     ';
