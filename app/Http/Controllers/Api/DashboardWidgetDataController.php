@@ -226,6 +226,17 @@
                     default => throw new \InvalidArgumentException('Unknown source type: '.$widget->source_type),
                 };
 
+                if (!empty($data['retryable'] ?? false)) {
+                    unset($data['retryable']);
+
+                    return response()->json([
+                        'success'    => false,
+                        'retryable'  => true,
+                        'error_code' => 'cloudflare_timeout',
+                        'error'      => 'This widget needs a bit more time to load its data. It will automatically reload in a few moments.',
+                    ], 200, [], JSON_UNESCAPED_UNICODE);
+                }
+
                 $missingAssets = $this->detectMissingAssets($project, $widget, $resolvedControls)
                     || !empty($data['_missing_assets'] ?? false);
 
@@ -1510,6 +1521,18 @@
                 ]);
                 report($e);
 
+                $retryable = $e instanceof \App\Exceptions\RetryableEngineException
+                    || \App\Services\RemoteEngineService::isCloudflareInterruption($e->getMessage());
+
+                if ($retryable) {
+                    return response()->json([
+                        'success'    => false,
+                        'retryable'  => true,
+                        'error_code' => 'cloudflare_timeout',
+                        'error'      => 'This widget needs a bit more time to load its data. It will automatically reload in a few moments.',
+                    ], 200, [], JSON_UNESCAPED_UNICODE);
+                }
+
                 $sanitizedMessage = $this->sanitizeErrorMessage($e, $widget);
 
                 return response()->json([
@@ -2278,6 +2301,10 @@
             }
 
             if (!($result['success'] ?? false)) {
+                if (!empty($result['retryable'])) {
+                    throw new \App\Exceptions\RetryableEngineException(($result['message'] ?? 'KPI computation timed out'));
+                }
+
                 throw new \RuntimeException($result['message'] ?? 'KPI computation failed');
             }
 

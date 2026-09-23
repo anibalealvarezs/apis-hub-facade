@@ -103,6 +103,7 @@
                 return $result;
             } catch (Exception $e) {
                 $message = $e->getMessage();
+                $retryable = self::isCloudflareInterruption($message);
                 if (preg_match('/500|502|503|Connection refused|Could not resolve host|cURL error/i', $message)) {
                     Log::warning("Remote Engine unreachable for project '{$project->name}': {$message}");
                 } else {
@@ -112,11 +113,57 @@
                     ]);
                 }
 
-                return [
+                $result = [
                     'status'  => 'error',
                     'message' => $message,
                 ];
+
+                if ($retryable) {
+                    $result['retryable'] = true;
+                    $result['error_code'] = 'cloudflare_timeout';
+                }
+
+                return $result;
             }
+        }
+
+        /**
+         * Detect whether an engine request was interrupted by Cloudflare / a gateway timeout.
+         * These are transient failures where re-requesting the same data shortly after may succeed.
+         */
+        public static function isCloudflareInterruption(string $message): bool
+        {
+            if ($message === '') {
+                return false;
+            }
+
+            $patterns = [
+                '/cURL error 28/i',
+                '/Operation timed out/i',
+                '/connect\(\) timed out/i',
+                '/Connection timed out/i',
+                '/timed out after/i',
+                '/Request Timeout/i',
+                '/Gateway Timeout/i',
+                '/Cloudflare/i',
+                '/A Timeout Occurred/i',
+                '/504 Gateway Time-out/i',
+                '/502 Bad Gateway/i',
+                '/520 Origin Error/i',
+                '/521 Web Server Is Down/i',
+                '/522 Connection timed out/i',
+                '/523 Origin Is Unreachable/i',
+                '/524 A timeout occurred/i',
+                '/525 SSL handshake failed/i',
+            ];
+
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $message)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /**

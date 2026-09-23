@@ -162,7 +162,8 @@ class FacebookMarketingController extends Controller
             return response()->json([
                 'summary' => empty($summaryData) ? new \stdClass() : $summaryData,
                 'previous' => empty($previousData) ? new \stdClass() : $previousData,
-                'debug_results' => ['payloads' => $payloads, 'meta' => $results['summary']['meta'] ?? null]
+                'debug_results' => ['payloads' => $payloads, 'meta' => $results['summary']['meta'] ?? null],
+                'retryable' => !empty($results['summary']['retryable'])
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBM Summary Error: " . $e->getMessage());
@@ -250,7 +251,8 @@ class FacebookMarketingController extends Controller
 
             return response()->json([
                 'chart' => $results['chart']['data'] ?? [],
-                'debug_results' => ['payloads' => $payloads, 'meta' => $results['chart']['meta'] ?? null]
+                'debug_results' => ['payloads' => $payloads, 'meta' => $results['chart']['meta'] ?? null],
+                'retryable' => !empty($results['chart']['retryable'])
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBM Chart Error: " . $e->getMessage());
@@ -418,7 +420,8 @@ class FacebookMarketingController extends Controller
 
             return response()->json([
                 'table' => $tableData,
-                'debug_results' => ['payloads' => $payloads]
+                'debug_results' => ['payloads' => $payloads],
+                'retryable' => !empty($results['table']['retryable'])
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBM Table Error: " . $e->getMessage());

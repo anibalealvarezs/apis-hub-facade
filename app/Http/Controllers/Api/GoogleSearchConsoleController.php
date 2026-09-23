@@ -130,12 +130,16 @@ class GoogleSearchConsoleController extends Controller
 
             if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("GSC Summary APIs Hub Error: " . json_encode($results['summary']));
+                $retryable = !empty($results['summary']['retryable']);
+            } else {
+                $retryable = false;
             }
 
             return response()->json([
                 'summary' => $results['summary']['data'][0] ?? [],
                 'previous' => $results['previous']['data'][0] ?? [],
-                'debug_results' => config('app.debug') ? $results : null
+                'debug_results' => config('app.debug') ? $results : null,
+                'retryable' => $retryable,
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Summary Error: " . $e->getMessage());
@@ -195,7 +199,8 @@ class GoogleSearchConsoleController extends Controller
 
             return response()->json([
                 'chart' => $results['chart']['data'] ?? [],
-                'debug_results' => config('app.debug') ? $results : null
+                'debug_results' => config('app.debug') ? $results : null,
+                'retryable' => !empty($results['chart']['retryable']),
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Chart Error: " . $e->getMessage());
@@ -264,7 +269,8 @@ class GoogleSearchConsoleController extends Controller
 
             return response()->json([
                 'table' => $tableData,
-                'debug_results' => config('app.debug') ? $results : null
+                'debug_results' => config('app.debug') ? $results : null,
+                'retryable' => !empty($results['table']['retryable']),
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Table Error: " . $e->getMessage());
