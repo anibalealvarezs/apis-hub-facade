@@ -2693,10 +2693,16 @@
                                 $rows[] = $row;
                             }
 
-                            return [
+                            $tablePayload = [
                                 'columns' => $columns,
                                 'rows'    => $rows,
                             ];
+                            if (in_array($breakdownOrder, ['value_desc', 'value_asc'], true)) {
+                                $tablePayload['default_sort_column'] = preg_replace('/^trend_(?:total|average)_/', '', $breakdownRankBy);
+                                $tablePayload['default_sort_direction'] = $breakdownOrder === 'value_asc' ? 'asc' : 'desc';
+                            }
+
+                            return $tablePayload;
                         }
 
                         if ($widget->widget_type === 'scatter_plot' && count($metrics) >= 2) {

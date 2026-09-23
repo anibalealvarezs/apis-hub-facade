@@ -1279,23 +1279,41 @@ window.dashboardRenderer = {
         containerEl._tableData = data;
 
         if (!containerEl._tableSort) {
-            // Default sort by first column: DESC for time-based, ASC for dimensions
-            const firstCol = columns[0];
-            const firstKey = firstCol?.key || firstCol;
-            const timeKeys = [
-                "date",
-                "daily",
-                "weekly",
-                "monthly",
-                "quarterly",
-                "semiannual",
-                "annually",
-            ];
-            const isTimeBased = timeKeys.includes(firstKey);
-            containerEl._tableSort = {
-                column: firstKey,
-                direction: isTimeBased ? "desc" : "asc",
-            };
+            // Backend may declare the intended default sort (e.g. breakdown "Rank Top By"
+            // configured on a custom metric). Use it instead of sorting by the left column.
+            const defaultSortColumn = data?.default_sort_column;
+            const defaultSortDirection = data?.default_sort_direction || "desc";
+            if (
+                defaultSortColumn &&
+                columns.some(
+                    (c) =>
+                        (c && c.key === defaultSortColumn) ||
+                        c === defaultSortColumn,
+                )
+            ) {
+                containerEl._tableSort = {
+                    column: defaultSortColumn,
+                    direction: defaultSortDirection,
+                };
+            } else {
+                // Default sort by first column: DESC for time-based, ASC for dimensions
+                const firstCol = columns[0];
+                const firstKey = firstCol?.key || firstCol;
+                const timeKeys = [
+                    "date",
+                    "daily",
+                    "weekly",
+                    "monthly",
+                    "quarterly",
+                    "semiannual",
+                    "annually",
+                ];
+                const isTimeBased = timeKeys.includes(firstKey);
+                containerEl._tableSort = {
+                    column: firstKey,
+                    direction: isTimeBased ? "desc" : "asc",
+                };
+            }
         }
         const sort = containerEl._tableSort;
 
