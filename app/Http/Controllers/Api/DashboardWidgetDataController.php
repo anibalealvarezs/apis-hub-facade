@@ -2487,6 +2487,10 @@
                         : (is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit);
                     $breakdownLimit = max(1, min($maxBreakdownLimit, $breakdownLimit));
                     $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
+                    $breakdownRankBy = is_array($seriesBreakdown) ? (string)($seriesBreakdown['rank_by'] ?? '') : '';
+                    if (!in_array($breakdownRankBy, $metrics, true)) {
+                        $breakdownRankBy = $metrics[0] ?? 'value';
+                    }
 
                     if (!empty($breakdownDim)) {
                         $payload['breakdown'] = $breakdownDim;
@@ -2535,7 +2539,7 @@
 
                             // Group and aggregate metrics per breakdown dimension item
                             $groupedRows = []; // [dimVal => [metric => sum]]
-                            $firstMetric = $metrics[0] ?? 'value';
+                            $firstMetric = $breakdownRankBy;
 
                             foreach ($rawRows as $row) {
                                 $dimVal = null;
@@ -2682,7 +2686,7 @@
                             ];
 
                             $groupedRows = [];
-                            $firstMetric = $metrics[0] ?? 'value';
+                            $firstMetric = $breakdownRankBy;
 
                             foreach ($rawRows as $row) {
                                 $dimVal = null;

@@ -1540,7 +1540,23 @@
                                                                                     </div>
                                                                                 </div>
 
-                                                                                {{-- Chart type hint/recommendation when breakdown produces many curves --}}
+                                                                        {{-- Rank Top By: choose which metric ranks the top-N breakdown items --}}
+                                                                        <template x-if="series.breakdown && series.breakdown.dimension && (series.breakdown.order === 'value_desc' || series.breakdown.order === 'value_asc') && (series.metrics || []).length > 1">
+                                                                            <div>
+                                                                                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Rank Top By') }}</label>
+                                                                                <x-ui.select-input
+                                                                                    x-model="series.breakdown.rank_by"
+                                                                                    x-on:change="markWidgetControlsDirty()"
+                                                                                    class="w-full">
+                                                                                    <template x-for="mKey in (series.metrics || [])" :key="mKey">
+                                                                                        <x-ui.select-option x-bind:value="mKey" x-text="(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})[mKey] || mKey)"></x-ui.select-option>
+                                                                                    </template>
+                                                                                </x-ui.select-input>
+                                                                                <p class="text-2xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Determines which metric ranks the top items when sorting by value.') }}</p>
+                                                                            </div>
+                                                                        </template>
+
+                                                                        {{-- Chart type hint/recommendation when breakdown produces many curves --}}
                                                                                 <div x-show="series.breakdown && (widgetControlsForm.widget_type === 'line' || widgetControlsForm.widget_type === 'area') && series.breakdown.limit > 5">
                                                                                     <span class="inline-flex items-center gap-1 text-2xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800/50">
                                                                                         💡 {{ __('Bar or Table charts may read clearer than line charts for many breakdown items.') }}

@@ -11,6 +11,16 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Breakdown "Rank Top By" Metric Selector (2026-09-23)
+- **Problem:** "Top keywords" (and generally any lifetime/table breakdown top-N) were ranked by the FIRST selected metric (`$metrics[0]`), so the metric determining which items rank on top was arbitrary. Users wanted to pick the ranking metric per series in the builder.
+- **Fix:**
+  1. `dashboard-builder.js`: new `ensureBreakdownRankByMetric(series)` helper defaults `series.breakdown.rank_by` to the first selected metric and re-anchors it whenever the active metric set changes (called from `onSeriesBreakdownDimensionChange`, `toggleRawMetricIncluded`, `toggleRawMetricDefaultActive`, and on widget load in `openWidgetControls`). Saves `rank_by` into the breakdown payload in `confirmWidgetControls`.
+  2. `dashboard-builder.blade.php`: added a "Rank Top By" metric select in the Breakdown panel, shown only when the breakdown exists, ordering is value-based (`value_desc`/`value_asc`), and more than one metric is active.
+  3. `DashboardWidgetDataController.php` (`handleMultiSeriesSource`): resolves `$breakdownRankBy` from `$series['breakdown']['rank_by']`, clamps it to an active metric (`in_array` fallback to `$metrics[0]`), and uses it in place of `$metrics[0]` for both the lifetime-table ranking and the scatter-plot ranking (`$firstMetric = $breakdownRankBy`).
+- **Not changed:** `fanOutBreakdownSeries` (line ~2792 passes `$metrics[0]` as the curve metric — correct for single-metric chart curves); DM source-series grouping (`$ssMetric` is the series' own configured metric); line ~2780 color-only metric resolution.
+- **Backwards compatibility:** `rank_by` is optional JSON on `DashboardWidget::controls`; absent/invalid values fall back to the previous behavior (`$metrics[0]`).
+- **Verification:** `php -l` and `node --check` pass. Frontend assets not recompiled yet.
+
 ### Multi-Series Breakdown Scatter Plot Alignment & Axis Scaling (2026-09-17)
 - **Problem:** Multi-series scatter plot widgets with breakdown dimensions (such as Widget #26 "Intent Match - Rebote vs Clics" crossing GSC `clicks` by `dimensions.page` with GA4 `bounce_rate` by `dimensions.landing_page`) displayed only a single point labeled "Lifetime" at `(x: 27, y: 274)`, inverted the axes (Bounce Rate on X, Clics on Y), and scaled bounce rate to `2700.0%`. After initial subcase 2 indexing, only 2 points were returned.
 - **Root Cause:**
