@@ -559,6 +559,9 @@ EOT;
         // Reiniciamos el contenedor master para que cargue el nuevo .env
         // Regeneramos el manifiesto con la configuración dinámica
         $commands[] = "docker run --rm -v {$path}:/app -e \"ENV_FILE=.env\" --env-file .env -w /app php:8.3-cli php bin/build-deployment.php";
+        // Force-recreate the master so it re-reads the freshly written .env.
+        // A plain "up -d" won't recreate a running container, leaving env changes stale.
+        $commands[] = "docker compose up -d --force-recreate master";
         // Levantamos todos los contenedores necesarios (incluyendo db si faltaba)
         $commands[] = "docker compose up -d --remove-orphans";
 
