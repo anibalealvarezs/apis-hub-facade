@@ -142,9 +142,18 @@ export function widgetHeaderPv(widgetId, controls, seriesOptions) {
                 el.setAttribute('data-raw-controls', raw);
             }
             const dbView = document.getElementById('view-grid-stack');
-            if (dbView && dbView.__x && dbView.__x.getUnobservedData()) {
-                dbView.__x.getUnobservedData().reloadWidget(this.widgetId, this.controls);
+            if (dbView) {
+                const view = window.Alpine ? Alpine.$data(dbView) : null;
+                if (view && typeof view.reloadWidget === 'function') {
+                    view.reloadWidget(this.widgetId, this.controls);
+                    return;
+                }
             }
+            window.dispatchEvent(
+                new CustomEvent('reload-widget', {
+                    detail: { id: this.widgetId, controls: this.controls },
+                }),
+            );
         },
     };
 }
