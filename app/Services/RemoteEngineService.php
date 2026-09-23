@@ -296,9 +296,9 @@ class RemoteEngineService
     /**
      * Perform an aggregation query on channeled entities via the remote node.
      */
-    public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload)
+    public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload, int $timeout = 30)
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload), $timeout);
     }
 
     /**
@@ -358,14 +358,14 @@ class RemoteEngineService
     /**
      * Perform concurrent aggregation queries via the remote node.
      */
-    public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads)
+    public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads, int $timeout = 30)
     {
         $results = [];
         $startTime = microtime(true);
 
         foreach ($payloads as $key => $payload) {
             $startReq = microtime(true);
-            $response = $this->aggregateChanneled($project, $channel, $entity, $payload);
+            $response = $this->aggregateChanneled($project, $channel, $entity, $payload, $timeout);
 
             // SDK returns the array directly, but handles errors by returning ['status' => 'error']
             if (isset($response['status']) && $response['status'] === 'error') {
@@ -384,9 +384,9 @@ class RemoteEngineService
     /**
      * List channeled entities via the remote node.
      */
-    public function listChanneled(Project $project, string $channel, string $entity, array $params = [])
+    public function listChanneled(Project $project, string $channel, string $entity, array $params = [], int $timeout = 30)
     {
-        return $this->execute($project, fn (ApisHubApi $client) => $client->listChanneled($channel, $entity, $params));
+        return $this->execute($project, fn (ApisHubApi $client) => $client->listChanneled($channel, $entity, $params), $timeout);
     }
 
     /**
