@@ -1545,11 +1545,11 @@
                                                                             <div>
                                                                                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ __('Rank Top By') }}</label>
                                                                                 <x-ui.select-input
-                                                                                    x-model="series.breakdown.rank_by"
-                                                                                    x-on:change="markWidgetControlsDirty()"
+                                                                                    x-bind:value="series.breakdown ? series.breakdown.rank_by : ''"
+                                                                                    x-on:change="if (!$event.target.value) { series.breakdown.rank_by = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.rank_by = $event.target.value; } markWidgetControlsDirty()"
                                                                                     class="w-full">
                                                                                     <template x-for="mKey in (series.metrics || [])" :key="mKey">
-                                                                                        <x-ui.select-option x-bind:value="mKey" x-text="(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})[mKey] || mKey)"></x-ui.select-option>
+                                                                                        <x-ui.select-option x-bind:value="mKey" x-text="(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})[mKey] || mKey)" x-bind:selected="series.breakdown && series.breakdown.rank_by === mKey"></x-ui.select-option>
                                                                                     </template>
                                                                                 </x-ui.select-input>
                                                                                 <p class="text-2xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Determines which metric ranks the top items when sorting by value.') }}</p>
