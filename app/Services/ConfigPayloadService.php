@@ -90,6 +90,11 @@ class ConfigPayloadService
 
         if ($channel === 'google_search_console') {
             $payload['max_workers'] = 4;
+
+            // Enable Redis aggregation caching (CacheStrategyService reads this top-level flag
+            // from the channel config; toggling false→true skips the cache clear in the driver).
+            $payload['feature_toggles']['cache_aggregations'] = true;
+
             if (isset($channelConfig['calculate_synthetics'])) {
                 $payload['feature_toggles']['calculate_synthetics'] = filter_var($channelConfig['calculate_synthetics'], FILTER_VALIDATE_BOOLEAN);
             }
