@@ -296,7 +296,7 @@ class RemoteEngineService
     /**
      * Perform an aggregation query on channeled entities via the remote node.
      */
-    public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload, int $timeout = 30)
+    public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload, int $timeout = 60)
     {
         return $this->execute($project, fn (ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload), $timeout);
     }
@@ -358,7 +358,7 @@ class RemoteEngineService
     /**
      * Perform concurrent aggregation queries via the remote node.
      */
-    public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads, int $timeout = 30)
+    public function aggregateChanneledPool(Project $project, string $channel, string $entity, array $payloads, int $timeout = 60)
     {
         $results = [];
         $startTime = microtime(true);
@@ -384,7 +384,7 @@ class RemoteEngineService
     /**
      * List channeled entities via the remote node.
      */
-    public function listChanneled(Project $project, string $channel, string $entity, array $params = [], int $timeout = 30)
+    public function listChanneled(Project $project, string $channel, string $entity, array $params = [], int $timeout = 60)
     {
         return $this->execute($project, fn (ApisHubApi $client) => $client->listChanneled($channel, $entity, $params), $timeout);
     }
