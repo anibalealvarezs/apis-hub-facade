@@ -232,11 +232,16 @@ class Project extends Model
 
     /**
      * Check if the project release version supports TypeSafe AI Query Classification (v1.16.0+).
+     *
+     * Unknown/unassigned release versions are treated as NOT compatible: only a
+     * positively identified release tag of v1.16.0 or higher is eligible, so
+     * runtime pushes (shared key propagation, project settings) never reach
+     * tenants whose deployed version cannot be verified.
      */
     public function supportsAiClassification(): bool
     {
         if (!$this->apisHubRelease) {
-            return true;
+            return false;
         }
 
         $version = ltrim($this->apisHubRelease->version_tag, 'v');

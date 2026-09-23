@@ -91,13 +91,9 @@ class DeployerService
     protected function generateEnvContent(Project $project, ?\App\Models\ApisHubRelease $targetRelease = null): string
     {
         $release = $targetRelease ?? $project->apisHubRelease;
-        $supportsAi = false;
-        if ($release) {
-            $version = ltrim($release->version_tag, 'v');
-            $supportsAi = version_compare($version, '1.16.0', '>=');
-        } elseif (!$project->apis_hub_release_id) {
-            $supportsAi = true;
-        }
+        // Only provision the key when the release is positively identified as v1.16.0+.
+        // Unknown/unassigned release versions are NOT eligible (matches Project::supportsAiClassification()).
+        $supportsAi = $release && version_compare(ltrim($release->version_tag, 'v'), '1.16.0', '>=');
 
         $fbAppId = config('services.facebook.client_id');
         $fbAppSecret = config('services.facebook.client_secret');
@@ -559,6 +555,9 @@ EOT;
         // Reiniciamos el contenedor master para que cargue el nuevo .env
         // Regeneramos el manifiesto con la configuración dinámica
         $commands[] = "docker run --rm -v {$path}:/app -e \"ENV_FILE=.env\" --env-file .env -w /app php:8.3-cli php bin/build-deployment.php";
+        // Force-recreate the master so it re-reads the freshly written .env.
+        // A plain "up -d" won't recreate a running container, leaving env changes stale.
+        $commands[] = "docker compose up -d --force-recreate master";
         // Levantamos todos los contenedores necesarios (incluyendo db si faltaba)
         $commands[] = "docker compose up -d --remove-orphans";
 
