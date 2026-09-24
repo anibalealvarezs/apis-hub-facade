@@ -1255,19 +1255,67 @@
                 }
             }
 
-            // If this is Search Console and tenant supports AI, add an Asset-Specific AI Context button
-            if ($this->activeChannel === 'google_search_console' && Filament::getTenant()?->supportsAiClassification()) {
+            // If this is Search Console and tenant release supports AI, add an Asset-Specific AI Context button
+            if ($this->activeChannel === 'google_search_console' && Filament::getTenant()?->releaseSupportsAiClassification()) {
+                $tenant = Filament::getTenant();
+                $hasAiAccess = $tenant->supportsAiClassification();
+
                 $itemComponents[] = \Filament\Forms\Components\Actions::make([
                     \Filament\Forms\Components\Actions\Action::make('configureAssetAiContext')
-                        ->label(__('AI Context'))
-                        ->tooltip(__('Configure specific Brand, Description, and Competitors for this website'))
+                        ->label(function () use ($hasAiAccess) {
+                            if ($hasAiAccess) {
+                                return __('AI Context');
+                            }
+                            return new \Illuminate\Support\HtmlString(
+                                e(__('AI Context')) . ' ' .
+                                '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">' .
+                                    '<svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' .
+                                    '<span>Pro</span>' .
+                                '</span>'
+                            );
+                        })
+                        ->tooltip(fn () => $hasAiAccess 
+                            ? __('Configure specific Brand, Description, and Competitors for this website')
+                            : __('Requires Pro subscription'))
                         ->icon('heroicon-m-sparkles')
                         ->size('xs')
-                        ->color('primary')
+                        ->color($hasAiAccess ? 'primary' : 'warning')
                         ->button()
-                        ->modalHeading(fn(\Filament\Forms\Get $get) => __('AI Business Context: :title', ['title' => $get('title') ?? $get('name') ?? $get('url')]))
-                        ->modalDescription(__('Individual context is concatenated with any global context. Leave empty to use inferred website data.'))
-                        ->fillForm(function (\Filament\Forms\Get $get): array {
+                        ->modalHeading(function (\Filament\Forms\Get $get) use ($hasAiAccess) {
+                            if (!$hasAiAccess) {
+                                return __('Unlock AI Semantic Context');
+                            }
+                            return __('AI Business Context: :title', ['title' => $get('title') ?? $get('name') ?? $get('url')]);
+                        })
+                        ->modalDescription(function () use ($hasAiAccess, $tenant) {
+                            if (!$hasAiAccess) {
+                                $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $tenant);
+                                if ($ctx['is_profile_owner']) {
+                                    return __('AI Semantic Classification and Context customization are Pro features. Upgrade your billing profile to Pro to unlock tailor-made business context for each website.');
+                                }
+                                return __('AI Semantic Classification requires a Pro subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile.', [
+                                    'owner' => $ctx['profile_owner_name'] ?? __('the profile owner'),
+                                ]);
+                            }
+                            return __('Individual context is concatenated with any global context. Leave empty to use inferred website data.');
+                        })
+                        ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) use ($hasAiAccess, $tenant) {
+                            if (!$hasAiAccess) {
+                                $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $tenant);
+                                if ($ctx['is_profile_owner'] && !empty($ctx['upgrade_url'])) {
+                                    return $action
+                                        ->label(__('Upgrade to Pro'))
+                                        ->color('primary')
+                                        ->url($ctx['upgrade_url'], shouldOpenInNewTab: true);
+                                }
+                                return false;
+                            }
+                            return $action;
+                        })
+                        ->fillForm(function (\Filament\Forms\Get $get) use ($hasAiAccess): array {
+                            if (!$hasAiAccess) {
+                                return [];
+                            }
                             $existing = $get('data.ai_context') ?? $get('ai_context') ?? [];
                             $url = $get('url') ?? '';
                             $cleanDomain = preg_replace('/^(sc-domain:|https?:\/\/|www\.)/i', '', (string)$url);
@@ -1282,25 +1330,33 @@
                                 'competitors' => $existing['competitors'] ?? [],
                             ];
                         })
-                        ->form([
-                            \Filament\Forms\Components\TextInput::make('brand')
-                                ->label(__('Asset Brand Name / Trademark'))
-                                ->placeholder(fn(\Filament\Forms\Get $get) => $get('inferred_brand_hint') ?: 'e.g. Mabe')
-                                ->helperText(__('Specific brand for this asset. If empty, auto-inferred from the website domain.')),
+                        ->form(function () use ($hasAiAccess) {
+                            if (!$hasAiAccess) {
+                                return [];
+                            }
+                            return [
+                                \Filament\Forms\Components\TextInput::make('brand')
+                                    ->label(__('Asset Brand Name / Trademark'))
+                                    ->placeholder(fn(\Filament\Forms\Get $get) => $get('inferred_brand_hint') ?: 'e.g. Mabe')
+                                    ->helperText(__('Specific brand for this asset. If empty, auto-inferred from the website domain.')),
 
-                            \Filament\Forms\Components\Textarea::make('description')
-                                ->label(__('Asset-Specific Context & Products/Services'))
-                                ->placeholder(__('e.g. Official distributor of spare parts and home appliances in Guadalajara, Mexico.'))
-                                ->helperText(__('Specific business description. Will be concatenated to any global project context. If both are empty, auto-inferred from live homepage.'))
-                                ->rows(3),
+                                \Filament\Forms\Components\Textarea::make('description')
+                                    ->label(__('Asset-Specific Context & Products/Services'))
+                                    ->placeholder(__('e.g. Official distributor of spare parts and home appliances in Guadalajara, Mexico.'))
+                                    ->helperText(__('Specific business description. Will be concatenated to any global project context. If both are empty, auto-inferred from live homepage.'))
+                                    ->rows(3),
 
-                            \Filament\Forms\Components\TagsInput::make('competitors')
-                                ->label(__('Direct Competitor Brands / Domains'))
-                                ->placeholder(__('Add competitor and press Enter'))
-                                ->helperText(__('Competitors specific to this asset (e.g. whirlpool, lg, samsung). Combined with global competitors.'))
-                                ->separator(','),
-                        ])
-                        ->action(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, array $data) {
+                                \Filament\Forms\Components\TagsInput::make('competitors')
+                                    ->label(__('Direct Competitor Brands / Domains'))
+                                    ->placeholder(__('Add competitor and press Enter'))
+                                    ->helperText(__('Competitors specific to this asset (e.g. whirlpool, lg, samsung). Combined with global competitors.'))
+                                    ->separator(','),
+                            ];
+                        })
+                        ->action(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get, array $data) use ($hasAiAccess) {
+                            if (!$hasAiAccess) {
+                                return;
+                            }
                             $assetAiContext = [
                                 'brand' => trim((string)($data['brand'] ?? '')),
                                 'description' => trim((string)($data['description'] ?? '')),
@@ -1385,18 +1441,71 @@
                                 $component->state($newState);
                             }),
                         \Filament\Forms\Components\Actions\Action::make('configureAiContext')
-                            ->label(__('Global AI Context'))
-                            ->tooltip(__('Configure project-wide business context that applies to all websites'))
+                            ->label(function () {
+                                $tenant = Filament::getTenant();
+                                $hasAiAccess = $tenant?->supportsAiClassification();
+                                if ($hasAiAccess) {
+                                    return __('Global AI Context');
+                                }
+                                return new \Illuminate\Support\HtmlString(
+                                    e(__('Global AI Context')) . ' ' .
+                                    '<span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">' .
+                                        '<svg class="w-3 h-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' .
+                                        '<span>Pro</span>' .
+                                    '</span>'
+                                );
+                            })
+                            ->tooltip(function () {
+                                $tenant = Filament::getTenant();
+                                return $tenant?->supportsAiClassification()
+                                    ? __('Configure project-wide business context that applies to all websites')
+                                    : __('Requires Pro subscription');
+                            })
                             ->button()
-                            ->color('gray')
+                            ->color(fn () => Filament::getTenant()?->supportsAiClassification() ? 'gray' : 'warning')
                             ->icon('heroicon-m-globe-alt')
                             ->visible(fn() => $this->activeChannel === 'google_search_console' 
                                 && \Illuminate\Support\Facades\Auth::user()->can('manage_channels')
-                                && Filament::getTenant()?->supportsAiClassification())
-                            ->modalHeading(__('Global Project AI Context'))
-                            ->modalDescription(__('This context applies across all websites in this project. Individual asset contexts are concatenated to this global context.'))
+                                && Filament::getTenant()?->releaseSupportsAiClassification())
+                            ->modalHeading(function () {
+                                $tenant = Filament::getTenant();
+                                if (!$tenant?->supportsAiClassification()) {
+                                    return __('Unlock Global AI Context');
+                                }
+                                return __('Global Project AI Context');
+                            })
+                            ->modalDescription(function () {
+                                $tenant = Filament::getTenant();
+                                if (!$tenant?->supportsAiClassification()) {
+                                    $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $tenant);
+                                    if ($ctx['is_profile_owner']) {
+                                        return __('Global AI Context lets you train semantic classification with your company profile and competitors across all websites. Upgrade your billing profile to Pro to unlock this feature.');
+                                    }
+                                    return __('AI Semantic Classification requires a Pro subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile.', [
+                                        'owner' => $ctx['profile_owner_name'] ?? __('the profile owner'),
+                                    ]);
+                                }
+                                return __('This context applies across all websites in this project. Individual asset contexts are concatenated to this global context.');
+                            })
+                            ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) {
+                                $tenant = Filament::getTenant();
+                                if (!$tenant?->supportsAiClassification()) {
+                                    $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $tenant);
+                                    if ($ctx['is_profile_owner'] && !empty($ctx['upgrade_url'])) {
+                                        return $action
+                                            ->label(__('Upgrade to Pro'))
+                                            ->color('primary')
+                                            ->url($ctx['upgrade_url'], shouldOpenInNewTab: true);
+                                    }
+                                    return false;
+                                }
+                                return $action;
+                            })
                             ->fillForm(function (): array {
                                 $tenant = Filament::getTenant();
+                                if (!$tenant?->supportsAiClassification()) {
+                                    return [];
+                                }
                                 $globalCtx = $tenant->sync_config['google_search_console']['ai_context'] ?? [];
                                 return [
                                     'brand' => $globalCtx['brand'] ?? '',
@@ -1406,38 +1515,47 @@
                                     'infer_transactional' => (bool) ($globalCtx['infer_transactional'] ?? true),
                                 ];
                             })
-                            ->form([
-                                \Filament\Forms\Components\TextInput::make('brand')
-                                    ->label(__('Global Brand / Parent Company Name'))
-                                    ->placeholder(__('e.g. Mabe Group, Acronis International'))
-                                    ->helperText(__('Parent brand or group name. Asset-specific brands will complement this.')),
+                            ->form(function () {
+                                $tenant = Filament::getTenant();
+                                if (!$tenant?->supportsAiClassification()) {
+                                    return [];
+                                }
+                                return [
+                                    \Filament\Forms\Components\TextInput::make('brand')
+                                        ->label(__('Global Brand / Parent Company Name'))
+                                        ->placeholder(__('e.g. Mabe Group, Acronis International'))
+                                        ->helperText(__('Parent brand or group name. Asset-specific brands will complement this.')),
 
-                                \Filament\Forms\Components\Textarea::make('description')
-                                    ->label(__('Global Business Context & Core Industry'))
-                                    ->placeholder(__('e.g. Manufacturer and distributor of major home appliances and HVAC equipment across Latin America.'))
-                                    ->helperText(__('Global industry and business proposition. Asset-specific descriptions will be concatenated to this.'))
-                                    ->rows(3),
+                                    \Filament\Forms\Components\Textarea::make('description')
+                                        ->label(__('Global Business Context & Core Industry'))
+                                        ->placeholder(__('e.g. Manufacturer and distributor of major home appliances and HVAC equipment across Latin America.'))
+                                        ->helperText(__('Global industry and business proposition. Asset-specific descriptions will be concatenated to this.'))
+                                        ->rows(3),
 
-                                \Filament\Forms\Components\TagsInput::make('competitors')
-                                    ->label(__('Global Competitor Brands'))
-                                    ->placeholder(__('Add competitor and press Enter'))
-                                    ->helperText(__('Platform-wide competitors (e.g. whirlpool, lg, samsung). Asset-specific competitors will be merged with this list.'))
-                                    ->separator(','),
+                                    \Filament\Forms\Components\TagsInput::make('competitors')
+                                        ->label(__('Global Competitor Brands'))
+                                        ->placeholder(__('Add competitor and press Enter'))
+                                        ->helperText(__('Platform-wide competitors (e.g. whirlpool, lg, samsung). Asset-specific competitors will be merged with this list.'))
+                                        ->separator(','),
 
-                                \Filament\Forms\Components\Grid::make(2)
-                                    ->schema([
-                                        Toggle::make('infer_geo')
-                                            ->label(__('Geo / Location Detection'))
-                                            ->helperText(__('Infer city/region markers for local intent.'))
-                                            ->default(true),
-                                        Toggle::make('infer_transactional')
-                                            ->label(__('Distinguish E-Commerce / Bookings'))
-                                            ->helperText(__('Identify transactional purchasing or appointment intent.'))
-                                            ->default(true),
-                                    ]),
-                            ])
+                                    \Filament\Forms\Components\Grid::make(2)
+                                        ->schema([
+                                            Toggle::make('infer_geo')
+                                                ->label(__('Geo / Location Detection'))
+                                                ->helperText(__('Infer city/region markers for local intent.'))
+                                                ->default(true),
+                                            Toggle::make('infer_transactional')
+                                                ->label(__('Distinguish E-Commerce / Bookings'))
+                                                ->helperText(__('Identify transactional purchasing or appointment intent.'))
+                                                ->default(true),
+                                        ]),
+                                ];
+                            })
                             ->action(function (array $data) {
                                 $tenant = Filament::getTenant();
+                                if (!$tenant?->supportsAiClassification()) {
+                                    return;
+                                }
                                 $syncConfig = $tenant->sync_config ?? [];
                                 $globalAiContext = [
                                     'brand' => trim((string)($data['brand'] ?? '')),
