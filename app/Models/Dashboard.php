@@ -44,6 +44,11 @@ class Dashboard extends Model
         'is_default' => 'boolean',
     ];
 
+    protected $attributes = [
+        'is_public' => false,
+        'is_default' => false,
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (Dashboard $dashboard) {

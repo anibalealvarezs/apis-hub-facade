@@ -238,7 +238,10 @@ class Project extends Model
      * runtime pushes (shared key propagation, project settings) never reach
      * tenants whose deployed version cannot be verified.
      */
-    public function supportsAiClassification(): bool
+    /**
+     * Check if the deployed apis-hub release version technically supports AI classification (>= v1.16.0).
+     */
+    public function releaseSupportsAiClassification(): bool
     {
         if (!$this->apisHubRelease) {
             return false;
@@ -246,6 +249,27 @@ class Project extends Model
 
         $version = ltrim($this->apisHubRelease->version_tag, 'v');
         return version_compare($version, '1.16.0', '>=');
+    }
+
+    public function supportsAiClassification(): bool
+    {
+        if (!$this->releaseSupportsAiClassification()) {
+            return false;
+        }
+
+        // Tier restriction check: free accounts require the temporary promo feature flag enabled
+        if ($this->billingProfile?->tier === \App\Enums\UserTier::FREE) {
+            try {
+                $featureSettings = app(\App\Settings\FeatureSettings::class);
+                if (!$featureSettings->enable_free_ai_classification) {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

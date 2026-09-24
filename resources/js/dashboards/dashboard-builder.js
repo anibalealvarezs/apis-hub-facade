@@ -833,6 +833,7 @@ export function dashboardBuilder(config = {}) {
             if (!series.breakdown.order) {
                 series.breakdown.order = 'value_desc';
             }
+            this.ensureBreakdownRankByMetric(series);
 
             const isLifetimeTable = (this.widgetControlsForm.widget_type || this.widgetControlsTarget?.widget_type) === 'table'
                 && this.widgetControlsForm.granularity === 'lifetime';
@@ -2774,6 +2775,10 @@ export function dashboardBuilder(config = {}) {
 
                 this.seriesMetricsLoading = {};
 
+                if (Array.isArray(this.widgetControlsForm.raw_series)) {
+                    this.widgetControlsForm.raw_series.forEach((series) => this.ensureBreakdownRankByMetric(series));
+                }
+
                 if (this.$wire) {
                     this.widgetControlsForm.raw_series.forEach((series, idx) => {
                         const ch = series.channel;
@@ -3277,6 +3282,13 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
+        ensureBreakdownRankByMetric(series) {
+            if (!series || !series.breakdown || !series.breakdown.dimension) return;
+            if (!series.breakdown.rank_by || !(series.metrics || []).includes(series.breakdown.rank_by)) {
+                series.breakdown.rank_by = (Array.isArray(series.metrics) && series.metrics.length > 0) ? series.metrics[0] : null;
+            }
+        },
+
         toggleRawMetricIncluded(index, metricKey) {
             this.markWidgetControlsDirty();
             const series = this.widgetControlsForm.raw_series[index];
@@ -3295,6 +3307,7 @@ export function dashboardBuilder(config = {}) {
                     series.metrics = [...series.metrics, metricKey];
                 }
             }
+            this.ensureBreakdownRankByMetric(series);
         },
 
         toggleRawMetricDefaultActive(index, metricKey) {
@@ -3317,6 +3330,7 @@ export function dashboardBuilder(config = {}) {
             } else {
                 series.metrics = [...series.metrics, metricKey];
             }
+            this.ensureBreakdownRankByMetric(series);
         },
 
         selectAllRawMetrics(index) {
@@ -3851,7 +3865,8 @@ export function dashboardBuilder(config = {}) {
                         limit: (this.widgetControlsTarget.widget_type === 'pie_chart' && payload.pie_slice_limit !== undefined) 
                             ? payload.pie_slice_limit 
                             : (parseInt(s.breakdown.limit, 10) || 5),
-                        order: s.breakdown.order || 'value_desc'
+                        order: s.breakdown.order || 'value_desc',
+                        rank_by: s.breakdown.rank_by || null
                     } : null,
                     filters: Array.isArray(s.filters) ? s.filters.filter(f => f.dimension).map(f => ({
                         name: f.name || '',

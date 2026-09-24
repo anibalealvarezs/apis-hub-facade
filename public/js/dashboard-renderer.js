@@ -7,6 +7,7 @@ window.dashboardRenderer = {
     _chartInstances: new Map(),
     _widgetData: new Map(),
     _pinnedTooltips: new Map(),
+    _retryTimers: new Map(),
     METRIC_FORMATS: {
         spend: { label: "Spend", format: "currency", prefix: "$" },
         cpc: {
@@ -446,8 +447,23 @@ window.dashboardRenderer = {
             });
 
             if (!json.success) {
+                if (json.retryable) {
+                    containerEl.innerHTML = this.cloudflareTimeoutState(
+                        json.message || json.error,
+                    );
+                    this._scheduleRetry(
+                        widgetId,
+                        containerEl,
+                        controls,
+                        tenant,
+                    );
+                    return;
+                }
                 throw new Error(json.message || json.error || "Unknown error");
             }
+
+            // Success — cancel any pending auto-reload for this widget
+            this._cancelRetry(widgetId);
 
             // Save to localStorage cache
             this._setStorageCache(
@@ -471,6 +487,13 @@ window.dashboardRenderer = {
         } catch (e) {
             if (e.message === "access_restricted") {
                 containerEl.innerHTML = this.accessRestrictedState();
+            } else if (
+                this.isRetryableError(e)
+            ) {
+                containerEl.innerHTML = this.cloudflareTimeoutState(
+                    e.message,
+                );
+                this._scheduleRetry(widgetId, containerEl, controls, tenant);
             } else if (
                 e.message &&
                 (e.message.includes("___EMPTY_GROUP___") ||
@@ -616,6 +639,95 @@ window.dashboardRenderer = {
                     <p class="text-xs text-gray-500 mt-1">Contact your project owner or editor to request access.</p>
                 </div>
             </div>`;
+    },
+
+    isRetryableError(err) {
+        const msg = (err && err.message) || "";
+        if (!msg) return false;
+        const patterns = [
+            /cURL error 28/i,
+            /Operation timed out/i,
+            /connect\(\) timed out/i,
+            /Connection timed out/i,
+            /timed out after/i,
+            /Request Timeout/i,
+            /Gateway Timeout/i,
+            /Cloudflare/i,
+            /A Timeout Occurred/i,
+            /504 Gateway Time-out/i,
+            /502 Bad Gateway/i,
+            /520 Origin Error/i,
+            /521 Web Server Is Down/i,
+            /522 Connection timed out/i,
+            /523 Origin Is Unreachable/i,
+            /524 A timeout occurred/i,
+            /525 SSL handshake failed/i,
+        ];
+        return patterns.some((re) => re.test(msg));
+    },
+
+    cloudflareTimeoutState(message) {
+        const displayMessage =
+            message ||
+            "This widget needs a bit more time to load its data.";
+        return `
+            <div class="flex items-center justify-center h-full p-4">
+                <div class="text-center">
+                    <svg class="w-6 h-6 mx-auto text-amber-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <p class="text-xs text-amber-500 mt-2 font-medium">Still Loading — Auto-Retrying</p>
+                    <p class="text-xs text-gray-400 mt-1">${this.escapeHtml(displayMessage)}</p>
+                    <p class="text-xs text-gray-500 mt-1">This widget will automatically reload in 2 minutes.</p>
+                    <button onclick="this.closest('.widget-content')?.dispatchEvent(new CustomEvent('widget-reload-now', { bubbles: true }))"
+                            class="text-xs text-primary-500 hover:underline mt-1">Retry Now</button>
+                </div>
+            </div>`;
+    },
+
+    _scheduleRetry(widgetId, containerEl, controls, tenant) {
+        this._cancelRetry(widgetId);
+
+        const fire = () => {
+            const pending = this._retryTimers.get(widgetId);
+            if (!pending) return;
+            // Only reload if the container is still in the DOM
+            if (!containerEl.isConnected) {
+                this._retryTimers.delete(widgetId);
+                return;
+            }
+            this._retryTimers.delete(widgetId);
+            containerEl.innerHTML = this.loadingSkeleton();
+            this.renderWidget(widgetId, containerEl, controls, tenant);
+        };
+
+        const onManualRetry = () => fire();
+
+        containerEl.addEventListener("widget-reload-now", onManualRetry);
+
+        const token = {
+            widgetId,
+            containerEl,
+            controls,
+            tenant,
+            timer: setTimeout(fire, 2 * 60 * 1000), // 2 minutes
+            onManualRetry,
+        };
+        this._retryTimers.set(widgetId, token);
+    },
+
+    _cancelRetry(widgetId) {
+        const pending = this._retryTimers.get(widgetId);
+        if (!pending) return;
+        if (pending.timer) clearTimeout(pending.timer);
+        if (pending.containerEl && pending.onManualRetry) {
+            pending.containerEl.removeEventListener(
+                "widget-reload-now",
+                pending.onManualRetry,
+            );
+        }
+        this._retryTimers.delete(widgetId);
     },
 
     escapeHtml(str) {
@@ -1167,23 +1279,41 @@ window.dashboardRenderer = {
         containerEl._tableData = data;
 
         if (!containerEl._tableSort) {
-            // Default sort by first column: DESC for time-based, ASC for dimensions
-            const firstCol = columns[0];
-            const firstKey = firstCol?.key || firstCol;
-            const timeKeys = [
-                "date",
-                "daily",
-                "weekly",
-                "monthly",
-                "quarterly",
-                "semiannual",
-                "annually",
-            ];
-            const isTimeBased = timeKeys.includes(firstKey);
-            containerEl._tableSort = {
-                column: firstKey,
-                direction: isTimeBased ? "desc" : "asc",
-            };
+            // Backend may declare the intended default sort (e.g. breakdown "Rank Top By"
+            // configured on a custom metric). Use it instead of sorting by the left column.
+            const defaultSortColumn = data?.default_sort_column;
+            const defaultSortDirection = data?.default_sort_direction || "desc";
+            if (
+                defaultSortColumn &&
+                columns.some(
+                    (c) =>
+                        (c && c.key === defaultSortColumn) ||
+                        c === defaultSortColumn,
+                )
+            ) {
+                containerEl._tableSort = {
+                    column: defaultSortColumn,
+                    direction: defaultSortDirection,
+                };
+            } else {
+                // Default sort by first column: DESC for time-based, ASC for dimensions
+                const firstCol = columns[0];
+                const firstKey = firstCol?.key || firstCol;
+                const timeKeys = [
+                    "date",
+                    "daily",
+                    "weekly",
+                    "monthly",
+                    "quarterly",
+                    "semiannual",
+                    "annually",
+                ];
+                const isTimeBased = timeKeys.includes(firstKey);
+                containerEl._tableSort = {
+                    column: firstKey,
+                    direction: isTimeBased ? "desc" : "asc",
+                };
+            }
         }
         const sort = containerEl._tableSort;
 

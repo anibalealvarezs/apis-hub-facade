@@ -48,16 +48,7 @@ class DashboardResource extends Resource
 
     public static function canCreate(): bool
     {
-        $project = \Filament\Facades\Filament::getTenant();
-        if (!$project || !$project->billingProfile) {
-            return false;
-        }
-
-        $currentCount = Dashboard::where('project_id', $project->id)->count();
-        $maxDashboards = app(\App\Services\BillingLifecycleService::class)
-            ->getMaxPrivateDashboardsForTier($project->billingProfile->tier);
-
-        return $currentCount < $maxDashboards;
+        return auth()->user()?->can('edit_preferences') ?? false;
     }
 
     public static function getNavigationLabel(): string
@@ -95,17 +86,33 @@ class DashboardResource extends Resource
                             ->columnSpanFull()
                             ->visible(fn (string $operation) => $operation === 'create'),
                         Forms\Components\Toggle::make('is_public')
-                            ->label(__('Public (accessible by any project collaborator and via shared link)'))
+                            ->label(function () {
+                                $gate = app(\App\Services\FeatureGateService::class);
+                                $hasAccess = $gate->canAccess('public_dashboards');
+
+                                if ($hasAccess) {
+                                    return __('Public (accessible by any project collaborator and via shared link)');
+                                }
+
+                                return new \Illuminate\Support\HtmlString(
+                                    e(__('Public (accessible by any project collaborator and via shared link)')) . ' ' .
+                                    '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">' .
+                                        '<svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' .
+                                        '<span>Pro</span>' .
+                                    '</span>'
+                                );
+                            })
                             ->default(false)
                             ->disabled(function (?\Illuminate\Database\Eloquent\Model $record) {
+                                $gate = app(\App\Services\FeatureGateService::class);
+                                if (!$gate->canAccess('public_dashboards')) {
+                                    return true;
+                                }
+
                                 $project = \Filament\Facades\Filament::getTenant();
                                 $tier = $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE;
                                 $maxPublic = app(\App\Services\BillingLifecycleService::class)->getMaxPublicDashboardsForTier($tier);
-                                
-                                if ($maxPublic === 0) {
-                                    return true;
-                                }
-                                
+
                                 if ($record && $record->is_public) {
                                     return false;
                                 }
@@ -113,23 +120,54 @@ class DashboardResource extends Resource
                                 $currentPublic = Dashboard::where('project_id', $project->id)->where('is_public', true)->count();
                                 return $currentPublic >= $maxPublic;
                             })
+                            ->hintAction(
+                                Forms\Components\Actions\Action::make('upgradeForPublicDashboards')
+                                    ->label(__('Upgrade to unlock'))
+                                    ->icon('heroicon-m-sparkles')
+                                    ->color('warning')
+                                    ->visible(fn () => !app(\App\Services\FeatureGateService::class)->canAccess('public_dashboards'))
+                                    ->modalHeading(__('Unlock Public Dashboards'))
+                                    ->modalDescription(function () {
+                                        $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('public_dashboards');
+                                        if ($ctx['is_profile_owner']) {
+                                            return __('Public dashboards allow sharing live dashboards with anyone via a public link. Upgrade your billing profile to Pro to unlock up to 5 public dashboards.');
+                                        }
+
+                                        return __('Public dashboards require a Pro subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile to this project.', [
+                                            'owner' => $ctx['profile_owner_name'] ?? __('the profile owner'),
+                                        ]);
+                                    })
+                                    ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) {
+                                        $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('public_dashboards');
+                                        if ($ctx['is_profile_owner'] && !empty($ctx['upgrade_url'])) {
+                                            return $action
+                                                ->label(__('Upgrade to Pro'))
+                                                ->color('primary')
+                                                ->url($ctx['upgrade_url'], shouldOpenInNewTab: true);
+                                        }
+
+                                        return false;
+                                    })
+                            )
                             ->helperText(function (?\Illuminate\Database\Eloquent\Model $record) {
-                                $project = \Filament\Facades\Filament::getTenant();
-                                $tier = $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE;
-                                $maxPublic = app(\App\Services\BillingLifecycleService::class)->getMaxPublicDashboardsForTier($tier);
-                                
-                                if ($maxPublic === 0) {
-                                    return __('Public dashboards are not available on your current plan.');
+                                $gate = app(\App\Services\FeatureGateService::class);
+                                if (!$gate->canAccess('public_dashboards')) {
+                                    return __('Public dashboards are not available on the Free tier. Upgrade to Pro to enable public sharing.');
                                 }
-                                
+
                                 if ($record && $record->is_public) {
                                     return null;
                                 }
-                                
+
+                                $project = \Filament\Facades\Filament::getTenant();
+                                $tier = $project->billingProfile?->tier ?? \App\Enums\UserTier::FREE;
+                                $maxPublic = app(\App\Services\BillingLifecycleService::class)->getMaxPublicDashboardsForTier($tier);
+
                                 $currentPublic = Dashboard::where('project_id', $project->id)->where('is_public', true)->count();
                                 if ($currentPublic >= $maxPublic) {
                                     return __('You have reached the limit of public dashboards for your plan.');
                                 }
+
                                 return null;
                             }),
                         Forms\Components\Toggle::make('is_default')

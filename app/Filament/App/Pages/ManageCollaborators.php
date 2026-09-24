@@ -290,100 +290,129 @@ class ManageCollaborators extends Page implements HasTable
                             ->send();
                     }),
             ])
-            ->headerActions([
-                Action::make('invite')
-                    ->label(__('Invite Collaborator'))
-                    ->icon('heroicon-o-envelope')
-                    ->hidden(fn () => ! auth()->user()->can('manage_collaborators'))
-                    ->disabled(function () {
-                        $tenant = Filament::getTenant();
-                        if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
-                            return true;
-                        }
-                        return !app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE);
-                    })
-                    ->tooltip(function () {
-                        $tenant = Filament::getTenant();
-                        if (! $tenant->is_active || $tenant->billing_status === 'suspended') {
-                            return __('Project is inactive or suspended.');
-                        }
-                        if (!app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE)) {
-                            return __('Upgrade to Ultra or Enterprise plan to invite collaborators.');
-                        }
+            ->headerActions((function () use ($project) {
+                $tenant = Filament::getTenant();
+                $tier = $tenant->billingProfile?->tier ?? \App\Enums\UserTier::FREE;
+                $canInvite = app(\App\Services\BillingLifecycleService::class)->canInviteCollaborators($tier);
 
-                        return null;
-                    })
-                    ->form([
-                        TextInput::make('email')
-                            ->email()
-                            ->required()
-                            ->label(__('Collaborator Email')),
-                        \Filament\Forms\Components\ViewField::make('role')
-                            ->label(__('Project Role'))
-                            ->required()
-                            ->default('project_user')
-                            ->view('filament.app.components.ui.form-asset-selector')
-                            ->viewData([
-                                'options' => Role::whereIn('name', ['project_editor', 'project_viewer', 'project_user'])
-                                    ->pluck('name', 'name')
-                                    ->toArray(),
-                                'placeholder' => __('Select an option'),
-                            ]),
-                    ])
-                    ->action(function (array $data) use ($project) {
-                        // 1. Verificar si ya es miembro
-                        $alreadyMember = $project->users()->where('email', $data['email'])->exists();
-                        if ($alreadyMember) {
-                            Notification::make()->danger()->title(__('This user is already a member of the project.'))->send();
+                if (! $canInvite) {
+                    $gate = app(\App\Services\FeatureGateService::class);
+                    return [
+                        Action::make('upgradeCollaborators')
+                            ->label(new \Illuminate\Support\HtmlString(
+                                '<span class="inline-flex items-center gap-1.5 font-semibold">' .
+                                    '<svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' .
+                                    '<span>' . e(__('Invite Collaborator')) . '</span>' .
+                                    '<span class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold uppercase">ULTRA</span>' .
+                                '</span>'
+                            ))
+                            ->color('warning')
+                            ->icon('heroicon-m-sparkles')
+                            ->hidden(fn () => ! auth()->user()->can('manage_collaborators'))
+                            ->modalHeading(__('Unlock Team Collaboration'))
+                            ->modalDescription(function () use ($gate, $project) {
+                                $ctx = $gate->getUpgradeContext('invite_collaborators', $project);
+                                if ($ctx['is_profile_owner']) {
+                                    return __('Team collaboration and role-based permissions are exclusively available on Ultra and Enterprise plans. Upgrade your billing profile to Ultra to invite members and assign roles.');
+                                }
 
-                            return;
-                        }
+                                return __('Team collaboration requires an Ultra or Enterprise subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile.', [
+                                    'owner' => $ctx['profile_owner_name'] ?? __('the profile owner'),
+                                ]);
+                            })
+                            ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) use ($gate, $project) {
+                                $ctx = $gate->getUpgradeContext('invite_collaborators', $project);
+                                if ($ctx['is_profile_owner'] && !empty($ctx['upgrade_url'])) {
+                                    return $action
+                                        ->label(__('Upgrade to Ultra'))
+                                        ->color('primary')
+                                        ->url($ctx['upgrade_url'], shouldOpenInNewTab: true);
+                                }
 
-                        // 2. Verificar si ya hay invitación pendiente
-                        $alreadyInvited = ProjectInvitation::where('project_id', $project->id)
-                            ->where('email', $data['email'])
-                            ->exists();
+                                return false;
+                            }),
+                    ];
+                }
 
-                        if ($alreadyInvited) {
-                            Notification::make()->warning()->title(__('An invitation is already pending for this email.'))->send();
+                return [
+                    Action::make('invite')
+                        ->label(__('Invite Collaborator'))
+                        ->icon('heroicon-o-envelope')
+                        ->hidden(fn () => ! auth()->user()->can('manage_collaborators'))
+                        ->disabled(fn () => ! $tenant->is_active || $tenant->billing_status === 'suspended')
+                        ->tooltip(fn () => (! $tenant->is_active || $tenant->billing_status === 'suspended') ? __('Project is inactive or suspended.') : null)
+                        ->form([
+                            TextInput::make('email')
+                                ->email()
+                                ->required()
+                                ->label(__('Collaborator Email')),
+                            \Filament\Forms\Components\ViewField::make('role')
+                                ->label(__('Project Role'))
+                                ->required()
+                                ->default('project_user')
+                                ->view('filament.app.components.ui.form-asset-selector')
+                                ->viewData([
+                                    'options' => Role::whereIn('name', ['project_editor', 'project_viewer', 'project_user'])
+                                        ->pluck('name', 'name')
+                                        ->toArray(),
+                                    'placeholder' => __('Select an option'),
+                                ]),
+                        ])
+                        ->action(function (array $data) use ($project) {
+                            // 1. Verificar si ya es miembro
+                            $alreadyMember = $project->users()->where('email', $data['email'])->exists();
+                            if ($alreadyMember) {
+                                Notification::make()->danger()->title(__('This user is already a member of the project.'))->send();
 
-                            return;
-                        }
+                                return;
+                            }
 
-                        // 3. Crear invitación
-                        $invitation = ProjectInvitation::create([
-                            'project_id' => $project->id,
-                            'email' => $data['email'],
-                            'role' => $data['role'],
-                            'token' => Str::random(32),
-                            'expires_at' => now()->addDays(7),
-                        ]);
+                            // 2. Verificar si ya hay invitación pendiente
+                            $alreadyInvited = ProjectInvitation::where('project_id', $project->id)
+                                ->where('email', $data['email'])
+                                ->exists();
 
-                        // 4. Enviar correo
-                        Mail::to($data['email'])->send(new ProjectInvitationMail($invitation));
+                            if ($alreadyInvited) {
+                                Notification::make()->warning()->title(__('An invitation is already pending for this email.'))->send();
 
-                        $editorAndOwnerIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
-                            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                            ->whereIn('roles.name', ['project_editor', 'project_owner'])
-                            ->where('model_has_roles.project_id', $project->id)
-                            ->pluck('model_has_roles.model_id')
-                            ->unique()
-                            ->values()
-                            ->toArray();
+                                return;
+                            }
 
-                        $usersToNotify = User::whereIn('id', $editorAndOwnerIds)->get();
-                        foreach ($usersToNotify as $notifyUser) {
-                            $notifyUser->notify(new \App\Notifications\InvitationSent($project, $data['email'], $data['role']));
-                        }
+                            // 3. Crear invitación
+                            $invitation = ProjectInvitation::create([
+                                'project_id' => $project->id,
+                                'email' => $data['email'],
+                                'role' => $data['role'],
+                                'token' => Str::random(32),
+                                'expires_at' => now()->addDays(7),
+                            ]);
 
-                        $inviteUrl = url("/app/invitations/{$invitation->token}/accept");
+                            // 4. Enviar correo
+                            Mail::to($data['email'])->send(new ProjectInvitationMail($invitation));
 
-                        Notification::make()
-                            ->success()
-                            ->title(__('Invitation sent via email.'))
-                            ->body(__('Share this link with the collaborator if they don\'t receive the email:') . ' ' . $inviteUrl)
-                            ->send();
-                    }),
-            ]);
+                            $editorAndOwnerIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+                                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                                ->whereIn('roles.name', ['project_editor', 'project_owner'])
+                                ->where('model_has_roles.project_id', $project->id)
+                                ->pluck('model_has_roles.model_id')
+                                ->unique()
+                                ->values()
+                                ->toArray();
+
+                            $usersToNotify = User::whereIn('id', $editorAndOwnerIds)->get();
+                            foreach ($usersToNotify as $notifyUser) {
+                                $notifyUser->notify(new \App\Notifications\InvitationSent($project, $data['email'], $data['role']));
+                            }
+
+                            $inviteUrl = url("/app/invitations/{$invitation->token}/accept");
+
+                            Notification::make()
+                                ->success()
+                                ->title(__('Invitation sent via email.'))
+                                ->body(__('Share this link with the collaborator if they don\'t receive the email:') . ' ' . $inviteUrl)
+                                ->send();
+                        }),
+                ];
+            })());
     }
 }

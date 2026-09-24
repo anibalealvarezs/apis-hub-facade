@@ -10,6 +10,29 @@ class CreateCustomKpi extends CreateRecord
 {
     protected static string $resource = CustomKpiResource::class;
 
+    public function mount(): void
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if ($project && $project->billingProfile) {
+            $currentCount = \App\Models\CustomKpi::where('project_id', $project->id)->count();
+            $maxKpis = app(\App\Services\BillingLifecycleService::class)
+                ->getMaxCustomKpisForTier($project->billingProfile->tier);
+
+            if ($currentCount >= $maxKpis) {
+                \Filament\Notifications\Notification::make()
+                    ->title(__('KPI limit reached'))
+                    ->body(__('You have reached the maximum number of custom KPIs allowed by your plan (:limit). Please upgrade your subscription to create more.', ['limit' => $maxKpis]))
+                    ->danger()
+                    ->send();
+
+                $this->redirect(CustomKpiResource::getUrl('index'));
+                return;
+            }
+        }
+
+        parent::mount();
+    }
+
     protected function getFormActions(): array
     {
         return [];

@@ -23,4 +23,16 @@ class EditDashboard extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+
+        // Enforce server-side restriction for public dashboards
+        if (!empty($data['is_public']) && !app(\App\Services\FeatureGateService::class)->canAccess('public_dashboards', $project)) {
+            $data['is_public'] = false;
+        }
+
+        return $data;
+    }
 }

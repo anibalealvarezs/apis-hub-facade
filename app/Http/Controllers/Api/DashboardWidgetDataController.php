@@ -226,6 +226,17 @@
                     default => throw new \InvalidArgumentException('Unknown source type: '.$widget->source_type),
                 };
 
+                if (!empty($data['retryable'] ?? false)) {
+                    unset($data['retryable']);
+
+                    return response()->json([
+                        'success'    => false,
+                        'retryable'  => true,
+                        'error_code' => 'cloudflare_timeout',
+                        'error'      => 'This widget needs a bit more time to load its data. It will automatically reload in a few moments.',
+                    ], 200, [], JSON_UNESCAPED_UNICODE);
+                }
+
                 $missingAssets = $this->detectMissingAssets($project, $widget, $resolvedControls)
                     || !empty($data['_missing_assets'] ?? false);
 
@@ -1510,6 +1521,18 @@
                 ]);
                 report($e);
 
+                $retryable = $e instanceof \App\Exceptions\RetryableEngineException
+                    || \App\Services\RemoteEngineService::isCloudflareInterruption($e->getMessage());
+
+                if ($retryable) {
+                    return response()->json([
+                        'success'    => false,
+                        'retryable'  => true,
+                        'error_code' => 'cloudflare_timeout',
+                        'error'      => 'This widget needs a bit more time to load its data. It will automatically reload in a few moments.',
+                    ], 200, [], JSON_UNESCAPED_UNICODE);
+                }
+
                 $sanitizedMessage = $this->sanitizeErrorMessage($e, $widget);
 
                 return response()->json([
@@ -2278,6 +2301,10 @@
             }
 
             if (!($result['success'] ?? false)) {
+                if (!empty($result['retryable'])) {
+                    throw new \App\Exceptions\RetryableEngineException(($result['message'] ?? 'KPI computation timed out'));
+                }
+
                 throw new \RuntimeException($result['message'] ?? 'KPI computation failed');
             }
 
@@ -2487,6 +2514,10 @@
                         : (is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit);
                     $breakdownLimit = max(1, min($maxBreakdownLimit, $breakdownLimit));
                     $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
+                    $breakdownRankBy = is_array($seriesBreakdown) ? (string)($seriesBreakdown['rank_by'] ?? '') : '';
+                    if (!in_array($breakdownRankBy, $metrics, true)) {
+                        $breakdownRankBy = $metrics[0] ?? 'value';
+                    }
 
                     if (!empty($breakdownDim)) {
                         $payload['breakdown'] = $breakdownDim;
@@ -2535,7 +2566,7 @@
 
                             // Group and aggregate metrics per breakdown dimension item
                             $groupedRows = []; // [dimVal => [metric => sum]]
-                            $firstMetric = $metrics[0] ?? 'value';
+                            $firstMetric = $breakdownRankBy;
 
                             foreach ($rawRows as $row) {
                                 $dimVal = null;
@@ -2662,10 +2693,16 @@
                                 $rows[] = $row;
                             }
 
-                            return [
+                            $tablePayload = [
                                 'columns' => $columns,
                                 'rows'    => $rows,
                             ];
+                            if (in_array($breakdownOrder, ['value_desc', 'value_asc'], true)) {
+                                $tablePayload['default_sort_column'] = preg_replace('/^trend_(?:total|average)_/', '', $breakdownRankBy);
+                                $tablePayload['default_sort_direction'] = $breakdownOrder === 'value_asc' ? 'asc' : 'desc';
+                            }
+
+                            return $tablePayload;
                         }
 
                         if ($widget->widget_type === 'scatter_plot' && count($metrics) >= 2) {
@@ -2682,7 +2719,7 @@
                             ];
 
                             $groupedRows = [];
-                            $firstMetric = $metrics[0] ?? 'value';
+                            $firstMetric = $breakdownRankBy;
 
                             foreach ($rawRows as $row) {
                                 $dimVal = null;

@@ -101,6 +101,7 @@ class AdminPanelProvider extends PanelProvider
                 \App\Filament\Pages\Dashboard::class,
                 \App\Filament\Pages\ManagePaymentSettings::class,
                 \App\Filament\Pages\ManageInfoWidgetSettings::class,
+                \App\Filament\Pages\ManageFeatureSettings::class,
             ])
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()

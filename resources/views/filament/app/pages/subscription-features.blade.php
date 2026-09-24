@@ -73,6 +73,11 @@
                         <span class="text-sm text-purple-400">{{ __('Private dashboards') }}  <span
                                 class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('up to') }} 1)</span></span>
                     </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('AI-assisted keywords classification') }} <span
+                                class="text-xs text-primary-600 dark:text-primary-500 italic font-normal">({{ __('limited time') }})</span></span>
+                    </li>
                 </ul>
             </x-filament::section>
 
@@ -150,6 +155,10 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium text-purple-400">{{ __('Export dashboards & reports to PDF') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('AI-assisted keywords classification') }}</span>
                     </li>
                 </ul>
             </x-filament::section>
@@ -232,6 +241,10 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium text-purple-400">{{ __('Export dashboards & reports to PDF') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('AI-assisted keywords classification') }}</span>
                     </li>
                 </ul>
             </x-filament::section>
@@ -328,6 +341,10 @@
                     <li class="flex items-start gap-2">
                         <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
                         <span class="text-sm font-medium text-purple-400">{{ __('Guaranteed SLA') }}</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <x-filament::icon icon="heroicon-m-check-circle" class="h-5 w-5 text-primary-500 shrink-0"/>
+                        <span class="text-sm font-medium text-purple-400">{{ __('AI-assisted keywords classification') }}</span>
                     </li>
                 </ul>
             </x-filament::section>

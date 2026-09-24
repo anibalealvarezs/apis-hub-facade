@@ -25,6 +25,12 @@ class DerivedMetric extends Model
         'is_active',
     ];
 
+    protected $attributes = [
+        'ast' => '[]',
+        'source_series' => '[]',
+        'is_active' => true,
+    ];
+
     protected $casts = [
         'ast' => 'array',
         'source_series' => 'array',
