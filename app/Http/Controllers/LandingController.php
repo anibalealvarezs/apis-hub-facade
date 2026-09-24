@@ -54,6 +54,42 @@ class LandingController extends Controller
     }
 
     /**
+     * Show the plans and features informational page.
+     */
+    public function plans(Request $request, $locale = null)
+    {
+        $host = $request->getHost();
+        $mainDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? config('app.network_domain', 'apis-hub.cloud');
+
+        if ($host !== $mainDomain && $host !== "www.{$mainDomain}") {
+            $subdomain = explode('.', $host)[0];
+            $projectExists = \App\Models\Project::where('subdomain', $subdomain)->exists();
+            if (!$projectExists) {
+                return redirect()->away("https://{$mainDomain}");
+            }
+        }
+
+        if ($locale === 'es') {
+            app()->setLocale('es');
+            session()->put('locale', 'es');
+        } else {
+            app()->setLocale('en');
+            session()->put('locale', 'en');
+        }
+
+        $gtmId = config('services.gtm.id');
+
+        return view('plans', [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+        ]);
+    }
+
+    /**
      * Collect interest for the alpha launch.
      */
     public function subscribe(Request $request)
