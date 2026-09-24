@@ -196,12 +196,41 @@ class ProjectSettings extends Page
                     ->required()
                     ->minItems(1)
                     ->helperText(__('Target languages enabled for dashboard reports and widget texts across this project. This is separate from the application interface language.')),
-                \Filament\Forms\Components\Section::make(__('AI Semantic Classification (TypeSafe)'))
+                \Filament\Forms\Components\Section::make(function () use ($project) {
+                    $baseTitle = __('AI Semantic Classification (TypeSafe)');
+                    if ($project->releaseSupportsAiClassification() && !$project->supportsAiClassification()) {
+                        return new \Illuminate\Support\HtmlString(
+                            e($baseTitle) . ' ' .
+                            '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">' .
+                                '<svg class="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' .
+                                '<span>Pro</span>' .
+                            '</span>'
+                        );
+                    }
+                    return $baseTitle;
+                })
                     ->description(__('Configure your dedicated TypeSafe API key for Search Console query classification (Intent, Brand, Relevance).'))
                     ->schema([
                         \Filament\Forms\Components\Placeholder::make('ai_status_banner')
                             ->hiddenLabel()
                             ->content(function () use ($project) {
+                                $isTierRestricted = $project->releaseSupportsAiClassification() && !$project->supportsAiClassification();
+                                if ($isTierRestricted) {
+                                    $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $project);
+                                    $message = $ctx['is_profile_owner']
+                                        ? __('AI Semantic Classification is a Pro feature. Upgrade your billing profile to unlock automated query categorization and intent analysis.')
+                                        : __('AI Semantic Classification requires a Pro subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile.', ['owner' => $ctx['profile_owner_name'] ?? __('the profile owner')]);
+
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-800 dark:text-amber-200">
+                                            <div class="flex items-center gap-2">
+                                                <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                                <span><strong>' . __('Pro Feature') . ':</strong> ' . e($message) . '</span>
+                                            </div>
+                                        </div>
+                                    ');
+                                }
+
                                 $html = '';
                                 if ($project->isUsingSharedAiKey()) {
                                     $html .= '
@@ -252,19 +281,66 @@ class ProjectSettings extends Page
                             ->label(__('TypeSafe API Key'))
                             ->password()
                             ->revealable()
-                            ->placeholder($project->isUsingSharedAiKey() ? __('Inheriting platform license (leave blank to keep)') : 'apikey_...')
-                            ->helperText(__('Enter your TypeSafe API key. It will be stored securely and applied directly to your tenant synchronization engine.')),
+                            ->disabled(fn () => !$project->supportsAiClassification())
+                            ->dehydrated(true)
+                            ->placeholder(function () use ($project) {
+                                if (!$project->supportsAiClassification()) {
+                                    return __('Requires Pro subscription');
+                                }
+                                return $project->isUsingSharedAiKey() ? __('Inheriting platform license (leave blank to keep)') : 'apikey_...';
+                            })
+                            ->helperText(function () use ($project) {
+                                if (!$project->supportsAiClassification()) {
+                                    return __('This feature requires a Pro subscription or active promotional period. Upgrade your billing profile to configure a dedicated key.');
+                                }
+                                return __('Enter your TypeSafe API key. It will be stored securely and applied directly to your tenant synchronization engine.');
+                            })
+                            ->hintAction(
+                                \Filament\Forms\Components\Actions\Action::make('upgradeForAiClassification')
+                                    ->label(__('Upgrade to unlock'))
+                                    ->icon('heroicon-m-sparkles')
+                                    ->color('warning')
+                                    ->visible(fn () => $project->releaseSupportsAiClassification() && !$project->supportsAiClassification())
+                                    ->modalHeading(__('Unlock AI Semantic Classification'))
+                                    ->modalDescription(function () use ($project) {
+                                        $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $project);
+                                        if ($ctx['is_profile_owner']) {
+                                            return __('AI Semantic Classification automatically labels and classifies Search Console queries (Intent, Brand, Relevance). Upgrade your billing profile to Pro to unlock this feature.');
+                                        }
+
+                                        return __('AI Semantic Classification requires a Pro subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile to this project.', [
+                                            'owner' => $ctx['profile_owner_name'] ?? __('the profile owner'),
+                                        ]);
+                                    })
+                                    ->modalSubmitAction(function (\Filament\Actions\StaticAction $action) use ($project) {
+                                        $ctx = app(\App\Services\FeatureGateService::class)->getUpgradeContext('ai_classification', $project);
+                                        if ($ctx['is_profile_owner'] && !empty($ctx['upgrade_url'])) {
+                                            return $action
+                                                ->label(__('Upgrade to Pro'))
+                                                ->color('primary')
+                                                ->url($ctx['upgrade_url'], shouldOpenInNewTab: true);
+                                        }
+
+                                        return false;
+                                    })
+                            ),
                     ])
-                    ->visible(fn () => $project->supportsAiClassification())
+                    ->visible(fn () => $project->releaseSupportsAiClassification())
                     ->collapsed(false),
             ])
             ->action(function (array $data) use ($project) {
                 $newApiKey = !empty($data['typesafe_api_key']) ? trim($data['typesafe_api_key']) : null;
-                $project->update([
-                    'timezone' => $data['timezone'],
+                $updateData = [
+                    'timezone' => $data['timezone'] ?? $project->timezone ?? 'UTC',
                     'supported_locales' => array_values($data['supported_locales'] ?? ['en', 'es']),
-                    'typesafe_api_key' => $newApiKey,
-                ]);
+                ];
+
+                // Only allow updating typesafe_api_key if the project supports AI classification
+                if ($project->supportsAiClassification()) {
+                    $updateData['typesafe_api_key'] = $newApiKey;
+                }
+
+                $project->update($updateData);
 
                 // Hot-push the effective API key to the tenant worker .env
                 if (!empty($project->remote_admin_api_key) && $project->supportsAiClassification()) {
