@@ -165,9 +165,10 @@ class SyncSettings extends Page
                     })
                     ->schema([
                         TextInput::make('api_url')
-                            ->label(__('API Endpoint'))
-                            ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud') . '/api')
+                            ->label(__('Base API URL'))
+                            ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud'))
                             ->disabled()
+                            ->helperText(new \Illuminate\Support\HtmlString(__('Use this base URL with endpoints like /api/v1/ping or /{channel}/metric. <a href="/app/' . Filament::getTenant()->slug . '/integrations/api-access-reference" class="underline text-primary-600 dark:text-primary-400 font-semibold">' . __('View API Guide & Examples') . '</a>')))
                             ->suffixIcon('heroicon-m-globe-alt'),
                         TextInput::make('app_api_key')
                             ->label(__('Secret API Key'))
