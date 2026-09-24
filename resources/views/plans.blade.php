@@ -11,7 +11,7 @@
         <link rel="dns-prefetch" href="https://fonts.gstatic.com">
         <link rel="preconnect" href="https://www.googletagmanager.com">
         <link rel="preconnect" href="https://www.google.com">
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
         <!-- Primary Meta Tags -->
         <title>{{ app()->getLocale() === 'es' ? 'Planes y Funcionalidades | Analítica de Marketing Unificada — APIs Hub' : 'Plans & Features | Unified Marketing Analytics & Dashboards — APIs Hub' }}</title>
@@ -135,13 +135,13 @@
             
             <!-- Hero Section -->
             <section class="text-center max-w-4xl mx-auto mb-16 sm:mb-20">
-                <span class="inline-block px-4 py-1.5 mb-4 text-xs font-black tracking-widest text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded-full uppercase">
+                <span class="public-kicker mb-4">
                     {{ __('Architected for Growth') }}
                 </span>
-                <h1 class="text-4xl sm:text-6xl font-extrabold unicorn-title mb-6 tracking-tight">
+                <h1 class="public-hero-title">
                     {{ app()->getLocale() === 'es' ? 'La arquitectura adecuada para cada etapa de tu analítica' : 'The Right Foundation for Every Stage of Your Analytics' }}
                 </h1>
-                <p class="text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-light leading-relaxed max-w-3xl mx-auto">
+                <p class="public-hero-subtitle">
                     {{ app()->getLocale() === 'es'
                         ? 'Diseñado para escalar con total soberanía de datos: desde proyectos individuales hasta agencias con decenas de clientes e infraestructura cloud dedicada.'
                         : 'Engineered to scale with complete data sovereignty: from standalone testing projects to high-growth agencies managing dozens of client workspaces.' }}
@@ -367,10 +367,10 @@
             <!-- Detailed Feature Breakdown Matrix (SEO Pillar Section) -->
             <section class="w-full mb-20" aria-labelledby="matrix-headline">
                 <div class="text-center max-w-2xl mx-auto mb-10">
-                    <h2 id="matrix-headline" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-3">
+                    <h2 id="matrix-headline" class="public-section-title mb-3">
                         {{ app()->getLocale() === 'es' ? 'Comparativa exhaustiva de capacidades' : 'Comprehensive Feature Comparison' }}
                     </h2>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                    <p class="public-section-subtitle">
                         {{ app()->getLocale() === 'es' ? 'Revisa al detalle los límites de datos, gobernanza y herramientas analíticas por nivel.' : 'A side-by-side technical breakdown of data retention, governance, and analytics capabilities.' }}
                     </p>
                 </div>
@@ -589,10 +589,10 @@
             <!-- FAQ Accordion Section (Rich Snippet SEO) -->
             <section class="w-full max-w-4xl mx-auto mb-20" aria-labelledby="faq-headline">
                 <div class="text-center mb-10">
-                    <h2 id="faq-headline" class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
+                    <h2 id="faq-headline" class="public-section-title mb-2">
                         {{ __('Frequently Asked Questions') }}
                     </h2>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                    <p class="public-section-subtitle">
                         {{ app()->getLocale() === 'es' ? 'Todo lo que necesitas saber sobre la gobernanza y escala de tus datos.' : 'Everything you need to know about our data architecture and governance.' }}
                     </p>
                 </div>
@@ -641,10 +641,10 @@
             <!-- Bottom CTA Banner -->
             <section class="w-full max-w-4xl mx-auto text-center p-8 sm:p-12 glass-panel rounded-3xl border border-brand-blue/30 shadow-2xl relative overflow-hidden">
                 <div class="relative z-10">
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mb-4">
+                    <h2 class="public-section-title mb-4">
                         {{ app()->getLocale() === 'es' ? '¿Listo para unificar tu analítica de marketing?' : 'Ready to Unify Your Marketing Analytics?' }}
                     </h2>
-                    <p class="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 font-light">
+                    <p class="public-section-subtitle mb-8">
                         {{ app()->getLocale() === 'es'
                             ? 'Conecta Meta Ads, Google Ads, GA4, Search Console y Shopify en segundos. Comienza gratis durante nuestra fase Beta.'
                             : 'Connect Meta, Google Ads, GA4, Search Console, and Shopify in seconds. Start free during our Beta program.' }}

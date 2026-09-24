@@ -119,7 +119,7 @@
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Google Fonts: Outfit -->
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
         <style>
             body {
@@ -195,10 +195,10 @@
                 <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-block px-8 py-3 mb-6 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
                     {{ __('Try beta for free') }}
                 </span>
-                <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
+                <h1 id="main-headline" class="public-hero-title">
                     {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
                 </h1>
-                <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
+                <p class="public-hero-subtitle">
                     {{ __('Connect Meta, Google, Shopify, Klaviyo and more in seconds. Automatically aggregate your advertising, social, and ecommerce metrics into lightning-fast, pre-built analytics dashboards with custom KPI support.') }}
                 </p>
             </section>
