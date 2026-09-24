@@ -159,11 +159,11 @@
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">Starter</span>
                         </div>
                         <h2 class="text-2xl font-extrabold mb-2 text-slate-900 dark:text-white">Free</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 min-h-[48px]">
+                        <p class="text-base text-slate-600 dark:text-slate-300 mb-6 min-h-[52px]">
                             {{ app()->getLocale() === 'es' ? 'Diseñado para pruebas de conectores, evaluación y proyectos personales sin costo.' : 'Entry workspace for connector verification, early testing, and personal projects.' }}
                         </p>
                         
-                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-xs">
+                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-base">
                             <div class="flex justify-between items-center">
                                 <span class="text-slate-500">{{ __('Projects') }}</span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200">1</span>
@@ -182,30 +182,30 @@
                             </div>
                         </div>
 
-                        <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-400 mb-8">
-                            <li class="flex items-center gap-2">
+                        <ul class="space-y-3 text-base text-slate-600 dark:text-slate-300 mb-8">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Basic data synchronization') }}</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Custom KPIs') }} (10)</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                                 <span class="text-slate-800 dark:text-slate-200">{{ __('AI-assisted keywords classification') }} ({{ __('limited time') }})</span>
                             </li>
                         </ul>
                     </div>
 
-                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-2.5 px-4 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-200/50 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer">
+                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-3 px-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-200/50 dark:bg-slate-800/80 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer">
                         {{ __('Get started for free') }}
                     </span>
                 </div>
 
                 <!-- PRO TIER CARD -->
                 <div class="glass-panel p-6 sm:p-8 rounded-2xl flex flex-col justify-between transition-all glow-hover border-brand-blue/30 relative">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-brand-blue to-brand-teal text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-brand-blue to-brand-teal text-white text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
                         {{ __('Freelancers & Consultants') }}
                     </div>
                     <div>
@@ -214,11 +214,11 @@
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-blue/10 text-brand-blue border border-brand-blue/20">Pro</span>
                         </div>
                         <h2 class="text-2xl font-extrabold mb-2 text-slate-900 dark:text-white">Pro</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 min-h-[48px]">
+                        <p class="text-base text-slate-600 dark:text-slate-300 mb-6 min-h-[52px]">
                             {{ app()->getLocale() === 'es' ? 'Potencia analítica y reportes compartibles ideales para profesionales con múltiples clientes.' : 'Analytics horsepower and client-ready shareable reports for independent marketers.' }}
                         </p>
                         
-                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-xs">
+                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-base">
                             <div class="flex justify-between items-center">
                                 <span class="text-slate-500">{{ __('Projects') }}</span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200">5</span>
@@ -237,23 +237,23 @@
                             </div>
                         </div>
 
-                        <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-400 mb-8">
-                            <li class="flex items-center gap-2">
+                        <ul class="space-y-3 text-base text-slate-600 dark:text-slate-300 mb-8">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Export dashboards & reports to PDF') }}</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Custom KPIs') }} (30)</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-brand-blue shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                                 <span class="font-semibold text-slate-800 dark:text-slate-200">{{ __('AI-assisted keywords classification') }}</span>
                             </li>
                         </ul>
                     </div>
 
-                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-2.5 px-4 text-xs font-bold text-white bg-brand-blue hover:opacity-95 rounded-xl transition-all shadow-glow cursor-pointer">
+                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-3 px-4 text-base font-bold text-white bg-brand-blue hover:opacity-95 rounded-xl transition-all shadow-glow cursor-pointer">
                         {{ __('Join the beta') }}
                     </span>
                 </div>
@@ -266,11 +266,11 @@
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-teal/10 text-brand-teal border border-brand-teal/20">Ultra</span>
                         </div>
                         <h2 class="text-2xl font-extrabold mb-2 text-slate-900 dark:text-white">Ultra / Founder</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 min-h-[48px]">
+                        <p class="text-base text-slate-600 dark:text-slate-300 mb-6 min-h-[52px]">
                             {{ app()->getLocale() === 'es' ? 'La suite definitiva para agencias: colaboración en equipo, acceso API y hasta 15 proyectos.' : 'The agency workhorse: full team collaboration, programmatic API access, and up to 15 workspaces.' }}
                         </p>
                         
-                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-xs">
+                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-base">
                             <div class="flex justify-between items-center">
                                 <span class="text-slate-500">{{ __('Projects') }}</span>
                                 <span class="font-bold text-slate-800 dark:text-slate-200">15</span>
@@ -289,23 +289,23 @@
                             </div>
                         </div>
 
-                        <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-400 mb-8">
-                            <li class="flex items-center gap-2">
+                        <ul class="space-y-3 text-base text-slate-600 dark:text-slate-300 mb-8">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('API access') }} ({{ __('External Integration') }})</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Custom KPIs') }} (50)</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-brand-teal shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                                 <span>{{ __('AI-assisted keywords classification') }}</span>
                             </li>
                         </ul>
                     </div>
 
-                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-2.5 px-4 text-xs font-bold text-white bg-gradient-to-r from-brand-blue to-brand-teal hover:opacity-95 rounded-xl transition-all shadow-glow cursor-pointer">
+                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-3 px-4 text-base font-bold text-white bg-gradient-to-r from-brand-blue to-brand-teal hover:opacity-95 rounded-xl transition-all shadow-glow cursor-pointer">
                         {{ __('Get started with Ultra') }}
                     </span>
                 </div>
@@ -318,14 +318,14 @@
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">Custom</span>
                         </div>
                         <h2 class="text-2xl font-extrabold mb-2 text-slate-900 dark:text-white">Enterprise</h2>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6 min-h-[48px]">
-                            {{ app()->getLocale() === 'es' ? 'Infraestructura dedicada, límites a medida y soporte corporativo de misión crítica.' : 'Corporate deployment with dedicated containers, custom limits, and premium SLA.' }}
+                        <p class="text-base text-slate-600 dark:text-slate-300 mb-6 min-h-[52px]">
+                            {{ app()->getLocale() === 'es' ? 'Infraestructura dedicada, límites a medida y soporte corporativo de misión crítica.' : 'Corporate deployment with dedicated syncing engine, custom limits, and premium SLA.' }}
                         </p>
                         
-                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-xs">
+                        <div class="space-y-3 mb-6 border-t border-b border-slate-200/60 dark:border-slate-800/80 py-4 text-base">
                             <div class="flex justify-between items-center">
                                 <span class="text-slate-500">{{ __('Projects') }}</span>
-                                <span class="font-bold text-amber-500">{{ __('Custom (Base 10)') }}+</span>
+                                <span class="font-bold text-amber-500">{{ __('Custom (Base 15)') }}+</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-slate-500">{{ __('Accounts to Sync') }}</span>
@@ -341,25 +341,28 @@
                             </div>
                         </div>
 
-                        <ul class="space-y-2.5 text-xs text-slate-600 dark:text-slate-400 mb-8">
-                            <li class="flex items-center gap-2">
+                        <ul class="space-y-3 text-base text-slate-600 dark:text-slate-300 mb-8">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Guaranteed SLA') }} & {{ __('Dedicated Support') }}</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Higher API rate limits') }} (120+/min)</span>
                             </li>
-                            <li class="flex items-center gap-2">
+                            <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                                <span>{{ __('Cross-project Analytics') }}</span>
+                                <span class="flex items-center gap-2">
+                                    <span>{{ __('Cross-project Analytics') }}</span>
+                                    <span class="px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">{{ __('Soon') }}</span>
+                                </span>
                             </li>
                         </ul>
                     </div>
 
-                    <a href="mailto:admin@apis-hub.cloud?subject=Enterprise%20Inquiry" class="block w-full text-center py-2.5 px-4 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-xl transition-all">
-                        {{ __('Contact Enterprise Team') }}
-                    </a>
+                    <span data-portal="{{ $portals['app'] }}" class="js-portal-link block w-full text-center py-3 px-4 text-base font-bold text-slate-900 dark:text-white bg-amber-500 hover:bg-amber-400 rounded-xl transition-all shadow-glow cursor-pointer">
+                        {{ __('Get started with Enterprise') }}
+                    </span>
                 </div>
 
             </section>
@@ -376,15 +379,15 @@
                 </div>
 
                 <div class="overflow-x-auto rounded-2xl glass-panel border border-slate-200/80 dark:border-slate-800 shadow-xl">
-                    <table class="w-full text-left text-xs border-collapse">
+                    <table class="w-full text-left text-sm sm:text-base border-collapse">
                         <!-- Table Header -->
                         <thead class="bg-slate-100/70 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                             <tr>
-                                <th scope="col" class="py-4 px-6 font-bold uppercase tracking-wider w-2/5">{{ __('Feature & Capability') }}</th>
-                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider w-1/6">Free</th>
-                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider w-1/6 text-brand-blue">Pro</th>
-                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider w-1/6 text-brand-teal">Ultra</th>
-                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider w-1/6 text-amber-500">Enterprise</th>
+                                <th scope="col" class="py-4 px-6 font-bold uppercase tracking-wider text-xs sm:text-sm w-2/5">{{ __('Feature & Capability') }}</th>
+                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider text-xs sm:text-sm w-1/6">Free</th>
+                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider text-xs sm:text-sm w-1/6 text-brand-blue">Pro</th>
+                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider text-xs sm:text-sm w-1/6 text-brand-teal">Ultra</th>
+                                <th scope="col" class="py-4 px-4 font-bold text-center uppercase tracking-wider text-xs sm:text-sm w-1/6 text-amber-500">Enterprise</th>
                             </tr>
                         </thead>
 
@@ -392,194 +395,194 @@
                             
                             <!-- Category: Infrastructure & Data -->
                             <tr class="bg-slate-50/50 dark:bg-slate-900/40">
-                                <th colspan="5" class="py-3 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-[11px] bg-slate-200/30 dark:bg-slate-800/30">
+                                <th colspan="5" class="py-3.5 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-xs sm:text-sm bg-slate-200/30 dark:bg-slate-800/30">
                                     {{ __('Infrastructure & Data Syncing') }}
                                 </th>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Max Active Projects') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Independent environments with dedicated database and worker queues.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Independent environments with dedicated syncing engine and isolated data.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-bold">1</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">5</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">15</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-amber-500">{{ __('Custom (Base 10)') }}+</td>
+                                <td class="py-4 px-4 text-center font-bold">1</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">5</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">15</td>
+                                <td class="py-4 px-4 text-center font-bold text-amber-500">{{ __('Custom (Base 15)') }}+</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Accounts to Sync') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Ad accounts, Google properties, Facebook pages, and Shopify stores.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Ad accounts, Google properties, Facebook pages, and Shopify stores.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-bold">5</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">100</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">500</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-amber-500">500+</td>
+                                <td class="py-4 px-4 text-center font-bold">5</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">100</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">500</td>
+                                <td class="py-4 px-4 text-center font-bold text-amber-500">500+</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Historical Data Retention') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Depth of historical daily metrics stored in queryable local cache.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Depth of historical daily metrics stored in queryable local cache.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center">6 {{ __('months') }}</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">{{ __('Full') }}</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">{{ __('Full') }}</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-amber-500">{{ __('Full') }}</td>
+                                <td class="py-4 px-4 text-center">6 {{ __('months') }}</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">{{ __('Full') }}</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">{{ __('Full') }}</td>
+                                <td class="py-4 px-4 text-center font-bold text-amber-500">{{ __('Full') }}</td>
                             </tr>
 
                             <!-- Category: Dashboards & Reporting -->
                             <tr class="bg-slate-50/50 dark:bg-slate-900/40">
-                                <th colspan="5" class="py-3 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-[11px] bg-slate-200/30 dark:bg-slate-800/30">
+                                <th colspan="5" class="py-3.5 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-xs sm:text-sm bg-slate-200/30 dark:bg-slate-800/30">
                                     {{ __('Dashboards & Client Reporting') }}
                                 </th>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Private Dashboards') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Internal operational dashboards customized with modular widgets.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Internal operational dashboards customized with modular widgets.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-bold">1</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">5</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">15</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
+                                <td class="py-4 px-4 text-center font-bold">1</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">5</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">15</td>
+                                <td class="py-4 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Public & Shareable Dashboards') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Live share links with token authentication for clients and partners.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Live share links with token authentication for clients and partners.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">5</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">15</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">5</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">15</td>
+                                <td class="py-4 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Export dashboards & reports to PDF') }}
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Custom KPIs') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Custom formulas, cross-channel blended metrics, and ROAS calculations.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Custom formulas, cross-channel blended metrics, and ROAS calculations.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-bold">10</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">30</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">50</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
+                                <td class="py-4 px-4 text-center font-bold">10</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">30</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">50</td>
+                                <td class="py-4 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Derived Metrics & Formulas') }}
                                 </td>
-                                <td class="py-3.5 px-4 text-center font-bold">10</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-blue">30</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-brand-teal">50</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
+                                <td class="py-4 px-4 text-center font-bold">10</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-blue">30</td>
+                                <td class="py-4 px-4 text-center font-bold text-brand-teal">50</td>
+                                <td class="py-4 px-4 text-center font-bold text-emerald-500 uppercase">{{ __('unlimited') }}</td>
                             </tr>
 
                             <!-- Category: Artificial Intelligence -->
                             <tr class="bg-slate-50/50 dark:bg-slate-900/40">
-                                <th colspan="5" class="py-3 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-[11px] bg-slate-200/30 dark:bg-slate-800/30">
+                                <th colspan="5" class="py-3.5 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-xs sm:text-sm bg-slate-200/30 dark:bg-slate-800/30">
                                     {{ __('Artificial Intelligence & Semantic SEO') }}
                                 </th>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('AI-assisted keywords classification') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Intent, Brand, and Relevance query labeling for Google Search Console.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Intent, Brand, and Relevance query labeling for Google Search Console.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-amber-500 font-semibold">{{ __('Promo') }}</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-amber-500 font-semibold">{{ __('Promo') }}</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Tailored Website Context') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Custom Brand, Description, and Competitors injection per web property.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Custom Brand, Description, and Competitors injection per web property.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-amber-500 font-semibold">{{ __('Promo') }}</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-amber-500 font-semibold">{{ __('Promo') }}</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Dedicated TypeSafe API Key') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Use your own dedicated classification key to bypass shared limits.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Use your own dedicated classification key to bypass shared limits.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
 
                             <!-- Category: Governance & Team -->
                             <tr class="bg-slate-50/50 dark:bg-slate-900/40">
-                                <th colspan="5" class="py-3 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-[11px] bg-slate-200/30 dark:bg-slate-800/30">
+                                <th colspan="5" class="py-3.5 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-xs sm:text-sm bg-slate-200/30 dark:bg-slate-800/30">
                                     {{ __('Team Collaboration & Access Control') }}
                                 </th>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Invite Team Collaborators') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Grant access to designers, team analysts, or external clients.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Grant access to designers, team analysts, or external clients.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">{{ __('Owner only') }}</td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">{{ __('Owner only') }}</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-slate-400">{{ __('Owner only') }}</td>
+                                <td class="py-4 px-4 text-center text-slate-400">{{ __('Owner only') }}</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Granular Asset Groups Sharing') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Restrict collaborators to specific stores, pages, or ad accounts.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Restrict collaborators to specific stores, pages, or ad accounts.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('Shared Billing Profiles') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Allow multiple agency admins to link projects to a corporate pool.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Allow multiple agency admins to link projects to a corporate pool.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
 
                             <!-- Category: Integration & API -->
                             <tr class="bg-slate-50/50 dark:bg-slate-900/40">
-                                <th colspan="5" class="py-3 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-[11px] bg-slate-200/30 dark:bg-slate-800/30">
+                                <th colspan="5" class="py-3.5 px-6 font-bold text-slate-900 dark:text-slate-100 uppercase tracking-widest text-xs sm:text-sm bg-slate-200/30 dark:bg-slate-800/30">
                                     {{ __('Developer & Programmatic API') }}
                                 </th>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('REST API Access') }}
-                                    <span class="block text-[11px] font-normal text-slate-400">{{ __('Query raw normalized metrics, extract timeseries data, and trigger syncs.') }}</span>
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Query raw normalized metrics, extract timeseries data, and trigger syncs.') }}</span>
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
-                                <td class="py-3.5 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
-                                <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('API Rate Limits') }}
                                 </td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center text-slate-400">—</td>
-                                <td class="py-3.5 px-4 text-center font-medium">60 req/min</td>
-                                <td class="py-3.5 px-4 text-center font-bold text-amber-500">120+ req/min</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center font-medium">60 req/min</td>
+                                <td class="py-4 px-4 text-center font-bold text-amber-500">120+ req/min</td>
                             </tr>
                         </tbody>
                     </table>
@@ -599,39 +602,39 @@
 
                 <div class="space-y-4" x-data="{ openFaq: null }">
                     
-                    <div class="glass-panel rounded-xl p-5 border border-slate-200 dark:border-slate-800">
-                        <button @click="openFaq = (openFaq === 1 ? null : 1)" class="w-full flex items-center justify-between text-left font-bold text-slate-800 dark:text-slate-200">
+                    <div class="glass-panel rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                        <button @click="openFaq = (openFaq === 1 ? null : 1)" class="w-full flex items-center justify-between text-left text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
                             <span>{{ app()->getLocale() === 'es' ? '¿Cómo se maneja la soberanía y privacidad de los datos de mis clientes?' : 'How is client data sovereignty and privacy protected?' }}</span>
-                            <svg class="w-5 h-5 transition-transform" :class="openFaq === 1 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="w-5 h-5 shrink-0 transition-transform ml-4" :class="openFaq === 1 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="openFaq === 1" x-collapse x-cloak class="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        <div x-show="openFaq === 1" x-collapse x-cloak class="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
                             {{ app()->getLocale() === 'es'
-                                ? 'Cada proyecto en APIs Hub opera de forma desacoplada con su propia base de datos SQLite y contenedor de sincronización. Ni siquiera el dueño del perfil de facturación puede ver los datos de un proyecto a menos que el creador del proyecto lo invite explícitamente como colaborador.'
-                                : 'Each workspace in APIs Hub operates in isolation with its own dedicated SQLite storage and background synchronization worker. Even billing profile owners cannot access workspace data unless explicitly invited as collaborators.' }}
+                                ? 'Cada proyecto en APIs Hub opera de forma completamente aislada con su propio motor de sincronización y almacenamiento dedicado. La soberanía de los datos es total: nadie, ni siquiera el dueño del perfil de facturación, puede acceder a los datos de un proyecto a menos que el creador lo invite explícitamente como colaborador.'
+                                : 'Each project in APIs Hub operates in total isolation with its own dedicated syncing engine and secure storage. Data sovereignty is absolute: no one, not even billing profile owners, can access project metrics unless explicitly invited by the project creator as a collaborator.' }}
                         </div>
                     </div>
 
-                    <div class="glass-panel rounded-xl p-5 border border-slate-200 dark:border-slate-800">
-                        <button @click="openFaq = (openFaq === 2 ? null : 2)" class="w-full flex items-center justify-between text-left font-bold text-slate-800 dark:text-slate-200">
-                            <span>{{ app()->getLocale() === 'es' ? '¿Puedo transferir la propiedad de un proyecto a un cliente en el futuro?' : 'Can I transfer workspace ownership to a client later?' }}</span>
-                            <svg class="w-5 h-5 transition-transform" :class="openFaq === 2 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <div class="glass-panel rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                        <button @click="openFaq = (openFaq === 2 ? null : 2)" class="w-full flex items-center justify-between text-left text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
+                            <span>{{ app()->getLocale() === 'es' ? '¿Puedo transferir la propiedad de un proyecto a un cliente en el futuro?' : 'Can I transfer project ownership to a client later?' }}</span>
+                            <svg class="w-5 h-5 shrink-0 transition-transform ml-4" :class="openFaq === 2 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="openFaq === 2" x-collapse x-cloak class="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        <div x-show="openFaq === 2" x-collapse x-cloak class="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
                             {{ app()->getLocale() === 'es'
                                 ? 'Sí. APIs Hub incluye un flujo completo de transferencia de proyectos con tokens seguros por correo electrónico. Puedes transferir la propiedad del proyecto reteniendo o desacoplando el perfil de facturación.'
-                                : 'Yes. APIs Hub provides an end-to-end tokenized transfer workflow, allowing agencies to build analytics workspaces and cleanly hand over ownership and billing to clients.' }}
+                                : 'Yes. APIs Hub provides an end-to-end tokenized transfer workflow, allowing agencies to build analytics projects and cleanly hand over ownership and billing to clients.' }}
                         </div>
                     </div>
 
-                    <div class="glass-panel rounded-xl p-5 border border-slate-200 dark:border-slate-800">
-                        <button @click="openFaq = (openFaq === 3 ? null : 3)" class="w-full flex items-center justify-between text-left font-bold text-slate-800 dark:text-slate-200">
+                    <div class="glass-panel rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                        <button @click="openFaq = (openFaq === 3 ? null : 3)" class="w-full flex items-center justify-between text-left text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
                             <span>{{ app()->getLocale() === 'es' ? '¿Qué requisitos técnicos tiene la clasificación asistida por IA?' : 'What are the technical requirements for AI semantic classification?' }}</span>
-                            <svg class="w-5 h-5 transition-transform" :class="openFaq === 3 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="w-5 h-5 shrink-0 transition-transform ml-4" :class="openFaq === 3 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div x-show="openFaq === 3" x-collapse x-cloak class="mt-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        <div x-show="openFaq === 3" x-collapse x-cloak class="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
                             {{ app()->getLocale() === 'es'
-                                ? 'Requiere un contenedor con APIs Hub v1.16.0 o superior y Google Search Console conectado. Las consultas de búsqueda se analizan y etiquetan semánticamente preservando la privacidad de tu negocio.'
-                                : 'It requires APIs Hub v1.16.0 or higher with a connected Google Search Console data source. Queries are analyzed and categorized by intent and brand relevance.' }}
+                                ? 'Requiere conectar Google Search Console al motor de sincronización de APIs Hub. Las consultas de búsqueda se analizan y clasifican semánticamente preservando la privacidad de tu negocio.'
+                                : 'It requires connecting Google Search Console to your APIs Hub syncing engine. Search queries are automatically analyzed and semantically classified while maintaining strict business privacy.' }}
                         </div>
                     </div>
 

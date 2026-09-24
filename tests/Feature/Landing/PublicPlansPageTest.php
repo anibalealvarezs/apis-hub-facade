@@ -17,6 +17,10 @@ class PublicPlansPageTest extends TestCase
         $response->assertSee('Enterprise');
         $response->assertSee('AI-assisted keywords classification');
         $response->assertDontSee('Clasficiación de keywords de SEO asistida por IA');
+        $response->assertDontSee('SQLite');
+        $response->assertSee('Custom (Base 15)');
+        $response->assertSee('Soon');
+        $response->assertSee('Get started with Enterprise');
         $response->assertSee('application/ld+json', false);
         $response->assertSee('SoftwareApplication');
         $response->assertSee('FAQPage');
@@ -35,6 +39,9 @@ class PublicPlansPageTest extends TestCase
         $response->assertSee('Ultra / Founder');
         $response->assertSee('Enterprise');
         $response->assertSee('Clasficiación de keywords de SEO asistida por IA');
+        $response->assertDontSee('SQLite');
+        $response->assertSee('A medida (Base 15)');
+        $response->assertSee('Próximamente');
         $response->assertSee('application/ld+json', false);
         $response->assertSee('SoftwareApplication');
         $response->assertSee('FAQPage');
