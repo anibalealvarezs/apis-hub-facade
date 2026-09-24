@@ -245,7 +245,23 @@ class Project extends Model
         }
 
         $version = ltrim($this->apisHubRelease->version_tag, 'v');
-        return version_compare($version, '1.16.0', '>=');
+        if (!version_compare($version, '1.16.0', '>=')) {
+            return false;
+        }
+
+        // Tier restriction check: free accounts require the temporary promo feature flag enabled
+        if ($this->billingProfile?->tier === \App\Enums\UserTier::FREE) {
+            try {
+                $featureSettings = app(\App\Settings\FeatureSettings::class);
+                if (!$featureSettings->enable_free_ai_classification) {
+                    return false;
+                }
+            } catch (\Throwable $e) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

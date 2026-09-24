@@ -223,6 +223,15 @@ class ProjectResource extends Resource
                                 }
 
                                 if (!$record->supportsAiClassification()) {
+                                    if ($record->billingProfile?->tier === \App\Enums\UserTier::FREE) {
+                                        return new \Illuminate\Support\HtmlString('
+                                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-center gap-2">
+                                                <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                                <span><strong>' . __('Free Tier Restriction') . ':</strong> ' . __('AI-assisted classification is currently disabled for Free accounts. It can be enabled temporarily in Features or by upgrading the billing tier.') . '</span>
+                                            </div>
+                                        ');
+                                    }
+
                                     $currentVersion = $record->apisHubRelease ? $record->apisHubRelease->version_tag : 'v1.15.0 or older';
                                     return new \Illuminate\Support\HtmlString('
                                         <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm flex items-center gap-2">
