@@ -238,14 +238,22 @@ class Project extends Model
      * runtime pushes (shared key propagation, project settings) never reach
      * tenants whose deployed version cannot be verified.
      */
-    public function supportsAiClassification(): bool
+    /**
+     * Check if the deployed apis-hub release version technically supports AI classification (>= v1.16.0).
+     */
+    public function releaseSupportsAiClassification(): bool
     {
         if (!$this->apisHubRelease) {
             return false;
         }
 
         $version = ltrim($this->apisHubRelease->version_tag, 'v');
-        if (!version_compare($version, '1.16.0', '>=')) {
+        return version_compare($version, '1.16.0', '>=');
+    }
+
+    public function supportsAiClassification(): bool
+    {
+        if (!$this->releaseSupportsAiClassification()) {
             return false;
         }
 
