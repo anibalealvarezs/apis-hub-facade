@@ -128,52 +128,7 @@
     <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white" x-data="themeControl">
         
         <!-- Header Sticky Navigation -->
-        <header class="fixed top-0 left-0 w-full z-50 h-20 md:h-24 px-6 md:px-12 flex items-center justify-between glass-panel border-b border-slate-200/50 dark:border-slate-800/50 transition-all duration-300">
-            <!-- Brand Logo Left -->
-            <a href="{{ app()->getLocale() === 'es' ? '/es' : '/' }}" class="hover:opacity-85 transition-opacity block">
-                <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
-                     alt="APIs Hub" class="h-9 md:h-11 dark:hidden" 
-                     :class="darkMode ? 'hidden' : 'block'">
-                <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
-                     alt="APIs Hub" class="h-9 md:h-11 hidden dark:block" 
-                     :class="darkMode ? 'block' : 'hidden'">
-            </a>
-
-            <!-- Right Controls: Language Selector, Theme Toggle & Home CTA -->
-            <div class="flex items-center gap-4 sm:gap-6">
-                <!-- Language Switcher -->
-                <nav aria-label="{{ __('Language switcher') }}" class="flex items-center gap-3 px-4 py-2 text-xs font-bold tracking-wider rounded-full border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
-                    <a href="{{ route('landing.plans') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'en' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">EN</a>
-                    <span class="w-1 h-1 bg-slate-300 dark:bg-slate-700 rounded-full" aria-hidden="true"></span>
-                    <a href="{{ route('landing.plans.es') }}" class="hover:text-brand-blue transition-colors {{ app()->getLocale() === 'es' ? 'text-brand-blue' : 'text-slate-400 dark:text-slate-500' }}">ES</a>
-                </nav>
-
-                <!-- Theme Toggle Button -->
-                <button @click="darkMode = !darkMode" aria-label="Toggle Dark Mode" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md glow-hover transition-all">
-                    <template x-if="darkMode">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </template>
-                    <template x-if="!darkMode">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                        </svg>
-                    </template>
-                </button>
-
-                <!-- Back to Home Button -->
-                <a href="{{ app()->getLocale() === 'es' ? '/es' : '/' }}" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold tracking-wider uppercase text-slate-500 hover:text-brand-blue border border-slate-200 dark:border-slate-800 rounded-xl transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    <span>{{ __('Home') }}</span>
-                </a>
-
-                <!-- Try Beta CTA -->
-                <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-flex px-4 sm:px-5 py-2 text-xs sm:text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
-                    {{ __('Try beta') }}
-                </span>
-            </div>
-        </header>
+        @include('components.public.header')
 
         <!-- Main Content -->
         <main class="relative pt-32 sm:pt-40 pb-24 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col items-center">
@@ -238,7 +193,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                <span class="text-slate-800 dark:text-slate-200">{{ __('Clasficiación de keywords de SEO asistida por IA') }} ({{ __('limited time') }})</span>
+                                <span class="text-slate-800 dark:text-slate-200">{{ __('AI-assisted keywords classification') }} ({{ __('limited time') }})</span>
                             </li>
                         </ul>
                     </div>
@@ -293,7 +248,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-brand-blue shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                <span class="font-semibold text-slate-800 dark:text-slate-200">{{ __('Clasficiación de keywords de SEO asistida por IA') }}</span>
+                                <span class="font-semibold text-slate-800 dark:text-slate-200">{{ __('AI-assisted keywords classification') }}</span>
                             </li>
                         </ul>
                     </div>
@@ -345,7 +300,7 @@
                             </li>
                             <li class="flex items-center gap-2">
                                 <svg class="w-4 h-4 text-brand-teal shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                <span>{{ __('Clasficiación de keywords de SEO asistida por IA') }}</span>
+                                <span>{{ __('AI-assisted keywords classification') }}</span>
                             </li>
                         </ul>
                     </div>
@@ -535,7 +490,7 @@
                             </tr>
                             <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
                                 <td class="py-3.5 px-6 font-medium text-slate-800 dark:text-slate-200">
-                                    {{ __('Clasficiación de keywords de SEO asistida por IA') }}
+                                    {{ __('AI-assisted keywords classification') }}
                                     <span class="block text-[11px] font-normal text-slate-400">{{ __('Intent, Brand, and Relevance query labeling for Google Search Console.') }}</span>
                                 </td>
                                 <td class="py-3.5 px-4 text-center text-amber-500 font-semibold">{{ __('Promo') }}</td>
@@ -705,44 +660,10 @@
         </main>
 
         <!-- Semantic Footer / Micro Branding -->
-        <footer class="relative w-full z-10 py-8 px-6 sm:px-8 mt-auto flex flex-col items-center gap-4 bd-text-2xs uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none border-t border-slate-200/50 dark:border-slate-800/50">
-            <nav aria-label="{{ __('Legal Links') }}" class="flex items-center justify-center opacity-70 flex-wrap gap-y-2">
-                <a href="{{ app()->getLocale() === 'es' ? route('landing.plans.es') : route('landing.plans') }}" class="px-4 py-2 mx-1 sm:mx-4 text-brand-blue">{{ __('Plans & Features') }}</a>
-                <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
-                <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
-                <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.data-deletion.es') : route('legal.data-deletion') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
-            </nav>
-            <div class="opacity-80 flex items-center justify-center gap-2 flex-wrap text-center">
-                <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" rel="noopener noreferrer" class="hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>
-                <span class="px-1.5 py-0.5 bd-text-4xs font-black text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded uppercase tracking-widest">Beta</span>
-            </div>
-        </footer>
+        @include('components.public.footer')
         
         <!-- Background Mesh -->
         <div class="hero-mesh" aria-hidden="true"></div>
-
-        <!-- Portal Link Resolver Script -->
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll('.js-portal-link').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const encodedPath = link.getAttribute('data-portal');
-                        if (encodedPath) {
-                            try {
-                                const decodedPath = atob(encodedPath);
-                                window.location.href = decodedPath;
-                            } catch (err) {
-                                console.error('Failed to resolve portal link', err);
-                            }
-                        }
-                    });
-                });
-            });
-        </script>
 
         <!-- External Marketing & Analytics (Vite Optimized) -->
         @vite(['resources/js/gtm.js'])
