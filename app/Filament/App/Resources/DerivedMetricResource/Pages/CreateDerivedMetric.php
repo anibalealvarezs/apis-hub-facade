@@ -9,6 +9,29 @@ class CreateDerivedMetric extends CreateRecord
 {
     protected static string $resource = DerivedMetricResource::class;
 
+    public function mount(): void
+    {
+        $project = \Filament\Facades\Filament::getTenant();
+        if ($project && $project->billingProfile) {
+            $currentCount = \App\Models\DerivedMetric::where('project_id', $project->id)->count();
+            $maxMetrics = app(\App\Services\BillingLifecycleService::class)
+                ->getMaxDerivedMetricsForTier($project->billingProfile->tier);
+
+            if ($currentCount >= $maxMetrics) {
+                \Filament\Notifications\Notification::make()
+                    ->title(__('Derived metric limit reached'))
+                    ->body(__('You have reached the maximum number of derived metrics allowed by your plan (:limit). Please upgrade your subscription to create more.', ['limit' => $maxMetrics]))
+                    ->danger()
+                    ->send();
+
+                $this->redirect(DerivedMetricResource::getUrl('index'));
+                return;
+            }
+        }
+
+        parent::mount();
+    }
+
     protected function getFormActions(): array
     {
         return [];
