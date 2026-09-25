@@ -35,6 +35,12 @@ class AdministrationOverview extends Page
                     'title' => __('Roles & Permissions'),
                     'description' => __('Learn which roles exist and what each one can do.'),
                 ],
+                [
+                    'url' => \App\Filament\App\Pages\TeamCollaboratorsReference::getUrl(),
+                    'icon' => 'heroicon-o-user-group',
+                    'title' => __('Team & Collaborators'),
+                    'description' => __('Learn how team invitation, asset group restrictions, and user-scoped API keys work.'),
+                ],
             ],
         ];
     }

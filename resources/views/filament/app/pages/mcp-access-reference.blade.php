@@ -80,8 +80,30 @@
 
             <div class="space-y-4">
                 <p class="text-sm text-gray-600 dark:text-gray-300">
-                    {{ __('Your dedicated node exposes an enterprise Model Context Protocol (MCP) server over Server-Sent Events (SSE). Use your public API key for authentication.') }}
+                    {{ __('Your dedicated node exposes an enterprise Model Context Protocol (MCP) server over Server-Sent Events (SSE). Use your API key for authentication.') }}
                 </p>
+
+                {{-- Key Scoping & Security Callout --}}
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 space-y-2">
+                    <div class="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+                        <x-filament::icon icon="heroicon-m-key" class="w-4 h-4 text-primary-500" />
+                        <span>{{ __('MCP Authentication & Access Scopes') }}</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 pl-1">
+                        <li>
+                            <strong class="text-gray-900 dark:text-white">{{ __('Project Master API Key:') }}</strong>
+                            {{ __('Owners and Editors use the master key displayed below. AI agents connected with this key have full visibility across all project integrations, accounts, and performance data.') }}
+                        </li>
+                        <li>
+                            <strong class="text-gray-900 dark:text-white">{{ __('User-Scoped API Keys:') }}</strong>
+                            {{ __('Viewers and Collaborators use their own user-scoped API key. AI agents connected with a user-scoped key are automatically restricted to only query and summarize the specific asset groups assigned to that collaborator.') }}
+                        </li>
+                        <li>
+                            <strong class="text-gray-900 dark:text-white">{{ __('Authentication Methods:') }}</strong>
+                            {{ __('MCP clients can pass the API key via the HTTP Authorization header (Bearer YOUR_API_KEY), the X-API-Key header, or directly as a URL parameter (?key=YOUR_API_KEY) in clients like Claude Desktop and Cursor that do not support custom SSE headers.') }}
+                        </li>
+                    </ul>
+                </div>
 
                 {{-- Livewire API Key Field --}}
                 <div class="mb-4">

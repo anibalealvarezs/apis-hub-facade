@@ -57,6 +57,24 @@
                     {{ __('Every project has a dedicated public API key for authentication. All requests must provide this key via HTTP headers.') }}
                 </p>
 
+                {{-- Key Type Callout: Master Key vs User-Scoped Key --}}
+                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 space-y-2">
+                    <div class="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+                        <x-filament::icon icon="heroicon-m-shield-check" class="w-4 h-4 text-primary-500" />
+                        <span>{{ __('API Key Security & Access Scopes') }}</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 pl-1">
+                        <li>
+                            <strong class="text-gray-900 dark:text-white">{{ __('Project Master API Key:') }}</strong>
+                            {{ __('Assigned to Project Owners and Editors. Grants unrestricted read-only access across all connected accounts, channels, and asset groups.') }}
+                        </li>
+                        <li>
+                            <strong class="text-gray-900 dark:text-white">{{ __('User-Scoped API Keys:') }}</strong>
+                            {{ __('Assigned to Viewers and Collaborators. Restricts queries strictly to the specific asset groups granted to that user. Requests targeting unassigned accounts or channels are filtered out or denied.') }}
+                        </li>
+                    </ul>
+                </div>
+
                 {{-- Livewire API Key Field with Reveal & Rotate --}}
                 <div class="mb-4">
                     {{ $this->form }}

@@ -199,7 +199,8 @@
             <!-- Topic Quick Navigation -->
             <div class="flex items-center gap-2 overflow-x-auto py-2 text-xs scrollbar-none border-b border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-400">
                 <span class="font-semibold text-slate-800 dark:text-slate-200">{{ __('Key Topics:') }}</span>
-                <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('🔐 Authentication') }}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('🔐 Authentication (Master & User Keys)') }}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('👥 Scoped RBAC') }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('💓 System Health') }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('🔄 Data Sync') }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('🔍 Assets Discovery') }}</span>

@@ -40,7 +40,17 @@ class ApiAccessReference extends Page implements HasForms
 
     public function getApiKeyProperty(): string
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if ($this->tenant && $this->tenant->isEditorOrOwner($user)) {
+            return $this->tenant->public_api_key ?? '';
+        }
+
         return $this->tenant?->public_api_key ?? '';
+    }
+
+    public function getIsEditorOrOwnerProperty(): bool
+    {
+        return (bool) $this->tenant?->isEditorOrOwner(\Illuminate\Support\Facades\Auth::user());
     }
 
     public function mount(): void
@@ -53,23 +63,28 @@ class ApiAccessReference extends Page implements HasForms
     public function form(Form $form): Form
     {
         $tenant = $this->tenant;
+        $isEditorOrOwner = $this->isEditorOrOwner;
 
         return $form
             ->schema([
                 TextInput::make('app_api_key')
-                    ->label(__('Public API Key'))
+                    ->label($isEditorOrOwner ? __('Tenant Public API Key (Master Key)') : __('Personal Scoped API Key'))
                     ->password()
                     ->revealable()
                     ->disabled()
-                    ->helperText(__('Keep this key secure. It provides programmatic access to your tenant data node.'))
+                    ->helperText($isEditorOrOwner 
+                        ? __('Master API key granting full access across all channels and connected accounts.')
+                        : __('Scoped API key restricted strictly to your assigned asset groups in this project.'))
                     ->hintAction(
                         Action::make('rotateKey')
                             ->icon('heroicon-m-arrow-path')
                             ->color('warning')
-                            ->disabled(fn () => ! $tenant || ! $tenant->is_active || $tenant->billing_status === 'suspended' || ! \Illuminate\Support\Facades\Auth::user()->can('edit_preferences'))
+                            ->disabled(fn () => ! $tenant || ! $tenant->is_active || $tenant->billing_status === 'suspended')
                             ->requiresConfirmation()
                             ->modalHeading(__('Rotate API Key?'))
-                            ->modalDescription(__('Generating a new key will immediately invalidate the current one. You must update all external integrations (PowerBI, Looker, scripts) with the new key.'))
+                            ->modalDescription($isEditorOrOwner 
+                                ? __('Generating a new master key will immediately invalidate the current one and affect all external integrations.')
+                                : __('Generating a new personal key will invalidate your current token. Update your external scripts and tools immediately.'))
                             ->modalSubmitActionLabel(__('Yes, rotate and push'))
                             ->action(function (\App\Services\DeployerService $deployer) {
                                 $tenant = $this->tenant;
@@ -77,39 +92,51 @@ class ApiAccessReference extends Page implements HasForms
                                     return;
                                 }
 
+                                $currentUser = \Illuminate\Support\Facades\Auth::user();
                                 $newKey = bin2hex(random_bytes(32));
 
-                                // 1. Persist in database
-                                $tenant->update(['public_api_key' => $newKey]);
+                                if ($this->isEditorOrOwner) {
+                                    // 1. Master key rotation
+                                    $tenant->update(['public_api_key' => $newKey]);
 
-                                // 2. Push to tenant remote environment and reload master container
-                                $response = $deployer->updateCredentials($tenant, [
-                                    'APP_API_KEY' => $newKey,
-                                    'TOKEN_AUTHORITY_BEARER' => $newKey,
-                                ]);
+                                    $response = $deployer->updateCredentials($tenant, [
+                                        'APP_API_KEY' => $newKey,
+                                        'TOKEN_AUTHORITY_BEARER' => $newKey,
+                                    ]);
 
-                                if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
-                                    \Filament\Notifications\Notification::make()
-                                        ->title(__('API Key Rotated!'))
-                                        ->success()
-                                        ->body(__('The new key has been generated and synchronized with your node.'))
-                                        ->send();
+                                    if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title(__('API Key Rotated!'))
+                                            ->success()
+                                            ->body(__('The new key has been generated and synchronized with your node.'))
+                                            ->send();
+                                    } else {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title(__('Key Saved Locally'))
+                                            ->warning()
+                                            ->body(__('Key updated in the database, but remote synchronization failed: ') . ($response['message'] ?? 'SSH connection error.'))
+                                            ->send();
+                                    }
+
+                                    // Notify team owners & editors
+                                    $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
+                                    foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
+                                        $userToNotify->notify($notification);
+                                    }
                                 } else {
+                                    // 2. Viewer personal key rotation
+                                    $deployer->syncUserApiKeys($tenant);
+
+                                    $notification = new \App\Notifications\UserApiKeyRotatedNotification($tenant, $currentUser, false);
+                                    $currentUser->notify($notification);
+
                                     \Filament\Notifications\Notification::make()
-                                        ->title(__('Key Saved Locally'))
-                                        ->warning()
-                                        ->body(__('Key updated in the database, but remote synchronization failed: ') . ($response['message'] ?? 'SSH connection error.'))
+                                        ->title(__('Personal Key Rotated'))
+                                        ->success()
+                                        ->body(__('Your personal scoped API key has been regenerated and synchronized with the node.'))
                                         ->send();
                                 }
 
-                                // 3. Notify all users with editor/owner permissions (mail and in-app database notification)
-                                $currentUser = \Illuminate\Support\Facades\Auth::user();
-                                $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
-                                foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
-                                    $userToNotify->notify($notification);
-                                }
-
-                                // 4. Update the form state so the field reflects the new value immediately
                                 $this->form->fill(['app_api_key' => $newKey]);
                             })
                     ),
