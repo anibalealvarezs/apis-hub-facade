@@ -296,6 +296,10 @@
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>{{ __('Model Context Protocol (MCP) Server') }}</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Custom KPIs') }} (50)</span>
                             </li>
                             <li class="flex items-center gap-2.5">
@@ -345,6 +349,10 @@
                             <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                                 <span>{{ __('Guaranteed SLA') }} & {{ __('Dedicated Support') }}</span>
+                            </li>
+                            <li class="flex items-center gap-2.5">
+                                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>{{ __('Model Context Protocol (MCP) Server') }}</span>
                             </li>
                             <li class="flex items-center gap-2.5">
                                 <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -569,6 +577,16 @@
                                 <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
                                     {{ __('REST API Access') }}
                                     <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Query raw normalized metrics, extract timeseries data, and trigger syncs.') }}</span>
+                                </td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-slate-400">—</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                                <td class="py-4 px-4 text-center text-emerald-500 font-bold">✓</td>
+                            </tr>
+                            <tr class="hover:bg-slate-100/30 dark:hover:bg-slate-800/30">
+                                <td class="py-4 px-6 font-medium text-slate-800 dark:text-slate-200">
+                                    {{ __('Model Context Protocol (MCP) Server') }}
+                                    <span class="block text-xs sm:text-sm font-normal text-slate-400 mt-0.5">{{ __('Direct integration with AI agents (Antigravity, Claude, Cursor) via SSE for live query execution.') }}</span>
                                 </td>
                                 <td class="py-4 px-4 text-center text-slate-400">—</td>
                                 <td class="py-4 px-4 text-center text-slate-400">—</td>

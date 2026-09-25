@@ -255,6 +255,66 @@ class SyncSettings extends Page
                                 </div>
                             '))
                     ]),
+
+                Section::make(__('Model Context Protocol (MCP) for AI Agents'))
+                    ->description(__('Connect Google Antigravity, Claude Desktop, Cursor, and autonomous agents directly to this project node.'))
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('mcp_info')
+                            ->label('')
+                            ->content(function () {
+                                $tenant = Filament::getTenant();
+                                $tier = $tenant?->fresh()?->billingProfile?->fresh()?->tier?->value ?? 'free';
+                                $hasMcp = in_array($tier, ['ultra', 'enterprise', 'founder']);
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                $subdomain = $tenant ? $tenant->subdomain : 'your-project';
+                                $mcpUrl = "https://{$subdomain}.{$domain}/mcp/sse";
+                                $mcpGuideUrl = "/app/" . ($tenant->slug ?? '') . "/integrations/mcp-access-reference";
+
+                                if ($hasMcp) {
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    <span class="font-bold text-sm">' . __('MCP Server Active on Dedicated Node') . ' (' . ucfirst($tier) . ')</span>
+                                                </div>
+                                                <a href="' . $mcpGuideUrl . '" class="inline-flex items-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
+                                                    ' . __('View Setup Guide & Prompts') . ' &rarr;
+                                                </a>
+                                            </div>
+                                            <p class="text-xs text-emerald-700 dark:text-emerald-400">
+                                                ' . __('Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.') . '
+                                            </p>
+                                            <div class="flex items-center gap-2 text-xs font-mono bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                                                <span class="text-slate-500 dark:text-slate-400 select-none">SSE Endpoint:</span>
+                                                <span class="select-all text-slate-800 dark:text-slate-200">' . $mcpUrl . '</span>
+                                            </div>
+                                        </div>
+                                    ');
+                                }
+
+                                return new \Illuminate\Support\HtmlString('
+                                    <div class="p-4 bg-warning-50 dark:bg-warning-500/10 rounded-xl text-warning-700 dark:text-warning-300 border border-warning-200 dark:border-warning-500/20 space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-warning-600 dark:text-warning-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                            </svg>
+                                            <h4 class="font-bold text-sm">' . __('Model Context Protocol (MCP) Server Locked') . '</h4>
+                                        </div>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300">
+                                            ' . __('The MCP server allows AI agents (Antigravity, Claude Desktop, Cursor) to directly query marketing metrics and run diagnostics. This feature is available on Ultra and Enterprise tiers.') . '
+                                        </p>
+                                        ' . ($tenant->billingProfile?->user_id === \Illuminate\Support\Facades\Auth::id() ? '
+                                        <div class="pt-1">
+                                            <a href="/account/account-subscription?profile=' . $tenant->billingProfile?->id . '" class="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-lg shadow-sm transition">
+                                                ' . __('Upgrade to Ultra') . '
+                                            </a>
+                                        </div>
+                                        ' : '') . '
+                                    </div>
+                                ');
+                            })
+                    ]),
             ])
             ->statePath('data')
             ->disabled($isSuspended || ! \Illuminate\Support\Facades\Auth::user()->can('edit_preferences'));
