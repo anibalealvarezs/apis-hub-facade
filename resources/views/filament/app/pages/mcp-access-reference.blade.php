@@ -272,43 +272,55 @@
                 </div>
 
                 {{-- Example Prompts for Agents --}}
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                         {{ __('Recommended Prompts for your AI Assistant:') }}
                     </h4>
 
-                    <div class="space-y-2">
-                        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 flex items-start justify-between gap-3 text-xs" x-data="{ copied: false }">
-                            <div class="space-y-1">
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ __('1. Cross-Channel Performance Summary:') }}</span>
-                                <p class="text-gray-600 dark:text-gray-300 select-all">"Using the apis-hub MCP server, summarize our total ad spend, clicks, impressions, and ROAS across Facebook and Google Ads for the last 30 days."</p>
+                    @php
+                        $prompt1 = "Using the apis-hub MCP server, summarize our total ad spend, clicks, impressions, and ROAS across Facebook and Google Ads for the last 30 days.";
+                        $prompt2 = "Check the data coverage for google_search_console and facebook_marketing over the last 60 days to see if there are missing dates or gaps.";
+                        $prompt3 = "Call summarize_performance for google_search_console grouped by daily for the past 14 days, analyze click and position trends, and give me key SEO recommendations.";
+                    @endphp
+
+                    <div class="space-y-4">
+                        <div>
+                            <h5 class="font-bold text-gray-800 dark:text-gray-200 mb-1 text-sm">{{ __('1. Cross-Channel Performance Summary:') }}</h5>
+                            <div class="api-ref-code-container" x-data="{ copied: false }">
+                                <pre class="api-ref-code-block"><code class="select-all">{{ $prompt1 }}</code></pre>
+                                <button type="button" 
+                                        @click="navigator.clipboard.writeText(@js($prompt1)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                        class="api-ref-copy-btn">
+                                    <span x-show="!copied">{{ __('Copy') }}</span>
+                                    <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
+                                </button>
                             </div>
-                            <button type="button" @click="navigator.clipboard.writeText('Using the apis-hub MCP server, summarize our total ad spend, clicks, impressions, and ROAS across Facebook and Google Ads for the last 30 days.'); copied = true; setTimeout(() => copied = false, 2000)" class="text-primary-600 dark:text-primary-400 font-semibold hover:underline shrink-0">
-                                <span x-show="!copied">{{ __('Copy Prompt') }}</span>
-                                <span x-show="copied" class="text-green-500" x-cloak>{{ __('Copied!') }}</span>
-                            </button>
                         </div>
 
-                        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 flex items-start justify-between gap-3 text-xs" x-data="{ copied: false }">
-                            <div class="space-y-1">
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ __('2. Data Health & Sync Coverage Check:') }}</span>
-                                <p class="text-gray-600 dark:text-gray-300 select-all">"Check the data coverage for google_search_console and facebook_marketing over the last 60 days to see if there are missing dates or gaps."</p>
+                        <div>
+                            <h5 class="font-bold text-gray-800 dark:text-gray-200 mb-1 text-sm">{{ __('2. Data Health & Sync Coverage Check:') }}</h5>
+                            <div class="api-ref-code-container" x-data="{ copied: false }">
+                                <pre class="api-ref-code-block"><code class="select-all">{{ $prompt2 }}</code></pre>
+                                <button type="button" 
+                                        @click="navigator.clipboard.writeText(@js($prompt2)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                        class="api-ref-copy-btn">
+                                    <span x-show="!copied">{{ __('Copy') }}</span>
+                                    <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
+                                </button>
                             </div>
-                            <button type="button" @click="navigator.clipboard.writeText('Check the data coverage for google_search_console and facebook_marketing over the last 60 days to see if there are missing dates or gaps.'); copied = true; setTimeout(() => copied = false, 2000)" class="text-primary-600 dark:text-primary-400 font-semibold hover:underline shrink-0">
-                                <span x-show="!copied">{{ __('Copy Prompt') }}</span>
-                                <span x-show="copied" class="text-green-500" x-cloak>{{ __('Copied!') }}</span>
-                            </button>
                         </div>
 
-                        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 flex items-start justify-between gap-3 text-xs" x-data="{ copied: false }">
-                            <div class="space-y-1">
-                                <span class="font-semibold text-gray-900 dark:text-white">{{ __('3. Executive Insights & SEO Breakdown:') }}</span>
-                                <p class="text-gray-600 dark:text-gray-300 select-all">"Call summarize_performance for google_search_console grouped by daily for the past 14 days, analyze click and position trends, and give me key SEO recommendations."</p>
+                        <div>
+                            <h5 class="font-bold text-gray-800 dark:text-gray-200 mb-1 text-sm">{{ __('3. Executive Insights & SEO Breakdown:') }}</h5>
+                            <div class="api-ref-code-container" x-data="{ copied: false }">
+                                <pre class="api-ref-code-block"><code class="select-all">{{ $prompt3 }}</code></pre>
+                                <button type="button" 
+                                        @click="navigator.clipboard.writeText(@js($prompt3)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                        class="api-ref-copy-btn">
+                                    <span x-show="!copied">{{ __('Copy') }}</span>
+                                    <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
+                                </button>
                             </div>
-                            <button type="button" @click="navigator.clipboard.writeText('Call summarize_performance for google_search_console grouped by daily for the past 14 days, analyze click and position trends, and give me key SEO recommendations.'); copied = true; setTimeout(() => copied = false, 2000)" class="text-primary-600 dark:text-primary-400 font-semibold hover:underline shrink-0">
-                                <span x-show="!copied">{{ __('Copy Prompt') }}</span>
-                                <span x-show="copied" class="text-green-500" x-cloak>{{ __('Copied!') }}</span>
-                            </button>
                         </div>
                     </div>
                 </div>
