@@ -84,7 +84,7 @@
                 </p>
 
                 {{-- Key Scoping & Security Callout --}}
-                <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 space-y-2">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 space-y-2">
                     <div class="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
                         <x-filament::icon icon="heroicon-m-key" class="w-4 h-4 text-primary-500" />
                         <span>{{ __('MCP Authentication & Access Scopes') }}</span>
