@@ -5,11 +5,14 @@
     @endphp
 
     <div class="space-y-6" x-data="{
-        apiKey: @js($apiKey),
         baseUrl: @js($baseUrl),
+        getApiKey() {
+            return $wire.data?.app_api_key || @js($apiKey);
+        },
         copySnippet(template) {
+            const currentKey = this.getApiKey();
             const resolved = template
-                .replace(/YOUR_API_KEY/g, this.apiKey || 'YOUR_API_KEY')
+                .replace(/YOUR_API_KEY/g, currentKey || 'YOUR_API_KEY')
                 .replace(/https:\/\/<subdomain>\.apis-hub\.cloud/g, this.baseUrl)
                 .replace(/https:\/\/<your-project-subdomain>\.apis-hub\.cloud/g, this.baseUrl);
             navigator.clipboard.writeText(resolved);

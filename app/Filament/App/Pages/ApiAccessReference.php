@@ -79,18 +79,37 @@ class ApiAccessReference extends Page implements HasForms
 
                                 $newKey = bin2hex(random_bytes(32));
 
+                                // 1. Persist in database
                                 $tenant->update(['public_api_key' => $newKey]);
 
-                                $deployer->updateCredentials($tenant, [
+                                // 2. Push to tenant remote environment and reload master container
+                                $response = $deployer->updateCredentials($tenant, [
                                     'APP_API_KEY' => $newKey,
+                                    'TOKEN_AUTHORITY_BEARER' => $newKey,
                                 ]);
 
-                                \Filament\Notifications\Notification::make()
-                                    ->title(__('API Key Rotated!'))
-                                    ->success()
-                                    ->body(__('The new key has been generated and synchronized with your node.'))
-                                    ->send();
+                                if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title(__('API Key Rotated!'))
+                                        ->success()
+                                        ->body(__('The new key has been generated and synchronized with your node.'))
+                                        ->send();
+                                } else {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title(__('Key Saved Locally'))
+                                        ->warning()
+                                        ->body(__('Key updated in the database, but remote synchronization failed: ') . ($response['message'] ?? 'SSH connection error.'))
+                                        ->send();
+                                }
 
+                                // 3. Notify all users with editor/owner permissions (mail and in-app database notification)
+                                $currentUser = \Illuminate\Support\Facades\Auth::user();
+                                $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
+                                foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
+                                    $userToNotify->notify($notification);
+                                }
+
+                                // 4. Update the form state so the field reflects the new value immediately
                                 $this->form->fill(['app_api_key' => $newKey]);
                             })
                     ),

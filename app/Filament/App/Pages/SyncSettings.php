@@ -193,17 +193,33 @@ class SyncSettings extends Page
                                         $tenant->update(['public_api_key' => $newKey]);
 
                                         // 2. Push to remote server via SSH
-                                        $deployer->updateCredentials($tenant, [
+                                        $response = $deployer->updateCredentials($tenant, [
                                             'APP_API_KEY' => $newKey,
+                                            'TOKEN_AUTHORITY_BEARER' => $newKey,
                                         ]);
 
-                                        \Filament\Notifications\Notification::make()
-                                            ->title(__('API Key Rotated!'))
-                                            ->success()
-                                            ->body(__('The new key has been generated and synchronized with your node.'))
-                                            ->send();
+                                        if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title(__('API Key Rotated!'))
+                                                ->success()
+                                                ->body(__('The new key has been generated and synchronized with your node.'))
+                                                ->send();
+                                        } else {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title(__('Key Saved Locally'))
+                                                ->warning()
+                                                ->body(__('Key updated in the database, but remote synchronization failed: ') . ($response['message'] ?? 'SSH connection error.'))
+                                                ->send();
+                                        }
 
-                                        // 3. Update the form state
+                                        // 3. Notify all users with editor/owner permissions (mail and in-app database notification)
+                                        $currentUser = \Illuminate\Support\Facades\Auth::user();
+                                        $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
+                                        foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
+                                            $userToNotify->notify($notification);
+                                        }
+
+                                        // 4. Update the form state
                                         $this->form->fill(['app_api_key' => $newKey]);
                                     })
                             ),

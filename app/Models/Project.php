@@ -769,5 +769,26 @@ class Project extends Model
     {
         return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
     }
+
+    /**
+     * Get all users who have editor or owner permissions on this project.
+     * Includes the project owner and collaborators assigned project_owner or project_editor roles.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public function getEditorsAndOwners(): \Illuminate\Database\Eloquent\Collection
+    {
+        $roleUserIds = \Illuminate\Support\Facades\DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->whereIn('roles.name', ['project_owner', 'project_editor'])
+            ->where('model_has_roles.project_id', $this->id)
+            ->pluck('model_has_roles.model_id')
+            ->toArray();
+
+        // Always include the project creator/owner ID
+        $userIds = array_values(array_unique(array_filter(array_merge([$this->user_id], $roleUserIds))));
+
+        return User::whereIn('id', $userIds)->get();
+    }
 }
 
