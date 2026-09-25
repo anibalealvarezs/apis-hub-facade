@@ -256,6 +256,8 @@
                         }
                     `;
 
+                    const locale = '{{ app()->getLocale() }}' === 'es' ? 'es' : 'en';
+
                     scriptTag.setAttribute('data-configuration', JSON.stringify({
                         theme: 'default',
                         darkMode: isDark,
@@ -263,6 +265,10 @@
                         showSidebar: true,
                         hideModels: false,
                         customCss: highContrastCss,
+                        locale: locale,
+                        localization: {
+                            locale: locale
+                        },
                         defaultHttpClient: {
                             targetKey: 'shell',
                             clientKey: 'curl'
