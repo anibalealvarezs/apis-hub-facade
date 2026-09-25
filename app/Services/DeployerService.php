@@ -77,9 +77,25 @@ class DeployerService
         $caddyHost = "{$project->subdomain}.{$baseDomain}";
         $containerName = "apis-hub-{$project->subdomain}-master"; // Con sufijo -master definido en docker-compose
 
-        $caddyConfig = "{$caddyHost} {
+        $billingService = app(\App\Services\BillingLifecycleService::class);
+        $tier = $project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE;
+        $hasApiAccess = $billingService->canAccessApi($tier) || !empty($project->public_api_key);
+
+        if ($hasApiAccess) {
+            $mcpContainerName = "apis-hub-{$project->subdomain}-mcp";
+            $caddyConfig = "{$caddyHost} {
+    handle /mcp/* {
+        reverse_proxy {$mcpContainerName}:3000
+    }
+    handle {
+        reverse_proxy {$containerName}:8080
+    }
+}";
+        } else {
+            $caddyConfig = "{$caddyHost} {
     reverse_proxy {$containerName}:8080
 }";
+        }
         $commands[] = "mkdir -p {$caddyVhostDir} && echo '{$caddyConfig}' > {$caddyVhostPath} && cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile";
 
         return $this->runSshCommands($server, $commands);
@@ -115,6 +131,11 @@ class DeployerService
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
         $apiRateLimit = app(\App\Services\BillingLifecycleService::class)
             ->getApiRateLimitForTier($project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE);
+
+        $billingService = app(\App\Services\BillingLifecycleService::class);
+        $projectTier = $project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE;
+        $hasApiAccess = $billingService->canAccessApi($projectTier) || !empty($project->public_api_key);
+        $deployMcpServer = $hasApiAccess ? 'true' : 'false';
 
         // Generate deterministic, unique host ports based on project ID and environment offset to prevent Docker conflicts
         $portOffset = env('DEPLOY_PORT_OFFSET', 11100);
@@ -152,7 +173,7 @@ REDIS_PORT=6379
 STARTING_HOST_PORT={$externalPort}
 EXTERNAL_PORT={$externalPort}
 MCP_PORT={$mcpPort}
-DEPLOY_MCP_SERVER=false
+DEPLOY_MCP_SERVER={$deployMcpServer}
 DB_HOST_PORT={$dbHostPort}
 REDIS_HOST_PORT={$redisHostPort}
 

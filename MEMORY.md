@@ -11,6 +11,29 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Tenant MCP Server Activation & Caddy Routing for API-Eligible Tenants (2026-09-25)
+- **Problem & Context:**
+  - In `DeployerService::generateEnvContent()`, `DEPLOY_MCP_SERVER=false` was hardcoded, preventing the tenant's containerized MCP server (`node mcp-server/index.js`, port 3000) from ever starting, even for projects on API-eligible tiers (`ULTRA`, `FOUNDER`, `ENTERPRISE`).
+  - Caddy virtual hosts (`/var/www/apis-hub/caddy_vhosts/{subdomain}.caddy`) only proxied to port 8080 (`apis-hub-{subdomain}-master:8080`), leaving MCP SSE (`/mcp/sse`) and JSON-RPC message endpoints (`/mcp/messages`) unreachable from external AI clients (like Cursor, Claude Desktop, Antigravity).
+- **Implementation:**
+  - `DeployerService::generateEnvContent()`: Dynamically calculates `$hasApiAccess` using `BillingLifecycleService::canAccessApi($projectTier) || !empty($project->public_api_key)`. Sets `DEPLOY_MCP_SERVER=true` (or `false`).
+  - `DeployerService::deploy()`: When `$hasApiAccess` is true, generates a Caddy block with route segregation:
+    ```caddy
+    {subdomain}.{network_domain} {
+        handle /mcp/* {
+            reverse_proxy apis-hub-{subdomain}-mcp:3000
+        }
+        handle {
+            reverse_proxy apis-hub-{subdomain}-master:8080
+        }
+    }
+    ```
+  - `apis-hub/bin/full-deploy.sh`: Ensured that the Docker external gateway network check reads `SHARED_GATEWAY_NETWORK` from `.env` (`apis-hub_default`) rather than only `{DEPLOYMENT_NAME}_default`, guaranteeing seamless network linkage with Caddy.
+  - `ApiDocsController::spec()`: Fixed specification default locale to `'en'` (when not under `/es/*`), ensuring `/docs/api/openapi.json` returns English and `/es/docs/api/openapi.json` returns Spanish.
+- **Verification:**
+  - `vendor/bin/pest tests/Feature/Analytics/ApiKeyRotationLifecycleTest.php`: All 6 tests passing (90 assertions).
+  - PHP syntax checked cleanly on both repositories.
+
 ### Public API Documentation & OpenAPI 3.1 Portal Implementation (2026-09-24)
 - **Context & Requirements**:
   - The API docs portal (`/docs/api` and `/es/docs/api`) provides comprehensive developer documentation and an interactive reference.

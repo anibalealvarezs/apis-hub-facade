@@ -50,7 +50,7 @@ class ApiDocsController extends Controller
      */
     public function spec(\App\Services\OpenApiSpecificationService $specService, ?string $locale = null): \Illuminate\Http\JsonResponse
     {
-        $targetLocale = $locale ?? (request()->is('es/*') ? 'es' : app()->getLocale());
+        $targetLocale = $locale ?? (request()->is('es/*') ? 'es' : 'en');
         
         return response()->json($specService->buildSpecification($targetLocale), 200, [
             'Access-Control-Allow-Origin' => '*',
