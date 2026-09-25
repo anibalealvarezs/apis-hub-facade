@@ -280,3 +280,19 @@ it('ensures project helper isEditorOrOwner matches permissions accurately', func
     expect($this->project->isEditorOrOwner($this->outsider))->toBeFalse();
     expect($this->project->isEditorOrOwner(null))->toBeFalse();
 });
+
+it('synchronizes user_keys.json to the tenant node when a user API key is rotated', function () {
+    $mockDeployer = Mockery::mock(\App\Services\DeployerService::class);
+    $mockDeployer->shouldReceive('syncUserApiKeys')
+        ->once()
+        ->with(Mockery::on(fn ($p) => $p->id === $this->project->id))
+        ->andReturn(true);
+
+    $this->app->instance(\App\Services\DeployerService::class, $mockDeployer);
+
+    actingAs($this->owner);
+    Filament::setTenant($this->project);
+
+    Livewire::test(McpAccessReference::class)
+        ->call('forceRotateCollaboratorKey', $this->viewer->id);
+});

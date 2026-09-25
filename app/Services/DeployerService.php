@@ -274,6 +274,71 @@ EOT;
     }
 
     /**
+     * Synchronize user-scoped API keys (user_keys.json) to remote apis-hub node.
+     */
+    public function syncUserApiKeys(Project $project): bool
+    {
+        if (app()->environment('testing')) {
+            return true;
+        }
+
+        $server = $project->server;
+        if (!$server) {
+            return false;
+        }
+
+        $collaborators = $project->users()->get();
+        $accessService = app(\App\Services\CollaboratorAssetAccessService::class);
+        $userKeys = [];
+
+        foreach ($collaborators as $collab) {
+            if ($project->isEditorOrOwner($collab)) {
+                continue;
+            }
+
+            $userKey = $collab->pivot?->api_key;
+            if (!$userKey) {
+                continue;
+            }
+
+            $sharedGroupIds = $accessService->getSharedAssetGroupIds($project, $collab->id);
+            $allowedAssets = [];
+
+            // Compile allowed channel assets
+            foreach (['facebook_marketing', 'google_search_console', 'google_analytics', 'shopify', 'klaviyo', 'amazon', 'tiktok'] as $channel) {
+                $assets = $accessService->getAllowedAssetIdsForChannel($project, $collab->id, $channel);
+                if (!empty($assets)) {
+                    $allowedAssets[$channel] = $assets;
+                }
+            }
+
+            $userKeys[] = [
+                'user_id' => $collab->id,
+                'name' => $collab->name,
+                'email' => $collab->email,
+                'api_key' => $userKey,
+                'allowed_asset_groups' => $sharedGroupIds,
+                'allowed_assets' => $allowedAssets,
+            ];
+        }
+
+        $jsonPayload = json_encode($userKeys, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/user_keys.json";
+
+        $b64 = base64_encode($jsonPayload);
+        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
+
+        try {
+            $this->runSshCommands($server, [$command]);
+            Log::info("Successfully synchronized user_keys.json for project {$project->name} (" . count($userKeys) . " keys)");
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Failed to synchronize user_keys.json for project {$project->name}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Manually trigger alert calculation on remote tenant worker over SSH.
      */
     public function evaluateAlert(Alert $alert): array

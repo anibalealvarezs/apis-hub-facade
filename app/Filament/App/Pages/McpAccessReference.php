@@ -137,13 +137,15 @@ class McpAccessReference extends Page implements HasForms
                                     }
                                 } else {
                                     // 2. Viewer personal key rotation
+                                    $deployer->syncUserApiKeys($tenant);
+
                                     $notification = new \App\Notifications\UserApiKeyRotatedNotification($tenant, $currentUser, false);
                                     $currentUser->notify($notification);
 
                                     \Filament\Notifications\Notification::make()
                                         ->title(__('Personal Key Rotated'))
                                         ->success()
-                                        ->body(__('Your personal scoped API key has been regenerated.'))
+                                        ->body(__('Your personal scoped API key has been regenerated and synchronized with the node.'))
                                         ->send();
                                 }
 
@@ -166,6 +168,9 @@ class McpAccessReference extends Page implements HasForms
             return;
         }
 
+        // Push updated keys to the tenant node
+        app(\App\Services\DeployerService::class)->syncUserApiKeys($tenant);
+
         $currentUser = \Illuminate\Support\Facades\Auth::user();
         $notification = new \App\Notifications\UserApiKeyRotatedNotification($tenant, $currentUser, true);
         $targetUser->notify($notification);
@@ -173,7 +178,7 @@ class McpAccessReference extends Page implements HasForms
         \Filament\Notifications\Notification::make()
             ->title(__('Collaborator Key Rotated'))
             ->success()
-            ->body(__('Rotated API key for :name. Email and in-app notifications have been dispatched.', ['name' => $targetUser->name]))
+            ->body(__('Rotated API key for :name. The new key has been synchronized with the node and notifications dispatched.', ['name' => $targetUser->name]))
             ->send();
     }
 
