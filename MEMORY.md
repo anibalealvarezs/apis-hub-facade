@@ -29,10 +29,11 @@
   - `App\Services\OpenApiSpecificationService`: Generates OpenAPI 3.1 JSON with dedicated topic tags, schemas, and security schemes.
   - `App\Http\Controllers\ApiDocsController`: Serves `/docs/api`, `/es/docs/api`, and `/docs/api/openapi.json` with CORS enabled.
   - `resources/views/docs/api-docs.blade.php`: Renders modern Scalar UI API reference (`@scalar/api-reference`) with quick-jump topic filters and OpenAPI JSON download.
-  - **High-Contrast Typography & Dynamic Theming**:
+  - **High-Contrast Typography, Dynamic Theming & Layout**:
     - Resolved dark mode readability issues by injecting explicit high-contrast CSS variable tokens (`--scalar-color-1: #f8fafc`, `--scalar-color-2: #cbd5e1`, `--scalar-background-1: #090d16`) into both page `<style>` and Scalar's `customCss` configuration.
     - Added element-level forced contrast overrides for prose paragraphs, lists, tables, and headings in both dark and light modes.
     - Synchronized live theme changes between Alpine's `themeControl` toggle (`document.documentElement.classList`) and Scalar's internal `.dark-mode`/`.light-mode` state using a `MutationObserver`.
+    - Expanded page layout to full width (`w-full` with responsive horizontal padding `px-4 sm:px-8 lg:px-12`) so the Scalar 3-column reference and sandbox maximize widescreen display real estate.
 - **Verification**:
   - `ApiKeyRotationLifecycleTest.php` passing all 6 tests (90 assertions).
 

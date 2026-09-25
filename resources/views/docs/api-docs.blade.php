@@ -167,7 +167,7 @@
     @include('components.public.header')
 
     <!-- Main Content -->
-    <main class="relative pt-28 sm:pt-36 pb-20 px-4 sm:px-8 max-w-7xl mx-auto w-full flex-grow flex flex-col">
+    <main class="relative pt-28 sm:pt-36 pb-20 px-4 sm:px-8 lg:px-12 w-full flex-grow flex flex-col">
         
         <!-- Hero Header -->
         <div class="space-y-4 mb-8">
