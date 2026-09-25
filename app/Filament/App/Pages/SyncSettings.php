@@ -168,7 +168,10 @@ class SyncSettings extends Page
                             ->label(__('Base API URL'))
                             ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud'))
                             ->disabled()
-                            ->helperText(new \Illuminate\Support\HtmlString(__('Use this base URL with endpoints like /api/v1/ping or /{channel}/metric. <a href="/app/' . Filament::getTenant()->slug . '/integrations/api-access-reference" class="underline text-primary-600 dark:text-primary-400 font-semibold">' . __('View API Guide & Examples') . '</a>')))
+                            ->helperText(function () {
+                                $url = \App\Filament\App\Pages\ApiAccessReference::getUrl(['tenant' => Filament::getTenant()]);
+                                return new \Illuminate\Support\HtmlString(__('Use this base URL with endpoints like /api/v1/ping or /{channel}/metric. <a href="' . $url . '" class="underline text-primary-600 dark:text-primary-400 font-semibold">' . __('View API Guide & Examples') . '</a>'));
+                            })
                             ->suffixIcon('heroicon-m-globe-alt'),
                         TextInput::make('app_api_key')
                             ->label(__('Secret API Key'))
@@ -268,7 +271,7 @@ class SyncSettings extends Page
                                 $domain = config('app.network_domain') ?: 'apis-hub.cloud';
                                 $subdomain = $tenant ? $tenant->subdomain : 'your-project';
                                 $mcpUrl = "https://{$subdomain}.{$domain}/mcp/sse";
-                                $mcpGuideUrl = "/app/" . ($tenant->slug ?? '') . "/integrations/mcp-access-reference";
+                                $mcpGuideUrl = \App\Filament\App\Pages\McpAccessReference::getUrl(['tenant' => $tenant]);
 
                                 if ($hasMcp) {
                                     return new \Illuminate\Support\HtmlString('
