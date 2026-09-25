@@ -790,5 +790,21 @@ class Project extends Model
 
         return User::whereIn('id', $userIds)->get();
     }
+
+    /**
+     * Determine if a user has editor or owner privileges on this project.
+     */
+    public function isEditorOrOwner(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->getEditorsAndOwners()->contains('id', $user->id);
+    }
 }
 

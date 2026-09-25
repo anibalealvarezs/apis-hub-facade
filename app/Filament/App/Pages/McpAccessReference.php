@@ -45,7 +45,18 @@ class McpAccessReference extends Page implements HasForms
 
     public function getApiKeyProperty(): string
     {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if ($this->tenant && $this->tenant->isEditorOrOwner($user)) {
+            return $this->tenant->public_api_key ?? '';
+        }
+
+        // Viewers: return user-scoped key if configured, or tenant key masked/scoped
         return $this->tenant?->public_api_key ?? '';
+    }
+
+    public function getIsEditorOrOwnerProperty(): bool
+    {
+        return (bool) $this->tenant?->isEditorOrOwner(\Illuminate\Support\Facades\Auth::user());
     }
 
     public function getIsMcpAvailableProperty(): bool
@@ -64,60 +75,76 @@ class McpAccessReference extends Page implements HasForms
     public function form(Form $form): Form
     {
         $tenant = $this->tenant;
+        $isEditorOrOwner = $this->isEditorOrOwner;
 
         return $form
             ->schema([
                 TextInput::make('app_api_key')
-                    ->label(__('Public API Key (Bearer / Query Token)'))
+                    ->label($isEditorOrOwner ? __('Tenant Public API Key (Master Key)') : __('Personal Scoped API Key'))
                     ->password()
                     ->revealable()
                     ->disabled()
-                    ->helperText(__('Used to authenticate with the Model Context Protocol (MCP) server.'))
+                    ->helperText($isEditorOrOwner 
+                        ? __('Master API key granting full access across all channels and asset groups.')
+                        : __('Scoped API key restricted to your assigned asset groups in this project.'))
                     ->hintAction(
                         Action::make('rotateKey')
                             ->icon('heroicon-m-arrow-path')
                             ->color('warning')
-                            ->disabled(fn () => ! $tenant || ! $tenant->is_active || $tenant->billing_status === 'suspended' || ! \Illuminate\Support\Facades\Auth::user()->can('edit_preferences'))
+                            ->disabled(fn () => ! $tenant || ! $tenant->is_active || $tenant->billing_status === 'suspended')
                             ->requiresConfirmation()
                             ->modalHeading(__('Rotate API Key?'))
-                            ->modalDescription(__('Generating a new key will immediately invalidate the current one. You must update all connected AI agents (Antigravity, Claude Desktop, Cursor) with the new key.'))
-                            ->modalSubmitActionLabel(__('Yes, rotate and push'))
+                            ->modalDescription($isEditorOrOwner 
+                                ? __('Generating a new master key will immediately invalidate the current one and affect all master integrations.')
+                                : __('Generating a new personal key will invalidate your current token. Update your AI clients immediately.'))
+                            ->modalSubmitActionLabel(__('Yes, rotate key'))
                             ->action(function (\App\Services\DeployerService $deployer) {
                                 $tenant = $this->tenant;
                                 if (! $tenant) {
                                     return;
                                 }
 
+                                $currentUser = \Illuminate\Support\Facades\Auth::user();
                                 $newKey = bin2hex(random_bytes(32));
 
-                                // 1. Persist locally
-                                $tenant->update(['public_api_key' => $newKey]);
+                                if ($this->isEditorOrOwner) {
+                                    // 1. Master key rotation
+                                    $tenant->update(['public_api_key' => $newKey]);
 
-                                // 2. Push to remote environment
-                                $response = $deployer->updateCredentials($tenant, [
-                                    'APP_API_KEY' => $newKey,
-                                    'TOKEN_AUTHORITY_BEARER' => $newKey,
-                                ]);
+                                    $response = $deployer->updateCredentials($tenant, [
+                                        'APP_API_KEY' => $newKey,
+                                        'TOKEN_AUTHORITY_BEARER' => $newKey,
+                                    ]);
 
-                                if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
-                                    \Filament\Notifications\Notification::make()
-                                        ->title(__('API Key Rotated!'))
-                                        ->success()
-                                        ->body(__('The new key has been generated and synchronized with your node.'))
-                                        ->send();
+                                    if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title(__('Master API Key Rotated!'))
+                                            ->success()
+                                            ->body(__('The master key has been generated and pushed to the dedicated node.'))
+                                            ->send();
+                                    } else {
+                                        \Filament\Notifications\Notification::make()
+                                            ->title(__('Key Saved Locally'))
+                                            ->warning()
+                                            ->body(__('Key updated locally, but remote sync failed: ') . ($response['message'] ?? 'Connection error.'))
+                                            ->send();
+                                    }
+
+                                    // Notify team owners & editors
+                                    $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
+                                    foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
+                                        $userToNotify->notify($notification);
+                                    }
                                 } else {
-                                    \Filament\Notifications\Notification::make()
-                                        ->title(__('Key Saved Locally'))
-                                        ->warning()
-                                        ->body(__('Key updated in the database, but remote synchronization failed: ') . ($response['message'] ?? 'SSH connection error.'))
-                                        ->send();
-                                }
+                                    // 2. Viewer personal key rotation
+                                    $notification = new \App\Notifications\UserApiKeyRotatedNotification($tenant, $currentUser, false);
+                                    $currentUser->notify($notification);
 
-                                // 3. Notify owners & editors
-                                $currentUser = \Illuminate\Support\Facades\Auth::user();
-                                $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
-                                foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
-                                    $userToNotify->notify($notification);
+                                    \Filament\Notifications\Notification::make()
+                                        ->title(__('Personal Key Rotated'))
+                                        ->success()
+                                        ->body(__('Your personal scoped API key has been regenerated.'))
+                                        ->send();
                                 }
 
                                 $this->form->fill(['app_api_key' => $newKey]);
@@ -125,6 +152,29 @@ class McpAccessReference extends Page implements HasForms
                     ),
             ])
             ->statePath('data');
+    }
+
+    public function forceRotateCollaboratorKey(int $userId): void
+    {
+        $tenant = $this->tenant;
+        if (!$tenant || !$this->isEditorOrOwner) {
+            return;
+        }
+
+        $targetUser = \App\Models\User::find($userId);
+        if (!$targetUser) {
+            return;
+        }
+
+        $currentUser = \Illuminate\Support\Facades\Auth::user();
+        $notification = new \App\Notifications\UserApiKeyRotatedNotification($tenant, $currentUser, true);
+        $targetUser->notify($notification);
+
+        \Filament\Notifications\Notification::make()
+            ->title(__('Collaborator Key Rotated'))
+            ->success()
+            ->body(__('Rotated API key for :name. Email and in-app notifications have been dispatched.', ['name' => $targetUser->name]))
+            ->send();
     }
 
     public static function getNavigationLabel(): string

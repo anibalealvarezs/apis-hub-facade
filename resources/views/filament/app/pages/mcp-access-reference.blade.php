@@ -106,6 +106,81 @@
                         {{ __('Supports Authorization Bearer header, X-API-Key, or passing ?key=YOUR_API_KEY directly in the SSE query URL.') }}
                     </p>
                 </div>
+
+                {{-- Team Collaborators Keys Management (Owners / Editors only) --}}
+                @if($this->isEditorOrOwner && $tenant)
+                    @php
+                        $collaborators = $tenant->collaborators ?? collect();
+                        $nonEditors = $collaborators->filter(fn($c) => !$tenant->isEditorOrOwner($c));
+                    @endphp
+                    @if($nonEditors->isNotEmpty())
+                        <div class="pt-4 border-t border-gray-100 dark:border-white/5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">
+                                        {{ __('Viewer & Collaborator Scoped API Keys') }}
+                                    </h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ __('Non-editor team members access the node with asset-restricted keys. You can force-rotate individual keys to immediately revoke compromised tokens; the user will be alerted via email and in-app notification.') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg">
+                                <table class="w-full text-xs text-left divide-y divide-gray-200 dark:divide-white/5">
+                                    <thead class="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 uppercase font-semibold">
+                                        <tr>
+                                            <th class="px-4 py-2.5">{{ __('User') }}</th>
+                                            <th class="px-4 py-2.5">{{ __('Role') }}</th>
+                                            <th class="px-4 py-2.5">{{ __('Assigned Asset Groups') }}</th>
+                                            <th class="px-4 py-2.5 text-right">{{ __('Actions') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                                        @foreach($nonEditors as $collab)
+                                            @php
+                                                $sharedGroups = app(\App\Services\CollaboratorAssetAccessService::class)->getSharedAssetGroups($tenant, $collab->id);
+                                            @endphp
+                                            <tr>
+                                                <td class="px-4 py-2.5 font-medium text-gray-900 dark:text-white">
+                                                    <div>{{ $collab->name }}</div>
+                                                    <div class="text-[11px] text-gray-400">{{ $collab->email }}</div>
+                                                </td>
+                                                <td class="px-4 py-2.5 text-gray-500">
+                                                    <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300">
+                                                        {{ __('Viewer') }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-2.5 text-gray-500">
+                                                    @if($sharedGroups->isNotEmpty())
+                                                        <div class="flex flex-wrap gap-1">
+                                                            @foreach($sharedGroups as $group)
+                                                                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400">
+                                                                    {{ $group->name }}
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="text-amber-500 text-[11px] italic">{{ __('No asset groups assigned') }}</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-4 py-2.5 text-right">
+                                                    <button type="button"
+                                                            wire:click="forceRotateCollaboratorKey({{ $collab->id }})"
+                                                            wire:confirm="{{ __('Are you sure you want to force-rotate the API key for :name? The user will be notified immediately.', ['name' => $collab->name]) }}"
+                                                            class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-300 transition">
+                                                        <x-filament::icon icon="heroicon-m-arrow-path" class="w-3.5 h-3.5" />
+                                                        <span>{{ __('Force Rotate Key') }}</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+                @endif
             </div>
         </x-filament::section>
 
