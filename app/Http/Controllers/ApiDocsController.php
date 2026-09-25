@@ -39,6 +39,18 @@ class ApiDocsController extends Controller
                 'docs' => base64_encode('/docs/api'),
             ],
             'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+            'specUrl' => route('docs.api.spec'),
+        ]);
+    }
+
+    /**
+     * Return the sanitized OpenAPI 3.1 JSON specification.
+     */
+    public function spec(\App\Services\OpenApiSpecificationService $specService): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($specService->buildSpecification(), 200, [
+            'Access-Control-Allow-Origin' => '*',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 }

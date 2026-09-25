@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com">
     <link rel="preconnect" href="https://www.google.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Primary Meta Tags -->
     <title>{{ app()->getLocale() === 'es' ? 'Documentación de API y Especificación OpenAPI — APIs Hub' : 'API Documentation & OpenAPI Specification — APIs Hub' }}</title>
@@ -40,6 +40,22 @@
     <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
 
     @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        /* Seamless Scalar UI Dark Mode Adaptation */
+        .scalar-container {
+            --scalar-font: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --scalar-font-code: 'JetBrains Mono', monospace;
+            --scalar-color-1: #0f172a;
+            --scalar-border-color: rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .light .scalar-container {
+            --scalar-color-1: #ffffff;
+            --scalar-border-color: rgba(0, 0, 0, 0.08);
+        }
+    </style>
 </head>
 <body class="antialiased min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white"
       x-data="themeControl">
@@ -48,96 +64,70 @@
     @include('components.public.header')
 
     <!-- Main Content -->
-    <main class="relative pt-32 sm:pt-40 pb-20 px-6 sm:px-12 flex-grow flex flex-col items-center">
-        <div class="w-full max-w-4xl space-y-8">
-            
-            <!-- Hero Title & Badge -->
-            <div class="text-center space-y-3">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-blue/10 text-brand-blue border border-brand-blue/20">
-                    <span class="w-2 h-2 rounded-full bg-brand-blue animate-pulse"></span>
-                    <span>{{ __('OpenAPI 3.1 Specification & Interactive Portal') }}</span>
-                </div>
-                <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
-                    {{ __('APIs Hub Developer Reference') }}
-                </h1>
-                <p class="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-2xl mx-auto">
-                    {{ __('Programmatic access to normalized cross-channel advertising data, real-time sync telemetry, and analytical reductions for BI tools and custom integrations.') }}
-                </p>
+    <main class="relative pt-28 sm:pt-36 pb-20 px-4 sm:px-8 max-w-7xl mx-auto w-full flex-grow flex flex-col">
+        
+        <!-- Hero Header -->
+        <div class="space-y-4 mb-8">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-blue/10 text-brand-blue border border-brand-blue/20">
+                <span class="w-2 h-2 rounded-full bg-brand-blue animate-pulse"></span>
+                <span>{{ __('OpenAPI 3.1 Reference & Interactive Sandbox') }}</span>
             </div>
-
-            <!-- Coming Soon / Portal Roadmap Card -->
-            <div class="p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 backdrop-blur-xl shadow-xl space-y-6">
-                <div class="flex items-start gap-4">
-                    <div class="p-3 rounded-xl bg-brand-blue/10 text-brand-blue shrink-0">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">
-                            {{ __('Public Interactive Portal & Sandbox Under Active Development') }}
-                        </h2>
-                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            {{ __('We are formalizing the complete OpenAPI 3.1 specification, browser try-it console, and downloadable Postman collections.') }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Feature Grid Preview -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-1.5">
-                        <div class="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                            <span>{{ __('Analytical Aggregations') }}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            <code>POST /{channel}/metric/aggregate</code> {{ __('with multi-dimensional groupBy, relational filters, and weighted formulas.') }}
-                        </p>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-1.5">
-                        <div class="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                            <span>{{ __('Normalized Channel Metrics') }}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            <code>GET /{channel}/metric</code> {{ __('paginated time-series records across Google, Meta, Shopify, and more.') }}
-                        </p>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-1.5">
-                        <div class="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                            <span>{{ __('Heartbeat & Network Ping') }}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            <code>GET /api/v1/ping</code> {{ __('public connectivity and key validation healthcheck.') }}
-                        </p>
-                    </div>
-
-                    <div class="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-1.5">
-                        <div class="flex items-center gap-2 font-semibold text-xs sm:text-sm text-slate-900 dark:text-slate-100">
-                            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                            <span>{{ __('Interactive Sandbox') }}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">
-                            {{ __('Execute test queries directly against your dedicated node with dynamic key injection.') }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- CTA Actions -->
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <p class="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
-                        {{ __('Already have an account? You can test endpoints using your API key from the app console.') }}
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
+                        {{ __('APIs Hub Developer Reference') }}
+                    </h1>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-3xl mt-2">
+                        {{ __('Direct programmatic access to normalized cross-channel advertising data, real-time sync telemetry, entity discovery, and high-speed multidimensional analytical aggregations.') }}
                     </p>
-                    <a href="/app" class="whitespace-nowrap px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense">
-                        {{ __('Go to App Dashboard') }} &rarr;
+                </div>
+                <!-- Spec Download Button -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <a href="{{ route('docs.api.spec') }}" target="_blank" download="apis-hub-openapi.json"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-blue hover:border-brand-blue/40 transition-all shadow-sm">
+                        <svg class="w-4 h-4 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span>{{ __('Download OpenAPI JSON') }}</span>
                     </a>
                 </div>
             </div>
 
+            <!-- Topic Quick Navigation -->
+            <div class="flex items-center gap-2 overflow-x-auto py-2 text-xs scrollbar-none border-b border-slate-200/80 dark:border-slate-800/80 text-slate-500 dark:text-slate-400">
+                <span class="font-semibold text-slate-700 dark:text-slate-300">{{ __('Key Topics:') }}</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">🔐 Authentication</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">💓 System Health</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">🔄 Data Sync</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">🔍 Assets Discovery</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">📄 Pagination & Sorting</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">📊 Aggregations</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">🌐 Omnichannel</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">⏱ Rate Limits</span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50 hover:text-brand-blue cursor-default">⚠️ Error Handling</span>
+            </div>
         </div>
+
+        <!-- Scalar UI Interactive Reference Container -->
+        <div class="scalar-container border border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl min-h-[800px]">
+            <script
+                id="api-reference"
+                data-url="{{ route('docs.api.spec') }}"
+                data-configuration='{
+                    "theme": "purple",
+                    "darkMode": true,
+                    "layout": "modern",
+                    "showSidebar": true,
+                    "hideModels": false,
+                    "defaultHttpClient": {
+                        "targetKey": "shell",
+                        "clientKey": "curl"
+                    }
+                }'
+            ></script>
+            <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest"></script>
+        </div>
+
     </main>
 
     <!-- Semantic Footer -->

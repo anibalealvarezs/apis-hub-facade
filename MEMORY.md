@@ -11,6 +11,28 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Public API Documentation & OpenAPI 3.1 Portal Implementation (2026-09-24)
+- **Context & Requirements**:
+  - The API docs portal (`/docs/api` and `/es/docs/api`) provides comprehensive developer documentation and an interactive reference.
+  - Required splitting API content cleanly into accessible topics:
+    - **Authentication & Security**: `X-API-KEY` header and `Bearer` token conventions, key rotation, project node resolution (`https://{subdomain}.apis-hub.cloud`). Public API keys are strictly read-only.
+    - **System Health**: `/api/v1/ping` node connectivity and credentials check (does not consume rate limits).
+    - **Data Synchronization**: `/api/sync/status` and `/api/sync/account-stats` for freshness timestamps and synced record volumes.
+    - **Assets Discovery & Entity Queries**: Clarified that channeled accounts are known as **assets** in APIs Hub. Used `GET /{channel}/account` for discovering asset IDs (`channeledAccount`), along with read-only entity inspection (`GET /{channel}/{entity}`, `/{id}`, `/count`, `/range`).
+    - **Pagination, Page Size & Sorting**: Detailed offset pagination (`limit` up to 50,000 for entities, 5,000 for aggregations) and deterministic sorting orders.
+    - **Channel Analytics (Aggregations)**: `POST /{channel}/metric/aggregate` across 4 core channels (GSC, GA4, Meta Ads, Meta Organic) with exhaustive scopes, granularities, canonical metrics, and dimensions.
+    - **Omnichannel Analytics**: `POST /entity/metric/aggregate` cross-channel master reducers.
+    - **Analytical Query Caching Telemetry**: Query response includes `meta.cached` (boolean indicating if calculation was served from cache) and `meta.execution_time_ms`.
+    - **Error Handling & Rate Limits**: Documented status semantics (`400`, `401`, `403`, `404`, `422`, `429`), error payload schemas, and tier-based rate limiting (500 req/min vs 1,000 req/min).
+  - Sanitization: All legacy cache CRUD endpoints and internal mutation operations omitted. Zero references to internal admin keys, internal ports, Redis/Swoole internals, or specific customer project URLs (placeholders only).
+- **Implementation**:
+  - `App\Services\OpenApiSpecificationService`: Generates OpenAPI 3.1 JSON with dedicated topic tags, schemas, and security schemes.
+  - `App\Http\Controllers\ApiDocsController`: Serves `/docs/api`, `/es/docs/api`, and `/docs/api/openapi.json` with CORS enabled.
+  - `resources/views/docs/api-docs.blade.php`: Renders modern Scalar UI API reference (`@scalar/api-reference`) with quick-jump topic filters and OpenAPI JSON download.
+- **Verification**:
+  - `ApiKeyRotationLifecycleTest.php` passing all 6 tests (90 assertions).
+
+
 ### Widget Header Reload Icon Fix + Breakdown Table Default-Sort Fix (2026-09-23)
 - **Bug 1 (reload icon in widget header did nothing):** `updateWidget()` in `resources/js/dashboards/dashboard-view.js` (and `resources/js/public-view/public-dashboard.js`) used `dbView.__x.getUnobservedData().reloadWidget(...)`. `getUnobservedData()` does NOT exist in Alpine 3.15 (confirmed via `node_modules/alpinejs/dist/cdn.js`), so the `if (dbView && dbView.__x && dbView.__x.getUnobservedData())` guard was always falsy → click silently no-oped (no console error, no network). **Fix:** replaced with `window.Alpine ? Alpine.$data(dbView) : null` and call `view.reloadWidget(...)` when it's a function; fallback dispatches `reload-widget` CustomEvent. Note the public view's root is `#view-grid-stack` (its Alpine ancestor is `sharedView`), while the app view root is `#dashboard-view-container` (`dashboardView`). `Alpine.$data()` is used elsewhere at dashboard-view.js:1399. Rebuilt via `npm run build` (vite 7.3.1).
 - **Bug 2 (breakdown table ignored "Rank Top By" custom metric for the initial sort):** `handleMultiSeriesSource()` lifetime-breakdown table path sorted rows by `$breakdownRankBy` in PHP, but `renderTable()` in `public/js/dashboard-renderer.js` re-sorted by the FIRST column (`dimension`, ASC) by default, throwing away the rank-by. **Fix:** controller now emits `default_sort_column` (rank_by cleaned of `trend_total_/trend_average_`) + `default_sort_direction` (`desc` for `value_desc`, `asc` for `value_asc`) only for value-based orders; renderer's default `_tableSort` now prefers the backend `default_sort_column` when a matching column exists, else falls back to the old first-column logic. Manual column-header clicks still override (stored in `containerEl._tableSort`).

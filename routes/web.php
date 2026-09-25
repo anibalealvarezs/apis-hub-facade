@@ -18,6 +18,9 @@ Route::get('/docs/api', [\App\Http\Controllers\ApiDocsController::class, 'show']
 Route::get('/es/docs/api', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\ApiDocsController::class)->show($r, 'es'))
     ->name('docs.api.es');
 
+Route::get('/docs/api/openapi.json', [\App\Http\Controllers\ApiDocsController::class, 'spec'])
+    ->name('docs.api.spec');
+
 Route::get('/{locale?}', [\App\Http\Controllers\LandingController::class, 'index'])
     ->where('locale', 'es')
     ->name('landing.index');

@@ -153,15 +153,20 @@ it('correctly resolves getEditorsAndOwners for a project', function () {
     expect($recipients->pluck('id')->all())->not->toContain($this->outsider->id);
 });
 
-it('serves the public API documentation placeholder page', function () {
+it('serves the public API documentation and OpenAPI spec', function () {
     $response = $this->get(route('docs.api'));
     $response->assertStatus(200);
     $response->assertSee('APIs Hub Developer Reference');
-    $response->assertSee('POST /{channel}/metric/aggregate');
+    $response->assertSee('Authentication');
 
     $responseEs = $this->get(route('docs.api.es'));
     $responseEs->assertStatus(200);
     $responseEs->assertSee('Documentación de API y Especificación OpenAPI');
+
+    $responseSpec = $this->get(route('docs.api.spec'));
+    $responseSpec->assertStatus(200);
+    $responseSpec->assertJsonPath('openapi', '3.1.0');
+    $responseSpec->assertJsonPath('info.title', 'APIs Hub RESTful Analytical API');
 });
 
 it('disables API access and rotation when project or billing profile is downgraded or suspended', function () {
