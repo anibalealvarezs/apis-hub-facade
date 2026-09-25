@@ -848,17 +848,32 @@ input[type="datetime-local"] {
 }
 
 /* ---------- API Reference Page Code Blocks & Tables ---------- */
+.api-ref-code-container {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    background-color: #0b1120; /* Very dark slate / midnight */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.dark .api-ref-code-container {
+    background-color: #030712 !important; /* Rich deep black/gray-950 for high contrast against section card */
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
 .api-ref-code-block {
-    background-color: #0f172a !important; /* slate-900 */
-    color: #f1f5f9 !important; /* slate-100 */
+    flex: 1 1 0%;
+    background-color: transparent !important;
+    color: #f1f5f9 !important;
     padding: 0.875rem 1rem !important;
-    border-radius: 0.5rem !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
     font-size: 0.75rem !important;
-    line-height: 1.5 !important;
+    line-height: 1.6 !important;
     overflow-x: auto !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    margin: 0 !important;
 }
 .api-ref-code-block code {
     background: transparent !important;
@@ -870,5 +885,53 @@ input[type="datetime-local"] {
 }
 .api-ref-code-block.is-success {
     color: #4ade80 !important; /* green-400 */
+}
+
+.api-ref-copy-btn {
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin: 0.5rem 0.5rem 0.5rem 0.25rem;
+    padding: 0.35rem 0.65rem;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    white-space: nowrap;
+}
+.api-ref-copy-btn:hover {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+}
+
+/* Rate Limits table body dark mode guarantees */
+.dark .api-ref-table-wrap {
+    background-color: #0f172a !important; /* slate-900 */
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.dark .api-ref-table thead {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    color: #94a3b8 !important;
+}
+.dark .api-ref-table tbody {
+    background-color: transparent !important;
+}
+.dark .api-ref-table tr {
+    background-color: transparent !important;
+}
+.dark .api-ref-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+}
+.dark .api-ref-table td {
+    color: #e2e8f0 !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+}
+.dark .api-ref-table td code {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 

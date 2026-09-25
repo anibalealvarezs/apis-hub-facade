@@ -1,6 +1,21 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
-        <div class="prose prose-sm max-w-none text-gray-500 dark:text-gray-400 mb-2">
+    @php
+        $baseUrl = $this->baseUrl;
+        $apiKey = $this->apiKey;
+    @endphp
+
+    <div class="space-y-6" x-data="{
+        apiKey: @js($apiKey),
+        baseUrl: @js($baseUrl),
+        copySnippet(template) {
+            const resolved = template
+                .replace(/YOUR_API_KEY/g, this.apiKey || 'YOUR_API_KEY')
+                .replace(/https:\/\/<subdomain>\.apis-hub\.cloud/g, this.baseUrl)
+                .replace(/https:\/\/<your-project-subdomain>\.apis-hub\.cloud/g, this.baseUrl);
+            navigator.clipboard.writeText(resolved);
+        }
+    }">
+        <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
             {{ __('Connect external reporting platforms, BI tools (PowerBI, Looker Studio), and custom applications directly to your dedicated APIs Hub node.') }}
         </div>
 
@@ -30,35 +45,59 @@
                 </div>
             </x-slot>
 
-            <div class="prose dark:prose-invert max-w-none text-sm space-y-3">
-                <p>
-                    {{ __('Every project has a dedicated public API key available under Project Settings -> API Access. All requests must provide this key via HTTP headers.') }}
+            <div class="space-y-4">
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ __('Every project has a dedicated public API key for authentication. All requests must provide this key via HTTP headers.') }}
                 </p>
-                <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs space-y-2">
+
+                {{-- Livewire API Key Field with Reveal & Rotate --}}
+                <div class="mb-4">
+                    {{ $this->form }}
+                </div>
+
+                {{-- Base Endpoint URL (Copyable) --}}
+                <div>
+                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                        {{ __('Base Endpoint URL:') }}
+                    </span>
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">{{ $baseUrl }}</code></pre>
+                        <button type="button" 
+                                @click="navigator.clipboard.writeText('{{ $baseUrl }}'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
+                            <span x-show="!copied">{{ __('Copy') }}</span>
+                            <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Authentication Header Options --}}
+                <div class="p-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/60 rounded-lg text-xs space-y-3">
                     <div>
-                        <span class="text-gray-500 dark:text-gray-400 block mb-1 font-semibold">{{ __('Header Option 1 (Recommended):') }}</span>
-                        <div class="flex items-center gap-2" x-data="{ copied: false }">
-                            <pre class="api-ref-code-block flex-1"><code class="select-all">X-API-Key: YOUR_API_KEY</code></pre>
-                            <button type="button" @click="navigator.clipboard.writeText('X-API-Key: YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-xs transition">
+                        <span class="text-gray-600 dark:text-gray-300 block mb-1 font-semibold">{{ __('Header Option 1 (Recommended):') }}</span>
+                        <div class="api-ref-code-container" x-data="{ copied: false }">
+                            <pre class="api-ref-code-block"><code class="select-all">X-API-Key: YOUR_API_KEY</code></pre>
+                            <button type="button" 
+                                    @click="copySnippet('X-API-Key: YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                    class="api-ref-copy-btn">
                                 <span x-show="!copied">{{ __('Copy') }}</span>
-                                <span x-show="copied" class="text-success-600 dark:text-success-400" x-cloak>{{ __('Copied!') }}</span>
+                                <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                             </button>
                         </div>
                     </div>
                     <div>
-                        <span class="text-gray-500 dark:text-gray-400 block mb-1 font-semibold">{{ __('Header Option 2 (Bearer Token):') }}</span>
-                        <div class="flex items-center gap-2" x-data="{ copied: false }">
-                            <pre class="api-ref-code-block flex-1"><code class="select-all">Authorization: Bearer YOUR_API_KEY</code></pre>
-                            <button type="button" @click="navigator.clipboard.writeText('Authorization: Bearer YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-xs transition">
+                        <span class="text-gray-600 dark:text-gray-300 block mb-1 font-semibold">{{ __('Header Option 2 (Bearer Token):') }}</span>
+                        <div class="api-ref-code-container" x-data="{ copied: false }">
+                            <pre class="api-ref-code-block"><code class="select-all">Authorization: Bearer YOUR_API_KEY</code></pre>
+                            <button type="button" 
+                                    @click="copySnippet('Authorization: Bearer YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                    class="api-ref-copy-btn">
                                 <span x-show="!copied">{{ __('Copy') }}</span>
-                                <span x-show="copied" class="text-success-600 dark:text-success-400" x-cloak>{{ __('Copied!') }}</span>
+                                <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                             </button>
                         </div>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ __('Base Endpoint URL format:') }} <code>https://&lt;your-project-subdomain&gt;.apis-hub.cloud</code>
-                </p>
             </div>
         </x-filament::section>
 
@@ -92,23 +131,32 @@
                 <p class="text-sm text-gray-600 dark:text-gray-300">
                     {{ __('To verify network connectivity and authenticate your API key, call the public ping endpoint:') }}
                 </p>
-                <div class="relative group" x-data="{ copied: false }">
-                    <pre class="api-ref-code-block"><code class="select-all">curl -s -H "X-API-Key: YOUR_API_KEY" \
-  https://&lt;subdomain&gt;.apis-hub.cloud/api/v1/ping</code></pre>
-                    <button type="button" @click="navigator.clipboard.writeText('curl -s -H &quot;X-API-Key: YOUR_API_KEY&quot; https://<subdomain>.apis-hub.cloud/api/v1/ping'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                @php
+                    $pingSnippet = "curl -s -H \"X-API-Key: YOUR_API_KEY\" \\\n  {$baseUrl}/api/v1/ping";
+                @endphp
+                <div class="api-ref-code-container" x-data="{ copied: false }">
+                    <pre class="api-ref-code-block"><code class="select-all">{{ $pingSnippet }}</code></pre>
+                    <button type="button" 
+                            @click="copySnippet(@js($pingSnippet)); copied = true; setTimeout(() => copied = false, 2000)" 
+                            class="api-ref-copy-btn">
                         <span x-show="!copied">{{ __('Copy') }}</span>
                         <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                     </button>
                 </div>
 
                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Expected Response (HTTP 200):') }}</p>
-                <div class="relative group" x-data="{ copied: false }">
+                @php
+                    $pingResponse = "{\n  \"status\": \"ok\",\n  \"message\": \"APIs Hub API connection verified successfully.\",\n  \"timestamp\": \"2026-09-24T23:15:00Z\"\n}";
+                @endphp
+                <div class="api-ref-code-container" x-data="{ copied: false }">
                     <pre class="api-ref-code-block is-success"><code class="select-all">{
   "status": "ok",
   "message": "APIs Hub API connection verified successfully.",
   "timestamp": "2026-09-24T23:15:00Z"
 }</code></pre>
-                    <button type="button" @click="navigator.clipboard.writeText('{\n  &quot;status&quot;: &quot;ok&quot;,\n  &quot;message&quot;: &quot;APIs Hub API connection verified successfully.&quot;,\n  &quot;timestamp&quot;: &quot;2026-09-24T23:15:00Z&quot;\n}'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                    <button type="button" 
+                            @click="navigator.clipboard.writeText(@js($pingResponse)); copied = true; setTimeout(() => copied = false, 2000)" 
+                            class="api-ref-copy-btn">
                         <span x-show="!copied">{{ __('Copy') }}</span>
                         <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                     </button>
@@ -145,10 +193,14 @@
             <div class="space-y-4 text-sm">
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">1. cURL (Fetch Channel Metrics)</h4>
-                    <div class="relative group" x-data="{ copied: false }">
-                        <pre class="api-ref-code-block"><code class="select-all">curl -s -H "X-API-Key: YOUR_API_KEY" \
-  "https://&lt;subdomain&gt;.apis-hub.cloud/google_search_console/metric?limit=50"</code></pre>
-                        <button type="button" @click="navigator.clipboard.writeText('curl -s -H &quot;X-API-Key: YOUR_API_KEY&quot; &quot;https://<subdomain>.apis-hub.cloud/google_search_console/metric?limit=50&quot;'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                    @php
+                        $curlMetric = "curl -s -H \"X-API-Key: YOUR_API_KEY\" \\\n  \"{$baseUrl}/google_search_console/metric?limit=50\"";
+                    @endphp
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">{{ $curlMetric }}</code></pre>
+                        <button type="button" 
+                                @click="copySnippet(@js($curlMetric)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
                             <span x-show="!copied">{{ __('Copy') }}</span>
                             <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
@@ -157,15 +209,14 @@
 
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">2. Python (requests)</h4>
-                    <div class="relative group" x-data="{ copied: false }">
-                        <pre class="api-ref-code-block"><code class="select-all">import requests
-
-url = "https://&lt;subdomain&gt;.apis-hub.cloud/api/sync/status"
-headers = {"X-API-Key": "YOUR_API_KEY"}
-
-response = requests.get(url, headers=headers)
-print(response.json())</code></pre>
-                        <button type="button" @click="navigator.clipboard.writeText('import requests\n\nurl = &quot;https://<subdomain>.apis-hub.cloud/api/sync/status&quot;\nheaders = {&quot;X-API-Key&quot;: &quot;YOUR_API_KEY&quot;}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json())'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                    @php
+                        $pythonSnippet = "import requests\n\nurl = \"{$baseUrl}/api/sync/status\"\nheaders = {\"X-API-Key\": \"YOUR_API_KEY\"}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json())";
+                    @endphp
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">{{ $pythonSnippet }}</code></pre>
+                        <button type="button" 
+                                @click="copySnippet(@js($pythonSnippet)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
                             <span x-show="!copied">{{ __('Copy') }}</span>
                             <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
@@ -174,13 +225,14 @@ print(response.json())</code></pre>
 
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">3. JavaScript / Node.js (fetch)</h4>
-                    <div class="relative group" x-data="{ copied: false }">
-                        <pre class="api-ref-code-block"><code class="select-all">const res = await fetch("https://&lt;subdomain&gt;.apis-hub.cloud/api/sync/account-stats", {
-  headers: { "X-API-Key": "YOUR_API_KEY" }
-});
-const data = await res.json();
-console.log(data);</code></pre>
-                        <button type="button" @click="navigator.clipboard.writeText('const res = await fetch(&quot;https://<subdomain>.apis-hub.cloud/api/sync/account-stats&quot;, {\n  headers: { &quot;X-API-Key&quot;: &quot;YOUR_API_KEY&quot; }\n});\nconst data = await res.json();\nconsole.log(data);'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                    @php
+                        $jsSnippet = "const res = await fetch(\"{$baseUrl}/api/sync/account-stats\", {\n  headers: { \"X-API-Key\": \"YOUR_API_KEY\" }\n});\nconst data = await res.json();\nconsole.log(data);";
+                    @endphp
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">{{ $jsSnippet }}</code></pre>
+                        <button type="button" 
+                                @click="copySnippet(@js($jsSnippet)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
                             <span x-show="!copied">{{ __('Copy') }}</span>
                             <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
@@ -192,11 +244,13 @@ console.log(data);</code></pre>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                         {{ __('In Power BI "Web Data Source" or Looker Studio JSON Connector, configure an HTTP header with:') }}
                     </p>
-                    <div class="flex items-center gap-2" x-data="{ copied: false }">
-                        <pre class="api-ref-code-block flex-1"><code class="select-all">Header: X-API-Key | Value: YOUR_API_KEY</code></pre>
-                        <button type="button" @click="navigator.clipboard.writeText('Header: X-API-Key | Value: YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-xs transition">
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">Header: X-API-Key | Value: YOUR_API_KEY</code></pre>
+                        <button type="button" 
+                                @click="copySnippet('Header: X-API-Key | Value: YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
                             <span x-show="!copied">{{ __('Copy') }}</span>
-                            <span x-show="copied" class="text-success-600 dark:text-success-400" x-cloak>{{ __('Copied!') }}</span>
+                            <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
                     </div>
                 </div>
@@ -236,26 +290,14 @@ console.log(data);</code></pre>
 
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">Scorecard Summary Example (Single Totals Row)</h4>
-                    <div class="relative group" x-data="{ copied: false }">
-                        <pre class="api-ref-code-block"><code class="select-all">curl -s -X POST https://&lt;subdomain&gt;.apis-hub.cloud/google_search_console/metric/aggregate \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "aggregations": {
-      "clicks": "clicks",
-      "impressions": "impressions",
-      "ctr": "ctr",
-      "position": "position"
-    },
-    "groupBy": [],
-    "filters": {
-      "channeledAccount": "12",
-      "dimensions.searchAppearance": "standard"
-    },
-    "startDate": "2026-09-01",
-    "endDate": "2026-09-24"
-  }'</code></pre>
-                        <button type="button" @click="navigator.clipboard.writeText('curl -s -X POST https://<subdomain>.apis-hub.cloud/google_search_console/metric/aggregate \\\n  -H &quot;X-API-Key: YOUR_API_KEY&quot; \\\n  -H &quot;Content-Type: application/json&quot; \\\n  -d \'{\n    &quot;aggregations&quot;: {\n      &quot;clicks&quot;: &quot;clicks&quot;,\n      &quot;impressions&quot;: &quot;impressions&quot;,\n      &quot;ctr&quot;: &quot;ctr&quot;,\n      &quot;position&quot;: &quot;position&quot;\n    },\n    &quot;groupBy&quot;: [],\n    &quot;filters&quot;: {\n      &quot;channeledAccount&quot;: &quot;12&quot;,\n      &quot;dimensions.searchAppearance&quot;: &quot;standard&quot;\n    },\n    &quot;startDate&quot;: &quot;2026-09-01&quot;,\n    &quot;endDate&quot;: &quot;2026-09-24&quot;\n  }\''); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                    @php
+                        $scorecardSnippet = "curl -s -X POST {$baseUrl}/google_search_console/metric/aggregate \\\n  -H \"X-API-Key: YOUR_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"aggregations\": {\n      \"clicks\": \"clicks\",\n      \"impressions\": \"impressions\",\n      \"ctr\": \"ctr\",\n      \"position\": \"position\"\n    },\n    \"groupBy\": [],\n    \"filters\": {\n      \"channeledAccount\": \"12\",\n      \"dimensions.searchAppearance\": \"standard\"\n    },\n    \"startDate\": \"2026-09-01\",\n    \"endDate\": \"2026-09-24\"\n  }'";
+                    @endphp
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">{{ $scorecardSnippet }}</code></pre>
+                        <button type="button" 
+                                @click="copySnippet(@js($scorecardSnippet)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
                             <span x-show="!copied">{{ __('Copy') }}</span>
                             <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
@@ -264,28 +306,14 @@ console.log(data);</code></pre>
 
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">Time-Series Line Chart Example (Daily Trend Grouping)</h4>
-                    <div class="relative group" x-data="{ copied: false }">
-                        <pre class="api-ref-code-block"><code class="select-all">curl -s -X POST https://&lt;subdomain&gt;.apis-hub.cloud/facebook_marketing/metric/aggregate \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "aggregations": {
-      "spend": "spend",
-      "clicks": "clicks",
-      "impressions": "impressions",
-      "cpc": "cpc",
-      "conversions": "results"
-    },
-    "groupBy": ["date"],
-    "filters": {
-      "channeledAccount": "5"
-    },
-    "startDate": "2026-09-01",
-    "endDate": "2026-09-24",
-    "orderBy": "date",
-    "orderDir": "ASC"
-  }'</code></pre>
-                        <button type="button" @click="navigator.clipboard.writeText('curl -s -X POST https://<subdomain>.apis-hub.cloud/facebook_marketing/metric/aggregate \\\n  -H &quot;X-API-Key: YOUR_API_KEY&quot; \\\n  -H &quot;Content-Type: application/json&quot; \\\n  -d \'{\n    &quot;aggregations&quot;: {\n      &quot;spend&quot;: &quot;spend&quot;,\n      &quot;clicks&quot;: &quot;clicks&quot;,\n      &quot;impressions&quot;: &quot;impressions&quot;,\n      &quot;cpc&quot;: &quot;cpc&quot;,\n      &quot;conversions&quot;: &quot;results&quot;\n    },\n    &quot;groupBy&quot;: [&quot;date&quot;],\n    &quot;filters&quot;: {\n      &quot;channeledAccount&quot;: &quot;5&quot;\n    },\n    &quot;startDate&quot;: &quot;2026-09-01&quot;,\n    &quot;endDate&quot;: &quot;2026-09-24&quot;,\n    &quot;orderBy&quot;: &quot;date&quot;,\n    &quot;orderDir&quot;: &quot;ASC&quot;\n  }\''); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
+                    @php
+                        $chartSnippet = "curl -s -X POST {$baseUrl}/facebook_marketing/metric/aggregate \\\n  -H \"X-API-Key: YOUR_API_KEY\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"aggregations\": {\n      \"spend\": \"spend\",\n      \"clicks\": \"clicks\",\n      \"impressions\": \"impressions\",\n      \"cpc\": \"cpc\",\n      \"conversions\": \"results\"\n    },\n    \"groupBy\": [\"date\"],\n    \"filters\": {\n      \"channeledAccount\": \"5\"\n    },\n    \"startDate\": \"2026-09-01\",\n    \"endDate\": \"2026-09-24\",\n    \"orderBy\": \"date\",\n    \"orderDir\": \"ASC\"\n  }'";
+                    @endphp
+                    <div class="api-ref-code-container" x-data="{ copied: false }">
+                        <pre class="api-ref-code-block"><code class="select-all">{{ $chartSnippet }}</code></pre>
+                        <button type="button" 
+                                @click="copySnippet(@js($chartSnippet)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                class="api-ref-copy-btn">
                             <span x-show="!copied">{{ __('Copy') }}</span>
                             <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
@@ -324,8 +352,8 @@ console.log(data);</code></pre>
                 <p class="text-sm text-gray-600 dark:text-gray-300">
                     {{ __('API access is rate-limited on a per-minute sliding window according to your project tier:') }}
                 </p>
-                <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg">
-                    <table class="w-full text-xs text-left divide-y divide-gray-200 dark:divide-white/5">
+                <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg api-ref-table-wrap">
+                    <table class="w-full text-xs text-left divide-y divide-gray-200 dark:divide-white/5 api-ref-table">
                         <thead class="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">
                             <tr>
                                 <th scope="col" class="px-4 py-3">{{ __('Tier') }}</th>
@@ -333,20 +361,26 @@ console.log(data);</code></pre>
                                 <th scope="col" class="px-4 py-3">{{ __('Status') }}</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-gray-900/50">
-                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                            <tr class="transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]">
                                 <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Free / Pro</td>
-                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><code>0</code></td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    <code class="px-1.5 py-0.5 rounded text-xs">0</code>
+                                </td>
                                 <td class="px-4 py-3 text-warning-600 dark:text-warning-400 font-medium">{{ __('Requires Ultra or Enterprise') }}</td>
                             </tr>
-                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                            <tr class="transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]">
                                 <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Ultra / Founder</td>
-                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><code>500 req/min</code></td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    <code class="px-1.5 py-0.5 rounded text-xs">500 req/min</code>
+                                </td>
                                 <td class="px-4 py-3 text-success-600 dark:text-success-400 font-medium">{{ __('Active') }}</td>
                             </tr>
-                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                            <tr class="transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]">
                                 <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Enterprise</td>
-                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><code>1,000 req/min</code></td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    <code class="px-1.5 py-0.5 rounded text-xs">1,000 req/min</code>
+                                </td>
                                 <td class="px-4 py-3 text-success-600 dark:text-success-400 font-medium">{{ __('Active') }}</td>
                             </tr>
                         </tbody>
