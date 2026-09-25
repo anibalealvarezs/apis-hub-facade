@@ -110,7 +110,7 @@
                 {{-- Team Collaborators Keys Management (Owners / Editors only) --}}
                 @if($this->isEditorOrOwner && $tenant)
                     @php
-                        $collaborators = $tenant->collaborators ?? collect();
+                        $collaborators = $tenant->users ?? collect();
                         $nonEditors = $collaborators->filter(fn($c) => !$tenant->isEditorOrOwner($c));
                     @endphp
                     @if($nonEditors->isNotEmpty())
