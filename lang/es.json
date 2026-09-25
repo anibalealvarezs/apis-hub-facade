@@ -5,6 +5,8 @@
     "Model Context Protocol (MCP) Server": "Servidor Model Context Protocol (MCP)",
     "Model Context Protocol (MCP) Server Locked": "Servidor Model Context Protocol (MCP) Bloqueado",
     "MCP Server Active on Dedicated Node": "Servidor MCP Activo en Nodo Dedicado",
+    "MCP Server Active on Dedicated Node (:tier)": "Servidor MCP Activo en Nodo Dedicado (:tier)",
+    "Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.": "El nodo de tu proyecto soporta ejecución de herramientas en tiempo real vía transporte SSE. Herramientas incluidas: agregaciones de rendimiento, auditorías de cobertura de canales y métricas de instancias.",
     "MCP Active (:tier)": "MCP Activo (:tier)",
     "Requires Ultra / Enterprise": "Requiere Ultra / Enterprise",
     "View Setup Guide & Prompts": "Ver Guía de Configuración y Prompts",

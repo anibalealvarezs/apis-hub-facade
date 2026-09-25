@@ -272,22 +272,38 @@ class SyncSettings extends Page
 
                                 if ($hasMcp) {
                                     return new \Illuminate\Support\HtmlString('
-                                        <div class="p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 space-y-3">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                    <span class="font-bold text-sm">' . __('MCP Server Active on Dedicated Node') . ' (' . ucfirst($tier) . ')</span>
+                                        <div class="space-y-4">
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04]">
+                                                <div class="space-y-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                        <h4 class="font-bold text-sm text-gray-900 dark:text-white">
+                                                            ' . __('MCP Server Active on Dedicated Node (:tier)', ['tier' => ucfirst($tier)]) . '
+                                                        </h4>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 dark:text-gray-300">
+                                                        ' . __('Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.') . '
+                                                    </p>
                                                 </div>
-                                                <a href="' . $mcpGuideUrl . '" class="inline-flex items-center text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline">
-                                                    ' . __('View Setup Guide & Prompts') . ' &rarr;
+                                                <a href="' . $mcpGuideUrl . '" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline shrink-0">
+                                                    <span>' . __('View Setup Guide & Prompts') . '</span>
+                                                    <span>&rarr;</span>
                                                 </a>
                                             </div>
-                                            <p class="text-xs text-emerald-700 dark:text-emerald-400">
-                                                ' . __('Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.') . '
-                                            </p>
-                                            <div class="flex items-center gap-2 text-xs font-mono bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                                                <span class="text-slate-500 dark:text-slate-400 select-none">SSE Endpoint:</span>
-                                                <span class="select-all text-slate-800 dark:text-slate-200">' . $mcpUrl . '</span>
+
+                                            <div>
+                                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                                                    ' . __('SSE Transport URL:') . '
+                                                </span>
+                                                <div class="api-ref-code-container" x-data="{ copied: false }">
+                                                    <pre class="api-ref-code-block"><code class="select-all">' . $mcpUrl . '</code></pre>
+                                                    <button type="button" 
+                                                            @click="navigator.clipboard.writeText(\'' . $mcpUrl . '\'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                                            class="api-ref-copy-btn">
+                                                        <span x-show="!copied">' . __('Copy') . '</span>
+                                                        <span x-show="copied" class="text-green-400" x-cloak>' . __('Copied!') . '</span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ');
