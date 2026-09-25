@@ -2209,5 +2209,19 @@
     "Unlock Team Collaboration": "Desbloquear Colaboración en Equipo",
     "Team collaboration and role-based permissions are exclusively available on Ultra and Enterprise plans. Upgrade your billing profile to Ultra to invite members and assign roles.": "La colaboración en equipo y los permisos basados en roles están disponibles exclusivamente en los planes Ultra y Enterprise. Mejora tu perfil de facturación a Ultra para invitar miembros y asignar roles.",
     "Team collaboration requires an Ultra or Enterprise subscription. This project is linked to a billing profile owned by :owner. Please request them to upgrade or link another billing profile.": "La colaboración en equipo requiere una suscripción Ultra o Enterprise. Este proyecto está vinculado a un perfil de facturación propiedad de :owner. Por favor, solicita que lo mejoren o vincula otro perfil de facturación.",
-    "Upgrade to Ultra": "Mejorar a Ultra"
+    "Upgrade to Ultra": "Mejorar a Ultra",
+    "OpenAPI 3.1 Reference & Interactive Sandbox": "Referencia OpenAPI 3.1 y Sandbox Interactivo",
+    "APIs Hub Developer Reference": "Referencia para Desarrolladores de APIs Hub",
+    "Direct programmatic access to normalized cross-channel advertising data, real-time sync telemetry, entity discovery, and high-speed multidimensional analytical aggregations.": "Acceso programático directo a datos publicitarios multicanal normalizados, telemetría de sincronización en tiempo real, descubrimiento de recursos y agregaciones analíticas multidimensionales de alta velocidad.",
+    "Download OpenAPI JSON": "Descargar OpenAPI JSON",
+    "Key Topics:": "Temas Clave:",
+    "🔐 Authentication": "🔐 Autenticación",
+    "💓 System Health": "💓 Estado del Sistema",
+    "🔄 Data Sync": "🔄 Sincronización",
+    "🔍 Assets Discovery": "🔍 Descubrimiento de Recursos",
+    "📄 Pagination & Sorting": "📄 Paginación y Orden",
+    "📊 Aggregations": "📊 Agregaciones",
+    "🌐 Omnichannel": "🌐 Omnicanal",
+    "⏱ Rate Limits": "⏱ Límites de Frecuencia",
+    "⚠️ Error Handling": "⚠️ Manejo de Errores"
 }

@@ -34,8 +34,13 @@
     - Added element-level forced contrast overrides for prose paragraphs, lists, tables, and headings in both dark and light modes.
     - Synchronized live theme changes between Alpine's `themeControl` toggle (`document.documentElement.classList`) and Scalar's internal `.dark-mode`/`.light-mode` state using a `MutationObserver`.
     - Expanded page layout to full width (`w-full` with responsive horizontal padding `px-4 sm:px-8 lg:px-12`) so the Scalar 3-column reference and sandbox maximize widescreen display real estate.
+  - **Full Spanish Localization (`/es/docs/api`)**:
+    - Added Spanish route `/es/docs/api/openapi.json` (`docs.api.spec.es`) and dynamic locale detection in `ApiDocsController`.
+    - Added comprehensive Spanish translations in `OpenApiSpecificationService` for the specification `info.title`, `info.description` topic guides (Autenticación, Subdominios, Recursos / Assets, Paginación / Orden, Agregaciones / Caché, Límites de Frecuencia), server descriptions, tag definitions, all endpoint path summaries/descriptions, parameter descriptions, and HTTP responses.
+    - Translated UI headers, subheadings, topic filter pills, and meta tags across Blade templates and `lang/es.json`.
 - **Verification**:
   - `ApiKeyRotationLifecycleTest.php` passing all 6 tests (90 assertions).
+  - PHP syntax checked cleanly across all touched controllers and services.
 
 
 ### Widget Header Reload Icon Fix + Breakdown Table Default-Sort Fix (2026-09-23)

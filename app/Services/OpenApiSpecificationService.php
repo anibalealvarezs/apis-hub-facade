@@ -22,57 +22,85 @@ class OpenApiSpecificationService
      * - Error Handling & Schemas
      * - Rate Limits & Quotas
      */
-    public function buildSpecification(): array
+    public function buildSpecification(string $locale = 'en'): array
     {
+        $isEs = ($locale === 'es');
+
+        $infoTitle = $isEs 
+            ? 'API RESTful y Analítica de APIs Hub' 
+            : 'APIs Hub RESTful Analytical API';
+
+        $infoDescription = $isEs
+            ? "Bienvenido a la Referencia para Desarrolladores de APIs Hub.\n\n### Guía Completa de Temas\n\n- **Autenticación y Seguridad**: Autentique cada solicitud proporcionando la clave de API de su proyecto a través del encabezado `X-API-KEY` (o alternativamente `Authorization: Bearer <key>`). Las claves se administran y rotan con cero tiempo de inactividad desde el panel de control de su proyecto. Las claves de API públicas son estrictamente de solo lectura.\n- **Subdominios y Enrutamiento del Proyecto**: Todas las solicitudes se enrutan directamente al nodo contenedor aislado de su proyecto utilizando el formato de host `https://{subdomain}.apis-hub.cloud`.\n- **Descubrimiento de Recursos y Cuentas Conectadas**: En APIs Hub, las cuentas conectadas, perfiles publicitarios, páginas y propiedades web se denominan **recursos** (representados internamente como `channeledAccount`). Utilice `GET /{channel}/account` para descubrir dinámicamente los recursos conectados y obtener su ID correspondiente, ID de plataforma y nombre visible. Pase estos identificadores de recurso en las consultas analíticas de reducción bajo `filters: { \"channeledAccount\": \"<asset_id>\" }` o `groupBy: [\"channeledAccount\"]`. Todos los puntos finales de entidades son de solo lectura (únicamente solicitudes GET).\n- **Paginación, Tamaño de Página y Orden**: Estándares de consumo secuencial de datos en toda la plataforma. La navegación de entidades (`GET /{channel}/{entity}`) utiliza paginación por desplazamiento basada en índice cero (`pagination`, `limit` de hasta 50,000, `orderBy`, `orderDir`). Las reducciones analíticas (`POST /{channel}/metric/aggregate`) utilizan límites de filas (`limit` hasta 5,000) y ordenamiento por métricas (`orderBy`, `orderDir`).\n- **Agregaciones de Alto Rendimiento y Telemetría de Caché**: El motor de `/metric/aggregate` proporciona cálculos OLAP reducidos en submilisegundos en Google Search Console, Google Analytics 4, Meta Ads, Meta Organic, Shopify y Klaviyo con agrupaciones flexibles, ventanas de fechas y fórmulas de reducción ponderadas. Los metadatos de respuesta indican si una reducción analítica se sirvió desde la memoria caché (`meta.cached`) y la duración de la ejecución (`meta.execution_time_ms`).\n- **Límites de Frecuencia y Uso Justo**: Las solicitudes se rastrean en una ventana deslizante de un minuto. Los planes Ultra/Founder reciben 500 sol/min; los planes Enterprise reciben 1,000 sol/min. Cuando se alcanza el límite, la API responde con HTTP `429 Too Many Requests` y el encabezado `Retry-After`."
+            : "Welcome to the APIs Hub Developer Reference.\n\n### Comprehensive Topic Guide\n\n- **Authentication & Security**: Authenticate every request by supplying your project API key via the `X-API-KEY` header (or alternatively `Authorization: Bearer <key>`). Keys are managed and rotated with zero downtime in your project dashboard. Public API Keys are strictly read-only.\n- **Project Subdomains & Routing**: All requests are routed directly to your isolated project container node using the host format `https://{subdomain}.apis-hub.cloud`.\n- **Assets & Channeled Account Discovery**: In APIs Hub, connected accounts, advertising profiles, pages, and web properties are referred to as **assets** (internally represented as `channeledAccount`). Use `GET /{channel}/account` to dynamically discover connected assets and retrieve their corresponding ID, platform ID, and display name. Pass these asset IDs into analytical reduction queries under `filters: { \"channeledAccount\": \"<asset_id>\" }` or `groupBy: [\"channeledAccount\"]`. All entity endpoints are read-only (GET requests only).\n- **Pagination, Page Size & Sorting**: Sequential data consumption standards across the platform. Entity browsing (`GET /{channel}/{entity}`) uses zero-indexed offset pagination (`pagination`, `limit` up to 50,000, `orderBy`, `orderDir`). Analytical reductions (`POST /{channel}/metric/aggregate`) use row caps (`limit` up to 5,000) and metric ranking (`orderBy`, `orderDir`).\n- **High-Performance Aggregations & Query Caching**: The `/metric/aggregate` engine provides sub-millisecond reduced OLAP calculations across Google Search Console, Google Analytics 4, Meta Ads, Meta Organic, Shopify, and Klaviyo with flexible grouping, date windows, and weighted reduction formulas. The query response metadata reports whether an analytical reduction was served from cache (`meta.cached`) and the execution duration (`meta.execution_time_ms`).\n- **Rate Limits & Fair Use**: Requests are tracked on a per-minute sliding window. Ultra/Founder plans receive 500 req/min; Enterprise plans receive 1,000 req/min. When rate limits are reached, the API returns HTTP `429 Too Many Requests` with a `Retry-After` header.";
+
+        $tags = [
+            [
+                'name' => 'Authentication',
+                'description' => $isEs
+                    ? 'Protocolos de seguridad, encabezados de clave de API, rotación de credenciales y resolución del nodo del proyecto.'
+                    : 'Security protocols, API key headers, credential rotation, and project node resolution.',
+            ],
+            [
+                'name' => 'System Health',
+                'description' => $isEs
+                    ? 'Monitoreo de latido, verificación de conectividad de red y comprobación de latencia pública sin consumir cuota de límite de velocidad.'
+                    : 'Heartbeat monitoring, network connectivity checks, and public latency verification without consuming rate limit quota.',
+            ],
+            [
+                'name' => 'Data Synchronization',
+                'description' => $isEs
+                    ? 'Telemetría en tiempo real, inspección del estado de sincronización, marcas de tiempo de actualización de datos y volumen total de registros sincronizados por cuenta.'
+                    : 'Real-time telemetry, sync state inspection, data freshness timestamps, and total synced record volume per account.',
+            ],
+            [
+                'name' => 'Assets Discovery & Entities',
+                'description' => $isEs
+                    ? 'Descubra recursos conectados (`channeledAccount`), inspeccione campañas, grupos de anuncios, publicaciones, páginas y examine los límites de fechas de las entidades.'
+                    : 'Discover connected assets (`channeledAccount`), inspect campaigns, ad groups, posts, pages, and browse entity date boundaries.',
+            ],
+            [
+                'name' => 'Channel Analytics (Aggregations)',
+                'description' => $isEs
+                    ? 'Ejecute reducciones analíticas multidimensionales de alta velocidad, gráficos de series temporales, tarjetas de puntuación de KPI y cubos de desglose para canales específicos.'
+                    : 'Execute high-speed multi-dimensional analytical reductions, time-series line charts, KPI scorecards, and breakdown cubes for specific channels.',
+            ],
+            [
+                'name' => 'Omnichannel Analytics',
+                'description' => $isEs
+                    ? 'Resúmenes ejecutivos multicanal que combinan el rendimiento de Meta, Google y plataformas de comercio electrónico en una única consulta unificada.'
+                    : 'Cross-network executive rollups combining Meta, Google, and eCommerce platforms into a single unified query.',
+            ],
+            [
+                'name' => 'Pagination, Page Size & Sorting',
+                'description' => $isEs
+                    ? 'Estándares de consumo secuencial de datos: paginación basada en desplazamiento con índice cero, límites de tamaño de página (límite de hasta 50,000 para entidades, 5,000 para agregaciones) y órdenes de clasificación deterministas (orderBy, orderDir).'
+                    : 'Sequential data consumption standards: zero-indexed offset pagination, page-size bounds (limit up to 50,000 for entities, 5,000 for aggregations), and deterministic sorting orders (orderBy, orderDir).',
+            ],
+            [
+                'name' => 'Error Handling & Rate Limits',
+                'description' => $isEs
+                    ? 'Estructuras de respuesta de error estándar, semántica de estados HTTP (400, 401, 403, 404, 429) y encabezados de limitación de frecuencia.'
+                    : 'Standard error response structures, HTTP status semantics (400, 401, 403, 404, 429), and rate limiting headers.',
+            ],
+        ];
+
         return [
             'openapi' => '3.1.0',
             'info' => [
-                'title' => 'APIs Hub RESTful Analytical API',
+                'title' => $infoTitle,
                 'version' => '1.0.0',
-                'description' => "Welcome to the APIs Hub Developer Reference.\n\n### Comprehensive Topic Guide\n\n- **Authentication & Security**: Authenticate every request by supplying your project API key via the `X-API-KEY` header (or alternatively `Authorization: Bearer <key>`). Keys are managed and rotated with zero downtime in your project dashboard. Public API Keys are strictly read-only.\n- **Project Subdomains & Routing**: All requests are routed directly to your isolated project container node using the host format `https://{subdomain}.apis-hub.cloud`.\n- **Assets & Channeled Account Discovery**: In APIs Hub, connected accounts, advertising profiles, pages, and web properties are referred to as **assets** (internally represented as `channeledAccount`). Use `GET /{channel}/account` to dynamically discover connected assets and retrieve their corresponding ID, platform ID, and display name. Pass these asset IDs into analytical reduction queries under `filters: { \"channeledAccount\": \"<asset_id>\" }` or `groupBy: [\"channeledAccount\"]`. All entity endpoints are read-only (GET requests only).\n- **Pagination, Page Size & Sorting**: Sequential data consumption standards across the platform. Entity browsing (`GET /{channel}/{entity}`) uses zero-indexed offset pagination (`pagination`, `limit` up to 50,000, `orderBy`, `orderDir`). Analytical reductions (`POST /{channel}/metric/aggregate`) use row caps (`limit` up to 5,000) and metric ranking (`orderBy`, `orderDir`).\n- **High-Performance Aggregations & Query Caching**: The `/metric/aggregate` engine provides sub-millisecond reduced OLAP calculations across Google Search Console, Google Analytics 4, Meta Ads, Meta Organic, Shopify, and Klaviyo with flexible grouping, date windows, and weighted reduction formulas. The query response metadata reports whether an analytical reduction was served from cache (`meta.cached`) and the execution duration (`meta.execution_time_ms`).\n- **Rate Limits & Fair Use**: Requests are tracked on a per-minute sliding window. Ultra/Founder plans receive 500 req/min; Enterprise plans receive 1,000 req/min. When rate limits are reached, the API returns HTTP `429 Too Many Requests` with a `Retry-After` header.",
+                'description' => $infoDescription,
                 'contact' => [
                     'name' => 'APIs Hub Developer Portal',
                     'url' => 'https://apis-hub.cloud',
                 ],
             ],
-            'tags' => [
-                [
-                    'name' => 'Authentication',
-                    'description' => 'Security protocols, API key headers, credential rotation, and project node resolution.',
-                ],
-                [
-                    'name' => 'System Health',
-                    'description' => 'Heartbeat monitoring, network connectivity checks, and public latency verification without consuming rate limit quota.',
-                ],
-                [
-                    'name' => 'Data Synchronization',
-                    'description' => 'Real-time telemetry, sync state inspection, data freshness timestamps, and total synced record volume per account.',
-                ],
-                [
-                    'name' => 'Assets Discovery & Entities',
-                    'description' => 'Discover connected assets (`channeledAccount`), inspect campaigns, ad groups, posts, pages, and browse entity date boundaries.',
-                ],
-                [
-                    'name' => 'Channel Analytics (Aggregations)',
-                    'description' => 'Execute high-speed multi-dimensional analytical reductions, time-series line charts, KPI scorecards, and breakdown cubes for specific channels.',
-                ],
-                [
-                    'name' => 'Omnichannel Analytics',
-                    'description' => 'Cross-network executive rollups combining Meta, Google, and eCommerce platforms into a single unified query.',
-                ],
-                [
-                    'name' => 'Pagination, Page Size & Sorting',
-                    'description' => 'Sequential data consumption standards: zero-indexed offset pagination, page-size bounds (limit up to 50,000 for entities, 5,000 for aggregations), and deterministic sorting orders (orderBy, orderDir).',
-                ],
-                [
-                    'name' => 'Error Handling & Rate Limits',
-                    'description' => 'Standard error response structures, HTTP status semantics (400, 401, 403, 404, 429), and rate limiting headers.',
-                ],
-            ],
+            'tags' => $tags,
             'servers' => [
                 [
                     'url' => 'https://{subdomain}.apis-hub.cloud',
-                    'description' => 'Dedicated Project Node (production)',
+                    'description' => $isEs ? 'Nodo dedicado del proyecto (producción)' : 'Dedicated Project Node (production)',
                     'variables' => [
                         'subdomain' => [
                             'default' => 'your-project',
@@ -90,12 +118,14 @@ class OpenApiSpecificationService
                 '/api/v1/ping' => [
                     'get' => [
                         'tags' => ['System Health'],
-                        'summary' => 'Node Connectivity & Heartbeat Ping',
-                        'description' => 'Verify that your dedicated node is healthy, responsive, and accepting authenticated requests. Does not consume rate limit tokens.',
+                        'summary' => $isEs ? 'Verificación de Conectividad y Ping del Nodo' : 'Node Connectivity & Heartbeat Ping',
+                        'description' => $isEs
+                            ? 'Verifique que su nodo dedicado esté activo, receptivo y aceptando solicitudes autenticadas. No consume tokens de límite de velocidad.'
+                            : 'Verify that your dedicated node is healthy, responsive, and accepting authenticated requests. Does not consume rate limit tokens.',
                         'operationId' => 'getPing',
                         'responses' => [
                             '200' => [
-                                'description' => 'Node is operational and credentials are valid',
+                                'description' => $isEs ? 'El nodo está operativo y las credenciales son válidas' : 'Node is operational and credentials are valid',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => [
@@ -105,7 +135,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '401' => [
-                                'description' => 'Invalid or missing API key',
+                                'description' => $isEs ? 'Clave de API inválida o ausente' : 'Invalid or missing API key',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -120,15 +150,19 @@ class OpenApiSpecificationService
                 '/api/sync/status' => [
                     'get' => [
                         'tags' => ['Data Synchronization'],
-                        'summary' => 'Sync Status & Data Freshness',
-                        'description' => 'Inspect active background sync processes, data completion state, and latest record dates across integrated channels.',
+                        'summary' => $isEs ? 'Estado de Sincronización y Actualización de Datos' : 'Sync Status & Data Freshness',
+                        'description' => $isEs
+                            ? 'Inspeccione los procesos de sincronización en segundo plano, el estado de finalización y las fechas de registros más recientes en los canales integrados.'
+                            : 'Inspect active background sync processes, data completion state, and latest record dates across integrated channels.',
                         'operationId' => 'getSyncStatus',
                         'parameters' => [
                             [
                                 'name' => 'channel',
                                 'in' => 'query',
                                 'required' => false,
-                                'description' => 'Optional filter for a specific channel (e.g. google_search_console, facebook_marketing)',
+                                'description' => $isEs
+                                    ? 'Filtro opcional para un canal específico (ej. google_search_console, facebook_marketing)'
+                                    : 'Optional filter for a specific channel (e.g. google_search_console, facebook_marketing)',
                                 'schema' => [
                                     '$ref' => '#/components/schemas/ChannelEnum',
                                 ],
@@ -137,7 +171,7 @@ class OpenApiSpecificationService
                                 'name' => 'account_id',
                                 'in' => 'query',
                                 'required' => false,
-                                'description' => 'Optional filter for a specific connected account ID',
+                                'description' => $isEs ? 'Filtro opcional por ID de cuenta conectada' : 'Optional filter for a specific connected account ID',
                                 'schema' => [
                                     'type' => 'integer',
                                 ],
@@ -145,7 +179,7 @@ class OpenApiSpecificationService
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Synchronization telemetry details',
+                                'description' => $isEs ? 'Detalles de telemetría de sincronización' : 'Synchronization telemetry details',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => [
@@ -155,7 +189,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '401' => [
-                                'description' => 'Unauthorized or missing API Key',
+                                'description' => $isEs ? 'No autorizado o clave de API faltante' : 'Unauthorized or missing API Key',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -163,7 +197,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '429' => [
-                                'description' => 'Rate limit exceeded',
+                                'description' => $isEs ? 'Límite de frecuencia excedido' : 'Rate limit exceeded',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/RateLimitErrorResponse'],
@@ -176,8 +210,10 @@ class OpenApiSpecificationService
                 '/api/sync/account-stats' => [
                     'get' => [
                         'tags' => ['Data Synchronization'],
-                        'summary' => 'Account Sync Statistics & Volume',
-                        'description' => 'Provides total normalized record count, initial synced record date, and most recent synced record date per connected account.',
+                        'summary' => $isEs ? 'Estadísticas de Sincronización y Volumen por Cuenta' : 'Account Sync Statistics & Volume',
+                        'description' => $isEs
+                            ? 'Proporciona el recuento total de registros normalizados, la fecha del primer registro sincronizado y la fecha del registro más reciente por cuenta conectada.'
+                            : 'Provides total normalized record count, initial synced record date, and most recent synced record date per connected account.',
                         'operationId' => 'getAccountSyncStats',
                         'parameters' => [
                             [
@@ -191,7 +227,7 @@ class OpenApiSpecificationService
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Account statistics summary',
+                                'description' => $isEs ? 'Resumen estadístico de la cuenta' : 'Account statistics summary',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => [
@@ -201,7 +237,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '401' => [
-                                'description' => 'Unauthorized or missing API Key',
+                                'description' => $isEs ? 'No autorizado o clave de API faltante' : 'Unauthorized or missing API Key',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -216,8 +252,10 @@ class OpenApiSpecificationService
                 '/{channel}/{entity}' => [
                     'get' => [
                         'tags' => ['Assets Discovery & Entities', 'Pagination, Page Size & Sorting'],
-                        'summary' => 'List Channeled Entities (Assets Discovery & Paginated Browsing)',
-                        'description' => "Browse and paginate normalized channeled records (e.g. `account`, `campaign`, `ad_group`, `ad`, `page`, `post`, `metric`).\n\n> [!IMPORTANT]\n> **Discovering Asset / `channeledAccount` IDs**: In APIs Hub, connected accounts, advertising profiles, pages, and web properties are known as **assets**. Make a call to `GET /{channel}/account` (such as `GET /facebook_marketing/account` or `GET /google_search_console/account`). The returned records represent the connected assets and include `id`, `platform_id`, and `name`. Pass this `id` into analytical reduction queries under `filters: { \"channeledAccount\": \"<asset_id>\" }` or `groupBy: [\"channeledAccount\"]`.",
+                        'summary' => $isEs ? 'Listar Entidades Canalizadas (Descubrimiento de Recursos y Paginación)' : 'List Channeled Entities (Assets Discovery & Paginated Browsing)',
+                        'description' => $isEs
+                            ? "Explore y pagine registros normalizados por canal (ej. `account`, `campaign`, `ad_group`, `ad`, `page`, `post`, `metric`).\n\n> [!IMPORTANT]\n> **Descubrimiento de IDs de Recursos / `channeledAccount`**: En APIs Hub, las cuentas conectadas, perfiles publicitarios, páginas y propiedades web se denominan **recursos**. Realice una llamada a `GET /{channel}/account` (como `GET /facebook_marketing/account` o `GET /google_search_console/account`). Los registros devueltos representan los recursos conectados e incluyen `id`, `platform_id` y `name`. Pase este `id` en las consultas analíticas de reducción bajo `filters: { \"channeledAccount\": \"<asset_id>\" }` o `groupBy: [\"channeledAccount\"]`."
+                            : "Browse and paginate normalized channeled records (e.g. `account`, `campaign`, `ad_group`, `ad`, `page`, `post`, `metric`).\n\n> [!IMPORTANT]\n> **Discovering Asset / `channeledAccount` IDs**: In APIs Hub, connected accounts, advertising profiles, pages, and web properties are known as **assets**. Make a call to `GET /{channel}/account` (such as `GET /facebook_marketing/account` or `GET /google_search_console/account`). The returned records represent the connected assets and include `id`, `platform_id`, and `name`. Pass this `id` into analytical reduction queries under `filters: { \"channeledAccount\": \"<asset_id>\" }` or `groupBy: [\"channeledAccount\"]`.",
                         'operationId' => 'listChanneledEntities',
                         'parameters' => [
                             [
@@ -297,8 +335,10 @@ class OpenApiSpecificationService
                 '/{channel}/{entity}/{id}' => [
                     'get' => [
                         'tags' => ['Assets Discovery & Entities'],
-                        'summary' => 'Retrieve Channeled Entity by ID',
-                        'description' => 'Fetch a single channeled entity record by its unique identifier.',
+                        'summary' => $isEs ? 'Obtener Entidad Canalizada por ID' : 'Retrieve Channeled Entity by ID',
+                        'description' => $isEs
+                            ? 'Obtiene un registro individual de una entidad canalizada mediante su identificador único.'
+                            : 'Fetch a single channeled entity record by its unique identifier.',
                         'operationId' => 'getChanneledEntity',
                         'parameters' => [
                             [
@@ -318,12 +358,12 @@ class OpenApiSpecificationService
                                 'in' => 'path',
                                 'required' => true,
                                 'schema' => ['type' => 'integer'],
-                                'description' => 'Unique internal record ID',
+                                'description' => $isEs ? 'ID interno único del registro' : 'Unique internal record ID',
                             ],
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Entity details',
+                                'description' => $isEs ? 'Detalles de la entidad' : 'Entity details',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => [
@@ -333,7 +373,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '404' => [
-                                'description' => 'Entity not found',
+                                'description' => $isEs ? 'Entidad no encontrada' : 'Entity not found',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -346,8 +386,10 @@ class OpenApiSpecificationService
                 '/{channel}/{entity}/count' => [
                     'get' => [
                         'tags' => ['Assets Discovery & Entities'],
-                        'summary' => 'Count Channeled Entities',
-                        'description' => 'Returns the total count of synchronized records for the requested channel and entity.',
+                        'summary' => $isEs ? 'Contar Entidades Canalizadas' : 'Count Channeled Entities',
+                        'description' => $isEs
+                            ? 'Devuelve el recuento total de registros sincronizados para el canal y entidad solicitados.'
+                            : 'Returns the total count of synchronized records for the requested channel and entity.',
                         'operationId' => 'countChanneledEntities',
                         'parameters' => [
                             [
@@ -365,7 +407,7 @@ class OpenApiSpecificationService
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Total count',
+                                'description' => $isEs ? 'Recuento total de registros' : 'Total count',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => [
@@ -384,8 +426,10 @@ class OpenApiSpecificationService
                 '/{channel}/{entity}/range' => [
                     'get' => [
                         'tags' => ['Assets Discovery & Entities'],
-                        'summary' => 'Get Entity Date Range Bounds',
-                        'description' => 'Retrieves the minimum and maximum recorded dates (`minDate`, `maxDate`) for the given channeled entity to help establish query boundary filters.',
+                        'summary' => $isEs ? 'Obtener Límites de Rango de Fechas' : 'Get Entity Date Range Bounds',
+                        'description' => $isEs
+                            ? 'Recupera las fechas mínima y máxima registradas (`minDate`, `maxDate`) para la entidad canalizada indicada para ayudar a definir filtros de límites de consulta.'
+                            : 'Retrieves the minimum and maximum recorded dates (`minDate`, `maxDate`) for the given channeled entity to help establish query boundary filters.',
                         'operationId' => 'getChanneledEntityRange',
                         'parameters' => [
                             [
@@ -403,7 +447,7 @@ class OpenApiSpecificationService
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Date bounds',
+                                'description' => $isEs ? 'Límites de fechas' : 'Date bounds',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => [
@@ -430,8 +474,10 @@ class OpenApiSpecificationService
                 '/{channel}/metric/aggregate' => [
                     'post' => [
                         'tags' => ['Channel Analytics (Aggregations)', 'Pagination, Page Size & Sorting'],
-                        'summary' => 'Execute Single-Channel Aggregation Query',
-                        'description' => "Executes multidimensional analytical queries with time-series groupings, relational filtering, and weighted reduction formulas for a specific channel.\n\n### Channel-Specific Reference:\n- **`google_search_console`**:\n  - Scopes: `gsc_site_totals`, `gsc_site_query_breakdown`, `gsc_site_geo_device_breakdown`, `gsc_site_full_breakdown`, `gsc_page_flow`\n  - Granularities: `lifetime`, `daily` (`date`), `weekly`, `monthly`, `quarterly`, `yearly`\n  - Metrics: `clicks`, `impressions`, `ctr`, `position` (weighted)\n  - Dimensions: `query`, `dimensions.page`, `dimensions.country`, `dimensions.device`, `dimensions.searchAppearance`\n\n- **`facebook_marketing`**:\n  - Scopes: `facebook_marketing_account`, `facebook_marketing_campaign`, `facebook_marketing_ad_group`, `facebook_marketing_ad`, `facebook_marketing_ads_hierarchy`\n  - Granularities: `all_time`, `daily` (`date`), `weekly`, `monthly`, `quarterly`, `yearly`\n  - Metrics: `spend`, `impressions`, `clicks`, `reach`, `frequency`, `conversions`, `cost_per_conversion`, `conversion_rate`, `roas_purchase`\n  - Dimensions: `channeledAccount`, `campaign`, `ad_group`, `ad`, `date`\n\n- **`facebook_organic`**:\n  - Scopes: `facebook_organic_page`, `facebook_organic_post`, `facebook_organic_linked_pages`\n  - FB Page Metrics: `reach`, `page_views_total`, `views`, `follows`, `likes`, `total_interactions`, `video_views`\n  - IG Account Metrics: `reach`, `views`, `follows`, `profile_views`, `website_clicks`, `accounts_engaged`, `total_interactions`, `likes`, `comments`, `shares`, `saves`\n  - FB Post Metrics: `reach`, `views`, `video_views`, `likes`, `post_clicks`, `total_interactions`, `comments`, `shares`\n  - IG Media Metrics: `reach`, `views`, `likes`, `comments`, `shares`, `saves`, `replies`, `profile_visits`\n\n- **`google_analytics`** (GA4):\n  - Scopes: `traffic_matrix`, `acquisition_matrix`, `event_matrix`, `ad_touchpoint_matrix`, `ga4_universal_matrix`\n  - Metrics: `sessions`, `activeUsers`, `totalUsers`, `newUsers`, `screenPageViews`, `bounceRate`, `averageSessionDuration`, `eventCount`, `conversions`, `totalRevenue`",
+                        'summary' => $isEs ? 'Ejecutar Consulta de Agregación de Canal' : 'Execute Single-Channel Aggregation Query',
+                        'description' => $isEs
+                            ? "Ejecuta consultas analíticas multidimensionales con agrupaciones de series temporales, filtrado relacional y fórmulas de reducción ponderadas para un canal específico.\n\n### Referencia Específica por Canal:\n- **`google_search_console`**:\n  - Ámbitos: `gsc_site_totals`, `gsc_site_query_breakdown`, `gsc_site_geo_device_breakdown`, `gsc_site_full_breakdown`, `gsc_page_flow`\n  - Granularidades: `lifetime`, `daily` (`date`), `weekly`, `monthly`, `quarterly`, `yearly`\n  - Métricas: `clicks`, `impressions`, `ctr`, `position` (ponderado)\n  - Dimensiones: `query`, `dimensions.page`, `dimensions.country`, `dimensions.device`, `dimensions.searchAppearance`\n\n- **`facebook_marketing`**:\n  - Ámbitos: `facebook_marketing_account`, `facebook_marketing_campaign`, `facebook_marketing_ad_group`, `facebook_marketing_ad`, `facebook_marketing_ads_hierarchy`\n  - Granularidades: `all_time`, `daily` (`date`), `weekly`, `monthly`, `quarterly`, `yearly`\n  - Métricas: `spend`, `impressions`, `clicks`, `reach`, `frequency`, `conversions`, `cost_per_conversion`, `conversion_rate`, `roas_purchase`\n  - Dimensiones: `channeledAccount`, `campaign`, `ad_group`, `ad`, `date`\n\n- **`facebook_organic`**:\n  - Ámbitos: `facebook_organic_page`, `facebook_organic_post`, `facebook_organic_linked_pages`\n  - Métricas Página FB: `reach`, `page_views_total`, `views`, `follows`, `likes`, `total_interactions`, `video_views`\n  - Métricas Cuenta IG: `reach`, `views`, `follows`, `profile_views`, `website_clicks`, `accounts_engaged`, `total_interactions`, `likes`, `comments`, `shares`, `saves`\n  - Métricas Publicación FB: `reach`, `views`, `video_views`, `likes`, `post_clicks`, `total_interactions`, `comments`, `shares`\n  - Métricas Media IG: `reach`, `views`, `likes`, `comments`, `shares`, `saves`, `replies`, `profile_visits`\n\n- **`google_analytics`** (GA4):\n  - Ámbitos: `traffic_matrix`, `acquisition_matrix`, `event_matrix`, `ad_touchpoint_matrix`, `ga4_universal_matrix`\n  - Métricas: `sessions`, `activeUsers`, `totalUsers`, `newUsers`, `screenPageViews`, `bounceRate`, `averageSessionDuration`, `eventCount`, `conversions`, `totalRevenue`"
+                            : "Executes multidimensional analytical queries with time-series groupings, relational filtering, and weighted reduction formulas for a specific channel.\n\n### Channel-Specific Reference:\n- **`google_search_console`**:\n  - Scopes: `gsc_site_totals`, `gsc_site_query_breakdown`, `gsc_site_geo_device_breakdown`, `gsc_site_full_breakdown`, `gsc_page_flow`\n  - Granularities: `lifetime`, `daily` (`date`), `weekly`, `monthly`, `quarterly`, `yearly`\n  - Metrics: `clicks`, `impressions`, `ctr`, `position` (weighted)\n  - Dimensions: `query`, `dimensions.page`, `dimensions.country`, `dimensions.device`, `dimensions.searchAppearance`\n\n- **`facebook_marketing`**:\n  - Scopes: `facebook_marketing_account`, `facebook_marketing_campaign`, `facebook_marketing_ad_group`, `facebook_marketing_ad`, `facebook_marketing_ads_hierarchy`\n  - Granularities: `all_time`, `daily` (`date`), `weekly`, `monthly`, `quarterly`, `yearly`\n  - Metrics: `spend`, `impressions`, `clicks`, `reach`, `frequency`, `conversions`, `cost_per_conversion`, `conversion_rate`, `roas_purchase`\n  - Dimensions: `channeledAccount`, `campaign`, `ad_group`, `ad`, `date`\n\n- **`facebook_organic`**:\n  - Scopes: `facebook_organic_page`, `facebook_organic_post`, `facebook_organic_linked_pages`\n  - FB Page Metrics: `reach`, `page_views_total`, `views`, `follows`, `likes`, `total_interactions`, `video_views`\n  - IG Account Metrics: `reach`, `views`, `follows`, `profile_views`, `website_clicks`, `accounts_engaged`, `total_interactions`, `likes`, `comments`, `shares`, `saves`\n  - FB Post Metrics: `reach`, `views`, `video_views`, `likes`, `post_clicks`, `total_interactions`, `comments`, `shares`\n  - IG Media Metrics: `reach`, `views`, `likes`, `comments`, `shares`, `saves`, `replies`, `profile_visits`\n\n- **`google_analytics`** (GA4):\n  - Scopes: `traffic_matrix`, `acquisition_matrix`, `event_matrix`, `ad_touchpoint_matrix`, `ga4_universal_matrix`\n  - Metrics: `sessions`, `activeUsers`, `totalUsers`, `newUsers`, `screenPageViews`, `bounceRate`, `averageSessionDuration`, `eventCount`, `conversions`, `totalRevenue`",
                         'operationId' => 'aggregateChannelMetrics',
                         'parameters' => [
                             [
@@ -451,7 +497,7 @@ class OpenApiSpecificationService
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Aggregated metrics response with metadata',
+                                'description' => $isEs ? 'Respuesta de métricas agregadas con metadatos y telemetría de caché' : 'Aggregated metrics response with metadata',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/AggregateQueryResponse'],
@@ -459,7 +505,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '400' => [
-                                'description' => 'Invalid query payload, missing aggregations, or invalid dimension for channel',
+                                'description' => $isEs ? 'Carga útil de consulta inválida, faltan agregaciones o dimensión inválida para el canal' : 'Invalid query payload, missing aggregations, or invalid dimension for channel',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -467,7 +513,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '401' => [
-                                'description' => 'Unauthorized or missing API Key',
+                                'description' => $isEs ? 'No autorizado o clave de API faltante' : 'Unauthorized or missing API Key',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -475,7 +521,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '422' => [
-                                'description' => 'Validation error (e.g. invalid date format YYYY-MM-DD)',
+                                'description' => $isEs ? 'Error de validación (ej. formato de fecha inválido YYYY-MM-DD)' : 'Validation error (e.g. invalid date format YYYY-MM-DD)',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -483,7 +529,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '429' => [
-                                'description' => 'Rate limit quota reached',
+                                'description' => $isEs ? 'Cuota de límite de velocidad alcanzada' : 'Rate limit quota reached',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/RateLimitErrorResponse'],
@@ -496,8 +542,10 @@ class OpenApiSpecificationService
                 '/entity/metric/aggregate' => [
                     'post' => [
                         'tags' => ['Omnichannel Analytics', 'Pagination, Page Size & Sorting'],
-                        'summary' => 'Execute Cross-Channel Master Aggregation',
-                        'description' => 'Executes a unified cross-channel query combining performance across Google, Meta, and ecommerce channels into a single scorecard or blended time series.',
+                        'summary' => $isEs ? 'Ejecutar Agregación Maestra Omnicanal' : 'Execute Cross-Channel Master Aggregation',
+                        'description' => $isEs
+                            ? 'Ejecuta una consulta multicanal unificada combinando el rendimiento entre Google, Meta y plataformas de comercio electrónico en un solo cuadro de mando o serie temporal combinada.'
+                            : 'Executes a unified cross-channel query combining performance across Google, Meta, and ecommerce channels into a single scorecard or blended time series.',
                         'operationId' => 'aggregateCrossChannelMetrics',
                         'requestBody' => [
                             'required' => true,
@@ -509,7 +557,7 @@ class OpenApiSpecificationService
                         ],
                         'responses' => [
                             '200' => [
-                                'description' => 'Cross-channel aggregation response',
+                                'description' => $isEs ? 'Respuesta de agregación omnicanal' : 'Cross-channel aggregation response',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/AggregateQueryResponse'],
@@ -517,7 +565,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '400' => [
-                                'description' => 'Invalid request payload',
+                                'description' => $isEs ? 'Carga útil de solicitud inválida' : 'Invalid request payload',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -525,7 +573,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '401' => [
-                                'description' => 'Unauthorized or missing API Key',
+                                'description' => $isEs ? 'No autorizado o clave de API faltante' : 'Unauthorized or missing API Key',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/ErrorResponse'],
@@ -533,7 +581,7 @@ class OpenApiSpecificationService
                                 ],
                             ],
                             '429' => [
-                                'description' => 'Rate limit exceeded',
+                                'description' => $isEs ? 'Límite de frecuencia excedido' : 'Rate limit exceeded',
                                 'content' => [
                                     'application/json' => [
                                         'schema' => ['$ref' => '#/components/schemas/RateLimitErrorResponse'],
