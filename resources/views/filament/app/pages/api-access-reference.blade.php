@@ -14,7 +14,7 @@
                     <a href="#{{ $id }}"
                        class="flex items-center gap-2 hover:underline text-inherit"
                        @click.prevent="copy('{{ $id }}');">
-                        <span>{{ __('API Overview & Authentication') }}</span>
+                         <span>{{ __('API Overview & Authentication') }}</span>
                         <x-filament::icon 
                             icon="heroicon-o-link" 
                             class="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
@@ -38,7 +38,7 @@
                     <div>
                         <span class="text-gray-500 dark:text-gray-400 block mb-1 font-semibold">{{ __('Header Option 1 (Recommended):') }}</span>
                         <div class="flex items-center gap-2" x-data="{ copied: false }">
-                            <pre class="bg-gray-900 text-gray-100 px-3 py-1.5 rounded text-xs flex-1 overflow-x-auto m-0"><code class="select-all">X-API-Key: YOUR_API_KEY</code></pre>
+                            <pre class="api-ref-code-block flex-1"><code class="select-all">X-API-Key: YOUR_API_KEY</code></pre>
                             <button type="button" @click="navigator.clipboard.writeText('X-API-Key: YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-xs transition">
                                 <span x-show="!copied">{{ __('Copy') }}</span>
                                 <span x-show="copied" class="text-success-600 dark:text-success-400" x-cloak>{{ __('Copied!') }}</span>
@@ -48,7 +48,7 @@
                     <div>
                         <span class="text-gray-500 dark:text-gray-400 block mb-1 font-semibold">{{ __('Header Option 2 (Bearer Token):') }}</span>
                         <div class="flex items-center gap-2" x-data="{ copied: false }">
-                            <pre class="bg-gray-900 text-gray-100 px-3 py-1.5 rounded text-xs flex-1 overflow-x-auto m-0"><code class="select-all">Authorization: Bearer YOUR_API_KEY</code></pre>
+                            <pre class="api-ref-code-block flex-1"><code class="select-all">Authorization: Bearer YOUR_API_KEY</code></pre>
                             <button type="button" @click="navigator.clipboard.writeText('Authorization: Bearer YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-xs transition">
                                 <span x-show="!copied">{{ __('Copy') }}</span>
                                 <span x-show="copied" class="text-success-600 dark:text-success-400" x-cloak>{{ __('Copied!') }}</span>
@@ -88,12 +88,12 @@
                 </div>
             </x-slot>
 
-            <div class="prose dark:prose-invert max-w-none text-sm space-y-3">
-                <p>
+            <div class="space-y-3">
+                <p class="text-sm text-gray-600 dark:text-gray-300">
                     {{ __('To verify network connectivity and authenticate your API key, call the public ping endpoint:') }}
                 </p>
                 <div class="relative group" x-data="{ copied: false }">
-                    <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">curl -s -H "X-API-Key: YOUR_API_KEY" \
+                    <pre class="api-ref-code-block"><code class="select-all">curl -s -H "X-API-Key: YOUR_API_KEY" \
   https://&lt;subdomain&gt;.apis-hub.cloud/api/v1/ping</code></pre>
                     <button type="button" @click="navigator.clipboard.writeText('curl -s -H &quot;X-API-Key: YOUR_API_KEY&quot; https://<subdomain>.apis-hub.cloud/api/v1/ping'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
                         <span x-show="!copied">{{ __('Copy') }}</span>
@@ -103,7 +103,7 @@
 
                 <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Expected Response (HTTP 200):') }}</p>
                 <div class="relative group" x-data="{ copied: false }">
-                    <pre class="bg-gray-900 text-green-400 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">{
+                    <pre class="api-ref-code-block is-success"><code class="select-all">{
   "status": "ok",
   "message": "APIs Hub API connection verified successfully.",
   "timestamp": "2026-09-24T23:15:00Z"
@@ -146,7 +146,7 @@
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">1. cURL (Fetch Channel Metrics)</h4>
                     <div class="relative group" x-data="{ copied: false }">
-                        <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">curl -s -H "X-API-Key: YOUR_API_KEY" \
+                        <pre class="api-ref-code-block"><code class="select-all">curl -s -H "X-API-Key: YOUR_API_KEY" \
   "https://&lt;subdomain&gt;.apis-hub.cloud/google_search_console/metric?limit=50"</code></pre>
                         <button type="button" @click="navigator.clipboard.writeText('curl -s -H &quot;X-API-Key: YOUR_API_KEY&quot; &quot;https://<subdomain>.apis-hub.cloud/google_search_console/metric?limit=50&quot;'); copied = true; setTimeout(() => copied = false, 2000)" class="absolute top-2 right-2 px-2 py-1 bg-gray-700/80 hover:bg-gray-600 text-white rounded text-xs transition">
                             <span x-show="!copied">{{ __('Copy') }}</span>
@@ -158,7 +158,7 @@
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">2. Python (requests)</h4>
                     <div class="relative group" x-data="{ copied: false }">
-                        <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">import requests
+                        <pre class="api-ref-code-block"><code class="select-all">import requests
 
 url = "https://&lt;subdomain&gt;.apis-hub.cloud/api/sync/status"
 headers = {"X-API-Key": "YOUR_API_KEY"}
@@ -175,7 +175,7 @@ print(response.json())</code></pre>
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">3. JavaScript / Node.js (fetch)</h4>
                     <div class="relative group" x-data="{ copied: false }">
-                        <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">const res = await fetch("https://&lt;subdomain&gt;.apis-hub.cloud/api/sync/account-stats", {
+                        <pre class="api-ref-code-block"><code class="select-all">const res = await fetch("https://&lt;subdomain&gt;.apis-hub.cloud/api/sync/account-stats", {
   headers: { "X-API-Key": "YOUR_API_KEY" }
 });
 const data = await res.json();
@@ -193,7 +193,7 @@ console.log(data);</code></pre>
                         {{ __('In Power BI "Web Data Source" or Looker Studio JSON Connector, configure an HTTP header with:') }}
                     </p>
                     <div class="flex items-center gap-2" x-data="{ copied: false }">
-                        <pre class="bg-gray-900 text-gray-100 px-3 py-2 rounded text-xs flex-1 overflow-x-auto m-0"><code class="select-all">Header: X-API-Key | Value: YOUR_API_KEY</code></pre>
+                        <pre class="api-ref-code-block flex-1"><code class="select-all">Header: X-API-Key | Value: YOUR_API_KEY</code></pre>
                         <button type="button" @click="navigator.clipboard.writeText('Header: X-API-Key | Value: YOUR_API_KEY'); copied = true; setTimeout(() => copied = false, 2000)" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-xs transition">
                             <span x-show="!copied">{{ __('Copy') }}</span>
                             <span x-show="copied" class="text-success-600 dark:text-success-400" x-cloak>{{ __('Copied!') }}</span>
@@ -230,14 +230,14 @@ console.log(data);</code></pre>
             </x-slot>
 
             <div class="space-y-4 text-sm">
-                <p>
+                <p class="text-gray-600 dark:text-gray-300">
                     {{ __('Query multi-dimensional time series, calculate weighted reductions, and group by any dimension supported by your connected channels.') }}
                 </p>
 
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">Scorecard Summary Example (Single Totals Row)</h4>
                     <div class="relative group" x-data="{ copied: false }">
-                        <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">curl -s -X POST https://&lt;subdomain&gt;.apis-hub.cloud/google_search_console/metric/aggregate \
+                        <pre class="api-ref-code-block"><code class="select-all">curl -s -X POST https://&lt;subdomain&gt;.apis-hub.cloud/google_search_console/metric/aggregate \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -265,7 +265,7 @@ console.log(data);</code></pre>
                 <div>
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1">Time-Series Line Chart Example (Daily Trend Grouping)</h4>
                     <div class="relative group" x-data="{ copied: false }">
-                        <pre class="bg-gray-900 text-gray-100 p-3 rounded-lg text-xs overflow-x-auto"><code class="select-all">curl -s -X POST https://&lt;subdomain&gt;.apis-hub.cloud/facebook_marketing/metric/aggregate \
+                        <pre class="api-ref-code-block"><code class="select-all">curl -s -X POST https://&lt;subdomain&gt;.apis-hub.cloud/facebook_marketing/metric/aggregate \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -320,39 +320,39 @@ console.log(data);</code></pre>
                 </div>
             </x-slot>
 
-            <div class="prose dark:prose-invert max-w-none text-sm space-y-3">
-                <p>
+            <div class="space-y-3">
+                <p class="text-sm text-gray-600 dark:text-gray-300">
                     {{ __('API access is rate-limited on a per-minute sliding window according to your project tier:') }}
                 </p>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs text-left">
-                        <thead class="bg-gray-50 dark:bg-gray-800/50 text-gray-500 uppercase">
+                <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg">
+                    <table class="w-full text-xs text-left divide-y divide-gray-200 dark:divide-white/5">
+                        <thead class="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">
                             <tr>
-                                <th class="p-2">Tier</th>
-                                <th class="p-2">Requests / Minute</th>
-                                <th class="p-2">Status</th>
+                                <th scope="col" class="px-4 py-3">{{ __('Tier') }}</th>
+                                <th scope="col" class="px-4 py-3">{{ __('Requests / Minute') }}</th>
+                                <th scope="col" class="px-4 py-3">{{ __('Status') }}</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr>
-                                <td class="p-2 font-medium">Free / Pro</td>
-                                <td class="p-2"><code>0</code></td>
-                                <td class="p-2 text-warning-500">Requires Ultra or Enterprise</td>
+                        <tbody class="divide-y divide-gray-200 dark:divide-white/5 bg-white dark:bg-gray-900/50">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Free / Pro</td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><code>0</code></td>
+                                <td class="px-4 py-3 text-warning-600 dark:text-warning-400 font-medium">{{ __('Requires Ultra or Enterprise') }}</td>
                             </tr>
-                            <tr>
-                                <td class="p-2 font-medium">Ultra / Founder</td>
-                                <td class="p-2"><code>500 req/min</code></td>
-                                <td class="p-2 text-success-500">Active</td>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Ultra / Founder</td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><code>500 req/min</code></td>
+                                <td class="px-4 py-3 text-success-600 dark:text-success-400 font-medium">{{ __('Active') }}</td>
                             </tr>
-                            <tr>
-                                <td class="p-2 font-medium">Enterprise</td>
-                                <td class="p-2"><code>1,000 req/min</code></td>
-                                <td class="p-2 text-success-500">Active</td>
+                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Enterprise</td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><code>1,000 req/min</code></td>
+                                <td class="px-4 py-3 text-success-600 dark:text-success-400 font-medium">{{ __('Active') }}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <p class="text-xs text-gray-500">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
                     {{ __('If a request exceeds quota limits, the server will return HTTP 429 Too Many Requests. If your current tier does not include API access, the server returns HTTP 403 Forbidden.') }}
                 </p>
             </div>

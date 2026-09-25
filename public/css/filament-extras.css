@@ -847,3 +847,28 @@ input[type="datetime-local"] {
     background-color: rgb(55, 65, 81); /* gray-700 – progress bar track */
 }
 
+/* ---------- API Reference Page Code Blocks & Tables ---------- */
+.api-ref-code-block {
+    background-color: #0f172a !important; /* slate-900 */
+    color: #f1f5f9 !important; /* slate-100 */
+    padding: 0.875rem 1rem !important;
+    border-radius: 0.5rem !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+    font-size: 0.75rem !important;
+    line-height: 1.5 !important;
+    overflow-x: auto !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    margin: 0 !important;
+}
+.api-ref-code-block code {
+    background: transparent !important;
+    color: inherit !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+}
+.api-ref-code-block.is-success {
+    color: #4ade80 !important; /* green-400 */
+}
+
