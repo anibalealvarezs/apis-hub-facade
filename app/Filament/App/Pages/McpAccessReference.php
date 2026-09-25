@@ -48,7 +48,7 @@ class McpAccessReference extends Page implements HasForms
         return $this->tenant?->public_api_key ?? '';
     }
 
-    public function isMcpAvailableProperty(): bool
+    public function getIsMcpAvailableProperty(): bool
     {
         $tier = $this->tenant?->fresh()?->billingProfile?->fresh()?->tier?->value;
         return in_array($tier, ['ultra', 'enterprise', 'founder']);

@@ -48,6 +48,12 @@ class IntegrationsOverview extends Page
                     'title' => __('API Access & Integration'),
                     'description' => __('Connect external reporting platforms, BI tools, and custom applications directly to your node.'),
                 ],
+                [
+                    'url' => \App\Filament\App\Pages\McpAccessReference::getUrl(),
+                    'icon' => 'heroicon-o-cpu-chip',
+                    'title' => __('Model Context Protocol (MCP)'),
+                    'description' => __('Connect AI assistants (Antigravity, Claude, Cursor) directly to query real-time metrics.'),
+                ],
             ],
         ];
     }
