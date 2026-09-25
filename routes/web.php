@@ -12,6 +12,12 @@ Route::get('/plans', [\App\Http\Controllers\LandingController::class, 'plans'])
 Route::get('/es/planes', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->plans($r, 'es'))
     ->name('landing.plans.es');
 
+Route::get('/docs/api', [\App\Http\Controllers\ApiDocsController::class, 'show'])
+    ->name('docs.api');
+
+Route::get('/es/docs/api', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\ApiDocsController::class)->show($r, 'es'))
+    ->name('docs.api.es');
+
 Route::get('/{locale?}', [\App\Http\Controllers\LandingController::class, 'index'])
     ->where('locale', 'es')
     ->name('landing.index');

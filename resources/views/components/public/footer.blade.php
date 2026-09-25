@@ -3,6 +3,8 @@
     <nav aria-label="{{ __('Navigation Links') }}" class="flex items-center justify-center opacity-70 flex-wrap gap-y-2">
         <a href="{{ app()->getLocale() === 'es' ? route('landing.plans.es') : route('landing.plans') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue {{ request()->routeIs('landing.plans*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('Plans & Features') }}</a>
         <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
+        <a href="{{ app()->getLocale() === 'es' ? route('docs.api.es') : route('docs.api') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue {{ request()->routeIs('docs.api*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('API Docs') }}</a>
+        <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
         <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue {{ request()->routeIs('legal.privacy*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('Privacy') }}</a>
         <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
         <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue {{ request()->routeIs('legal.tos*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('Terms') }}</a>

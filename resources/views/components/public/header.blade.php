@@ -17,10 +17,13 @@
             @php
                 $currentRoute = request()->route() ? request()->route()->getName() : null;
                 
-                // Determine counterpart routes cleanly for landing, plans, and legal documents
+                // Determine counterpart routes cleanly for landing, plans, docs, and legal documents
                 if ($currentRoute === 'landing.plans' || $currentRoute === 'landing.plans.es') {
                     $enUrl = route('landing.plans');
                     $esUrl = route('landing.plans.es');
+                } elseif ($currentRoute === 'docs.api' || $currentRoute === 'docs.api.es') {
+                    $enUrl = route('docs.api');
+                    $esUrl = route('docs.api.es');
                 } elseif ($currentRoute && str_starts_with($currentRoute, 'legal.')) {
                     $baseLegal = str_replace('.es', '', $currentRoute);
                     $enUrl = route($baseLegal);

@@ -18,8 +18,12 @@
             navigator.clipboard.writeText(resolved);
         }
     }">
-        <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-            {{ __('Connect external reporting platforms, BI tools (PowerBI, Looker Studio), and custom applications directly to your dedicated APIs Hub node.') }}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <span>{{ __('Connect external reporting platforms, BI tools (PowerBI, Looker Studio), and custom applications directly to your dedicated APIs Hub node.') }}</span>
+            <a href="{{ route('docs.api') }}" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline shrink-0">
+                <x-filament::icon icon="heroicon-m-arrow-top-right-on-square" class="w-4 h-4" />
+                <span>{{ __('Full API Docs & OpenAPI Spec') }}</span>
+            </a>
         </div>
 
         @php
@@ -72,6 +76,10 @@
                             <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
                         </button>
                     </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                        {{ __('Looking for the complete endpoint catalog, query parameters, and interactive testing?') }}
+                        <a href="{{ route('docs.api') }}" target="_blank" class="underline text-primary-600 dark:text-primary-400 font-semibold">{{ __('Visit the Public API Documentation Portal') }} &rarr;</a>
+                    </p>
                 </div>
 
                 {{-- Authentication Header Options --}}
