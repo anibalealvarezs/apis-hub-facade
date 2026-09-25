@@ -72,7 +72,7 @@
                 </div>
 
                 {{-- Authentication Header Options --}}
-                <div class="p-3 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/60 rounded-lg text-xs space-y-3">
+                <div class="api-ref-header-options text-xs space-y-3">
                     <div>
                         <span class="text-gray-600 dark:text-gray-300 block mb-1 font-semibold">{{ __('Header Option 1 (Recommended):') }}</span>
                         <div class="api-ref-code-container" x-data="{ copied: false }">

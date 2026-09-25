@@ -84,7 +84,7 @@ class AppPanelProvider extends PanelProvider
                 fn () => \Illuminate\Support\Facades\Blade::render('
                     <link rel="stylesheet" href="' . \Illuminate\Support\Facades\Vite::asset('resources/css/driver-theme.css') . '">
                     <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=20260825.1">
-                    <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=20260924.2">
+                    <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=20260924.3">
                     <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=20260825.1">
                 ')
             )

@@ -862,6 +862,17 @@ input[type="datetime-local"] {
     border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
+.api-ref-header-options {
+    background-color: #f3f4f6; /* gray-100 */
+    border: 1px solid #e5e7eb; /* gray-200 */
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+}
+.dark .api-ref-header-options {
+    background-color: rgba(255, 255, 255, 0.03) !important; /* subtle dark surface matching Filament panels */
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
 .api-ref-code-block {
     flex: 1 1 0%;
     background-color: transparent !important;
