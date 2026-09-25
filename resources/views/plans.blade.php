@@ -656,6 +656,18 @@
                         </div>
                     </div>
 
+                    <div class="glass-panel rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                        <button @click="openFaq = (openFaq === 4 ? null : 4)" class="w-full flex items-center justify-between text-left text-base sm:text-lg font-bold text-slate-800 dark:text-slate-200">
+                            <span>{{ app()->getLocale() === 'es' ? '¿Cómo funciona el servidor Model Context Protocol (MCP) y qué planes lo incluyen?' : 'How does the Model Context Protocol (MCP) server work and which tiers include it?' }}</span>
+                            <svg class="w-5 h-5 shrink-0 transition-transform ml-4" :class="openFaq === 4 ? 'rotate-180 text-brand-blue' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="openFaq === 4" x-collapse x-cloak class="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                            {{ app()->getLocale() === 'es'
+                                ? 'El servidor MCP está disponible exclusivamente en las cuentas Ultra y Enterprise. Permite conectar asistentes de IA como Google Antigravity, Claude Desktop o Cursor directamente a tu nodo mediante transporte Server-Sent Events (SSE). Los agentes pueden realizar llamadas a herramientas para consultar resúmenes de rendimiento multi-canal, calcular ROAS y auditar la cobertura de datos en tiempo real de forma segura y autenticada.'
+                                : 'The MCP server is exclusively available on Ultra and Enterprise tiers. It connects AI assistants such as Google Antigravity, Claude Desktop, and Cursor directly to your dedicated node using Server-Sent Events (SSE). Autonomous agents can invoke tools to summarize cross-channel metrics, calculate blended ROAS, and audit data coverage in real-time under authenticated access.' }}
+                        </div>
+                    </div>
+
                 </div>
             </section>
 

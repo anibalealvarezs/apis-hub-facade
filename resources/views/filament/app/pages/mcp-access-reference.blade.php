@@ -326,5 +326,63 @@
                 </div>
             </div>
         </x-filament::section>
+
+        {{-- Rate Limits & Tier Availability Section --}}
+        @php
+            $idTiers = \Illuminate\Support\Str::slug(__('MCP Tier Availability & Rate Limits'));
+        @endphp
+        <x-filament::section id="{{ $idTiers }}">
+            <x-slot name="heading">
+                <div class="flex items-center gap-2">
+                    <x-filament::icon icon="heroicon-o-shield-check" class="h-5 w-5 text-emerald-500" />
+                    <span>{{ __('MCP Tier Availability & Rate Limits') }}</span>
+                </div>
+            </x-slot>
+
+            <div class="space-y-3">
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ __('Model Context Protocol (MCP) server access is exclusively provisioned on Ultra and Enterprise tiers with built-in sliding window rate limiting to protect nodes against autonomous agent swarm abuse:') }}
+                </p>
+                <div class="overflow-x-auto ring-1 ring-gray-200 dark:ring-white/10 rounded-lg api-ref-table-wrap">
+                    <table class="w-full text-xs text-left divide-y divide-gray-200 dark:divide-white/5 api-ref-table">
+                        <thead class="bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">{{ __('Tier') }}</th>
+                                <th scope="col" class="px-4 py-3">{{ __('MCP SSE Server Access') }}</th>
+                                <th scope="col" class="px-4 py-3">{{ __('Sliding Rate Limit') }}</th>
+                                <th scope="col" class="px-4 py-3">{{ __('Status') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                            <tr class="transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Free / Pro</td>
+                                <td class="px-4 py-3 text-slate-400">—</td>
+                                <td class="px-4 py-3 text-gray-500 dark:text-gray-400">0</td>
+                                <td class="px-4 py-3 text-warning-600 dark:text-warning-400 font-medium">{{ __('Requires Ultra or Enterprise') }}</td>
+                            </tr>
+                            <tr class="transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Ultra / Founder</td>
+                                <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-semibold">{{ __('Included (Dedicated Node)') }}</td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    <code class="px-1.5 py-0.5 rounded text-xs">60 req/min</code>
+                                </td>
+                                <td class="px-4 py-3 text-success-600 dark:text-success-400 font-medium">{{ __('Active') }}</td>
+                            </tr>
+                            <tr class="transition-colors hover:bg-gray-50/60 dark:hover:bg-white/[0.02]">
+                                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Enterprise</td>
+                                <td class="px-4 py-3 text-emerald-600 dark:text-emerald-400 font-semibold">{{ __('Included + Custom Tooling') }}</td>
+                                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                    <code class="px-1.5 py-0.5 rounded text-xs">120+ req/min</code>
+                                </td>
+                                <td class="px-4 py-3 text-success-600 dark:text-success-400 font-medium">{{ __('Active') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ __('Calls exceeding the sliding window threshold will receive standard HTTP 429 Too Many Requests (or JSON-RPC error code -32000). Projects on Free or Pro tiers receive HTTP 401 Unauthorized.') }}
+                </p>
+            </div>
+        </x-filament::section>
     </div>
 </x-filament-panels::page>
