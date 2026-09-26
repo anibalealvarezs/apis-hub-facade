@@ -175,11 +175,13 @@ class DataSync extends Page
         $syncConfig = $project->sync_config ?? [];
         $gscConfig = $syncConfig['google_search_console'] ?? null;
 
-        if (!$gscConfig || empty($gscConfig['enabled'])) {
-            return false;
+        // True if GSC is enabled in sync settings, OR if the channel is currently connected,
+        // OR if historical accounts exist for this channel in sync_config.
+        if (!empty($gscConfig['enabled']) || $project->isChannelConnected('google_search_console')) {
+            return true;
         }
 
-        return $project->isChannelConnected('google_search_console');
+        return !empty($gscConfig['accounts']);
     }
 
     protected function getHeaderActions(): array
