@@ -419,6 +419,11 @@ EOT;
             'custom_kpis' => $customKpis,
             'dashboards' => $dashboards,
             'alerts' => $alerts,
+            'reference_library' => [
+                'notice' => 'These predefined KPIs and Derived Metrics are platform-wide reference definitions and templates provided for analytical inspiration and deep analysis. They are NOT active custom KPIs created specifically for this project.',
+                'predefined_kpis' => \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis(),
+                'predefined_derived_metrics' => \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined(),
+            ],
             'synced_at' => now()->toIso8601String(),
         ];
     }
