@@ -330,11 +330,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
                         <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
-                            <x-filament::icon icon="heroicon-m-chart-bar" class="w-4 h-4 text-primary-500" />
-                            <span>summarize_performance</span>
+                            <x-filament::icon icon="heroicon-m-book-open" class="w-4 h-4 text-primary-500" />
+                            <span>get_mcp_guide</span>
                         </div>
                         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            {{ __('Calculates aggregated metrics (spend, clicks, impressions, CTR, CPC, ROAS) across Meta, Google Ads, GSC, and Shopify with built-in memory caching.') }}
+                            {{ __('Self-contained interactive guide for agents. Details workflow, asset filtering, valid breakdowns, data scopes, and copy-paste ready recipes.') }}
                         </p>
                         <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
                             Ultra & Enterprise
@@ -343,11 +343,37 @@
 
                     <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
                         <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
-                            <x-filament::icon icon="heroicon-m-check-circle" class="w-4 h-4 text-emerald-500" />
-                            <span>check_coverage</span>
+                            <x-filament::icon icon="heroicon-m-rectangle-stack" class="w-4 h-4 text-indigo-500" />
+                            <span>list_connected_assets</span>
                         </div>
                         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            {{ __('Scans date gaps in your synced marketing channels (e.g. facebook_marketing, google_search_console) over a requested timeframe.') }}
+                            {{ __('Discovers all connected web properties, ad accounts, and stores with their exact integer IDs, names, channels, and platform keys.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-academic-cap" class="w-4 h-4 text-purple-500" />
+                            <span>get_analytics_catalog</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Introspects canonical metrics, derived formulas (ROAS, CPC, CTR), temporal granularities, and valid dimensions per channel or scope.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-chart-bar" class="w-4 h-4 text-emerald-500" />
+                            <span>summarize_performance</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Calculates aggregated metrics across Meta, Google Ads, GSC, GA4, Shopify, and Klaviyo with built-in memory caching and asset group isolation.') }}
                         </p>
                         <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             Ultra & Enterprise
@@ -356,13 +382,26 @@
 
                     <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
                         <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
-                            <x-filament::icon icon="heroicon-m-queue-list" class="w-4 h-4 text-indigo-500" />
+                            <x-filament::icon icon="heroicon-m-check-circle" class="w-4 h-4 text-teal-500" />
+                            <span>check_coverage</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Scans date gaps in your synced marketing channels (e.g. facebook_marketing, google_search_console) over a requested timeframe.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-queue-list" class="w-4 h-4 text-amber-500" />
                             <span>get_available_instances</span>
                         </div>
                         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
                             {{ __('Lists active synchronization workers and explorer schedules configured for your project node.') }}
                         </p>
-                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                             Ultra & Enterprise
                         </span>
                     </div>
