@@ -260,15 +260,13 @@ EOT;
         $jsonPayload = json_encode($alerts, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/alerts.json";
 
-        $b64 = base64_encode($jsonPayload);
-        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
+        $res = $this->writeRemoteFile($server, $path, $jsonPayload);
 
-        try {
-            $this->runSshCommands($server, [$command]);
+        if ($res['status'] === 'success') {
             Log::info("Successfully synchronized alerts.json for project {$project->name} (" . count($alerts) . " alerts)");
             return true;
-        } catch (\Exception $e) {
-            Log::error("Failed to synchronize alerts.json for project {$project->name}: " . $e->getMessage());
+        } else {
+            Log::error("Failed to synchronize alerts.json for project {$project->name}: " . ($res['output'] ?? 'Unknown error'));
             return false;
         }
     }
@@ -325,15 +323,13 @@ EOT;
         $jsonPayload = json_encode($userKeys, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/user_keys.json";
 
-        $b64 = base64_encode($jsonPayload);
-        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
+        $res = $this->writeRemoteFile($server, $path, $jsonPayload);
 
-        try {
-            $this->runSshCommands($server, [$command]);
+        if ($res['status'] === 'success') {
             Log::info("Successfully synchronized user_keys.json for project {$project->name} (" . count($userKeys) . " keys)");
             return true;
-        } catch (\Exception $e) {
-            Log::error("Failed to synchronize user_keys.json for project {$project->name}: " . $e->getMessage());
+        } else {
+            Log::error("Failed to synchronize user_keys.json for project {$project->name}: " . ($res['output'] ?? 'Unknown error'));
             return false;
         }
     }
@@ -380,7 +376,7 @@ EOT;
                     'widget_type' => $w->widget_type,
                     'source_type' => $w->source_type,
                     'source_config' => $w->source_config,
-                    'controls' => $w->controls,
+                    'controls' => $this->sanitizeWidgetControls($w->controls),
                     'custom_kpi_id' => $w->custom_kpi_id,
                 ])->values()->toArray(),
             ])
@@ -428,6 +424,44 @@ EOT;
     }
 
     /**
+     * Sanitize widget controls by stripping builder UI metadata while retaining
+     * analytical parameters (channels, metrics, breakdowns, filters, date range).
+     */
+    protected function sanitizeWidgetControls(mixed $controls): mixed
+    {
+        if (!is_array($controls)) {
+            return $controls;
+        }
+
+        // Strip UI-only and internal form-state keys
+        $clean = \Illuminate\Support\Arr::except($controls, [
+            '_ui_state',
+            '_step_history',
+            '_builder_step',
+            'series_allowed_assets',
+            'series_allowed_metrics',
+            'series_asset_groups',
+            'series_metric_colors',
+        ]);
+
+        // Clean raw_series if present
+        if (isset($clean['raw_series']) && is_array($clean['raw_series'])) {
+            $clean['raw_series'] = array_map(function ($series) {
+                if (is_array($series)) {
+                    return \Illuminate\Support\Arr::except($series, [
+                        'allowed_assets',
+                        'allowed_metrics',
+                        'metric_colors',
+                    ]);
+                }
+                return $series;
+            }, $clean['raw_series']);
+        }
+
+        return $clean;
+    }
+
+    /**
      * Synchronize sanitized project context metadata (project_context.json) to remote apis-hub node.
      * Contains Custom KPIs, Dashboards & Widgets, and Configured Alerts.
      * Strips all sensitive credentials, database keys, and personal credentials.
@@ -447,16 +481,14 @@ EOT;
         $jsonPayload = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/project_context.json";
 
-        $b64 = base64_encode($jsonPayload);
-        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
+        $res = $this->writeRemoteFile($server, $path, $jsonPayload);
 
-        try {
-            $this->runSshCommands($server, [$command]);
+        if ($res['status'] === 'success') {
             $project->update(['context_synced_at' => now()]);
             Log::info("Successfully synchronized project_context.json for project {$project->name} (" . count($payload['custom_kpis']) . " KPIs, " . count($payload['dashboards']) . " dashboards, " . count($payload['alerts']) . " alerts)");
             return true;
-        } catch (\Exception $e) {
-            Log::error("Failed to synchronize project_context.json for project {$project->name}: " . $e->getMessage());
+        } else {
+            Log::error("Failed to synchronize project_context.json for project {$project->name}: " . ($res['output'] ?? 'Unknown error'));
             return false;
         }
     }
@@ -484,6 +516,45 @@ EOT;
             return ['success' => true, 'output' => $textOutput];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Write contents to a remote file securely using SSH stdin piping.
+     * Avoids argument length limits (ARG_MAX) and shell escaping issues on large payloads.
+     */
+    public function writeRemoteFile(Server $server, string $remotePath, string $content, int $chmod = 0664, ?int $timeout = null): array
+    {
+        $timeout = $timeout ?? 60;
+        $dir = dirname($remotePath);
+        $chmodOctal = sprintf('%04o', $chmod);
+
+        $tmpKeyPath = tempnam(sys_get_temp_dir(), 'ssh_key_');
+        file_put_contents($tmpKeyPath, $server->ssh_private_key . "\n");
+        chmod($tmpKeyPath, 0600);
+
+        try {
+            $remoteEscapedDir = escapeshellarg($dir);
+            $remoteEscapedPath = escapeshellarg($remotePath);
+            $remoteCmd = "mkdir -p {$remoteEscapedDir} && cat > {$remoteEscapedPath} && chmod {$chmodOctal} {$remoteEscapedPath}";
+
+            $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} " . escapeshellarg($remoteCmd);
+
+            $process = Process::timeout($timeout)->input($content);
+            $result = $process->run($sshCmd);
+
+            if ($result->failed()) {
+                $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
+                Log::error("writeRemoteFile failed on {$server->ip_address} for {$remotePath}:\n" . $combinedOutput);
+
+                return ['status' => 'error', 'output' => trim($combinedOutput)];
+            }
+
+            return ['status' => 'success', 'output' => $result->output()];
+        } finally {
+            if (file_exists($tmpKeyPath)) {
+                unlink($tmpKeyPath);
+            }
         }
     }
 
