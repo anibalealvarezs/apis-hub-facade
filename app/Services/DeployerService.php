@@ -339,6 +339,128 @@ EOT;
     }
 
     /**
+     * Build the sanitized project context payload containing only public/whitelisted metadata.
+     * Guaranteed free from sensitive credentials, user tables, and database passwords.
+     */
+    public function buildSanitizedProjectContextPayload(Project $project): array
+    {
+        // 1. Sanitize Custom KPIs
+        $customKpis = $project->customKpis()
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($kpi) {
+                $cleanFilters = is_array($kpi->filters) ? \Illuminate\Support\Arr::except($kpi->filters, ['_ui_state']) : $kpi->filters;
+                return [
+                    'id' => $kpi->id,
+                    'name' => $kpi->name,
+                    'description' => $kpi->description,
+                    'calculation_type' => $kpi->calculation_type,
+                    'ast' => $kpi->ast,
+                    'filters' => $cleanFilters,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        // 2. Sanitize Dashboards & Widgets
+        $dashboards = $project->dashboards()
+            ->with(['widgets' => fn ($q) => $q->orderBy('id', 'asc')])
+            ->get()
+            ->map(fn ($d) => [
+                'id' => $d->id,
+                'name' => $d->getTranslations('name'),
+                'description' => $d->getTranslations('description'),
+                'is_default' => (bool) $d->is_default,
+                'widgets_count' => $d->widgets->count(),
+                'widgets' => $d->widgets->map(fn ($w) => [
+                    'id' => $w->id,
+                    'name' => $w->getTranslations('name'),
+                    'title' => $w->getTranslations('title'),
+                    'description' => $w->getTranslations('description'),
+                    'widget_type' => $w->widget_type,
+                    'source_type' => $w->source_type,
+                    'source_config' => $w->source_config,
+                    'controls' => $w->controls,
+                    'custom_kpi_id' => $w->custom_kpi_id,
+                ])->values()->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
+        // 3. Sanitize Configured Alerts
+        $alerts = $project->alerts()
+            ->with('calculationLines')
+            ->get()
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'name' => $a->name,
+                'is_active' => (bool) $a->is_active,
+                'source_type' => $a->source_type,
+                'source_config' => $a->source_config,
+                'ast' => $a->ast,
+                'filters' => $a->filters,
+                'aggregation_method' => $a->aggregation_method,
+                'upper_limit' => $a->upper_limit !== null ? (float) $a->upper_limit : null,
+                'lower_limit' => $a->lower_limit !== null ? (float) $a->lower_limit : null,
+                'schedule_type' => $a->schedule_type,
+                'next_evaluation_at' => $a->next_evaluation_at?->toIso8601String(),
+                'calculation_lines' => $a->calculationLines->map(fn ($line) => [
+                    'id' => $line->id,
+                    'label' => $line->label,
+                    'asset_filter' => $line->asset_filter,
+                ])->values()->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
+        return [
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'subdomain' => $project->subdomain,
+                'timezone' => $project->timezone,
+            ],
+            'custom_kpis' => $customKpis,
+            'dashboards' => $dashboards,
+            'alerts' => $alerts,
+            'synced_at' => now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Synchronize sanitized project context metadata (project_context.json) to remote apis-hub node.
+     * Contains Custom KPIs, Dashboards & Widgets, and Configured Alerts.
+     * Strips all sensitive credentials, database keys, and personal credentials.
+     */
+    public function syncProjectMetadata(Project $project): bool
+    {
+        if (app()->environment('testing')) {
+            return true;
+        }
+
+        $server = $project->server;
+        if (!$server) {
+            return false;
+        }
+
+        $payload = $this->buildSanitizedProjectContextPayload($project);
+        $jsonPayload = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/project_context.json";
+
+        $b64 = base64_encode($jsonPayload);
+        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
+
+        try {
+            $this->runSshCommands($server, [$command]);
+            Log::info("Successfully synchronized project_context.json for project {$project->name} (" . count($payload['custom_kpis']) . " KPIs, " . count($payload['dashboards']) . " dashboards, " . count($payload['alerts']) . " alerts)");
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Failed to synchronize project_context.json for project {$project->name}: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Manually trigger alert calculation on remote tenant worker over SSH.
      */
     public function evaluateAlert(Alert $alert): array

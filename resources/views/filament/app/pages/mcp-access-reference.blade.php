@@ -382,6 +382,45 @@
 
                     <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
                         <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-variable" class="w-4 h-4 text-pink-500" />
+                            <span>list_custom_kpis</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Discovers custom KPIs, calculated derived formulas (AST expressions), descriptions, and filter criteria configured for your project.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-presentation-chart-bar" class="w-4 h-4 text-cyan-500" />
+                            <span>list_project_dashboards</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Inspects configured project dashboards and their constituent widgets (titles, formulas, assigned channels, metrics, and visualization controls).') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-bell-alert" class="w-4 h-4 text-red-500" />
+                            <span>list_configured_alerts</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Lists active threshold alerts, automated evaluation schedules, and monitoring limits defined across marketing channels.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
                             <x-filament::icon icon="heroicon-m-check-circle" class="w-4 h-4 text-teal-500" />
                             <span>check_coverage</span>
                         </div>
@@ -417,6 +456,7 @@
                         $prompt1 = "Using the apis-hub MCP server, summarize our total ad spend, clicks, impressions, and ROAS across Facebook and Google Ads for the last 30 days.";
                         $prompt2 = "Check the data coverage for google_search_console and facebook_marketing over the last 60 days to see if there are missing dates or gaps.";
                         $prompt3 = "Call summarize_performance for google_search_console grouped by daily for the past 14 days, analyze click and position trends, and give me key SEO recommendations.";
+                        $prompt4 = "Inspect our project's custom KPIs and active dashboards with list_custom_kpis and list_project_dashboards. Then, summarize the performance of the metrics tracked in our executive widgets for this month.";
                     @endphp
 
                     <div class="space-y-4">
@@ -452,6 +492,19 @@
                                 <pre class="api-ref-code-block"><code class="select-all">{{ $prompt3 }}</code></pre>
                                 <button type="button" 
                                         @click="navigator.clipboard.writeText(@js($prompt3)); copied = true; setTimeout(() => copied = false, 2000)" 
+                                        class="api-ref-copy-btn">
+                                    <span x-show="!copied">{{ __('Copy') }}</span>
+                                    <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h5 class="font-bold text-gray-800 dark:text-gray-200 mb-1 text-sm">{{ __('4. Project Context & Dashboard Audit:') }}</h5>
+                            <div class="api-ref-code-container" x-data="{ copied: false }">
+                                <pre class="api-ref-code-block"><code class="select-all">{{ $prompt4 }}</code></pre>
+                                <button type="button" 
+                                        @click="navigator.clipboard.writeText(@js($prompt4)); copied = true; setTimeout(() => copied = false, 2000)" 
                                         class="api-ref-copy-btn">
                                     <span x-show="!copied">{{ __('Copy') }}</span>
                                     <span x-show="copied" class="text-green-400" x-cloak>{{ __('Copied!') }}</span>

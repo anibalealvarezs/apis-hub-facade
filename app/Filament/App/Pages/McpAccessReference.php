@@ -7,6 +7,7 @@ namespace App\Filament\App\Pages;
 use App\Filament\App\Clusters\KnowledgeBase\Integrations;
 use App\Models\Project;
 use Filament\Facades\Filament;
+use Filament\Actions\Action as HeaderAction;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -22,6 +23,39 @@ class McpAccessReference extends Page implements HasForms
     protected static ?string $navigationIcon = 'heroicon-o-cpu-chip';
     protected static ?int $navigationSort = 5;
     protected static string $view = 'filament.app.pages.mcp-access-reference';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            HeaderAction::make('syncContext')
+                ->label(__('Sync Context with Node'))
+                ->icon('heroicon-o-arrow-path')
+                ->color('primary')
+                ->visible(fn () => $this->isEditorOrOwner)
+                ->action(function (\App\Services\DeployerService $deployer) {
+                    $tenant = $this->tenant;
+                    if (!$tenant) {
+                        return;
+                    }
+
+                    $success = $deployer->syncProjectMetadata($tenant);
+
+                    if ($success) {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Project Context Synchronized'))
+                            ->success()
+                            ->body(__('Custom KPIs, Dashboards, and Alerts catalog have been securely pushed to your node.'))
+                            ->send();
+                    } else {
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Sync Failed'))
+                            ->danger()
+                            ->body(__('Failed to synchronize project context with the remote node.'))
+                            ->send();
+                    }
+                }),
+        ];
+    }
 
     public ?array $data = [];
 
