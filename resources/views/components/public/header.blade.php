@@ -17,10 +17,22 @@
             @php
                 $currentRoute = request()->route() ? request()->route()->getName() : null;
                 
-                // Determine counterpart routes cleanly for landing, plans, docs, and legal documents
+                // Determine counterpart routes cleanly for landing, plans, docs, architecture, solutions, and guides
                 if ($currentRoute === 'landing.plans' || $currentRoute === 'landing.plans.es') {
                     $enUrl = route('landing.plans');
                     $esUrl = route('landing.plans.es');
+                } elseif ($currentRoute === 'landing.architecture' || $currentRoute === 'landing.architecture.es') {
+                    $enUrl = route('landing.architecture');
+                    $esUrl = route('landing.architecture.es');
+                } elseif ($currentRoute === 'landing.solutions.agency' || $currentRoute === 'landing.solutions.agency.es') {
+                    $enUrl = route('landing.solutions.agency');
+                    $esUrl = route('landing.solutions.agency.es');
+                } elseif ($currentRoute === 'landing.solutions.normalization' || $currentRoute === 'landing.solutions.normalization.es') {
+                    $enUrl = route('landing.solutions.normalization');
+                    $esUrl = route('landing.solutions.normalization.es');
+                } elseif ($currentRoute === 'landing.guides.looker-quota' || $currentRoute === 'landing.guides.looker-quota.es') {
+                    $enUrl = route('landing.guides.looker-quota');
+                    $esUrl = route('landing.guides.looker-quota.es');
                 } elseif ($currentRoute === 'docs.api' || $currentRoute === 'docs.api.es') {
                     $enUrl = route('docs.api');
                     $esUrl = route('docs.api.es');

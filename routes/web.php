@@ -12,6 +12,30 @@ Route::get('/plans', [\App\Http\Controllers\LandingController::class, 'plans'])
 Route::get('/es/planes', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->plans($r, 'es'))
     ->name('landing.plans.es');
 
+// Architecture & Isolated Data Clusters
+Route::get('/architecture', [\App\Http\Controllers\LandingController::class, 'architecture'])
+    ->name('landing.architecture');
+Route::get('/es/arquitectura', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->architecture($r, 'es'))
+    ->name('landing.architecture.es');
+
+// Solutions: Agency Client Reporting
+Route::get('/solutions/agency-client-reporting', [\App\Http\Controllers\LandingController::class, 'agencyReporting'])
+    ->name('landing.solutions.agency');
+Route::get('/es/soluciones/reportes-agencias-marketing', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->agencyReporting($r, 'es'))
+    ->name('landing.solutions.agency.es');
+
+// Solutions: Cross-Channel Metric Normalization
+Route::get('/solutions/cross-channel-normalization', [\App\Http\Controllers\LandingController::class, 'crossChannelNormalization'])
+    ->name('landing.solutions.normalization');
+Route::get('/es/soluciones/normalizacion-metricas-marketing', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->crossChannelNormalization($r, 'es'))
+    ->name('landing.solutions.normalization.es');
+
+// Guides: Looker Studio Quota Fix
+Route::get('/guides/fix-gsc-looker-quota-limits', [\App\Http\Controllers\LandingController::class, 'fixLookerQuota'])
+    ->name('landing.guides.looker-quota');
+Route::get('/es/guias/solucion-error-cuota-looker-studio-gsc', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->fixLookerQuota($r, 'es'))
+    ->name('landing.guides.looker-quota.es');
+
 Route::get('/docs/api', [\App\Http\Controllers\ApiDocsController::class, 'show'])
     ->name('docs.api');
 

@@ -147,4 +147,64 @@ class LandingController extends Controller
             'unsubscribe_message' => 'You have been successfully unsubscribed from the APIs Hub Alpha waitlist.'
         ]);
     }
+
+    /**
+     * Show the architecture overview page.
+     */
+    public function architecture(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.architecture', $this->baseViewData());
+    }
+
+    /**
+     * Show the agency client reporting solution page.
+     */
+    public function agencyReporting(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.agency-reporting', $this->baseViewData());
+    }
+
+    /**
+     * Show the cross-channel metric normalization solution page.
+     */
+    public function crossChannelNormalization(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.cross-channel-normalization', $this->baseViewData());
+    }
+
+    /**
+     * Show the problem-solving guide for Looker Studio quota limits.
+     */
+    public function fixLookerQuota(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.fix-looker-quota', $this->baseViewData());
+    }
+
+    protected function resolveLocale(Request $request, ?string $locale): void
+    {
+        if ($locale === 'es' || $request->is('es/*')) {
+            app()->setLocale('es');
+            session()->put('locale', 'es');
+        } else {
+            app()->setLocale('en');
+            session()->put('locale', 'en');
+        }
+    }
+
+    protected function baseViewData(): array
+    {
+        $gtmId = config('services.gtm.id');
+        return [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+        ];
+    }
 }
