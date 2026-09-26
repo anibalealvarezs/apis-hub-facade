@@ -79,7 +79,7 @@ class DeployerService
 
         $billingService = app(\App\Services\BillingLifecycleService::class);
         $tier = $project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE;
-        $hasApiAccess = $billingService->canAccessApi($tier) || !empty($project->public_api_key);
+        $hasApiAccess = $billingService->canAccessApi($tier);
 
         if ($hasApiAccess) {
             $mcpContainerName = "apis-hub-{$project->subdomain}-mcp";
@@ -134,7 +134,7 @@ class DeployerService
 
         $billingService = app(\App\Services\BillingLifecycleService::class);
         $projectTier = $project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE;
-        $hasApiAccess = $billingService->canAccessApi($projectTier) || !empty($project->public_api_key);
+        $hasApiAccess = $billingService->canAccessApi($projectTier);
         $deployMcpServer = $hasApiAccess ? 'true' : 'false';
 
         // Generate deterministic, unique host ports based on project ID and environment offset to prevent Docker conflicts
