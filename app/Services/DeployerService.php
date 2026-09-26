@@ -452,6 +452,7 @@ EOT;
 
         try {
             $this->runSshCommands($server, [$command]);
+            $project->update(['context_synced_at' => now()]);
             Log::info("Successfully synchronized project_context.json for project {$project->name} (" . count($payload['custom_kpis']) . " KPIs, " . count($payload['dashboards']) . " dashboards, " . count($payload['alerts']) . " alerts)");
             return true;
         } catch (\Exception $e) {

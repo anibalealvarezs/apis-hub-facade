@@ -64,6 +64,7 @@ class Project extends Model
         'facebook_profile_id',
         'supported_locales',
         'typesafe_api_key',
+        'context_synced_at',
     ];
 
     /**
@@ -327,6 +328,7 @@ class Project extends Model
         'public_api_key' => 'encrypted',
         'supported_locales' => 'array',
         'typesafe_api_key' => 'encrypted',
+        'context_synced_at' => 'datetime',
     ];
 
     /**

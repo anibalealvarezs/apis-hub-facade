@@ -28,9 +28,21 @@ class McpAccessReference extends Page implements HasForms
     {
         return [
             HeaderAction::make('syncContext')
-                ->label(__('Sync Context with Node'))
+                ->label(function () {
+                    $syncedAt = $this->tenant?->context_synced_at;
+                    if ($syncedAt) {
+                        return __('Sync Context with Node') . ' (' . __('Last:') . ' ' . $syncedAt->diffForHumans() . ')';
+                    }
+                    return __('Sync Context with Node') . ' (' . __('Never synced') . ')';
+                })
+                ->tooltip(function () {
+                    $syncedAt = $this->tenant?->context_synced_at;
+                    return $syncedAt 
+                        ? __('Last synchronized: :date', ['date' => $syncedAt->translatedFormat('Y-m-d H:i:s')])
+                        : __('Context has never been pushed to this node.');
+                })
                 ->icon('heroicon-o-arrow-path')
-                ->color('primary')
+                ->color(fn () => $this->tenant?->context_synced_at ? 'primary' : 'warning')
                 ->visible(fn () => $this->isEditorOrOwner)
                 ->action(function (\App\Services\DeployerService $deployer) {
                     $tenant = $this->tenant;
@@ -41,6 +53,7 @@ class McpAccessReference extends Page implements HasForms
                     $success = $deployer->syncProjectMetadata($tenant);
 
                     if ($success) {
+                        $tenant->refresh();
                         \Filament\Notifications\Notification::make()
                             ->title(__('Project Context Synchronized'))
                             ->success()

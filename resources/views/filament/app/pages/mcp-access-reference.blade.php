@@ -107,9 +107,22 @@
 
                 {{-- Project Context & Catalog Synchronization Callout --}}
                 <div class="p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-800/40 text-xs text-indigo-900 dark:text-indigo-200 space-y-2">
-                    <div class="flex items-center gap-2 font-semibold text-indigo-950 dark:text-indigo-100">
-                        <x-filament::icon icon="heroicon-m-arrow-path" class="w-4 h-4 text-indigo-500" />
-                        <span>{{ __('Project Context Synchronization ("Sync Context with Node")') }}</span>
+                    <div class="flex items-center justify-between gap-2 font-semibold text-indigo-950 dark:text-indigo-100">
+                        <div class="flex items-center gap-2">
+                            <x-filament::icon icon="heroicon-m-arrow-path" class="w-4 h-4 text-indigo-500" />
+                            <span>{{ __('Project Context Synchronization ("Sync Context with Node")') }}</span>
+                        </div>
+                        @if($tenant && $tenant->context_synced_at)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                {{ __('Last synced:') }} {{ $tenant->context_synced_at->diffForHumans() }} ({{ $tenant->context_synced_at->format('Y-m-d H:i') }})
+                            </span>
+                        @else
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                {{ __('Never synchronized') }}
+                            </span>
+                        @endif
                     </div>
                     <p class="leading-relaxed">
                         {{ __('The "Sync Context with Node" button in the page header allows project Owners and Editors to propagate your latest project definitions to your isolated node over SSH without restarting services:') }}
