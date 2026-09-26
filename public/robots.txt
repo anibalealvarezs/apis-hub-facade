@@ -13,6 +13,9 @@ Allow: /favicon.ico
 
 # Allow explicitly indexed URLs (English)
 Allow: /$
+Allow: /plans$
+Allow: /docs/api$
+Allow: /docs/api/openapi.json$
 Allow: /app/login$
 Allow: /app/register$
 Allow: /privacy$
@@ -21,6 +24,9 @@ Allow: /data-deletion$
 
 # Allow explicitly indexed URLs (Spanish)
 Allow: /es$
+Allow: /es/planes$
+Allow: /es/docs/api$
+Allow: /es/docs/api/openapi.json$
 Allow: /es/privacy$
 Allow: /es/tos$
 Allow: /es/data-deletion$

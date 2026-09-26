@@ -160,14 +160,18 @@ class SyncSettings extends Page
                 Section::make(__('API Access (External Integration)'))
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
-                        $tier = Filament::getTenant()->billingProfile?->tier?->value;
-                        return !in_array($tier, ['free', 'pro']);
+                        $tier = Filament::getTenant()?->fresh()?->billingProfile?->fresh()?->tier?->value;
+                        return !in_array($tier, ['free', 'pro', null]);
                     })
                     ->schema([
                         TextInput::make('api_url')
-                            ->label(__('API Endpoint'))
-                            ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud') . '/api')
+                            ->label(__('Base API URL'))
+                            ->formatStateUsing(fn () => 'https://' . Filament::getTenant()->subdomain . '.' . (config('app.network_domain') ?: 'apis-hub.cloud'))
                             ->disabled()
+                            ->helperText(function () {
+                                $url = \App\Filament\App\Pages\ApiAccessReference::getUrl(['tenant' => Filament::getTenant()]);
+                                return new \Illuminate\Support\HtmlString(__('Use this base URL with endpoints like /api/v1/ping or /{channel}/metric. <a href="' . $url . '" class="underline text-primary-600 dark:text-primary-400 font-semibold">' . __('View API Guide & Examples') . '</a>'));
+                            })
                             ->suffixIcon('heroicon-m-globe-alt'),
                         TextInput::make('app_api_key')
                             ->label(__('Secret API Key'))
@@ -192,17 +196,33 @@ class SyncSettings extends Page
                                         $tenant->update(['public_api_key' => $newKey]);
 
                                         // 2. Push to remote server via SSH
-                                        $deployer->updateCredentials($tenant, [
+                                        $response = $deployer->updateCredentials($tenant, [
                                             'APP_API_KEY' => $newKey,
+                                            'TOKEN_AUTHORITY_BEARER' => $newKey,
                                         ]);
 
-                                        \Filament\Notifications\Notification::make()
-                                            ->title(__('API Key Rotated!'))
-                                            ->success()
-                                            ->body(__('The new key has been generated and synchronized with your node.'))
-                                            ->send();
+                                        if (($response['success'] ?? false) || ($response['status'] ?? '') === 'success') {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title(__('API Key Rotated!'))
+                                                ->success()
+                                                ->body(__('The new key has been generated and synchronized with your node.'))
+                                                ->send();
+                                        } else {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title(__('Key Saved Locally'))
+                                                ->warning()
+                                                ->body(__('Key updated in the database, but remote synchronization failed: ') . ($response['message'] ?? 'SSH connection error.'))
+                                                ->send();
+                                        }
 
-                                        // 3. Update the form state
+                                        // 3. Notify all users with editor/owner permissions (mail and in-app database notification)
+                                        $currentUser = \Illuminate\Support\Facades\Auth::user();
+                                        $notification = new \App\Notifications\ApiKeyRotatedNotification($tenant, $currentUser);
+                                        foreach ($tenant->getEditorsAndOwners() as $userToNotify) {
+                                            $userToNotify->notify($notification);
+                                        }
+
+                                        // 4. Update the form state
                                         $this->form->fill(['app_api_key' => $newKey]);
                                     })
                             ),
@@ -211,8 +231,8 @@ class SyncSettings extends Page
                 Section::make(__('API Access (External Integration)'))
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
-                        $tier = Filament::getTenant()->billingProfile?->tier?->value;
-                        return in_array($tier, ['free', 'pro']);
+                        $tier = Filament::getTenant()?->fresh()?->billingProfile?->fresh()?->tier?->value;
+                        return in_array($tier, ['free', 'pro', null]);
                     })
                     ->schema([
                         \Filament\Forms\Components\Placeholder::make('upgrade_required')
@@ -237,6 +257,82 @@ class SyncSettings extends Page
                                     ') . '
                                 </div>
                             '))
+                    ]),
+
+                Section::make(__('Model Context Protocol (MCP) for AI Agents'))
+                    ->description(__('Connect Google Antigravity, Claude Desktop, Cursor, and autonomous agents directly to this project node.'))
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('mcp_info')
+                            ->label('')
+                            ->content(function () {
+                                $tenant = Filament::getTenant();
+                                $tier = $tenant?->fresh()?->billingProfile?->fresh()?->tier?->value ?? 'free';
+                                $hasMcp = in_array($tier, ['ultra', 'enterprise', 'founder']);
+                                $domain = config('app.network_domain') ?: 'apis-hub.cloud';
+                                $subdomain = $tenant ? $tenant->subdomain : 'your-project';
+                                $mcpUrl = "https://{$subdomain}.{$domain}/mcp/sse";
+                                $mcpGuideUrl = \App\Filament\App\Pages\McpAccessReference::getUrl(['tenant' => $tenant]);
+
+                                if ($hasMcp) {
+                                    return new \Illuminate\Support\HtmlString('
+                                        <div class="space-y-4">
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04]">
+                                                <div class="space-y-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                        <h4 class="font-bold text-sm text-gray-900 dark:text-white">
+                                                            ' . __('MCP Server Active on Dedicated Node (:tier)', ['tier' => ucfirst($tier)]) . '
+                                                        </h4>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 dark:text-gray-300">
+                                                        ' . __('Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.') . '
+                                                    </p>
+                                                </div>
+                                                <a href="' . $mcpGuideUrl . '" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline shrink-0">
+                                                    <span>' . __('View Setup Guide & Prompts') . '</span>
+                                                    <span>&rarr;</span>
+                                                </a>
+                                            </div>
+
+                                            <div>
+                                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                                                    ' . __('SSE Transport URL:') . '
+                                                </span>
+                                                <div class="api-ref-code-container" x-data="{ copied: false }">
+                                                    <pre class="api-ref-code-block"><code class="select-all">' . $mcpUrl . '</code></pre>
+                                                    <button type="button" 
+                                                            @click="navigator.clipboard.writeText(\'' . $mcpUrl . '\'); copied = true; setTimeout(() => copied = false, 2000)" 
+                                                            class="api-ref-copy-btn">
+                                                        <span x-show="!copied">' . __('Copy') . '</span>
+                                                        <span x-show="copied" class="text-green-400" x-cloak>' . __('Copied!') . '</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ');
+                                }
+
+                                return new \Illuminate\Support\HtmlString('
+                                    <div class="p-4 bg-warning-50 dark:bg-warning-500/10 rounded-xl text-warning-700 dark:text-warning-300 border border-warning-200 dark:border-warning-500/20 space-y-2">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-warning-600 dark:text-warning-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                            </svg>
+                                            <h4 class="font-bold text-sm">' . __('Model Context Protocol (MCP) Server Locked') . '</h4>
+                                        </div>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300">
+                                            ' . __('The MCP server allows AI agents (Antigravity, Claude Desktop, Cursor) to directly query marketing metrics and run diagnostics. This feature is available on Ultra and Enterprise tiers.') . '
+                                        </p>
+                                        ' . ($tenant->billingProfile?->user_id === \Illuminate\Support\Facades\Auth::id() ? '
+                                        <div class="pt-1">
+                                            <a href="/account/account-subscription?profile=' . $tenant->billingProfile?->id . '" class="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-lg shadow-sm transition">
+                                                ' . __('Upgrade to Ultra') . '
+                                            </a>
+                                        </div>
+                                        ' : '') . '
+                                    </div>
+                                ');
+                            })
                     ]),
             ])
             ->statePath('data')

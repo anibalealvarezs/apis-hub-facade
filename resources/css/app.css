@@ -74,14 +74,40 @@ body {
         radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%);
 }
 
-/* Unicorn Typography */
+/* Unicorn Typography & Public Design System */
 .unicorn-title {
-    @apply bg-clip-text text-transparent tracking-[-0.05em] leading-none;
+    @apply bg-clip-text text-transparent tracking-[-0.04em] leading-[1.08];
     background-image: linear-gradient(135deg, var(--color-brand-dark) 20%, var(--color-brand-blue) 100%);
 }
 
 .dark .unicorn-title {
     background-image: linear-gradient(135deg, #FFFFFF 30%, var(--color-brand-teal) 100%);
+}
+
+/* Public Pages Unified Typography */
+.public-kicker {
+    @apply inline-block px-3.5 py-1 text-xs font-bold tracking-widest text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded-full uppercase;
+}
+
+.public-hero-title {
+    @apply text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.04em] leading-[1.08] mb-6 bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, var(--color-brand-dark) 20%, var(--color-brand-blue) 100%);
+}
+
+.dark .public-hero-title {
+    background-image: linear-gradient(135deg, #FFFFFF 30%, var(--color-brand-teal) 100%);
+}
+
+.public-hero-subtitle {
+    @apply text-lg sm:text-xl text-slate-600 dark:text-slate-400 font-light leading-relaxed max-w-3xl mx-auto;
+}
+
+.public-section-title {
+    @apply text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight;
+}
+
+.public-section-subtitle {
+    @apply text-sm sm:text-base text-slate-600 dark:text-slate-400 font-light max-w-2xl mx-auto;
 }
 
 /* Custom Input Glows */
@@ -105,31 +131,31 @@ body {
     --tw-prose-invert-bold: var(--color-brand-teal);
 }
 
-.prose h1 { @apply tracking-tighter font-black uppercase text-5xl md:text-6xl mb-12; }
-.prose h2 { @apply tracking-tight font-extrabold text-3xl mt-16; }
+.prose h1 { @apply tracking-tighter font-black uppercase text-4xl md:text-5xl mb-10; }
+.prose h2 { @apply tracking-tight font-extrabold text-2xl md:text-3xl mt-12 mb-4; }
 .prose a { @apply no-underline hover:underline decoration-brand-blue hover:text-brand-blue transition-colors; }
 .prose p { @apply font-light leading-relaxed mb-6; }
 .prose li { @apply mb-3; }
  
- /* Full Fidelity Legal Containers */
- .legal-document h1 { 
-    @apply text-4xl md:text-6xl font-black mb-16 tracking-tighter uppercase text-slate-950;
- }
- .dark .legal-document h1 { 
-    @apply text-white;
- }
- .legal-document h2 { 
-    @apply text-3xl font-extrabold mt-16 mb-8 text-brand-blue tracking-tight;
- }
- .legal-document p, .legal-document li { 
-    @apply text-xl leading-relaxed font-light mb-8 text-slate-800;
- }
- .dark .legal-document p, .dark .legal-document li { 
-    @apply text-slate-400;
- }
- .legal-document hr { 
-    @apply border-slate-200 dark:border-white/5 my-16;
- }
+/* Full Fidelity Legal Containers */
+.legal-document h1 { 
+    @apply text-3xl sm:text-5xl font-black mb-10 tracking-tight uppercase text-slate-950 dark:text-white;
+}
+.legal-document h2 { 
+    @apply text-xl sm:text-2xl font-extrabold mt-12 mb-4 text-brand-blue tracking-tight;
+}
+.legal-document h3 { 
+    @apply text-lg font-bold mt-8 mb-3 text-slate-900 dark:text-slate-100 tracking-tight;
+}
+.legal-document p, .legal-document li { 
+    @apply text-base sm:text-lg leading-relaxed font-light mb-6 text-slate-700 dark:text-slate-300;
+}
+.legal-document a {
+    @apply text-brand-blue hover:underline decoration-brand-blue transition-colors;
+}
+.legal-document hr { 
+    @apply border-slate-200 dark:border-white/10 my-12;
+}
 
  /* Stable Transparent Header Navigation */
  .legal-header {

@@ -42,6 +42,20 @@ class IntegrationsOverview extends Page
                     'title' => __('Syncing Engine & Telemetry'),
                     'description' => __('Understand how data is fetched, cached, and kept fresh.'),
                 ],
+                [
+                    'url' => \App\Filament\App\Pages\ApiAccessReference::getUrl(),
+                    'icon' => 'heroicon-o-code-bracket',
+                    'title' => __('API Access & Integration'),
+                    'description' => __('Connect external reporting platforms, BI tools, and custom applications directly to your node.'),
+                    'tier' => __('Ultra & Enterprise'),
+                ],
+                [
+                    'url' => \App\Filament\App\Pages\McpAccessReference::getUrl(),
+                    'icon' => 'heroicon-o-cpu-chip',
+                    'title' => __('Model Context Protocol (MCP)'),
+                    'description' => __('Connect AI assistants (Antigravity, Claude, Cursor) directly to query real-time metrics.'),
+                    'tier' => __('Ultra & Enterprise'),
+                ],
             ],
         ];
     }

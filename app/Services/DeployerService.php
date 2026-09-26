@@ -77,9 +77,25 @@ class DeployerService
         $caddyHost = "{$project->subdomain}.{$baseDomain}";
         $containerName = "apis-hub-{$project->subdomain}-master"; // Con sufijo -master definido en docker-compose
 
-        $caddyConfig = "{$caddyHost} {
+        $billingService = app(\App\Services\BillingLifecycleService::class);
+        $tier = $project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE;
+        $hasApiAccess = $billingService->canAccessApi($tier) || !empty($project->public_api_key);
+
+        if ($hasApiAccess) {
+            $mcpContainerName = "apis-hub-{$project->subdomain}-mcp";
+            $caddyConfig = "{$caddyHost} {
+    handle /mcp/* {
+        reverse_proxy {$mcpContainerName}:3000
+    }
+    handle {
+        reverse_proxy {$containerName}:8080
+    }
+}";
+        } else {
+            $caddyConfig = "{$caddyHost} {
     reverse_proxy {$containerName}:8080
 }";
+        }
         $commands[] = "mkdir -p {$caddyVhostDir} && echo '{$caddyConfig}' > {$caddyVhostPath} && cd /root/n8n-docker-caddy && docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile";
 
         return $this->runSshCommands($server, $commands);
@@ -115,6 +131,11 @@ class DeployerService
         $billingTier = $project->billingProfile ? $project->billingProfile->tier->value : 'free';
         $apiRateLimit = app(\App\Services\BillingLifecycleService::class)
             ->getApiRateLimitForTier($project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE);
+
+        $billingService = app(\App\Services\BillingLifecycleService::class);
+        $projectTier = $project->billingProfile ? $project->billingProfile->tier : \App\Enums\UserTier::FREE;
+        $hasApiAccess = $billingService->canAccessApi($projectTier) || !empty($project->public_api_key);
+        $deployMcpServer = $hasApiAccess ? 'true' : 'false';
 
         // Generate deterministic, unique host ports based on project ID and environment offset to prevent Docker conflicts
         $portOffset = env('DEPLOY_PORT_OFFSET', 11100);
@@ -152,7 +173,7 @@ REDIS_PORT=6379
 STARTING_HOST_PORT={$externalPort}
 EXTERNAL_PORT={$externalPort}
 MCP_PORT={$mcpPort}
-DEPLOY_MCP_SERVER=false
+DEPLOY_MCP_SERVER={$deployMcpServer}
 DB_HOST_PORT={$dbHostPort}
 REDIS_HOST_PORT={$redisHostPort}
 
@@ -239,15 +260,240 @@ EOT;
         $jsonPayload = json_encode($alerts, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/alerts.json";
 
-        $b64 = base64_encode($jsonPayload);
-        $command = "mkdir -p /var/www/apis-hub/tenants/{$project->subdomain}/config && echo '{$b64}' | base64 -d > {$path} && chmod 664 {$path}";
+        $res = $this->writeRemoteFile($server, $path, $jsonPayload);
 
-        try {
-            $this->runSshCommands($server, [$command]);
+        if ($res['status'] === 'success') {
             Log::info("Successfully synchronized alerts.json for project {$project->name} (" . count($alerts) . " alerts)");
             return true;
-        } catch (\Exception $e) {
-            Log::error("Failed to synchronize alerts.json for project {$project->name}: " . $e->getMessage());
+        } else {
+            Log::error("Failed to synchronize alerts.json for project {$project->name}: " . ($res['output'] ?? 'Unknown error'));
+            return false;
+        }
+    }
+
+    /**
+     * Synchronize user-scoped API keys (user_keys.json) to remote apis-hub node.
+     */
+    public function syncUserApiKeys(Project $project): bool
+    {
+        if (app()->environment('testing')) {
+            return true;
+        }
+
+        $server = $project->server;
+        if (!$server) {
+            return false;
+        }
+
+        $collaborators = $project->users()->get();
+        $accessService = app(\App\Services\CollaboratorAssetAccessService::class);
+        $userKeys = [];
+
+        foreach ($collaborators as $collab) {
+            if ($project->isEditorOrOwner($collab)) {
+                continue;
+            }
+
+            $userKey = $collab->pivot?->api_key;
+            if (!$userKey) {
+                continue;
+            }
+
+            $sharedGroupIds = $accessService->getSharedAssetGroupIds($project, $collab->id);
+            $allowedAssets = [];
+
+            // Compile allowed channel assets
+            foreach (['facebook_marketing', 'google_search_console', 'google_analytics', 'shopify', 'klaviyo', 'amazon', 'tiktok'] as $channel) {
+                $assets = $accessService->getAllowedAssetIdsForChannel($project, $collab->id, $channel);
+                if (!empty($assets)) {
+                    $allowedAssets[$channel] = $assets;
+                }
+            }
+
+            $userKeys[] = [
+                'user_id' => $collab->id,
+                'name' => $collab->name,
+                'email' => $collab->email,
+                'api_key' => $userKey,
+                'allowed_asset_groups' => $sharedGroupIds,
+                'allowed_assets' => $allowedAssets,
+            ];
+        }
+
+        $jsonPayload = json_encode($userKeys, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/user_keys.json";
+
+        $res = $this->writeRemoteFile($server, $path, $jsonPayload);
+
+        if ($res['status'] === 'success') {
+            Log::info("Successfully synchronized user_keys.json for project {$project->name} (" . count($userKeys) . " keys)");
+            return true;
+        } else {
+            Log::error("Failed to synchronize user_keys.json for project {$project->name}: " . ($res['output'] ?? 'Unknown error'));
+            return false;
+        }
+    }
+
+    /**
+     * Build the sanitized project context payload containing only public/whitelisted metadata.
+     * Guaranteed free from sensitive credentials, user tables, and database passwords.
+     */
+    public function buildSanitizedProjectContextPayload(Project $project): array
+    {
+        // 1. Sanitize Custom KPIs
+        $customKpis = $project->customKpis()
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($kpi) {
+                $cleanFilters = is_array($kpi->filters) ? \Illuminate\Support\Arr::except($kpi->filters, ['_ui_state']) : $kpi->filters;
+                return [
+                    'id' => $kpi->id,
+                    'name' => $kpi->name,
+                    'description' => $kpi->description,
+                    'calculation_type' => $kpi->calculation_type,
+                    'ast' => $kpi->ast,
+                    'filters' => $cleanFilters,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        // 2. Sanitize Dashboards & Widgets
+        $dashboards = $project->dashboards()
+            ->with(['widgets' => fn ($q) => $q->orderBy('id', 'asc')])
+            ->get()
+            ->map(fn ($d) => [
+                'id' => $d->id,
+                'name' => $d->getTranslations('name'),
+                'description' => $d->getTranslations('description'),
+                'is_default' => (bool) $d->is_default,
+                'widgets_count' => $d->widgets->count(),
+                'widgets' => $d->widgets->map(fn ($w) => [
+                    'id' => $w->id,
+                    'name' => $w->getTranslations('name'),
+                    'title' => $w->getTranslations('title'),
+                    'description' => $w->getTranslations('description'),
+                    'widget_type' => $w->widget_type,
+                    'source_type' => $w->source_type,
+                    'source_config' => $w->source_config,
+                    'controls' => $this->sanitizeWidgetControls($w->controls),
+                    'custom_kpi_id' => $w->custom_kpi_id,
+                ])->values()->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
+        // 3. Sanitize Configured Alerts
+        $alerts = $project->alerts()
+            ->with('calculationLines')
+            ->get()
+            ->map(fn ($a) => [
+                'id' => $a->id,
+                'name' => $a->name,
+                'is_active' => (bool) $a->is_active,
+                'source_type' => $a->source_type,
+                'source_config' => $a->source_config,
+                'ast' => $a->ast,
+                'filters' => $a->filters,
+                'aggregation_method' => $a->aggregation_method,
+                'upper_limit' => $a->upper_limit !== null ? (float) $a->upper_limit : null,
+                'lower_limit' => $a->lower_limit !== null ? (float) $a->lower_limit : null,
+                'schedule_type' => $a->schedule_type,
+                'next_evaluation_at' => $a->next_evaluation_at?->toIso8601String(),
+                'calculation_lines' => $a->calculationLines->map(fn ($line) => [
+                    'id' => $line->id,
+                    'label' => $line->label,
+                    'asset_filter' => $line->asset_filter,
+                ])->values()->toArray(),
+            ])
+            ->values()
+            ->toArray();
+
+        return [
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'subdomain' => $project->subdomain,
+                'timezone' => $project->timezone,
+            ],
+            'custom_kpis' => $customKpis,
+            'dashboards' => $dashboards,
+            'alerts' => $alerts,
+            'reference_library' => [
+                'notice' => 'These predefined KPIs and Derived Metrics are platform-wide reference definitions and templates provided for analytical inspiration and deep analysis. They are NOT active custom KPIs created specifically for this project.',
+                'predefined_kpis' => \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis(),
+                'predefined_derived_metrics' => \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined(),
+            ],
+            'synced_at' => now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Sanitize widget controls by stripping builder UI metadata while retaining
+     * analytical parameters (channels, metrics, breakdowns, filters, date range).
+     */
+    protected function sanitizeWidgetControls(mixed $controls): mixed
+    {
+        if (!is_array($controls)) {
+            return $controls;
+        }
+
+        // Strip UI-only and internal form-state keys
+        $clean = \Illuminate\Support\Arr::except($controls, [
+            '_ui_state',
+            '_step_history',
+            '_builder_step',
+            'series_allowed_assets',
+            'series_allowed_metrics',
+            'series_asset_groups',
+            'series_metric_colors',
+        ]);
+
+        // Clean raw_series if present
+        if (isset($clean['raw_series']) && is_array($clean['raw_series'])) {
+            $clean['raw_series'] = array_map(function ($series) {
+                if (is_array($series)) {
+                    return \Illuminate\Support\Arr::except($series, [
+                        'allowed_assets',
+                        'allowed_metrics',
+                        'metric_colors',
+                    ]);
+                }
+                return $series;
+            }, $clean['raw_series']);
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Synchronize sanitized project context metadata (project_context.json) to remote apis-hub node.
+     * Contains Custom KPIs, Dashboards & Widgets, and Configured Alerts.
+     * Strips all sensitive credentials, database keys, and personal credentials.
+     */
+    public function syncProjectMetadata(Project $project): bool
+    {
+        if (app()->environment('testing')) {
+            return true;
+        }
+
+        $server = $project->server;
+        if (!$server) {
+            return false;
+        }
+
+        $payload = $this->buildSanitizedProjectContextPayload($project);
+        $jsonPayload = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $path = "/var/www/apis-hub/tenants/{$project->subdomain}/config/project_context.json";
+
+        $res = $this->writeRemoteFile($server, $path, $jsonPayload);
+
+        if ($res['status'] === 'success') {
+            $project->update(['context_synced_at' => now()]);
+            Log::info("Successfully synchronized project_context.json for project {$project->name} (" . count($payload['custom_kpis']) . " KPIs, " . count($payload['dashboards']) . " dashboards, " . count($payload['alerts']) . " alerts)");
+            return true;
+        } else {
+            Log::error("Failed to synchronize project_context.json for project {$project->name}: " . ($res['output'] ?? 'Unknown error'));
             return false;
         }
     }
@@ -275,6 +521,45 @@ EOT;
             return ['success' => true, 'output' => $textOutput];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Write contents to a remote file securely using SSH stdin piping.
+     * Avoids argument length limits (ARG_MAX) and shell escaping issues on large payloads.
+     */
+    public function writeRemoteFile(Server $server, string $remotePath, string $content, int $chmod = 0664, ?int $timeout = null): array
+    {
+        $timeout = $timeout ?? 60;
+        $dir = dirname($remotePath);
+        $chmodOctal = sprintf('%04o', $chmod);
+
+        $tmpKeyPath = tempnam(sys_get_temp_dir(), 'ssh_key_');
+        file_put_contents($tmpKeyPath, $server->ssh_private_key . "\n");
+        chmod($tmpKeyPath, 0600);
+
+        try {
+            $remoteEscapedDir = escapeshellarg($dir);
+            $remoteEscapedPath = escapeshellarg($remotePath);
+            $remoteCmd = "mkdir -p {$remoteEscapedDir} && cat > {$remoteEscapedPath} && chmod {$chmodOctal} {$remoteEscapedPath}";
+
+            $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} " . escapeshellarg($remoteCmd);
+
+            $process = Process::timeout($timeout)->input($content);
+            $result = $process->run($sshCmd);
+
+            if ($result->failed()) {
+                $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
+                Log::error("writeRemoteFile failed on {$server->ip_address} for {$remotePath}:\n" . $combinedOutput);
+
+                return ['status' => 'error', 'output' => trim($combinedOutput)];
+            }
+
+            return ['status' => 'success', 'output' => $result->output()];
+        } finally {
+            if (file_exists($tmpKeyPath)) {
+                unlink($tmpKeyPath);
+            }
         }
     }
 

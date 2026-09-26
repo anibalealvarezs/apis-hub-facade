@@ -54,6 +54,42 @@ class LandingController extends Controller
     }
 
     /**
+     * Show the plans and features informational page.
+     */
+    public function plans(Request $request, $locale = null)
+    {
+        $host = $request->getHost();
+        $mainDomain = parse_url(config('app.url'), PHP_URL_HOST) ?? config('app.network_domain', 'apis-hub.cloud');
+
+        if ($host !== $mainDomain && $host !== "www.{$mainDomain}") {
+            $subdomain = explode('.', $host)[0];
+            $projectExists = \App\Models\Project::where('subdomain', $subdomain)->exists();
+            if (!$projectExists) {
+                return redirect()->away("https://{$mainDomain}");
+            }
+        }
+
+        if ($locale === 'es') {
+            app()->setLocale('es');
+            session()->put('locale', 'es');
+        } else {
+            app()->setLocale('en');
+            session()->put('locale', 'en');
+        }
+
+        $gtmId = config('services.gtm.id');
+
+        return view('plans', [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+        ]);
+    }
+
+    /**
      * Collect interest for the alpha launch.
      */
     public function subscribe(Request $request)
@@ -110,5 +146,65 @@ class LandingController extends Controller
             'gtmId' => config('services.gtm.id'),
             'unsubscribe_message' => 'You have been successfully unsubscribed from the APIs Hub Alpha waitlist.'
         ]);
+    }
+
+    /**
+     * Show the architecture overview page.
+     */
+    public function architecture(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.architecture', $this->baseViewData());
+    }
+
+    /**
+     * Show the agency client reporting solution page.
+     */
+    public function agencyReporting(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.agency-reporting', $this->baseViewData());
+    }
+
+    /**
+     * Show the cross-channel metric normalization solution page.
+     */
+    public function crossChannelNormalization(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.cross-channel-normalization', $this->baseViewData());
+    }
+
+    /**
+     * Show the problem-solving guide for Looker Studio quota limits.
+     */
+    public function fixLookerQuota(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        return view('landing.fix-looker-quota', $this->baseViewData());
+    }
+
+    protected function resolveLocale(Request $request, ?string $locale): void
+    {
+        if ($locale === 'es' || $request->is('es/*')) {
+            app()->setLocale('es');
+            session()->put('locale', 'es');
+        } else {
+            app()->setLocale('en');
+            session()->put('locale', 'en');
+        }
+    }
+
+    protected function baseViewData(): array
+    {
+        $gtmId = config('services.gtm.id');
+        return [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+        ];
     }
 }

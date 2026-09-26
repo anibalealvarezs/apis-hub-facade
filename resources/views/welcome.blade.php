@@ -16,10 +16,10 @@
         <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
         
         <!-- Primary Meta Tags -->
-        <title>APIs Hub | {{ __('Unified Marketing Analytics & Dashboards') }}</title>
-        <meta name="title" content="APIs Hub | {{ __('Unified Marketing Analytics & Dashboards') }}">
-        <meta name="description" content="{{ __('Connect your advertising, social, and ecommerce platforms to instantly aggregate and visualize your marketing data in high-performance dashboards.') }}">
-        <meta name="keywords" content="{{ __('marketing analytics, unified dashboards, social media metrics, ecommerce data, data aggregation, custom KPIs, apis hub') }}">
+        <title>APIs Hub | {{ __('Normalized Marketing Data Engine for Agencies') }}</title>
+        <meta name="title" content="APIs Hub | {{ __('Normalized Marketing Data Engine for Agencies') }}">
+        <meta name="description" content="{{ __('Stop fighting broken connectors and conflicting metrics. APIs Hub syncs Meta, Google, Shopify, and Klaviyo into dedicated client clusters with unified definitions for true ROAS and MER.') }}">
+        <meta name="keywords" content="{{ __('marketing agency reporting, cross channel attribution, normalized marketing data, blended ROAS, looker studio quota fix, multi client dashboards, apis hub') }}">
         <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
         <meta name="author" content="APIs Hub Network">
         <meta name="application-name" content="APIs Hub">
@@ -119,7 +119,7 @@
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
 
         <!-- Google Fonts: Outfit -->
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
         <style>
             body {
@@ -195,11 +195,11 @@
                 <span data-portal="{{ $portals['app'] }}" class="js-portal-link inline-block px-8 py-3 mb-6 text-sm font-bold text-white bg-brand-blue rounded-xl hover:scale-105 active:scale-95 transition-all shadow-glow hover:shadow-glow-intense cursor-pointer">
                     {{ __('Try beta for free') }}
                 </span>
-                <h1 id="main-headline" class="text-6xl font-extrabold sm:text-7xl lg:text-8xl unicorn-title mb-6">
-                    {!! __('All Your Data.') !!}<br>{!! __('One Unified Dashboard.') !!}
+                <h1 id="main-headline" class="public-hero-title">
+                    {!! __('Every marketing channel speaks a different language.') !!}<br><span class="text-brand-blue dark:text-brand-blue-400">{!! __('APIs Hub translates them into one.') !!}</span>
                 </h1>
-                <p class="text-xl leading-relaxed text-slate-500 dark:text-slate-400 font-light max-w-2xl mx-auto">
-                    {{ __('Connect Meta, Google, Shopify, Klaviyo and more in seconds. Automatically aggregate your advertising, social, and ecommerce metrics into lightning-fast, pre-built analytics dashboards with custom KPI support.') }}
+                <p class="public-hero-subtitle max-w-3xl mx-auto text-base sm:text-lg text-slate-600 dark:text-slate-300 font-normal leading-relaxed mt-4">
+                    {{ __('Meta, Google, Shopify, and Klaviyo all define clicks, conversions, and revenue differently. APIs Hub syncs them daily, reconciles their metrics, and gives each of your clients an isolated data hub—so your reporting never breaks, and your numbers always match.') }}
                 </p>
             </section>
 
@@ -265,30 +265,82 @@
                 @endif
             </section>
 
+            <!-- The 4 Core Operational Pains -->
+            <section class="max-w-6xl mx-auto my-12 text-left" aria-label="{{ __('Why APIs Hub') }}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Pain 1: Attribution -->
+                    <div class="p-6 rounded-2xl glass-panel bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/80 shadow-sm hover:border-brand-blue/40 transition-all">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center font-bold text-sm">01</span>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('The Multi-Platform Attribution Fight') }}</h2>
+                        </div>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            {{ __('Meta says you made $80k. GA4 reports $35k. Shopify shows $50k. Your team wastes hours explaining attribution windows to a skeptical client.') }}
+                        </p>
+                        <p class="text-xs text-brand-blue dark:text-brand-blue-400 font-semibold flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {{ __('Unified into a shared dictionary of metrics: true Blended ROAS, uniform MER, and reconcilable numbers.') }}
+                        </p>
+                    </div>
+
+                    <!-- Pain 2: Broken Connectors -->
+                    <div class="p-6 rounded-2xl glass-panel bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/80 shadow-sm hover:border-brand-blue/40 transition-all">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-sm">02</span>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('The Monday Morning Dashboard Crash') }}</h2>
+                        </div>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            {{ __('Live connectors query ad platforms on the fly. The moment a client opens a 90-day report, the API hits a quota limit and displays an ugly error message.') }}
+                        </p>
+                        <p class="text-xs text-brand-blue dark:text-brand-blue-400 font-semibold flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {{ __('APIs Hub syncs on schedule into an isolated cluster. Your dashboards load instantly with zero live API timeouts.') }}
+                        </p>
+                    </div>
+
+                    <!-- Pain 3: Agency Multi-Client -->
+                    <div class="p-6 rounded-2xl glass-panel bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/80 shadow-sm hover:border-brand-blue/40 transition-all">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-blue-500/10 text-brand-blue flex items-center justify-center font-bold text-sm">03</span>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('Multi-Client Billing & Workspace Chaos') }}</h2>
+                        </div>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            {{ __('Juggling different client logins, mixed credit cards, and shared workspace permission trees eats margins and creates operational chaos.') }}
+                        </p>
+                        <p class="text-xs text-brand-blue dark:text-brand-blue-400 font-semibold flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {{ __('Built-in Project vs. Billing separation. Manage 30 client projects cleanly and route invoices directly or consolidated.') }}
+                        </p>
+                    </div>
+
+                    <!-- Pain 4: Safe AI -->
+                    <div class="p-6 rounded-2xl glass-panel bg-white/40 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800/80 shadow-sm hover:border-brand-blue/40 transition-all">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold text-sm">04</span>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">{{ __('AI Analysis Without Hallucinations') }}</h2>
+                        </div>
+                        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            {{ __('Copy-pasting raw CSV exports into ChatGPT causes math errors and made-up metrics. You cannot afford to send hallucinated numbers to clients.') }}
+                        </p>
+                        <p class="text-xs text-brand-blue dark:text-brand-blue-400 font-semibold flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {{ __('Native Model Context Protocol (MCP) server. Claude or Cursor queries verified, mathematically normalized ground truth.') }}
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             <!-- Portals Link (Internal / Admin / Documentation) -->
-            <div class="flex gap-4 sm:gap-8 justify-center items-center mt-4">
-                {{-- <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span> --}}
-                {{-- <span data-portal="{{ $portals['admin'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-brand-teal hover:underline decoration-2 underline-offset-4 cursor-pointer">Admin Console</span> --}}
-                {{-- <span class="w-1 h-1 bg-slate-400 dark:bg-slate-600 rounded-full"></span> --}}
-                {{-- <span data-portal="{{ $portals['docs'] }}" class="js-portal-link text-sm font-semibold tracking-wide text-slate-500 hover:underline cursor-pointer">Documentation</span> --}}
+            <div class="flex gap-4 sm:gap-8 justify-center items-center mt-4 mb-8">
+                <a href="{{ app()->getLocale() === 'es' ? route('landing.plans.es') : route('landing.plans') }}" class="text-sm font-semibold tracking-wide text-brand-blue hover:underline decoration-2 underline-offset-4">
+                    {{ __('View Plans & Features') }} &rarr;
+                </a>
             </div>
 
         </main>
 
         <!-- Semantic Footer / Micro Branding -->
-        <footer class="relative w-full z-10 py-6 sm:py-8 px-6 sm:px-8 mt-auto flex flex-col items-center gap-4 bd-text-2xs uppercase tracking-[0.3em] font-bold text-slate-400 dark:text-slate-500 select-none">
-            <nav aria-label="{{ __('Legal Links') }}" class="flex items-center justify-center opacity-70 flex-wrap gap-y-2">
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Privacy') }}</a>
-                <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.tos.es') : route('legal.tos') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Terms') }}</a>
-                <span class="w-1 h-1 bg-brand-teal/30 dark:bg-brand-teal/20 rounded-full" aria-hidden="true"></span>
-                <a href="{{ app()->getLocale() === 'es' ? route('legal.data-deletion.es') : route('legal.data-deletion') }}" class="px-4 py-2 mx-1 sm:mx-4 hover:text-brand-blue transition-colors">{{ __('Data Deletion') }}</a>
-            </nav>
-            <div class="opacity-80 flex items-center justify-center gap-2 flex-wrap text-center">
-                <span>{{ __('Engineered by') }} <a href="https://anibalalvarez.com" target="_blank" rel="noopener noreferrer" class="hover:text-brand-blue transition-colors underline-offset-4 hover:underline">Aníbal Álvarez</a>. &copy; {{ date('Y') }} APIs Hub</span>
-                <span class="px-1.5 py-0.5 bd-text-4xs font-black text-brand-blue bg-brand-blue/10 border border-brand-blue/20 rounded uppercase tracking-widest">Beta</span>
-            </div>
-        </footer>
+        @include('components.public.footer')
         
         <!-- Background Mesh -->
         <div class="hero-mesh" aria-hidden="true"></div>

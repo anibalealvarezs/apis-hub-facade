@@ -6,33 +6,47 @@ use Illuminate\Http\Request;
 
 class LegalController extends Controller
 {
-    public function privacy($locale = null)
+    private function getViewData(): array
     {
-        if ($locale === 'es') {
-            app()->setLocale('es');
-            return view('legal.privacy-es');
-        }
-        app()->setLocale('en');
-        return view('legal.privacy');
+        $gtmId = config('services.gtm.id');
+
+        return [
+            'portals' => [
+                'app' => base64_encode('/app'),
+                'admin' => base64_encode('/admin'),
+                'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+            ],
+            'gtmId' => ($gtmId && $gtmId !== 'GTM-XXXXXXX') ? $gtmId : null,
+        ];
     }
 
-    public function tos($locale = null)
+    public function privacy(Request $request, $locale = null)
     {
-        if ($locale === 'es') {
+        if ($locale === 'es' || $request->is('es/*')) {
             app()->setLocale('es');
-            return view('legal.tos-es');
+            return view('legal.privacy-es', $this->getViewData());
         }
         app()->setLocale('en');
-        return view('legal.tos');
+        return view('legal.privacy', $this->getViewData());
     }
 
-    public function dataDeletion($locale = null)
+    public function tos(Request $request, $locale = null)
     {
-        if ($locale === 'es') {
+        if ($locale === 'es' || $request->is('es/*')) {
             app()->setLocale('es');
-            return view('legal.data-deletion-es');
+            return view('legal.tos-es', $this->getViewData());
         }
         app()->setLocale('en');
-        return view('legal.data-deletion');
+        return view('legal.tos', $this->getViewData());
+    }
+
+    public function dataDeletion(Request $request, $locale = null)
+    {
+        if ($locale === 'es' || $request->is('es/*')) {
+            app()->setLocale('es');
+            return view('legal.data-deletion-es', $this->getViewData());
+        }
+        app()->setLocale('en');
+        return view('legal.data-deletion', $this->getViewData());
     }
 }
