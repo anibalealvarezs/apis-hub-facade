@@ -105,6 +105,31 @@
                     </ul>
                 </div>
 
+                {{-- Project Context & Catalog Synchronization Callout --}}
+                <div class="p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/20 border border-indigo-200/80 dark:border-indigo-800/40 text-xs text-indigo-900 dark:text-indigo-200 space-y-2">
+                    <div class="flex items-center gap-2 font-semibold text-indigo-950 dark:text-indigo-100">
+                        <x-filament::icon icon="heroicon-m-arrow-path" class="w-4 h-4 text-indigo-500" />
+                        <span>{{ __('Project Context Synchronization ("Sync Context with Node")') }}</span>
+                    </div>
+                    <p class="leading-relaxed">
+                        {{ __('The "Sync Context with Node" button in the page header allows project Owners and Editors to propagate your latest project definitions to your isolated node over SSH without restarting services:') }}
+                    </p>
+                    <ul class="list-disc list-inside space-y-1 pl-1">
+                        <li>
+                            <strong class="text-indigo-950 dark:text-white">{{ __('Catalogs Synchronized:') }}</strong>
+                            {{ __('Exports your active Custom KPIs and mathematical AST formulas, your configured Dashboards & constituent Widgets, and your active Threshold Alerts.') }}
+                        </li>
+                        <li>
+                            <strong class="text-indigo-950 dark:text-white">{{ __('Zero Sensitive Data Leakage:') }}</strong>
+                            {{ __('The synchronization payload is strictly sanitized via whitelist. No database passwords, server SSH credentials, user records, or private tokens are ever included. AI agents only see functional calculation schemas.') }}
+                        </li>
+                        <li>
+                            <strong class="text-indigo-950 dark:text-white">{{ __('Immediate Agent Availability:') }}</strong>
+                            {{ __('Once synchronized, AI assistants can query your custom business metrics immediately through the list_custom_kpis, list_project_dashboards, and list_configured_alerts MCP tools.') }}
+                        </li>
+                    </ul>
+                </div>
+
                 {{-- Livewire API Key Field --}}
                 <div class="mb-4">
                     {{ $this->form }}
