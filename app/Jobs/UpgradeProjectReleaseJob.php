@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,23 @@ class UpgradeProjectReleaseJob implements ShouldQueue
         protected Project $project,
         protected ApisHubRelease $targetRelease,
     ) {
+    }
+
+    /**
+     * Get the middleware the job should pass through.
+     * Prevents concurrent release upgrades on the same physical server to avoid Docker daemon contention and Caddy reload races.
+     *
+     * @return array
+     */
+    public function middleware(): array
+    {
+        $serverId = $this->project->server_id ?? 'default';
+
+        return [
+            (new WithoutOverlapping("server-deploy:{$serverId}"))
+                ->releaseAfter(1200)
+                ->expireAfter(1500),
+        ];
     }
 
     public function handle(DeployerService $deployer): void
