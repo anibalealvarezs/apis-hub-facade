@@ -195,9 +195,7 @@
                         {{ __('You need to authorize access to this provider before you can configure its data sources.') }}
                     </p>
 
-                    @if(str_contains($activeChannel, 'facebook') || str_contains($activeChannel, 'google'))
-                        {{ $this->getAction('connect') }}
-                    @endif
+                    {{ $this->getAction('connect') }}
                 </div>
             @else
 

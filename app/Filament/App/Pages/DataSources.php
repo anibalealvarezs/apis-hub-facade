@@ -503,6 +503,12 @@
                         ['key' => 'shopify_customers', 'label' => 'Shopify Customers'],
                     ],
                 ],
+                'mailchimp' => [
+                    'label'    => 'Mailchimp',
+                    'channels' => [
+                        ['key' => 'mailchimp', 'label' => 'Mailchimp'],
+                    ],
+                ],
             ];
 
             // Sort channels inside providers and set dynamic status
@@ -553,6 +559,20 @@
         public function isConnected($channel): bool
         {
             $tenant = Filament::getTenant();
+
+            if ($channel === 'mailchimp') {
+                $accounts = $tenant->sync_config['mailchimp']['accounts'] ?? [];
+                if (!is_array($accounts) || empty($accounts)) {
+                    return false;
+                }
+                foreach ($accounts as $acc) {
+                    if (!empty($acc['api_key']) || !empty($acc['access_token'])) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
             $profileIdColumn = "{$provider}_profile_id";
 
@@ -660,6 +680,7 @@
                             'facebook_marketing'    => 'ad_accounts',
                             'facebook_organic'      => 'pages',
                             'shopify'               => 'stores',
+                            'mailchimp'             => 'audiences',
                         ];
                         $resourceKey = $resourceKeyMap[$this->activeChannel] ?? $this->activeChannel;
 
@@ -741,9 +762,105 @@
                 ->icon('heroicon-o-link')
                 ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
-                ->form(fn() => $this->getChannelSelectionForm())
+                ->form(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return [
+                            \Filament\Forms\Components\TextInput::make('account_name')
+                                ->label(__('Account Label / Name'))
+                                ->placeholder(__('e.g. Primary Store, European Audience'))
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('api_key')
+                                ->label(__('Mailchimp API Key'))
+                                ->placeholder(__('Enter your Mailchimp API key'))
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->helperText(__('Enter your Mailchimp API key. The data center prefix (e.g. us14) will be extracted automatically.')),
+                        ];
+                    }
+
+                    return $this->getChannelSelectionForm();
+                })
+                ->modalHeading(fn () => $this->activeChannel === 'mailchimp' ? __('Connect Mailchimp Account') : __('Connect Account'))
                 ->action(function (array $data) {
                     $tenant = Filament::getTenant();
+
+                    if ($this->activeChannel === 'mailchimp') {
+                        $apiKey = trim((string)($data['api_key'] ?? ''));
+                        $accountName = trim((string)($data['account_name'] ?? 'Default Account'));
+
+                        // Extract data center (server prefix) from api key (e.g. "key-us14")
+                        $parts = explode('-', $apiKey);
+                        $serverPrefix = count($parts) > 1 ? end($parts) : 'us1';
+
+                        // Verify connectivity via MarketingApi ping
+                        try {
+                            $client = new \Anibalealvarezs\MailchimpApi\Services\Marketing\MarketingApi(
+                                apiKey: $apiKey,
+                                serverPrefix: $serverPrefix,
+                            );
+                            $ping = $client->ping();
+                            if (($ping['health_status'] ?? '') !== "Everything's Chimpy!") {
+                                throw new \Exception(__('Mailchimp ping returned unhealthy status.'));
+                            }
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title(__('Connection Failed'))
+                                ->danger()
+                                ->body(__('Could not connect to Mailchimp with this API key: :error', ['error' => $e->getMessage()]))
+                                ->send();
+                            return;
+                        }
+
+                        $accountId = 'mc_' . substr(md5($apiKey), 0, 10);
+                        $syncConfig = $tenant->sync_config ?? [];
+                        if (!isset($syncConfig['mailchimp']) || !is_array($syncConfig['mailchimp'])) {
+                            $syncConfig['mailchimp'] = ['enabled' => true];
+                        }
+                        if (!isset($syncConfig['mailchimp']['accounts']) || !is_array($syncConfig['mailchimp']['accounts'])) {
+                            $syncConfig['mailchimp']['accounts'] = [];
+                        }
+
+                        $syncConfig['mailchimp']['accounts'][$accountId] = [
+                            'account_id' => $accountId,
+                            'account_name' => $accountName,
+                            'api_key' => $apiKey,
+                            'server_prefix' => $serverPrefix,
+                            'connected_at' => now()->toIso8601String(),
+                        ];
+
+                        $tenant->update(['sync_config' => $syncConfig]);
+
+                        // Push credentials to remote node if deployed
+                        try {
+                            $service = app(\App\Services\RemoteEngineService::class);
+                            $service->execute($tenant, function ($client) use ($syncConfig) {
+                                return $client->importCredentials('mailchimp', '', [
+                                    'accounts' => $syncConfig['mailchimp']['accounts'],
+                                ]);
+                            });
+                        } catch (\Throwable $e) {
+                            Log::warning("Could not push Mailchimp credentials to remote node: " . $e->getMessage());
+                        }
+
+                        $this->hydrateFormFromDb($syncConfig);
+
+                        Notification::make()
+                            ->title(__('Mailchimp Account Connected'))
+                            ->body(__('Account ":name" connected successfully. Discovering audiences...', ['name' => $accountName]))
+                            ->success()
+                            ->send();
+
+                        // Automatically discover assets
+                        $discService = app(\App\Services\LocalAssetDiscoveryService::class);
+                        $discResponse = $discService->fetchAssets($tenant, 'mailchimp');
+                        if (!empty($discResponse['assets']['audiences'])) {
+                            $this->mergeDiscoveredAssets(['audiences' => $discResponse['assets']['audiences']]);
+                        }
+
+                        return;
+                    }
+
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
                     $types = implode(',', $data['channels']);
 
@@ -758,16 +875,117 @@
         public function updateCredentialsAction(): Action
         {
             return Action::make('updateCredentials')
-                ->label(__('Update Permissions'))
-                ->icon('heroicon-o-key')
+                ->label(fn () => $this->activeChannel === 'mailchimp' ? __('Manage Accounts') : __('Update Permissions'))
+                ->icon(fn () => $this->activeChannel === 'mailchimp' ? 'heroicon-o-user-plus' : 'heroicon-o-key')
                 ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
-                ->form(fn() => $this->getChannelSelectionForm())
-                ->requiresConfirmation()
-                ->modalHeading(fn() => (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Update Credentials') : __('Update Credentials Safely'))
-                ->modalDescription(fn() => (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.') : __('Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.'))
+                ->form(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return [
+                            \Filament\Forms\Components\TextInput::make('account_name')
+                                ->label(__('Account Label / Name'))
+                                ->placeholder(__('e.g. Secondary Store, Regional Audience'))
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('api_key')
+                                ->label(__('Mailchimp API Key'))
+                                ->placeholder(__('Enter your Mailchimp API key'))
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->helperText(__('Enter another Mailchimp API key to connect an additional account.')),
+                        ];
+                    }
+
+                    return $this->getChannelSelectionForm();
+                })
+                ->requiresConfirmation(fn () => $this->activeChannel !== 'mailchimp')
+                ->modalHeading(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return __('Add Mailchimp Account');
+                    }
+                    return (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Update Credentials') : __('Update Credentials Safely');
+                })
+                ->modalDescription(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return __('Add an additional Mailchimp account to sync audiences and campaigns simultaneously.');
+                    }
+                    return (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.') : __('Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.');
+                })
                 ->action(function (array $data) {
                     $tenant = Filament::getTenant();
+
+                    if ($this->activeChannel === 'mailchimp') {
+                        $apiKey = trim((string)($data['api_key'] ?? ''));
+                        $accountName = trim((string)($data['account_name'] ?? 'Additional Account'));
+
+                        $parts = explode('-', $apiKey);
+                        $serverPrefix = count($parts) > 1 ? end($parts) : 'us1';
+
+                        try {
+                            $client = new \Anibalealvarezs\MailchimpApi\Services\Marketing\MarketingApi(
+                                apiKey: $apiKey,
+                                serverPrefix: $serverPrefix,
+                            );
+                            $ping = $client->ping();
+                            if (($ping['health_status'] ?? '') !== "Everything's Chimpy!") {
+                                throw new \Exception(__('Mailchimp ping returned unhealthy status.'));
+                            }
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title(__('Connection Failed'))
+                                ->danger()
+                                ->body(__('Could not connect to Mailchimp with this API key: :error', ['error' => $e->getMessage()]))
+                                ->send();
+                            return;
+                        }
+
+                        $accountId = 'mc_' . substr(md5($apiKey), 0, 10);
+                        $syncConfig = $tenant->sync_config ?? [];
+                        if (!isset($syncConfig['mailchimp']) || !is_array($syncConfig['mailchimp'])) {
+                            $syncConfig['mailchimp'] = ['enabled' => true];
+                        }
+                        if (!isset($syncConfig['mailchimp']['accounts']) || !is_array($syncConfig['mailchimp']['accounts'])) {
+                            $syncConfig['mailchimp']['accounts'] = [];
+                        }
+
+                        $syncConfig['mailchimp']['accounts'][$accountId] = [
+                            'account_id' => $accountId,
+                            'account_name' => $accountName,
+                            'api_key' => $apiKey,
+                            'server_prefix' => $serverPrefix,
+                            'connected_at' => now()->toIso8601String(),
+                        ];
+
+                        $tenant->update(['sync_config' => $syncConfig]);
+
+                        try {
+                            $service = app(\App\Services\RemoteEngineService::class);
+                            $service->execute($tenant, function ($client) use ($syncConfig) {
+                                return $client->importCredentials('mailchimp', '', [
+                                    'accounts' => $syncConfig['mailchimp']['accounts'],
+                                ]);
+                            });
+                        } catch (\Throwable $e) {
+                            Log::warning("Could not push Mailchimp credentials to remote node: " . $e->getMessage());
+                        }
+
+                        $this->hydrateFormFromDb($syncConfig);
+
+                        Notification::make()
+                            ->title(__('Mailchimp Account Added'))
+                            ->body(__('Account ":name" connected successfully.', ['name' => $accountName]))
+                            ->success()
+                            ->send();
+
+                        $discService = app(\App\Services\LocalAssetDiscoveryService::class);
+                        $discResponse = $discService->fetchAssets($tenant, 'mailchimp');
+                        if (!empty($discResponse['assets']['audiences'])) {
+                            $this->mergeDiscoveredAssets(['audiences' => $discResponse['assets']['audiences']]);
+                        }
+
+                        return;
+                    }
+
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
                     $types = implode(',', $data['channels']);
 
@@ -1088,6 +1306,42 @@
                 }
             }
 
+            if ($this->activeChannel === 'mailchimp') {
+                $accounts = $tenant->sync_config['mailchimp']['accounts'] ?? [];
+                $accountCards = [];
+
+                if (empty($accounts)) {
+                    $accountCards[] = \Filament\Forms\Components\Placeholder::make('no_accounts')
+                        ->label('')
+                        ->content(new \Illuminate\Support\HtmlString('<span class="text-xs text-gray-500 italic">' . __('No accounts connected yet.') . '</span>'));
+                } else {
+                    foreach ($accounts as $accId => $acc) {
+                        $name = e($acc['account_name'] ?? $acc['name'] ?? $accId);
+                        $prefix = e($acc['server_prefix'] ?? 'us1');
+                        $connAt = !empty($acc['connected_at']) ? \Carbon\Carbon::parse($acc['connected_at'])->diffForHumans() : __('Recently');
+
+                        $accountCards[] = \Filament\Forms\Components\Placeholder::make('acc_'.$accId)
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="font-semibold text-gray-900 dark:text-white">'.$name.'</span>
+                                        <span class="text-gray-400">DC: <span class="font-mono text-primary-500 font-medium">'.$prefix.'</span> &bull; '.$connAt.'</span>
+                                    </div>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success-500/10 text-success-600 dark:text-success-400 border border-success-500/20">
+                                        ' . __('Connected') . '
+                                    </span>
+                                </div>
+                            '));
+                    }
+                }
+
+                $secondarySections[] = \Filament\Forms\Components\Section::make(__('Connected Accounts'))
+                    ->description(__('Manage connected Mailchimp accounts and their data center endpoints.'))
+                    ->schema($accountCards)
+                    ->columns(1);
+            }
+
             $mainContent = array_merge($parts['main'], $parts['repeaters']);
 
             if (empty($secondarySections)) {
@@ -1239,9 +1493,12 @@
                             $this->activeChannel === 'facebook_marketing' ? 'ID: '.($get('id') ?? 'N/A') :
                                 ($this->activeChannel === 'google_search_console' ? 'ID: <a href="https://'.preg_replace('/^sc-domain:/', '', preg_replace('/^https?:\/\//', '', rtrim((string)($get('url') ?? $get('id')), '/'))).'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>' :
                                     ($this->activeChannel === 'google_analytics' ? 'Property ID: '.($get('platformId') ?? 'N/A') :
-                                    'ID: <a href="'.($get('link') ?? $get('url') ?? '#').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>')
+                                        ($this->activeChannel === 'mailchimp' ? 'Audience ID: '.($get('id') ?? 'N/A').($get('account_id') ? ' (Account: '.$get('account_id').')' : '') :
+                                        'ID: <a href="'.($get('link') ?? $get('url') ?? '#').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>')
+                                    )
+                                )
                             )
-                        )))
+                        ))
                         ->inline(false)
                         ->default(true)
                         ->columnSpan(4);
@@ -1969,6 +2226,7 @@
                 'google_analytics'      => 'google_analytics',
                 'facebook_marketing'    => 'ad_accounts',
                 'facebook_organic'      => 'pages',
+                'mailchimp'             => 'audiences',
             ];
 
             $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();

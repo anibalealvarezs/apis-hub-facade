@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "255413baf13655076d4ca11a25ad5b66",
+    "content-hash": "bc3b23dccd4df9eac9f34001f9231978",
     "packages": [
         {
             "name": "anibalealvarezs/api-client-skeleton",
@@ -279,6 +279,59 @@
                 "issues": "https://github.com/anibalealvarezs/google-api/issues"
             },
             "time": "2026-06-23T21:06:43+00:00"
+        },
+        {
+            "name": "anibalealvarezs/mailchimp-api",
+            "version": "v1.0.0",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:anibalealvarezs/mailchimp-api.git",
+                "reference": "f422dca10fdd8afd783783eec3503d62f7a2108b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://satis.anibalalvarez.com/dist/anibalealvarezs/mailchimp-api/anibalealvarezs-mailchimp-api-f422dca10fdd8afd783783eec3503d62f7a2108b-zip-03803e.zip",
+                "reference": "f422dca10fdd8afd783783eec3503d62f7a2108b",
+                "shasum": "4b346490aaf89029602976ea27800d787c85911a"
+            },
+            "require": {
+                "anibalealvarezs/api-client-skeleton": "^1.0.0",
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^7.0",
+                "monolog/monolog": "^2.0 || ^3.0",
+                "nesbot/carbon": "^2.61 || ^3.0",
+                "php": ">=8.3",
+                "psr/log": "^1.0 || ^2.0 || ^3.0",
+                "symfony/yaml": "^6.0 || ^7.0"
+            },
+            "require-dev": {
+                "doctrine/instantiator": "^1.5",
+                "fakerphp/faker": "^1.20",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Anibalealvarezs\\MailchimpApi\\": "src"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Aníbal Álvarez",
+                    "email": "anibalealvarezs@gmail.com"
+                }
+            ],
+            "description": "description",
+            "time": "2026-09-26T17:58:27+00:00"
         },
         {
             "name": "anibalealvarezs/oauth-v1",

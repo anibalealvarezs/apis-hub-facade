@@ -21,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
             $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookMarketingProfile());
             $registry->register(new \App\Domain\ChannelProfiles\Profiles\FacebookOrganicProfile());
             $registry->register(new \App\Domain\ChannelProfiles\Profiles\GoogleAnalyticsProfile());
+            $registry->register(new \App\Domain\ChannelProfiles\Profiles\MailchimpProfile());
             return $registry;
         });
     }

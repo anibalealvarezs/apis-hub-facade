@@ -92,6 +92,7 @@ class ApisHubReleaseResource extends Resource
                                 'tiktok_leads' => 'TikTok Leads',
                                 'klaviyo_metrics' => 'Klaviyo Metrics',
                                 'klaviyo_events' => 'Klaviyo Events',
+                                'mailchimp' => 'Mailchimp',
                                 'shopify_metrics' => 'Shopify Metrics',
                                 'shopify_orders' => 'Shopify Orders',
                                 'shopify_products' => 'Shopify Products',

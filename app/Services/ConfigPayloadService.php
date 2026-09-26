@@ -24,6 +24,7 @@ class ConfigPayloadService
             'google_analytics' => 'google_analytics',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
+            'mailchimp' => 'audiences',
         ];
 
         $fields = $release->config_schemas[$channel]['fields'] ?? [];
