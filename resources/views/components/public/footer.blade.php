@@ -7,6 +7,8 @@
         <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
         <a href="{{ app()->getLocale() === 'es' ? route('landing.solutions.agency.es') : route('landing.solutions.agency') }}" class="px-3 py-1.5 mx-1 sm:mx-2 hover:text-brand-blue {{ request()->routeIs('landing.solutions.agency*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('For Agencies') }}</a>
         <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
+        <a href="{{ app()->getLocale() === 'es' ? route('landing.solutions.normalization.es') : route('landing.solutions.normalization') }}" class="px-3 py-1.5 mx-1 sm:mx-2 hover:text-brand-blue {{ request()->routeIs('landing.solutions.normalization*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('Normalization') }}</a>
+        <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
         <a href="{{ app()->getLocale() === 'es' ? route('docs.api.es') : route('docs.api') }}" class="px-3 py-1.5 mx-1 sm:mx-2 hover:text-brand-blue {{ request()->routeIs('docs.api*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('API Docs') }}</a>
         <span class="w-1 h-1 bg-brand-blue/30 dark:bg-brand-blue/20 rounded-full" aria-hidden="true"></span>
         <a href="{{ app()->getLocale() === 'es' ? route('legal.privacy.es') : route('legal.privacy') }}" class="px-3 py-1.5 mx-1 sm:mx-2 hover:text-brand-blue {{ request()->routeIs('legal.privacy*') ? 'text-brand-blue' : '' }} transition-colors">{{ __('Privacy') }}</a>
