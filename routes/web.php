@@ -136,6 +136,11 @@ Route::post('/api/ga4/chart', [\App\Http\Controllers\Api\GoogleAnalyticsControll
 Route::post('/api/ga4/table', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
 Route::post('/api/ga4/list-properties', [\App\Http\Controllers\Api\GoogleAnalyticsController::class, 'listProperties'])->middleware(['web', 'auth', 'channel.asset.access:google_analytics']);
 
+Route::post('/api/mailchimp/summary', [\App\Http\Controllers\Api\MailchimpController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
+Route::post('/api/mailchimp/chart', [\App\Http\Controllers\Api\MailchimpController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
+Route::post('/api/mailchimp/table', [\App\Http\Controllers\Api\MailchimpController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
+Route::post('/api/mailchimp/trend', [\App\Http\Controllers\Api\MailchimpController::class, 'trend'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
+
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);
 Route::get('/api/analytics/breakdowns', function (\Illuminate\Http\Request $request) {
     $channel = $request->query('channel', '');

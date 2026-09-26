@@ -12,36 +12,43 @@
     $containerClass = match ($variant) {
         'ga4' => 'ga4-table-container',
         'gsc' => 'gsc-table-container',
+        'mailchimp' => 'mailchimp-table-container',
         default => 'fb-table-container',
     };
     $tabNavClass = match ($variant) {
         'ga4' => 'tab-nav-ga4',
         'gsc' => 'tab-nav-gsc',
+        'mailchimp' => 'tab-nav-mailchimp',
         default => 'tab-nav-fb',
     };
     $paginationContainer = match ($variant) {
         'ga4' => 'ga4-pagination-container',
         'gsc' => 'gsc-pagination-container',
+        'mailchimp' => 'mailchimp-pagination-container',
         default => 'fb-pagination-container',
     };
     $paginationText = match ($variant) {
         'ga4' => 'ga4-pagination-text',
         'gsc' => 'gsc-pagination-text',
+        'mailchimp' => 'mailchimp-pagination-text',
         default => 'fb-pagination-text',
     };
     $paginationSelect = match ($variant) {
         'ga4' => 'ga4-pagination-select',
         'gsc' => 'gsc-pagination-select',
+        'mailchimp' => 'mailchimp-pagination-select',
         default => 'fb-pagination-select',
     };
     $paginationBadge = match ($variant) {
         'ga4' => 'ga4-pagination-badge',
         'gsc' => 'gsc-pagination-badge',
+        'mailchimp' => 'mailchimp-pagination-badge',
         default => 'fb-pagination-badge',
     };
     $paginationBtn = match ($variant) {
         'ga4' => 'ga4-pagination-btn',
         'gsc' => 'gsc-pagination-btn',
+        'mailchimp' => 'mailchimp-pagination-btn',
         default => 'fb-pagination-btn',
     };
 @endphp

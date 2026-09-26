@@ -843,5 +843,21 @@
   - Resolved controls: ensured `$resolvedControls['metrics']` is auto-populated from `scatter_data['metrics']` or curve series definitions when missing.
   - Scale constraints: position-based metrics automatically set `min: 1` with reversed axis, while impressions/volume metrics begin at zero.
 
+### Mailchimp Data Explorer (2026-09-26)
+- **What was added:** full Data Explorer page for Mailchimp, mirroring the GSC architecture.
+  - `app/Filament/App/Pages/MailchimpDashboard.php` (cluster `DataExplorer`, slug `mailchimp`, nav group `Email Marketing`).
+  - `app/Http/Controllers/Api/MailchimpController.php` with `summary` / `chart` / `table` / `trend`.
+  - Routes in `routes/web.php` → `POST /api/mailchimp/{summary,chart,table,trend}`, each behind `['web','auth','channel.asset.access:mailchimp']`.
+  - `resources/views/filament/app/pages/mailchimp-dashboard.blade.php`, `resources/js/dashboards/mailchimp-dashboard.js` (registered in `app.js`), plus a `mailchimp` variant in `components/data-table.blade.php` and `public/css/dashboards.css`.
+  - `BrandIcon::mailchimp()` and Spanish strings in `lang/es.json`.
+- **Metric vocabulary is NOT the UI vocabulary.** Worker canonical metrics are `sends`, `opens`, `clicks`, `bounces`, `unsubscribes`, `orders`, `revenue` (see `MailchimpDriver::getCanonicalMetricDictionary()`). The UI shows "Total Emails Sent" but must map it to `sends`; `open_rate` / `click_rate` are **derived in the facade** (`opens/sends`, `clicks/sends`) and must never be requested from the worker.
+- **Mailchimp assets are audiences (lists), not sites.** `sync_config.mailchimp.assets.audiences[].id` is the raw Mailchimp list id — do **not** `md5()` it (GSC sites are hashed; Mailchimp is not). Selector is filtered by `enabled` and matched against the worker's `channeled_account` `platformId`.
+- **Grouping dimensions** (from `Services\Aggregation\AggregationGroupingResolver`): the `metric` entity only supports `daily|weekly|monthly|quarterly|yearly`, `query|page|country|device`, `channeledCampaign`, `channeledAccount`, and `dimensions.<key>`. A single temporal + one known entity is also allowed. So the tabs map to `channeledCampaign` (campaigns) and `channeledAccount` (audiences); the chart uses `['daily']`.
+- **Rates must be recomputed per day** on the client (`withDerivedRates()`) so a rate line never contradicts the counters plotted next to it.
+- **Known worker-side gap (unresolved, worker repo):** Mailchimp engagement events carry `campaign_id` + `action` but no `audience_id`/`list_id`, so date-filtered opens/clicks cannot be reliably split by audience. Also `AgnosticPreAggregationEngine::persistCanonicalMetricSlice()` looked like a no-op in the inspected build — verify the live `mailchimp/metric/aggregate` response before treating empty dashboards as a facade bug.
+- **House style observed here:** controllers use fully-qualified `\Illuminate\Support\Facades\Log::` (no `use` import); session cache keys are namespaced per channel; `data-table.blade.php` maps a `variant` prop to prefixed CSS classes.
+- **Test baseline:** 17 tests were already failing on a clean `develop` (WidgetConfigHeritage, AssetFiltering, WidgetDataIntegrity, DashboardTranslation KPI, ProjectSoftDelete, ProjectTransfer, UserTierManagement). Verified by `git stash --include-untracked` + full run: identical 17 before and after this change (357 → 359 passing = the 2 new `DataExplorerBrandIconsTest` cases).
+- **Nav icon test:** any new Data Explorer page must be added to `tests/Feature/DataExplorerBrandIconsTest.php` (both the page provider and the monochrome-SVG provider).
+
 
 

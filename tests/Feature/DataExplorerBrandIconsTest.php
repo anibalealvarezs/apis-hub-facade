@@ -6,6 +6,7 @@ use App\Filament\App\Pages\FacebookMarketingDashboard;
 use App\Filament\App\Pages\FacebookOrganicDashboard;
 use App\Filament\App\Pages\GoogleAnalyticsDashboard;
 use App\Filament\App\Pages\GoogleSearchConsoleDashboard;
+use App\Filament\App\Pages\MailchimpDashboard;
 use App\Support\BrandIcon;
 use Illuminate\Contracts\Support\Htmlable;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -29,6 +30,7 @@ class DataExplorerBrandIconsTest extends TestCase
             'facebook organic' => [FacebookOrganicDashboard::class, BrandIcon::facebook()->toHtml()],
             'google analytics' => [GoogleAnalyticsDashboard::class, BrandIcon::google()->toHtml()],
             'google search console' => [GoogleSearchConsoleDashboard::class, BrandIcon::google()->toHtml()],
+            'mailchimp' => [MailchimpDashboard::class, BrandIcon::mailchimp()->toHtml()],
         ];
     }
 
@@ -60,6 +62,7 @@ class DataExplorerBrandIconsTest extends TestCase
             'triple whale' => ['tripleWhale'],
             'salesforce' => ['salesforce'],
             'hubspot' => ['hubspot'],
+            'mailchimp' => ['mailchimp'],
         ];
     }
 }

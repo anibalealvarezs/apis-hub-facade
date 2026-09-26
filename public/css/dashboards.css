@@ -41,6 +41,12 @@
 .card-stat-gsc[data-metric="impressions"] { --color: #7e57c2; }
 .card-stat-gsc[data-metric="ctr"] { --color: #0097a7; }
 .card-stat-gsc[data-metric="position"] { --color: #f4511e; }
+.card-stat-mailchimp[data-metric="sends"] { --color: #1f9e8f; }
+.card-stat-mailchimp[data-metric="opens"] { --color: #f5a623; }
+.card-stat-mailchimp[data-metric="clicks"] { --color: #2f6fe0; }
+.card-stat-mailchimp[data-metric="open_rate"] { --color: #7e57c2; }
+.card-stat-mailchimp[data-metric="click_rate"] { --color: #e4572e; }
+.card-stat-mailchimp[data-metric="unsubscribes"] { --color: #d64545; }
 
 .trend-up { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
 .dark .trend-up { color: #4ade80; }
@@ -48,12 +54,19 @@
 .dark .trend-down { color: #f87171; }
 .progress-bar-fill { height: 100%; transition: width 0.6s ease; }
 
-.ga4-table .metric-cell, .gsc-table .metric-cell { text-align: right; width: 12.5%; min-width: 110px; }
+.ga4-table .metric-cell, .gsc-table .metric-cell, .mailchimp-table .metric-cell { text-align: right; width: 12.5%; min-width: 110px; }
 .fb-table .metric-cell { text-align: right; }
 
 .gsc-bar-clicks { background: #4285f4; }
 .gsc-bar-impressions { background: #7e57c2; }
 .gsc-bar-ctr { background: #0097a7; }
+
+.mailchimp-bar-sends { background: #1f9e8f; }
+.mailchimp-bar-opens { background: #f5a623; }
+.mailchimp-bar-clicks { background: #2f6fe0; }
+.mailchimp-bar-open-rate { background: #7e57c2; }
+.mailchimp-bar-click-rate { background: #e4572e; }
+.mailchimp-bar-unsubscribes { background: #d64545; }
 
 /* ================================================================
    Google Analytics 4
@@ -330,6 +343,155 @@
 .gsc-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .gsc-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--gsc-bg-card); border-radius: 4px; font-size: 0.75rem; }
+
+/* ================================================================
+   Mailchimp
+   ================================================================ */
+:root {
+    --mailchimp-accent: #1f9e8f;
+    --mailchimp-sends: #1f9e8f;
+    --mailchimp-opens: #f5a623;
+    --mailchimp-clicks: #2f6fe0;
+    --mailchimp-open-rate: #7e57c2;
+    --mailchimp-click-rate: #e4572e;
+    --mailchimp-unsubscribes: #d64545;
+
+    --mailchimp-text-main: #111827;
+    --mailchimp-text-dim: #6b7280;
+    --mailchimp-bg-card: rgba(0, 0, 0, 0.03);
+    --mailchimp-border: rgba(0, 0, 0, 0.05);
+    --mailchimp-bg-hover: rgba(0, 0, 0, 0.05);
+    --mailchimp-bg-active: rgba(0, 0, 0, 0.08);
+    --mailchimp-chart-grid: rgba(0, 0, 0, 0.05);
+    --mailchimp-chart-ticks: #6b7280;
+}
+
+.dark {
+    --mailchimp-text-main: #ffffff;
+    --mailchimp-text-dim: #94a3b8;
+    --mailchimp-bg-card: rgba(255, 255, 255, 0.03);
+    --mailchimp-border: rgba(255, 255, 255, 0.05);
+    --mailchimp-bg-hover: rgba(255, 255, 255, 0.05);
+    --mailchimp-bg-active: rgba(255, 255, 255, 0.08);
+    --mailchimp-chart-grid: rgba(255, 255, 255, 0.05);
+    --mailchimp-chart-ticks: #94a3b8;
+}
+
+.mailchimp-header-row {
+    position: sticky;
+    top: 4rem;
+    z-index: 15;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+    background-color: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+.dark .mailchimp-header-row {
+    background-color: #111827 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.mailchimp-header-title { font-size: 1.8rem; font-weight: 800; color: var(--mailchimp-text-main); margin-bottom: 5px; display: flex; align-items: center; gap: 12px; }
+
+.mailchimp-header-subtitle { color: var(--mailchimp-text-dim); font-size: 0.9rem; }
+
+.mailchimp-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
+
+.metrics-grid-mailchimp { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 15px; margin-bottom: 25px; }
+
+.card-stat-mailchimp {
+    background: var(--mailchimp-bg-card);
+    border: 1px solid var(--mailchimp-border);
+    border-bottom: 4px solid var(--color, transparent);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.5;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-stat-mailchimp:hover { transform: translateY(-3px); background: var(--mailchimp-bg-hover); }
+
+.card-stat-mailchimp.active { opacity: 1; border-bottom-color: var(--color); background: var(--mailchimp-bg-active); }
+
+.mailchimp-label { font-size: 0.72rem; font-weight: 700; color: var(--mailchimp-text-dim); text-transform: uppercase; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; letter-spacing: 0.05em; }
+
+.card-stat-mailchimp .card-metric-value { font-size: 2.2rem; font-weight: 800; color: var(--mailchimp-text-main); line-height: 1.2; }
+
+.card-stat-mailchimp .card-metric-trend { font-size: 0.85rem; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; width: fit-content; }
+
+.card-stat-mailchimp .trend-neutral { background: var(--mailchimp-border); color: var(--mailchimp-text-dim); }
+
+.chart-container-mailchimp {
+    background: var(--mailchimp-bg-card);
+    border: 1px solid var(--mailchimp-border);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 30px;
+    height: 450px;
+    position: relative;
+}
+
+.mailchimp-table-container {
+    background: var(--mailchimp-bg-card);
+    border: 1px solid var(--mailchimp-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 40px;
+}
+
+.tab-nav-mailchimp {
+    display: flex;
+    border-bottom: 1px solid var(--mailchimp-border);
+    background-color: #f9fafb;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    flex-wrap: nowrap;
+}
+
+.dark .tab-nav-mailchimp { background-color: #111827; }
+
+.tab-mailchimp { flex-shrink: 0; white-space: nowrap; padding: 15px 25px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--mailchimp-text-dim); border-right: 1px solid var(--mailchimp-border); transition: all 0.2s; }
+
+.tab-mailchimp:hover { background: var(--mailchimp-bg-hover); }
+
+.tab-mailchimp.active { background: var(--mailchimp-bg-card); color: var(--mailchimp-accent); border-bottom: 2px solid var(--mailchimp-accent); }
+
+.mailchimp-table { width: 100%; border-collapse: collapse; text-align: left; }
+
+.mailchimp-table th { padding: 15px 25px; font-size: 0.75rem; text-transform: uppercase; color: var(--mailchimp-text-dim); font-weight: 700; border-bottom: 1px solid var(--mailchimp-border); }
+
+.mailchimp-table td { padding: 15px 25px; border-bottom: 1px solid var(--mailchimp-border); vertical-align: middle; }
+
+.mailchimp-table th:first-child, .mailchimp-table td:first-child { width: 40%; min-width: 280px; }
+
+.mailchimp-table .progress-bar-container { width: 100%; height: 4px; background: var(--mailchimp-border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+
+.mailchimp-table .metric-val-main { color: var(--mailchimp-text-main); font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+
+.mailchimp-name-text { font-weight: 600; color: var(--mailchimp-text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 650px; display: inline-block; vertical-align: middle; }
+
+.mailchimp-pagination-container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 15px 25px; border-top: 1px solid var(--mailchimp-border); background: var(--mailchimp-bg-active); }
+
+.mailchimp-pagination-text { font-size: 0.875rem; color: var(--mailchimp-text-dim); }
+
+.mailchimp-pagination-text strong { color: var(--mailchimp-text-main); font-weight: 700; }
+
+.mailchimp-pagination-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background: var(--mailchimp-bg-card); border: 1px solid var(--mailchimp-border); color: var(--mailchimp-text-main); font-size: 0.875rem; font-weight: 500; border-radius: 8px; padding: 6px 32px 6px 12px !important; min-width: 4.5rem; outline: none; cursor: pointer; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.25rem 1.25rem; }
+
+.mailchimp-pagination-btn { padding: 8px 16px; background: var(--mailchimp-bg-card); border: 1px solid var(--mailchimp-border); border-radius: 8px; font-size: 0.875rem; font-weight: 500; color: var(--mailchimp-text-main); cursor: pointer; transition: background 0.2s; }
+
+.mailchimp-pagination-btn:hover:not(:disabled) { background: var(--mailchimp-bg-hover); }
+
+.mailchimp-pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.mailchimp-pagination-badge { margin-left: 8px; padding: 4px 8px; background: var(--mailchimp-bg-card); border-radius: 4px; font-size: 0.75rem; }
 
 /* ================================================================
    Facebook Marketing
@@ -863,6 +1025,8 @@
     .joint-header-controls,
     .gsc-header-row,
     .gsc-header-controls,
+    .mailchimp-header-row,
+    .mailchimp-header-controls,
     .ga4-header-row,
     .ga4-header-controls,
     .fb-header-row,
@@ -888,6 +1052,7 @@
     #joint-dashboard-container,
     .joint-page,
     .gsc-page,
+    .mailchimp-page,
     .ga4-page,
     .fb-page {
         display: block !important;
@@ -994,7 +1159,8 @@
 .data-table-pagination-select option,
 .fb-pagination-select option,
 .ga4-pagination-select option,
-.gsc-pagination-select option {
+.gsc-pagination-select option,
+.mailchimp-pagination-select option {
     background-color: #ffffff;
     color: #111827;
     padding: 6px 12px;
@@ -1004,6 +1170,7 @@
 .dark .fb-pagination-select option,
 .dark .ga4-pagination-select option,
 .dark .gsc-pagination-select option,
+.dark .mailchimp-pagination-select option,
 .dark .fb-marketing-page .fb-pagination-select option,
 .dark .fb-organic-page .fb-pagination-select option,
 .dark select.data-table-pagination-select option {
