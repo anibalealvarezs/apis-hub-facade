@@ -456,6 +456,29 @@
             return $count;
         }
 
+        /**
+         * Whether a channel is toggled on for this project.
+         *
+         * The nested `$this->data[<key>]['enabled']` entry is canonical; the flat
+         * `$this->data[<key>_enabled']` mirror is what the Toggle binds to and is only
+         * present after hydrateFormFromDb() has run. Check both so getProviders() is
+         * correct during mount(), before the mirror exists.
+         */
+        public function isChannelEnabled(string $channelKey): bool
+        {
+            $channelData = $this->data[$channelKey] ?? null;
+            if (is_array($channelData) && array_key_exists('enabled', $channelData)) {
+                return filter_var($channelData['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $mirror = $this->data[$channelKey . '_enabled'] ?? null;
+            if ($mirror !== null) {
+                return filter_var($mirror, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            return false;
+        }
+
         public function getProviders(): array
         {
             $tenant = Filament::getTenant();
@@ -511,33 +534,59 @@
                 ],
             ];
 
-            // Sort channels inside providers and set dynamic status
+            // Annotate each channel with its release compatibility and enabled state, then
+            // derive the per-provider rollups the provider sort depends on.
             foreach ($providers as $pKey => &$provider) {
                 $providerCount = 0;
-                foreach ($provider['channels'] as &$channel) {
-                    $channel['status'] = in_array($channel['key'], $supportedChannels) ? 'Active' : 'Coming Soon';
-                    $channel['count'] = $this->getChannelAssetCount($channel['key']);
-                    $providerCount += $channel['count'];
-                }
-                $provider['count'] = $providerCount;
+                $hasCompatible = false;
+                $hasEnabledCompatible = false;
 
+                foreach ($provider['channels'] as &$channel) {
+                    $isCompatible = in_array($channel['key'], $supportedChannels, true);
+                    $isEnabled = $this->isChannelEnabled($channel['key']);
+
+                    $channel['compatible'] = $isCompatible;
+                    $channel['enabled'] = $isEnabled;
+                    $channel['status'] = $isCompatible ? 'Active' : 'Coming Soon';
+                    $channel['count'] = $this->getChannelAssetCount($channel['key']);
+
+                    $providerCount += $channel['count'];
+                    $hasCompatible = $hasCompatible || $isCompatible;
+                    $hasEnabledCompatible = $hasEnabledCompatible || ($isCompatible && $isEnabled);
+                }
+
+                $provider['count'] = $providerCount;
+                $provider['has_compatible'] = $hasCompatible;
+                $provider['has_enabled'] = $hasEnabledCompatible;
+
+                // Channels the current release cannot run are demoted below usable ones, then
+                // enabled channels are lifted above disabled ones, then alphabetical.
                 usort($provider['channels'], function ($a, $b) {
-                    if ($a['count'] !== $b['count']) {
-                        return $b['count'] <=> $a['count']; // Higher count first
+                    if ($a['compatible'] !== $b['compatible']) {
+                        return $a['compatible'] ? -1 : 1;
                     }
 
-                    return strcmp($a['label'], $b['label']); // Then alphabetical
+                    if ($a['compatible'] && $a['enabled'] !== $b['enabled']) {
+                        return $a['enabled'] ? -1 : 1;
+                    }
+
+                    return strcasecmp($a['label'], $b['label']);
                 });
             }
             unset($provider); // break reference
 
-            // Sort providers
+            // Providers exposing at least one compatible channel lead, then those with
+            // something actually turned on, then alphabetical by label.
             uasort($providers, function ($a, $b) {
-                if ($a['count'] !== $b['count']) {
-                    return $b['count'] <=> $a['count'];
+                if ($a['has_compatible'] !== $b['has_compatible']) {
+                    return $a['has_compatible'] ? -1 : 1;
                 }
 
-                return strcmp($a['label'], $b['label']);
+                if ($a['has_compatible'] && $a['has_enabled'] !== $b['has_enabled']) {
+                    return $a['has_enabled'] ? -1 : 1;
+                }
+
+                return strcasecmp($a['label'], $b['label']);
             });
 
             return $providers;

@@ -6,6 +6,55 @@ use Illuminate\Support\HtmlString;
 
 class BrandIcon
 {
+    /**
+     * Emitted by svg() as the icon's own sizing. Overridable via forProvider().
+     */
+    private const CLASS_ATTRIBUTE = 'class="h-6 w-6"';
+
+    /**
+     * Provider key => brand mark method name.
+     *
+     * Keys are matched case-insensitively after trimming. Add an entry here to make a
+     * new provider's branded mark resolvable from a provider key (Data Sources sidebar,
+     * navigation icons, etc.) without touching the individual mark methods.
+     */
+    public const PROVIDER_METHODS = [
+        'amazon' => 'amazon',
+        'bigcommerce' => 'bigcommerce',
+        'facebook' => 'facebook',
+        'google' => 'google',
+        'hubspot' => 'hubspot',
+        'klaviyo' => 'klaviyo',
+        'linkedin' => 'linkedin',
+        'mailchimp' => 'mailchimp',
+        'meta' => 'meta',
+        'netsuite' => 'netsuite',
+        'pinterest' => 'pinterest',
+        'salesforce' => 'salesforce',
+        'shopify' => 'shopify',
+        'tiktok' => 'tiktok',
+        'triple_whale' => 'tripleWhale',
+        'x' => 'x',
+    ];
+
+    /**
+     * Resolve the branded mark for a provider key (e.g. "google", "triple_whale").
+     *
+     * Returns null when the provider has no branded mark so the caller can fall back to
+     * its own generic icon rather than rendering a blank slot.
+     */
+    public static function forProvider(?string $provider, string $classes = 'h-6 w-6'): ?HtmlString
+    {
+        $key = strtolower(trim((string) $provider));
+        $method = self::PROVIDER_METHODS[$key] ?? null;
+
+        if ($method === null || ! method_exists(self::class, $method)) {
+            return null;
+        }
+
+        return self::withClasses(self::$method(), $classes);
+    }
+
     public static function facebook(): HtmlString
     {
         return self::svg('<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>');
@@ -90,7 +139,22 @@ class BrandIcon
     protected static function svg(string $inner, string $viewBox = '0 0 24 24'): HtmlString
     {
         return new HtmlString(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'.$viewBox.'" fill="currentColor" class="h-6 w-6" aria-hidden="true">'.$inner.'</svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'.$viewBox.'" fill="currentColor" '.self::CLASS_ATTRIBUTE.' aria-hidden="true">'.$inner.'</svg>'
+        );
+    }
+
+    /**
+     * Re-size an already-built mark. The replacement targets the exact class attribute
+     * emitted by svg(), so it stays a no-op-safe single substitution.
+     */
+    private static function withClasses(HtmlString $icon, string $classes): HtmlString
+    {
+        if ($classes === 'h-6 w-6') {
+            return $icon;
+        }
+
+        return new HtmlString(
+            str_replace(self::CLASS_ATTRIBUTE, 'class="'.$classes.'"', $icon->toHtml())
         );
     }
 }

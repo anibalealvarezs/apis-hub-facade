@@ -49,15 +49,14 @@
             @foreach($this->getProviders() as $pKey => $provider)
                 @php
                     $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
+                    $providerIcon = \App\Support\BrandIcon::forProvider($pKey, 'h-5 w-5');
                 @endphp
                 <div class="flex flex-col gap-2" x-data="{ expanded: {{ $hasActiveChannel ? 'true' : 'false' }} }">
                     <!-- Provider Header -->
                     <div @click="expanded = !expanded" class="cursor-pointer flex items-center justify-between text-gray-900 dark:text-white font-bold border-b border-gray-100 dark:border-white/5 transition hover:text-primary-500 ds-provider-header">
                         <div class="flex items-center gap-2">
-                            @if($pKey === 'google')
-                                <x-heroicon-o-globe-alt class="w-5 h-5 text-gray-500" />
-                            @elseif($pKey === 'facebook')
-                                <x-heroicon-o-users class="w-5 h-5 text-gray-500" />
+                            @if($providerIcon)
+                                {!! $providerIcon !!}
                             @else
                                 <x-heroicon-o-server-stack class="w-5 h-5 text-gray-500" />
                             @endif
@@ -84,7 +83,7 @@
                                             :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300' : ''"
                                             x-text="getChannelCount('{{ $channel['key'] }}')">
                                         </span>
-                                        @if(isset($this->data[$channel['key'].'_enabled']) && $this->data[$channel['key'].'_enabled'])
+                                        @if($channel['enabled'])
                                             <span class="flex h-2 w-2 rounded-full bg-success-500"></span>
                                         @else
                                             <span class="flex h-2 w-2 rounded-full bg-gray-300 dark:bg-gray-700"></span>

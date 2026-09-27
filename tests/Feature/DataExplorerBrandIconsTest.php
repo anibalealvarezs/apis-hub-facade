@@ -65,4 +65,51 @@ class DataExplorerBrandIconsTest extends TestCase
             'mailchimp' => ['mailchimp'],
         ];
     }
+
+    #[DataProvider('providerKeyProvider')]
+    public function test_for_provider_resolves_each_catalog_provider(string $providerKey, string $method): void
+    {
+        $icon = BrandIcon::forProvider($providerKey);
+
+        $this->assertInstanceOf(Htmlable::class, $icon);
+        $this->assertSame(BrandIcon::$method()->toHtml(), $icon->toHtml());
+    }
+
+    public static function providerKeyProvider(): array
+    {
+        // The six providers hard-coded in DataSources::getProviders().
+        return [
+            'google' => ['google', 'google'],
+            'facebook' => ['facebook', 'facebook'],
+            'tiktok' => ['tiktok', 'tiktok'],
+            'klaviyo' => ['klaviyo', 'klaviyo'],
+            'shopify' => ['shopify', 'shopify'],
+            'mailchimp' => ['mailchimp', 'mailchimp'],
+        ];
+    }
+
+    public function test_for_provider_is_case_insensitive_and_trims(): void
+    {
+        $this->assertSame(BrandIcon::tripleWhale()->toHtml(), BrandIcon::forProvider('  Triple_Whale ')->toHtml());
+    }
+
+    public function test_for_provider_returns_null_for_unknown_provider(): void
+    {
+        $this->assertNull(BrandIcon::forProvider('not_a_provider'));
+        $this->assertNull(BrandIcon::forProvider(null));
+        $this->assertNull(BrandIcon::forProvider(''));
+    }
+
+    public function test_for_provider_applies_requested_size_classes(): void
+    {
+        $icon = BrandIcon::forProvider('shopify', 'h-5 w-5');
+
+        $this->assertStringContainsString('class="h-5 w-5"', $icon->toHtml());
+        $this->assertStringNotContainsString('class="h-6 w-6"', $icon->toHtml());
+    }
+
+    public function test_for_provider_defaults_to_navigation_size(): void
+    {
+        $this->assertSame(BrandIcon::google()->toHtml(), BrandIcon::forProvider('google')->toHtml());
+    }
 }
