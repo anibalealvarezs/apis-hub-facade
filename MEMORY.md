@@ -900,3 +900,21 @@
 - **Blade gotcha hit here:** the inline one-liner `@php($icon = ...)` inside the sidebar produced `syntax error, unexpected token "endif"`. Use the explicit `@php` / `@endphp` block form, matching what the loop above already does.
 - **Do not Pint-format `DataSources.php`.** That file is 2,398 lines of pre-existing 4-space style and already fails Pint at HEAD with 21 fixers; running Pint on it would bury the diff. Verified the fixer set is *identical* before and after this change, so nothing new was introduced. The new test file and `DataExplorerBrandIconsTest.php` are Pint-clean.
 - **Test baseline after this change:** 391 passed / 17 failed - the same 17 pre-existing locale failures (359 + 9 deployment + 23 new here).
+### Mailchimp connect reverted to "Not Connected" (2026-09-26)
+- **Symptom:** connecting Mailchimp with a valid API key showed "Account connected successfully. Discovering audiences...", the toast then vanished, and the page fell back to the "Not Connected" block. Reproduced after the missing-SDK-class fix, so the two issues were unrelated.
+- **Root cause: `mergeDiscoveredAssets()` destroyed the credentials it had just saved.** The connect action persists `sync_config.mailchimp.accounts` (api_key, server_prefix, account_name) at `DataSources.php:881`, then discovers audiences and calls `mergeDiscoveredAssets()`. That method rebuilds the channel from **form state** (`$this->form->getState()`) and did a hard replace:
+  `$fullDbState[$this->activeChannel] = Arr::get($currentData, $this->activeChannel, []);`
+  The Mailchimp form schema (`MailchimpProfile::getSchemaDefinition()`) only defines `enabled`, `cron_recent_hour/minute` and `audiences` - there is **no `accounts` field**, because credentials are deliberately stored outside the form. So the replace dropped `accounts` and `$tenant->update()` at the end of the method persisted the gutted config. `isConnected()` then read `sync_config.mailchimp.accounts` as empty and the UI reverted.
+- **Why it was silent:** the notification was sent *before* the wipe, so the UI reported success and then immediately showed the opposite state. Filament toasts also auto-dismiss after a few seconds, which made it look like a failing request rather than a successful one followed by a state rollback. Nothing threw.
+- **Fix:** merge instead of replace, so keys the form does not manage survive:
+  ```php
+  $fullDbState[$this->activeChannel] = array_merge(
+      is_array($fullDbState[$this->activeChannel] ?? null) ? $fullDbState[$this->activeChannel] : [],
+      (array) \Illuminate\Support\Arr::get($currentData, $this->activeChannel, [])
+  );
+  ```
+  Form values still win on overlapping keys (`enabled`, `audiences`, `cron_*`), and other channels are untouched because only the active channel is reassigned.
+- **This was never Mailchimp-specific.** Any channel whose credentials live in `sync_config.<channel>` outside the form schema was being wiped by every asset merge. The same `mergeDiscoveredAssets()` is used by the OAuth connect path (~line 1032) and the manual discovery path, so all of them were affected. Klaviyo/Shopify/Google/Facebook/TikTok credentials are the same shape and were equally at risk.
+- **Regression test:** `tests/Feature/Pages/DataSourcesMergeAssetsTest.php` builds a release with a mailchimp schema that (like production) has no `accounts` field, seeds `sync_config.mailchimp.accounts` in the DB, then invokes the protected `mergeDiscoveredAssets()` and asserts the credentials survive. Verified it genuinely catches the bug: reverting the fix fails with `Undefined array key "accounts"`.
+- **Test-baseline note:** the form schema adds a `required()` `cron_time` TimePicker, so `$page->data` in the test must supply `mailchimp.cron_time` or `getState()` throws a ValidationException. Set form state explicitly rather than reusing the DB `sync_config` - the divergence between the two is the whole point of the test.
+- **Test baseline after this change:** 393 passed / 17 failed (391 + 2 new; the same 17 pre-existing locale failures).

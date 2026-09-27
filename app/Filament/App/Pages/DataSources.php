@@ -1175,7 +1175,10 @@
             \Illuminate\Support\Arr::set($currentData, $this->activeChannel.'.'.$assetListKey, array_values($mergedAssets));
 
             // Merge the active channel's data back into the full DB state
-            $fullDbState[$this->activeChannel] = \Illuminate\Support\Arr::get($currentData, $this->activeChannel, []);
+            $fullDbState[$this->activeChannel] = array_merge(
+                is_array($fullDbState[$this->activeChannel] ?? null) ? $fullDbState[$this->activeChannel] : [],
+                (array) \Illuminate\Support\Arr::get($currentData, $this->activeChannel, [])
+            );
 
             $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
 
