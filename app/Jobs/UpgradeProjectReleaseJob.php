@@ -19,7 +19,9 @@ class UpgradeProjectReleaseJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
-    public int $timeout = 1200; // 20 minutes maximum
+    // Covers the Composer pre-flight probe (60s) + the upgrade chain (1100s) + a full
+    // automatic rollback (checkout, .env restore, container restart ~1020s).
+    public int $timeout = 2400; // 40 minutes maximum
 
     public function __construct(
         protected Project $project,
@@ -39,8 +41,8 @@ class UpgradeProjectReleaseJob implements ShouldQueue
 
         return [
             (new WithoutOverlapping("server-deploy:{$serverId}"))
-                ->releaseAfter(1200)
-                ->expireAfter(1500),
+                ->releaseAfter(2400)
+                ->expireAfter(2700),
         ];
     }
 
@@ -59,10 +61,35 @@ class UpgradeProjectReleaseJob implements ShouldQueue
             $result = $deployer->upgradeRelease($this->project, $this->targetRelease);
 
             $deploymentLog->update([
-                'status' => $result['status'] === 'success' ? 'success' : 'failed',
+                'status' => match ($result['status'] ?? 'error') {
+                    'success' => 'success',
+                    'rolled_back' => 'rolled_back',
+                    default => 'failed',
+                },
                 'output' => $deploymentLog->output . "\n\n=== UPGRADE OUTPUT ===\n" . $result['output'],
                 'completed_at' => now(),
             ]);
+
+            // The deployer restored the previous release, so the tenant is serving again
+            // and the pinned version is still the old one. Record it as its own outcome
+            // instead of an error so the UI can tell "broken" from "never upgraded".
+            if (($result['status'] ?? null) === 'rolled_back') {
+                $this->project->update(['health_status' => 'online']);
+
+                $restoredTag = $this->project->apisHubRelease?->version_tag ?? 'the previous release';
+
+                \App\Models\ProjectStatusLog::create([
+                    'project_id' => $this->project->id,
+                    'is_active' => true,
+                    'event_type' => 'upgrade',
+                    'created_by_id' => null,
+                    'notes' => "Upgrade to {$this->targetRelease->version_tag} was rolled back automatically; project remains on {$restoredTag}.",
+                ]);
+
+                Log::warning("Upgrade of {$this->project->name} to {$this->targetRelease->version_tag} was rolled back automatically and the project remains on {$restoredTag}.");
+
+                return;
+            }
 
             if ($result['status'] !== 'success') {
                 $this->project->update(['health_status' => 'error']);

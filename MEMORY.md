@@ -11,6 +11,32 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Deployment Resilience: Composer Repository Outages (2026-09-26)
+- **Problem & Context:**
+  - Upgrading project `mabe-2-dev` to `v1.17.0` failed and surfaced as `Deployment failed due to an unknown issue. (install [--prefer-source] ...)`.
+  - Actual cause was **not** a code defect: `satis.anibalalvarez.com` (private Composer/Satis repo) returned **HTTP 522** (Cloudflare could not reach origin) for both `packages.json` and dist zips. `v1.17.0` introduced packages absent from tenant caches (`anibalealvarezs/mailchimp-api`, `anibalealvarezs/mailchimp-hub-driver`, `anibalealvarezs/api-driver-core` v1.1.2), so they had to be downloaded.
+  - Failure hit at step 3 (`docker compose build` → Dockerfile `stage-0 RUN composer install`, exit 100), i.e. **after** `docker compose stop` had already stopped every container. The existing inline rollback at step 4 never fired, so the tenant was left stopped (heartbeat `502`) with `v1.17.0` code on disk.
+- **Critical architectural fact (drives all rollback decisions):**
+  - The worker's `bin/build-deployment.php` bind-mounts the checkout over the app: `"$projectPathHost:/app"`. The container therefore runs the **code on disk**, and `/app/vendor` comes from the **host** too. `docker-compose.yml` and `vendor/` are both gitignored.
+  - Consequence: restarting containers **without** reverting the checkout boots the new release's code against the previous vendor tree → guaranteed crash loop. Any recovery MUST `git checkout` the old tag first.
+  - `bin/build-deployment.php` was verified **identical between v1.16.0 and v1.17.0**, so the stale generated manifest is harmless for that specific pair (do not rely on this in general).
+- **Implementation:**
+  - `config/services.php`: new `services.composer.repository_url` (`COMPOSER_REPOSITORY_URL`, default `https://satis.anibalalvarez.com`).
+  - `DeployerService::assertComposerRepositoryReachable()`: pre-flight probe (`curl`, falling back to `wget`, hard-fail if neither exists) run **on the tenant node** — the node is the party that must download. Aborts while the project is still serving traffic. Also applied to `DeployerService::deploy()`.
+  - `DeployerService::upgradeRelease()`: returns `code: composer_repository_unreachable` and mutates nothing when the probe fails.
+  - Phase detection via explicit sentinels `__MIGRATION_FAILED__` / `__MIGRATIONS_APPLIED__` (`DeployerService::MIGRATION_FAILED_MARKER`, `MIGRATIONS_APPLIED_MARKER`) rather than a second SSH call — a split would have cut the single-call 1100s timeout budget the Docker build depends on. Past either sentinel, code rollback is unsafe (schema may be ahead of code), so failures escalate.
+  - `DeployerService::isDependencyRepositoryFailure()`: narrow classifier (522/5xx, `could not be downloaded`, `Source fallback is disabled`, `policy.ignore-unreachable`, connection timeouts). Unrecognised pre-migration failures are **not** auto-reverted, so real build defects are not masked.
+  - `DeployerService::recoverPreMigrationUpgrade()`: revert checkout → rewrite `.env` for the old release via `writeRemoteFile()` (SSH stdin, avoids re-introducing shell-escaping problems with secrets) → `docker compose up -d --force-recreate --remove-orphans` **without `--build`** (rebuilding would re-enter the failing download). Reuses the still-present previous image and the host `vendor/` that already matches the old lock. Returns distinct codes: `rolled_back`, `rollback_failed`, `rollback_restart_failed`, `upgrade_failed_pre_migration`, `upgrade_failed_after_migration`.
+  - `UpgradeProjectReleaseJob`: `timeout` 1200 → 2400 and `WithoutOverlapping` `releaseAfter`/`expireAfter` → 2400/2700 to fit probe + chain + recovery while keeping the lock alive for the whole run. New `rolled_back` status maps to `health_status = online` plus a `ProjectStatusLog` entry; `apis_hub_release_id` is still only updated on success, so the pinned version is unchanged.
+  - `ProjectDeploymentLog::getSummaryMessage()`: now scans the **whole** output instead of the last line only. Composer prints the actionable error *above* its usage block, which is exactly why this outage was reported as an "unknown issue". Broad progress phrases (`container`, `restarting`, …) are now only matched for non-failed statuses, since they co-occur with the real error in failure logs.
+- **Known remaining fragility (not addressed, out of scope):**
+  - `DeployerService::runSshCommands()` wraps the whole chain in raw double quotes (`ssh … "{$allCommands}"`) while the chain contains unescaped `"` (`--entrypoint "php"`) and arbitrary `.env` content. It works today only because those quotes happen to balance. A `"`, `$`, or backtick in a project name, DB password, or client secret would corrupt every downstream command, including the Composer step. `writeRemoteFile()` is the safe pattern already in the codebase.
+- **Verification:**
+  - `tests/Feature/DeploymentResilienceTest.php` (new, 9 tests / 33 assertions) covers: pre-flight abort leaves no mutating command; rollback on dependency failure; no rollback after `__MIGRATIONS_APPLIED__`; no rollback on unrecognised pre-migration failure; `rollback_failed` reporting; the outage classifier; and all three `getSummaryMessage()` paths. Uses `Process::fake()` with a self-collected command log (Laravel 12's `Process\Factory` has no public `recorded()`).
+  - `ProjectDeploymentTest.php` + `DeploymentResilienceTest.php`: 14 passed.
+  - Full facade suite: **17 failed, 368 passed** — same 17 pre-existing failures as the clean baseline, 368 = 359 previous passes + 9 new.
+  - `lang/es.json` valid JSON; both new summary keys added.
+
 ### Tenant MCP Server Activation & Caddy Routing for API-Eligible Tenants (2026-09-25)
 - **Problem & Context:**
   - In `DeployerService::generateEnvContent()`, `DEPLOY_MCP_SERVER=false` was hardcoded, preventing the tenant's containerized MCP server (`node mcp-server/index.js`, port 3000) from ever starting, even for projects on API-eligible tiers (`ULTRA`, `FOUNDER`, `ENTERPRISE`).
