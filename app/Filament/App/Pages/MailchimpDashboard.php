@@ -103,7 +103,7 @@ class MailchimpDashboard extends Page
                 'enabledIds' => $enabledIds,
             ]);
 
-            if (isset($response['data']) && is_array($response['data'])) {
+            if (isset($response['data']) && is_array($response['data']) && !empty($response['data'])) {
                 \Illuminate\Support\Facades\Log::info('Mailchimp Dashboard - remote channeled_accounts', [
                     'count' => count($response['data']),
                     'sample' => array_slice($response['data'], 0, 3),
@@ -112,21 +112,43 @@ class MailchimpDashboard extends Page
                 foreach ($response['data'] as $audience) {
                     $platformId = (string) ($audience['platformId'] ?? $audience['platform_id'] ?? $audience['id'] ?? '');
 
-                    if ($platformId !== '' && in_array($platformId, $enabledIds, true)) {
+                    // Match against enabled list IDs (or allow all if no explicit enabled filter is defined yet)
+                    if ($platformId !== '' && (empty($enabledIds) || in_array($platformId, $enabledIds, true))) {
                         $this->accounts[$audience['id']] = $audience['name'] ?? $platformId;
                     }
                 }
+            }
 
-                if (!empty($this->accounts)) {
-                    uasort($this->accounts, fn ($a, $b) => strcasecmp((string) $a, (string) $b));
+            // Fallback: If no remote channeled accounts were found (e.g. worker has not synced yet or is unreachable),
+            // populate directly from discovered/configured audiences in sync_config.
+            if (empty($this->accounts) && !empty($config)) {
+                \Illuminate\Support\Facades\Log::info('Mailchimp Dashboard - falling back to sync_config audiences', [
+                    'count' => count($config),
+                ]);
 
-                    if (!$this->selectedAccount) {
-                        $this->selectedAccount = array_key_first($this->accounts);
+                foreach ($config as $audience) {
+                    $listId = (string) ($audience['id'] ?? $audience['list_id'] ?? $audience['platform_id'] ?? '');
+                    if ($listId === '') {
+                        continue;
+                    }
+
+                    // Prioritize enabled audiences, or fall back to all if none explicitly enabled
+                    if (empty($enabledIds) || in_array($listId, $enabledIds, true) || !empty($audience['enabled'])) {
+                        $this->accounts[$listId] = $audience['name'] ?? $listId;
                     }
                 }
+            }
+
+            if (!empty($this->accounts)) {
+                uasort($this->accounts, fn ($a, $b) => strcasecmp((string) $a, (string) $b));
+
+                if (!$this->selectedAccount || !isset($this->accounts[$this->selectedAccount])) {
+                    $this->selectedAccount = (string) array_key_first($this->accounts);
+                }
             } else {
-                \Illuminate\Support\Facades\Log::info('Mailchimp Dashboard - no data in response', [
-                    'response_keys' => is_array($response) ? array_keys($response) : gettype($response),
+                \Illuminate\Support\Facades\Log::warning('Mailchimp Dashboard - no accounts found from worker or sync_config', [
+                    'has_config' => !empty($config),
+                    'enabled_count' => count($enabledIds),
                 ]);
             }
         } catch (\Exception $e) {

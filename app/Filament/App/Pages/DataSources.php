@@ -1516,7 +1516,7 @@
                 $type = $definition['type'] ?? 'string';
 
                 // Preserve data objects and identifying strings in the form state invisibly
-                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'platformId'])) {
+                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'account_id', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'platformId'])) {
                     $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
 
                     continue;

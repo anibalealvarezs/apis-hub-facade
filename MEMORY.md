@@ -918,3 +918,14 @@
 - **Regression test:** `tests/Feature/Pages/DataSourcesMergeAssetsTest.php` builds a release with a mailchimp schema that (like production) has no `accounts` field, seeds `sync_config.mailchimp.accounts` in the DB, then invokes the protected `mergeDiscoveredAssets()` and asserts the credentials survive. Verified it genuinely catches the bug: reverting the fix fails with `Undefined array key "accounts"`.
 - **Test-baseline note:** the form schema adds a `required()` `cron_time` TimePicker, so `$page->data` in the test must supply `mailchimp.cron_time` or `getState()` throws a ValidationException. Set form state explicitly rather than reusing the DB `sync_config` - the divergence between the two is the whole point of the test.
 - **Test baseline after this change:** 393 passed / 17 failed (391 + 2 new; the same 17 pre-existing locale failures).
+
+### Mailchimp Data Explorer asset selector empty fix (2026-10-01)
+- **Symptom:** The Mailchimp Data Explorer page displayed "No audiences available." in the audience dropdown selector despite having connected Mailchimp and discovered audiences in Data Sources.
+- **Root causes:**
+  1. `MailchimpDashboard::loadAccounts()` strictly gated account population on `$response['data']` from `$service->listChanneled($tenant, 'mailchimp', 'channeled_account')`. If the worker node had not synced `channeled_accounts` yet, or was running in a dev/offline environment, `$response['data']` was empty, leaving `$this->accounts` completely empty with no fallback.
+  2. Discovered audiences in Data Sources default to `enabled: false`. If audiences were discovered but not yet explicitly toggled on or if worker sync was pending, `$enabledIds` was empty.
+- **Fix:**
+  - Added fallback in [MailchimpDashboard.php](file:///D:/laragon/www/apis-hub-facade/app/Filament/App/Pages/MailchimpDashboard.php): if remote `channeled_accounts` returns empty (or before worker persistence runs), populate `$this->accounts` directly from `$tenant->sync_config['mailchimp']['assets']['audiences']` (or `sync_config['mailchimp']['audiences']`).
+  - If no audiences are explicitly toggled enabled yet, fall back to showing all discovered audiences in the selector so it is never empty.
+  - Added test coverage in [MailchimpDashboardAccountsTest.php](file:///D:/laragon/www/apis-hub-facade/tests/Feature/Pages/MailchimpDashboardAccountsTest.php).
+
