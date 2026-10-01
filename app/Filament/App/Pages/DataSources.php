@@ -15,6 +15,7 @@
     use Filament\Forms\Form;
     use Filament\Notifications\Notification;
     use Filament\Pages\Page;
+    use Illuminate\Support\Facades\Log;
     use Illuminate\Support\Str;
     use Livewire\Attributes\Url;
 
@@ -605,7 +606,7 @@
             return __('Configuration');
         }
 
-        public function isConnected($channel): bool
+        public function isConnected(string $channel): bool
         {
             $tenant = Filament::getTenant();
 
@@ -645,13 +646,13 @@
             return false;
         }
 
-        public function getLastSyncTime($channel): string
+        public function getLastSyncTime(string $channel): string
         {
             // To be implemented via SDK or local tenant timestamp
             return 'Never';
         }
 
-        public function isProfileShared($channel): bool
+        public function isProfileShared(string $channel): bool
         {
             $tenant = Filament::getTenant();
             $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
@@ -2311,6 +2312,18 @@
                 // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
                 if (!$isFirstDeployment) {
                     try {
+                        if ($channel === 'mailchimp' && !empty($tenant->sync_config['mailchimp']['accounts'])) {
+                            try {
+                                $service->execute($tenant, function ($client) use ($tenant) {
+                                    return $client->importCredentials('mailchimp', '', [
+                                        'accounts' => $tenant->sync_config['mailchimp']['accounts'],
+                                    ]);
+                                });
+                            } catch (\Throwable $e) {
+                                Log::warning("Could not sync Mailchimp accounts to remote node: " . $e->getMessage());
+                            }
+                        }
+
                         $response = $service->updateCredentials($tenant, $payload);
 
                         // Sync status back from Remote Node
