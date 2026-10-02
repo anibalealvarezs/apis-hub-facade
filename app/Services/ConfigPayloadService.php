@@ -158,6 +158,7 @@ class ConfigPayloadService
             'google_analytics'      => '2 years',
             'facebook_marketing'    => '2 years',
             'facebook_organic'      => '2 years',
+            'mailchimp'             => '2 years',
         ];
         $payload['cache_history_range'] = $maxRanges[$channel] ?? '1 year';
 

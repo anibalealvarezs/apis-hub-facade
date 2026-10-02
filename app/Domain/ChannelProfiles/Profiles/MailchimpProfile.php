@@ -22,6 +22,13 @@ class MailchimpProfile extends AbstractChannelProfile
             'type' => $this->getChannelKey(),
             'fields' => [
                 'enabled' => $this->configurableField('boolean', true),
+                'cache_history_range' => $this->configurableField('string', '2 years', [
+                    '1 month' => '1 Month',
+                    '3 months' => '3 Months',
+                    '6 months' => '6 Months',
+                    '1 year' => '1 Year',
+                    '2 years' => '2 Years',
+                ]),
                 'cron_recent_hour' => $this->systemField('integer', 4),
                 'cron_recent_minute' => $this->systemField('integer', 0),
                 'max_workers' => $this->systemField('integer', 2),

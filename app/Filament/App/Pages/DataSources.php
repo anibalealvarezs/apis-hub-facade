@@ -333,9 +333,10 @@
                 'google_analytics' => '2 years',
                 'facebook_marketing' => '2 years',
                 'facebook_organic' => '2 years',
+                'mailchimp' => '2 years',
             ];
 
-            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing'] as $chan) {
+            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing', 'mailchimp'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
@@ -343,7 +344,7 @@
                     $config[$chan]['enabled'] = true;
                 }
                 // Always force max range, overriding previous values
-                $config[$chan]['cache_history_range'] = $maxRanges[$chan] ?? '1 year';
+                $config[$chan]['cache_history_range'] = $isFreeTier ? '6 months' : ($maxRanges[$chan] ?? '2 years');
             }
 
             if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
