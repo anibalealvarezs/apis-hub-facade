@@ -27,6 +27,9 @@ class MailchimpProfile extends AbstractChannelProfile
                 'max_workers' => $this->systemField('integer', 2),
                 'granular_sync' => $this->systemField('boolean', true),
 
+                'metrics_strategy' => $this->systemField('string', 'default'),
+                'metrics_config' => $this->systemField('object', []),
+
                 'feature_toggles' => $this->systemField('object', [
                     'cache_aggregations' => false,
                 ]),

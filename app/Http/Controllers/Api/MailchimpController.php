@@ -151,7 +151,10 @@ class MailchimpController extends Controller
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $baseFilters = ['channeledAccount' => (string) $validated['account']];
+            $baseFilters = [
+                'channel' => 'mailchimp',
+                'channeledAccount' => (string) $validated['account'],
+            ];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $aggs = $this->getRequestedAggregations($request);
@@ -202,7 +205,10 @@ class MailchimpController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $baseFilters = ['channeledAccount' => (string) $validated['account']];
+            $baseFilters = [
+                'channel' => 'mailchimp',
+                'channeledAccount' => (string) $validated['account'],
+            ];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $aggs = $this->getRequestedAggregations($request);
@@ -268,12 +274,16 @@ class MailchimpController extends Controller
             $tab = $validated['activeTab'] ?? 'campaigns';
             $aggs = $this->getRequestedAggregations($request);
 
+            $tableFilters = [
+                'channel' => 'mailchimp',
+                'channeledAccount' => (string) $validated['account'],
+            ];
+            $this->applyDynamicFilters($tableFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
+
             $tabPayload = [
                 'aggregations' => $aggs,
                 'groupBy' => [self::TAB_DIMENSIONS[$tab] ?? self::TAB_DIMENSIONS['campaigns']],
-                'filters' => [
-                    'channeledAccount' => (string) $validated['account'],
-                ],
+                'filters' => $tableFilters,
                 'startDate' => $validated['dateStart'],
                 'endDate' => $validated['dateEnd'],
                 'limit' => 5000, // reasonable limit for frontend rendering
