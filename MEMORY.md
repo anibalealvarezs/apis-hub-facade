@@ -11,6 +11,15 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Mailchimp Data Explorer Channel Resolution (2026-10-01)
+- **Problem & Context:**
+  - In Mailchimp Data Explorer (`/api/mailchimp/summary`, `/chart`, `/table`), all metrics were returning `null`.
+  - APIs Hub aggregation planner diagnostics revealed metric resolution was misattributing requests to `channel: google_search_console` with `missing_metric_equivalence_in_universal`.
+  - Cause: `MailchimpController` only passed `['channeledAccount' => ...]` in `$baseFilters` without `'channel' => 'mailchimp'`. When `channel` is omitted in the filter bag, `AggregationPlanner` defaulted to evaluating the first registered tenant profile (`google_search_console`), which lacks Mailchimp canonical metrics (`sends`, `opens`, `clicks`, `bounces`, `unsubscribes`, `orders`, `revenue`).
+- **Implementation:**
+  - `MailchimpController.php`: Added `'channel' => 'mailchimp'` to `$baseFilters` in `summary()` and `chart()`, and added `tableFilters` with `'channel' => 'mailchimp'` plus `applyDynamicFilters()` in `table()`.
+  - `MailchimpProfile.php`: Added `metrics_strategy` (`default`) and `metrics_config` (`[]`) system fields to conform with standard channel profile schema.
+
 ### Deployment Resilience: Composer Repository Outages (2026-09-26)
 - **Problem & Context:**
   - Upgrading project `mabe-2-dev` to `v1.17.0` failed and surfaced as `Deployment failed due to an unknown issue. (install [--prefer-source] ...)`.
