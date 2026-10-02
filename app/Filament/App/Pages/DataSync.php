@@ -224,13 +224,15 @@ class DataSync extends Page
                 ->form(function () use ($tenant) {
                     $channels = [];
                     $syncConfig = $tenant->sync_config ?? [];
-                    if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
-                        foreach (array_keys($this->syncData['channels']) as $c) {
-                            $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
-                            $isConnected = $tenant->isChannelConnected($c);
-                            if ($isConfigured && $isConnected) {
-                                $channels[$c] = ucwords(str_replace('_', ' ', $c));
-                            }
+                    $candidateChannels = (isset($this->syncData['channels']) && is_array($this->syncData['channels']) && !empty($this->syncData['channels']))
+                        ? array_keys($this->syncData['channels'])
+                        : array_keys($syncConfig);
+
+                    foreach ($candidateChannels as $c) {
+                        $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
+                        $isConnected = $tenant->isChannelConnected($c);
+                        if ($isConfigured && $isConnected) {
+                            $channels[$c] = ucwords(str_replace('_', ' ', $c));
                         }
                     }
 

@@ -929,3 +929,17 @@
   - If no audiences are explicitly toggled enabled yet, fall back to showing all discovered audiences in the selector so it is never empty.
   - Added test coverage in [MailchimpDashboardAccountsTest.php](file:///D:/laragon/www/apis-hub-facade/tests/Feature/Pages/MailchimpDashboardAccountsTest.php).
 
+### Channel Connection Architecture: Polymorphic ChannelProfile Refactor (2026-10-01)
+- **Problem:**
+  - `Project::isChannelConnected()` and `DataSources::isConnected()` previously had fragmented, hardcoded `if/else` checks for specific providers (`facebook_`, `google_`, `mailchimp`, etc.). Adding new drivers required adding more ad-hoc conditionals across multiple models and pages.
+- **Architectural Solution:**
+  - Added `isConnected(Project $project): bool` to `ChannelProfileInterface` (`app/Domain/ChannelProfiles/Contracts/ChannelProfileInterface.php`).
+  - Implemented standard, reusable connection resolution in `AbstractChannelProfile`:
+    1. Checks the provider's `ChannelProfile` model (with `authorized_channels` support for OAuth channels).
+    2. Checks legacy `ProjectCredential` table tokens.
+    3. Checks provider/channel accounts stored in `$project->sync_config[$channel]['accounts']` (for API-key / multi-account integrations like Mailchimp).
+  - Any channel profile can override `isConnected()` if it requires custom validation.
+  - Refactored `Project::isChannelConnected($channel)` to delegate directly to `ChannelProfileRegistry::get($channel)->isConnected($this)`.
+  - Refactored `DataSources::isConnected($channel)` to delegate directly to `$tenant->isChannelConnected($channel)`.
+  - In `DataSync`, candidate channels for Nuclear Resync fall back to `sync_config` keys if background telemetry (`syncData['channels']`) hasn't loaded yet.
+

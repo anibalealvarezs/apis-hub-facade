@@ -610,40 +610,7 @@
         {
             $tenant = Filament::getTenant();
 
-            if ($channel === 'mailchimp') {
-                $accounts = $tenant->sync_config['mailchimp']['accounts'] ?? [];
-                if (!is_array($accounts) || empty($accounts)) {
-                    return false;
-                }
-                foreach ($accounts as $acc) {
-                    if (!empty($acc['api_key']) || !empty($acc['access_token'])) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
-            $profileIdColumn = "{$provider}_profile_id";
-
-            if (!$tenant->{$profileIdColumn}) {
-                return false;
-            }
-
-            $profile = \App\Models\ChannelProfile::find($tenant->{$profileIdColumn});
-            if ($profile && is_array($profile->authorized_channels)) {
-                return in_array($channel, $profile->authorized_channels) && !empty($profile->access_token);
-            }
-
-            // Fallback for legacy connections before the column was added
-            if ($provider === 'facebook') {
-                return $tenant->facebook_user_id !== null;
-            }
-            if ($provider === 'google') {
-                return $tenant->google_user_id !== null;
-            }
-
-            return false;
+            return $tenant ? $tenant->isChannelConnected($channel) : false;
         }
 
         public function getLastSyncTime(string $channel): string
