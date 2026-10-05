@@ -58,7 +58,7 @@ const MAILCHIMP_METRICS = {
     },
 };
 
-const TABS = ['campaigns', 'audiences'];
+const TABS = ['campaigns', 'automations', 'audiences'];
 
 const EMPTY_SUMMARY = {
     sends: 0,
@@ -100,7 +100,7 @@ export function mailchimpDashboard(config = {}) {
             unsubscribes: false,
         },
 
-        activeFilters: { campaigns: [], audiences: [] },
+        activeFilters: { campaigns: [], automations: [], audiences: [] },
 
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
@@ -216,6 +216,7 @@ export function mailchimpDashboard(config = {}) {
                     // Merge onto the known tabs so a stale cache from another build cannot inject keys.
                     this.activeFilters = {
                         campaigns: Array.isArray(parsed?.campaigns) ? parsed.campaigns : [],
+                        automations: Array.isArray(parsed?.automations) ? parsed.automations : [],
                         audiences: Array.isArray(parsed?.audiences) ? parsed.audiences : [],
                     };
                 } catch (e) {
@@ -232,7 +233,7 @@ export function mailchimpDashboard(config = {}) {
         },
 
         clearFiltersLocal() {
-            this.activeFilters = { campaigns: [], audiences: [] };
+            this.activeFilters = { campaigns: [], automations: [], audiences: [] };
         },
 
         clearFilters() {

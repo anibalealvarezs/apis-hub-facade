@@ -213,6 +213,8 @@
                 <div class="tab-nav-mailchimp">
                     <div class="tab-mailchimp" :class="activeTab === 'campaigns' ? 'active' : ''"
                          @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
+                    <div class="tab-mailchimp" :class="activeTab === 'automations' ? 'active' : ''"
+                         @click="setTab('automations')">{{ __('AUTOMATIONS') }}</div>
                     <div class="tab-mailchimp" :class="activeTab === 'audiences' ? 'active' : ''"
                          @click="setTab('audiences')">{{ __('AUDIENCES') }}</div>
                 </div>
@@ -222,7 +224,7 @@
                 <thead>
                 <tr>
                     <x-data-table.column sortable="false">
-                        <span x-text="activeTab === 'audiences' ? '{{ __('AUDIENCE') }}' : '{{ __('CAMPAIGN') }}'"></span>
+                        <span x-text="activeTab === 'audiences' ? '{{ __('AUDIENCE') }}' : (activeTab === 'automations' ? '{{ __('AUTOMATION') }}' : '{{ __('CAMPAIGN') }}')"></span>
                     </x-data-table.column>
                     <x-data-table.column state="tableState" key="sends" label="{{ __('Emails Sent') }}"/>
                     <x-data-table.column state="tableState" key="opens" label="{{ __('Opens') }}"/>

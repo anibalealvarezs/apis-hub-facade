@@ -30,6 +30,7 @@ class MailchimpController extends Controller
      */
     private const TAB_DIMENSIONS = [
         'campaigns' => 'channeledCampaign',
+        'automations' => 'channeledCampaign',
         'audiences' => 'channeledAccount',
     ];
 
@@ -40,7 +41,7 @@ class MailchimpController extends Controller
             'account' => 'required|string',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,audiences',
+            'activeTab' => 'nullable|string|in:campaigns,automations,audiences',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
             'filters' => 'nullable|array',
