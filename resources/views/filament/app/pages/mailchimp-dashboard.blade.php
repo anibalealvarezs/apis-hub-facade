@@ -121,16 +121,16 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Total Opens') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.opens)"></div>
-                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    <div class="flex items-center gap-1.5 mt-1.5 flex-nowrap overflow-hidden">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-300/80 shrink-0"
                               title="{{ __('Standard human opens by recipients') }}">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span class="w-1 h-1 rounded-full bg-emerald-400/80"></span>
                             <span x-text="formatNumber(summary.opens_standard) + ' {{ __('Human') }}'"></span>
                         </span>
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-300/80 shrink-0"
                               title="{{ __('Preloaded by Apple Mail Privacy Protection (MPP) proxy') }}">
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                            <span x-text="formatNumber(summary.opens_proxy) + ' {{ __('Apple MPP') }}'"></span>
+                            <span class="w-1 h-1 rounded-full bg-purple-400/80"></span>
+                            <span x-text="formatNumber(summary.opens_proxy) + ' {{ __('MPP') }}'"></span>
                         </span>
                     </div>
                     <div class="card-metric-trend mt-2" :class="getVarianceClass(variance.opens)">
@@ -146,10 +146,10 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Total Clicks') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
-                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                    <div class="flex items-center gap-1.5 mt-1.5 flex-nowrap overflow-hidden">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-300/80 shrink-0"
                               title="{{ __('Unique individual contacts who clicked at least one link') }}">
-                            <x-heroicon-m-user class="w-3 h-3"/>
+                            <x-heroicon-m-user class="w-2.5 h-2.5 opacity-70"/>
                             <span x-text="formatNumber(summary.clicks_unique) + ' {{ __('Unique') }}'"></span>
                         </span>
                     </div>
@@ -196,15 +196,15 @@
                      data-metric="bounces">
                     <div class="mailchimp-label">{{ __('Bounces (Undelivered)') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.bounces)"></div>
-                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                    <div class="flex items-center gap-1.5 mt-1.5 flex-nowrap overflow-hidden">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/10 text-rose-300/80 shrink-0"
                               title="{{ __('Permanent delivery failures (e.g. invalid or non-existent email addresses)') }}">
-                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                            <span class="w-1 h-1 rounded-full bg-rose-400/80"></span>
                             <span x-text="formatNumber(summary.bounces_hard) + ' {{ __('Hard') }}'"></span>
                         </span>
-                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-300/80 shrink-0"
                               title="{{ __('Temporary delivery issues (e.g. mailbox full or temporary server error)') }}">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                            <span class="w-1 h-1 rounded-full bg-amber-400/80"></span>
                             <span x-text="formatNumber(summary.bounces_soft) + ' {{ __('Soft') }}'"></span>
                         </span>
                     </div>
