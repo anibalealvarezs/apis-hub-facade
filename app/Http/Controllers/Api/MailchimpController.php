@@ -279,6 +279,11 @@ class MailchimpController extends Controller
                 'channel' => 'mailchimp',
                 'channeledAccount' => (string) $validated['account'],
             ];
+            if ($tab === 'campaigns') {
+                $tableFilters['campaignType'] = 'regular';
+            } elseif ($tab === 'automations') {
+                $tableFilters['campaignType'] = 'automation';
+            }
             $this->applyDynamicFilters($tableFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $tabPayload = [
