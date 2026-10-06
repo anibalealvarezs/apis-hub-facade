@@ -25,6 +25,10 @@ class ChannelGranularityRegistry
             'google_analytics' => self::getGa4Dimensions($dependency),
             'facebook_marketing' => self::getFbMarketingDimensions($dependency),
             'facebook_organic' => self::getFbOrganicDimensions($dependency),
+            'mailchimp' => [
+                'channeledCampaign' => __('Campaign'),
+                'dimensions.page' => __('Page / URL'),
+            ],
             default => [],
         };
 

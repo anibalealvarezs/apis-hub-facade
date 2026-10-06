@@ -3673,7 +3673,41 @@
                     $dimVal = '/'.$dimVal;
                 }
 
-                // Canonicalize trailing slashes so '/page/' and '/page' match across GSC and GA4
+                // Strip email & marketing tracking parameters (utm_*, mc_cid, mc_eid, etc.) so cross-channel page paths align
+                if ($isPageDimension && str_contains($dimVal, '?')) {
+                    [$basePath, $rawQuery] = explode('?', $dimVal, 2);
+                    parse_str($rawQuery, $queryParams);
+                    if (is_array($queryParams) && !empty($queryParams)) {
+                        $filtered = [];
+                        $trackingPrefixes = ['utm_', 'mc_'];
+                        $trackingKeys = ['gclid', 'fbclid', 'msclkid', 'ttclid', 'dclid', '_hsenc', '_hsmi', 'ref', 'source'];
+
+                        foreach ($queryParams as $pKey => $pVal) {
+                            $lowerKey = strtolower((string)$pKey);
+                            $isTracking = in_array($lowerKey, $trackingKeys, true);
+                            if (!$isTracking) {
+                                foreach ($trackingPrefixes as $prefix) {
+                                    if (str_starts_with($lowerKey, $prefix)) {
+                                        $isTracking = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!$isTracking) {
+                                $filtered[$pKey] = $pVal;
+                            }
+                        }
+
+                        if (!empty($filtered)) {
+                            ksort($filtered);
+                            $dimVal = $basePath . '?' . http_build_query($filtered);
+                        } else {
+                            $dimVal = $basePath;
+                        }
+                    }
+                }
+
+                // Canonicalize trailing slashes so '/page/' and '/page' match across GSC, GA4, Mailchimp, etc.
                 if ($isPageDimension && $dimVal !== '/' && str_ends_with($dimVal, '/')) {
                     $dimVal = rtrim($dimVal, '/');
                 }
