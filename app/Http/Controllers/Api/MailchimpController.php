@@ -282,7 +282,7 @@ class MailchimpController extends Controller
             if ($tab === 'campaigns') {
                 $tableFilters['campaignType'] = 'regular';
             } elseif ($tab === 'automations') {
-                $tableFilters['campaignType'] = 'automation';
+                $tableFilters['campaignType'] = ['operator' => 'in', 'value' => ['automation', 'automation-email']];
             }
             $this->applyDynamicFilters($tableFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
@@ -310,7 +310,7 @@ class MailchimpController extends Controller
             $tableData = $results['table']['data'] ?? [];
 
             return response()->json([
-                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab, $tenant, $service),
+                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab),
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['table']['retryable']),
             ]);
@@ -410,9 +410,7 @@ class MailchimpController extends Controller
     private function normalizeTableRows(
         $rows,
         string $dimensionKey,
-        string $activeTab = 'campaigns',
-        ?Project $tenant = null,
-        ?RemoteEngineService $service = null
+        string $activeTab = 'campaigns'
     ): array {
         if (!is_array($rows)) {
             return [];
@@ -421,29 +419,6 @@ class MailchimpController extends Controller
         $dimensionFull = strtolower($dimensionKey);
         $dimensionStripped = strtolower(str_replace(['channeled', 'dimensions.'], '', $dimensionKey));
         $isCampaignDimension = in_array($dimensionStripped, ['campaign', 'channeledcampaign'], true);
-
-        // Map campaign types if on campaigns or automations tab
-        $campaignTypes = [];
-        if ($isCampaignDimension && in_array($activeTab, ['campaigns', 'automations'], true) && $tenant && $service) {
-            try {
-                $campResp = $service->listChanneled($tenant, 'mailchimp', 'channeled_campaign', ['limit' => 2000]);
-                if (isset($campResp['data']) && is_array($campResp['data'])) {
-                    foreach ($campResp['data'] as $c) {
-                        $cId = (string)($c['id'] ?? '');
-                        $cPlatformId = (string)($c['platformId'] ?? $c['platform_id'] ?? '');
-                        $cType = strtolower((string)($c['type'] ?? ($c['data']['type'] ?? 'regular')));
-                        if ($cId !== '') {
-                            $campaignTypes[$cId] = $cType;
-                        }
-                        if ($cPlatformId !== '') {
-                            $campaignTypes[$cPlatformId] = $cType;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning("Could not fetch channeled_campaigns for type segmentation: " . $e->getMessage());
-            }
-        }
 
         $normalized = [];
 
@@ -472,19 +447,6 @@ class MailchimpController extends Controller
 
             if ($value === null || $value === '' || $value === 'N/A' || $value === '(not set)') {
                 $value = 'Unknown';
-            }
-
-            // Filter between standard campaigns vs automations
-            if ($isCampaignDimension && in_array($activeTab, ['campaigns', 'automations'], true) && !empty($campaignTypes)) {
-                $matchedType = $campaignTypes[(string)$idVal] ?? ($campaignTypes[(string)$value] ?? 'regular');
-                $isAutomation = in_array($matchedType, ['automation', 'automation-email', 'workflow', 'automations'], true);
-
-                if ($activeTab === 'automations' && !$isAutomation) {
-                    continue;
-                }
-                if ($activeTab === 'campaigns' && $isAutomation) {
-                    continue;
-                }
             }
 
             $entry = $row;
