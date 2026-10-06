@@ -11,6 +11,13 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Mailchimp Data Explorer KPI & Sub-Metric Breakdown Redesign (2026-10-06)
+- **Context & Design:**
+  - Redesigned the Mailchimp KPI cards and campaign table cells to clearly explain the newly supported granular metric variations (`opens_standard`, `opens_proxy`, `clicks_unique`, `bounces_hard`, `bounces_soft`).
+  - Separated Bounces into its own dedicated KPI card (`Bounces (Undelivered)`) with permanent delivery failure badges (`Hard`) and temporary delivery failure badges (`Soft`), alongside the % of sent bounce rate.
+  - Added clear contextual badges with tooltips to Opens (`Human` vs `Apple MPP` proxy) and Clicks (`Unique` recipient clickers).
+  - Added a dedicated `Bounces` column to the Data Explorer table with hard (`h`) and soft (`s`) breakdown indicators, as well as human/proxy (`h`/`p`) indicators under Opens and unique (`uniq`) indicators under Clicks.
+
 ### Mailchimp Data Explorer Channel Resolution (2026-10-01)
 - **Problem & Context:**
   - In Mailchimp Data Explorer (`/api/mailchimp/summary`, `/chart`, `/table`), all metrics were returning `null`.
