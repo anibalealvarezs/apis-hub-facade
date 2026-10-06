@@ -245,7 +245,7 @@
                                 <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
-                                <div class="mailchimp-name-text" :title="row.id" x-text="row.id"></div>
+                                <div class="mailchimp-name-text" :title="row.name || row.id" x-text="row.name || row.id"></div>
                             </div>
                         </td>
                         <td class="metric-cell">

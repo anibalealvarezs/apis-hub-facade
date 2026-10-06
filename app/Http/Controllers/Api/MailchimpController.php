@@ -305,7 +305,7 @@ class MailchimpController extends Controller
             $tableData = $results['table']['data'] ?? [];
 
             return response()->json([
-                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0]),
+                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab, $tenant, $service),
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['table']['retryable']),
             ]);
@@ -398,16 +398,47 @@ class MailchimpController extends Controller
 
     /**
      * Give every table row an `id`/`name` the frontend can sort, filter and display,
-     * and append the derived open/click rate so the table can show them too.
+     * append the derived open/click rate so the table can show them too,
+     * exclude unassigned/rollup rows when breaking down by individual campaigns,
+     * and filter rows based on the active breakdown tab (campaigns vs automations).
      */
-    private function normalizeTableRows($rows, string $dimensionKey): array
-    {
+    private function normalizeTableRows(
+        $rows,
+        string $dimensionKey,
+        string $activeTab = 'campaigns',
+        ?Project $tenant = null,
+        ?RemoteEngineService $service = null
+    ): array {
         if (!is_array($rows)) {
             return [];
         }
 
         $dimensionFull = strtolower($dimensionKey);
         $dimensionStripped = strtolower(str_replace(['channeled', 'dimensions.'], '', $dimensionKey));
+        $isCampaignDimension = in_array($dimensionStripped, ['campaign', 'channeledcampaign'], true);
+
+        // Map campaign types if on campaigns or automations tab
+        $campaignTypes = [];
+        if ($isCampaignDimension && in_array($activeTab, ['campaigns', 'automations'], true) && $tenant && $service) {
+            try {
+                $campResp = $service->listChanneled($tenant, 'mailchimp', 'channeled_campaign', ['limit' => 2000]);
+                if (isset($campResp['data']) && is_array($campResp['data'])) {
+                    foreach ($campResp['data'] as $c) {
+                        $cId = (string)($c['id'] ?? '');
+                        $cPlatformId = (string)($c['platformId'] ?? $c['platform_id'] ?? '');
+                        $cType = strtolower((string)($c['type'] ?? ($c['data']['type'] ?? 'regular')));
+                        if ($cId !== '') {
+                            $campaignTypes[$cId] = $cType;
+                        }
+                        if ($cPlatformId !== '') {
+                            $campaignTypes[$cPlatformId] = $cType;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Could not fetch channeled_campaigns for type segmentation: " . $e->getMessage());
+            }
+        }
 
         $normalized = [];
 
@@ -418,13 +449,37 @@ class MailchimpController extends Controller
 
             $lower = array_change_key_case($row, CASE_LOWER);
 
-            $value = $lower[$dimensionFull]
-                ?? $lower[$dimensionStripped]
+            $idVal = $lower[$dimensionFull . '_id']
+                ?? $lower[$dimensionStripped . '_id']
                 ?? $lower['id']
                 ?? null;
 
+            $value = $lower[$dimensionFull]
+                ?? $lower[$dimensionStripped]
+                ?? $lower['name']
+                ?? $lower['id']
+                ?? null;
+
+            // When grouping by campaign, omit unassigned account-level rollup rows (N/A / Unknown)
+            if ($isCampaignDimension && ($idVal === null || $value === null || $value === '' || $value === 'N/A' || $value === 'Unknown' || $value === '(not set)')) {
+                continue;
+            }
+
             if ($value === null || $value === '' || $value === 'N/A' || $value === '(not set)') {
                 $value = 'Unknown';
+            }
+
+            // Filter between standard campaigns vs automations
+            if ($isCampaignDimension && in_array($activeTab, ['campaigns', 'automations'], true) && !empty($campaignTypes)) {
+                $matchedType = $campaignTypes[(string)$idVal] ?? ($campaignTypes[(string)$value] ?? 'regular');
+                $isAutomation = in_array($matchedType, ['automation', 'automation-email', 'workflow', 'automations'], true);
+
+                if ($activeTab === 'automations' && !$isAutomation) {
+                    continue;
+                }
+                if ($activeTab === 'campaigns' && $isAutomation) {
+                    continue;
+                }
             }
 
             $entry = $row;
