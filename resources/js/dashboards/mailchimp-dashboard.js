@@ -756,6 +756,11 @@ export function mailchimpDashboard(config = {}) {
             return Math.max(...this.tableState.sortedRows.map(r => Number(r.unsubscribes) || 0)) || 1;
         },
 
+        get maxBounces() {
+            if (!this.tableState.sortedRows.length) return 1;
+            return Math.max(...this.tableState.sortedRows.map(r => Number(r.bounces) || 0)) || 1;
+        },
+
         formatNumber(num) {
             if (num === undefined || num === null) return '0';
             return new Intl.NumberFormat('en-US').format(num);

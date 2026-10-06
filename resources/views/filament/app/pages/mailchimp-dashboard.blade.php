@@ -113,6 +113,7 @@
                         <span x-text="formatVariance(variance.sends)"></span>
                     </div>
                 </div>
+
                 <div class="card-stat-mailchimp" :class="activeMetrics.opens ? 'active' : ''" @click="toggleMetric('opens')"
                      data-metric="opens">
                     <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
@@ -120,16 +121,24 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Total Opens') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.opens)"></div>
-                    <div class="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span :title="'{{ __('Standard Human Opens') }}'" x-text="formatNumber(summary.opens_standard) + ' {{ __('std') }}'"></span>
-                        <span class="opacity-50">·</span>
-                        <span :title="'{{ __('Apple MPP / Proxy Opens') }}'" x-text="formatNumber(summary.opens_proxy) + ' {{ __('proxy') }}'"></span>
+                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              title="{{ __('Standard human opens by recipients') }}">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span x-text="formatNumber(summary.opens_standard) + ' {{ __('Human') }}'"></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                              title="{{ __('Preloaded by Apple Mail Privacy Protection (MPP) proxy') }}">
+                            <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                            <span x-text="formatNumber(summary.opens_proxy) + ' {{ __('Apple MPP') }}'"></span>
+                        </span>
                     </div>
-                    <div class="card-metric-trend mt-1" :class="getVarianceClass(variance.opens)">
+                    <div class="card-metric-trend mt-2" :class="getVarianceClass(variance.opens)">
                         <span x-text="getVarianceIcon(variance.opens)"></span>
                         <span x-text="formatVariance(variance.opens)"></span>
                     </div>
                 </div>
+
                 <div class="card-stat-mailchimp" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
                      data-metric="clicks">
                     <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
@@ -137,14 +146,19 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Total Clicks') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
-                    <div class="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span :title="'{{ __('Unique Recipients Who Clicked') }}'" x-text="'{{ __('Unique') }}: ' + formatNumber(summary.clicks_unique)"></span>
+                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              title="{{ __('Unique individual contacts who clicked at least one link') }}">
+                            <x-heroicon-m-user class="w-3 h-3"/>
+                            <span x-text="formatNumber(summary.clicks_unique) + ' {{ __('Unique') }}'"></span>
+                        </span>
                     </div>
-                    <div class="card-metric-trend mt-1" :class="getVarianceClass(variance.clicks)">
+                    <div class="card-metric-trend mt-2" :class="getVarianceClass(variance.clicks)">
                         <span x-text="getVarianceIcon(variance.clicks)"></span>
                         <span x-text="formatVariance(variance.clicks)"></span>
                     </div>
                 </div>
+
                 <div class="card-stat-mailchimp" :class="activeMetrics.open_rate ? 'active' : ''" @click="toggleMetric('open_rate')"
                      data-metric="open_rate">
                     <div class="mailchimp-label">{{ __('Average Open Rate') }}</div>
@@ -154,6 +168,7 @@
                         <span x-text="formatVariance(variance.open_rate)"></span>
                     </div>
                 </div>
+
                 <div class="card-stat-mailchimp" :class="activeMetrics.click_rate ? 'active' : ''" @click="toggleMetric('click_rate')"
                      data-metric="click_rate">
                     <div class="mailchimp-label">{{ __('Average Click Rate') }}</div>
@@ -163,6 +178,7 @@
                         <span x-text="formatVariance(variance.click_rate)"></span>
                     </div>
                 </div>
+
                 <div class="card-stat-mailchimp" :class="activeMetrics.unsubscribes ? 'active' : ''" @click="toggleMetric('unsubscribes')"
                      data-metric="unsubscribes">
                     <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
@@ -170,12 +186,30 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Unsubscribes') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.unsubscribes)"></div>
-                    <div class="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span :title="'{{ __('Bounces') }}'" x-text="'{{ __('Bounces') }}: ' + formatNumber(summary.bounces)"></span>
-                    </div>
-                    <div class="card-metric-trend mt-1" :class="getVarianceClass(variance.unsubscribes, true)">
+                    <div class="card-metric-trend mt-2" :class="getVarianceClass(variance.unsubscribes, true)">
                         <span x-text="getVarianceIcon(variance.unsubscribes, true)"></span>
                         <span x-text="formatVariance(variance.unsubscribes)"></span>
+                    </div>
+                </div>
+
+                <div class="card-stat-mailchimp"
+                     data-metric="bounces">
+                    <div class="mailchimp-label">{{ __('Bounces (Undelivered)') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.bounces)"></div>
+                    <div class="flex items-center gap-1.5 mt-2 flex-wrap">
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                              title="{{ __('Permanent delivery failures (e.g. invalid or non-existent email addresses)') }}">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                            <span x-text="formatNumber(summary.bounces_hard) + ' {{ __('Hard') }}'"></span>
+                        </span>
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              title="{{ __('Temporary delivery issues (e.g. mailbox full or temporary server error)') }}">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                            <span x-text="formatNumber(summary.bounces_soft) + ' {{ __('Soft') }}'"></span>
+                        </span>
+                    </div>
+                    <div class="card-metric-trend mt-2 text-xs text-gray-400 opacity-70">
+                        <span x-text="(summary.sends > 0 ? ((summary.bounces / summary.sends) * 100).toFixed(2) : '0.00') + '% {{ __('of sent') }}'"></span>
                     </div>
                 </div>
             </div>
@@ -242,6 +276,7 @@
                     <x-data-table.column state="tableState" key="open_rate" label="{{ __('Open Rate') }}"/>
                     <x-data-table.column state="tableState" key="clicks" label="{{ __('Clicks') }}"/>
                     <x-data-table.column state="tableState" key="click_rate" label="{{ __('Click Rate') }}"/>
+                    <x-data-table.column state="tableState" key="bounces" label="{{ __('Bounces') }}"/>
                     <x-data-table.column state="tableState" key="unsubscribes" label="{{ __('Unsubscribes') }}"/>
                 </tr>
                 </thead>
@@ -268,6 +303,11 @@
                         </td>
                         <td class="metric-cell">
                             <div class="metric-val-main" x-text="formatNumber(row.opens)"></div>
+                            <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                <span title="{{ __('Human opens') }}" x-text="formatNumber(row.opens_standard) + 'h'"></span>
+                                <span class="opacity-40">·</span>
+                                <span title="{{ __('Apple MPP proxy opens') }}" x-text="formatNumber(row.opens_proxy) + 'p'"></span>
+                            </div>
                             <div class="progress-bar-container">
                                 <div class="progress-bar-fill mailchimp-bar-opens"
                                      :style="`width: ${maxOpens > 0 ? (row.opens / maxOpens) * 100 : 0}%`"></div>
@@ -282,6 +322,9 @@
                         </td>
                         <td class="metric-cell">
                             <div class="metric-val-main" x-text="formatNumber(row.clicks)"></div>
+                            <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" title="{{ __('Unique clickers') }}">
+                                <span x-text="formatNumber(row.clicks_unique) + ' {{ __('uniq') }}'"></span>
+                            </div>
                             <div class="progress-bar-container">
                                 <div class="progress-bar-fill mailchimp-bar-clicks"
                                      :style="`width: ${maxClicks > 0 ? (row.clicks / maxClicks) * 100 : 0}%`"></div>
@@ -292,6 +335,18 @@
                             <div class="progress-bar-container">
                                 <div class="progress-bar-fill mailchimp-bar-click-rate"
                                      :style="`width: ${row.click_rate * 100}%`"></div>
+                            </div>
+                        </td>
+                        <td class="metric-cell">
+                            <div class="metric-val-main" x-text="formatNumber(row.bounces)"></div>
+                            <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                <span title="{{ __('Hard bounces') }}" x-text="formatNumber(row.bounces_hard) + 'h'"></span>
+                                <span class="opacity-40">·</span>
+                                <span title="{{ __('Soft bounces') }}" x-text="formatNumber(row.bounces_soft) + 's'"></span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill bg-rose-500"
+                                     :style="`width: ${maxBounces > 0 ? (row.bounces / maxBounces) * 100 : 0}%`"></div>
                             </div>
                         </td>
                         <td class="metric-cell">
