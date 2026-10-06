@@ -63,9 +63,15 @@ const TABS = ['campaigns', 'automations', 'audiences'];
 const EMPTY_SUMMARY = {
     sends: 0,
     opens: 0,
+    opens_standard: 0,
+    opens_proxy: 0,
     clicks: 0,
+    clicks_unique: 0,
     open_rate: 0,
     click_rate: 0,
+    bounces: 0,
+    bounces_hard: 0,
+    bounces_soft: 0,
     unsubscribes: 0,
 };
 

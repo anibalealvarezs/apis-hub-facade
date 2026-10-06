@@ -18,8 +18,13 @@ class MailchimpController extends Controller
     private const AVAILABLE_AGGS = [
         'sends' => 'sends',
         'opens' => 'opens',
+        'opens_standard' => 'opens_standard',
+        'opens_proxy' => 'opens_proxy',
         'clicks' => 'clicks',
+        'clicks_unique' => 'clicks_unique',
         'bounces' => 'bounces',
+        'bounces_hard' => 'bounces_hard',
+        'bounces_soft' => 'bounces_soft',
         'unsubscribes' => 'unsubscribes',
         'orders' => 'orders',
         'revenue' => 'revenue',

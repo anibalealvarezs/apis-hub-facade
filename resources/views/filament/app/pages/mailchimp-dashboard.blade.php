@@ -120,7 +120,12 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Total Opens') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.opens)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.opens)">
+                    <div class="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span :title="'{{ __('Standard Human Opens') }}'" x-text="formatNumber(summary.opens_standard) + ' {{ __('std') }}'"></span>
+                        <span class="opacity-50">·</span>
+                        <span :title="'{{ __('Apple MPP / Proxy Opens') }}'" x-text="formatNumber(summary.opens_proxy) + ' {{ __('proxy') }}'"></span>
+                    </div>
+                    <div class="card-metric-trend mt-1" :class="getVarianceClass(variance.opens)">
                         <span x-text="getVarianceIcon(variance.opens)"></span>
                         <span x-text="formatVariance(variance.opens)"></span>
                     </div>
@@ -132,7 +137,10 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Total Clicks') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
+                    <div class="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span :title="'{{ __('Unique Recipients Who Clicked') }}'" x-text="'{{ __('Unique') }}: ' + formatNumber(summary.clicks_unique)"></span>
+                    </div>
+                    <div class="card-metric-trend mt-1" :class="getVarianceClass(variance.clicks)">
                         <span x-text="getVarianceIcon(variance.clicks)"></span>
                         <span x-text="formatVariance(variance.clicks)"></span>
                     </div>
@@ -162,7 +170,10 @@
                     </div>
                     <div class="mailchimp-label">{{ __('Unsubscribes') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.unsubscribes)"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.unsubscribes, true)">
+                    <div class="flex items-center justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <span :title="'{{ __('Bounces') }}'" x-text="'{{ __('Bounces') }}: ' + formatNumber(summary.bounces)"></span>
+                    </div>
+                    <div class="card-metric-trend mt-1" :class="getVarianceClass(variance.unsubscribes, true)">
                         <span x-text="getVarianceIcon(variance.unsubscribes, true)"></span>
                         <span x-text="formatVariance(variance.unsubscribes)"></span>
                     </div>
