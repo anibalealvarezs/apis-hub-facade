@@ -58,7 +58,7 @@ const MAILCHIMP_METRICS = {
     },
 };
 
-const TABS = ['campaigns', 'automations', 'audiences'];
+const TABS = ['campaigns', 'automations', 'audiences', 'urls'];
 
 const EMPTY_SUMMARY = {
     sends: 0,
@@ -93,7 +93,7 @@ export function mailchimpDashboard(config = {}) {
         summary: { ...EMPTY_SUMMARY },
         previous: { ...EMPTY_SUMMARY },
         chartDataRaw: [],
-        tableState: dataTable({ sortCol: 'sends', sortDir: 'desc', searchKeys: ['id'] }),
+        tableState: dataTable({ sortCol: 'clicks', sortDir: 'desc', searchKeys: ['id'] }),
         trendData: {},
         showTrends: false,
 
@@ -106,7 +106,7 @@ export function mailchimpDashboard(config = {}) {
             unsubscribes: false,
         },
 
-        activeFilters: { campaigns: [], automations: [], audiences: [] },
+        activeFilters: { campaigns: [], automations: [], audiences: [], urls: [] },
 
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
@@ -224,6 +224,7 @@ export function mailchimpDashboard(config = {}) {
                         campaigns: Array.isArray(parsed?.campaigns) ? parsed.campaigns : [],
                         automations: Array.isArray(parsed?.automations) ? parsed.automations : [],
                         audiences: Array.isArray(parsed?.audiences) ? parsed.audiences : [],
+                        urls: Array.isArray(parsed?.urls) ? parsed.urls : [],
                     };
                 } catch (e) {
                     this.clearFiltersLocal();
@@ -239,7 +240,7 @@ export function mailchimpDashboard(config = {}) {
         },
 
         clearFiltersLocal() {
-            this.activeFilters = { campaigns: [], automations: [], audiences: [] };
+            this.activeFilters = { campaigns: [], automations: [], audiences: [], urls: [] };
         },
 
         clearFilters() {

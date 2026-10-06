@@ -37,6 +37,7 @@ class MailchimpController extends Controller
         'campaigns' => 'channeledCampaign',
         'automations' => 'channeledCampaign',
         'audiences' => 'channeledAccount',
+        'urls' => 'dimensions.page',
     ];
 
     private function validateRequest(Request $request): array
@@ -46,7 +47,7 @@ class MailchimpController extends Controller
             'account' => 'required|string',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,automations,audiences',
+            'activeTab' => 'nullable|string|in:campaigns,automations,audiences,urls',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
             'filters' => 'nullable|array',
@@ -436,17 +437,24 @@ class MailchimpController extends Controller
 
             $idVal = $lower[$dimensionFull . '_id']
                 ?? $lower[$dimensionStripped . '_id']
+                ?? $lower['page_id']
                 ?? $lower['id']
                 ?? null;
 
             $value = $lower[$dimensionFull]
                 ?? $lower[$dimensionStripped]
+                ?? $lower['page']
                 ?? $lower['name']
                 ?? $lower['id']
                 ?? null;
 
             // When grouping by campaign, omit unassigned account-level rollup rows (N/A / Unknown)
             if ($isCampaignDimension && ($idVal === null || $value === null || $value === '' || $value === 'N/A' || $value === 'Unknown' || $value === '(not set)')) {
+                continue;
+            }
+
+            // When grouping by URLs / pages, omit unknown rollup rows
+            if ($activeTab === 'urls' && ($value === null || $value === '' || $value === 'N/A' || $value === 'unknown' || $value === 'Unknown' || $value === '(not set)')) {
                 continue;
             }
 
