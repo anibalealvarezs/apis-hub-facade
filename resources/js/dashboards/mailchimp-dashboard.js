@@ -752,6 +752,11 @@ export function mailchimpDashboard(config = {}) {
             return Math.max(...this.tableState.sortedRows.map(r => Number(r.clicks) || 0)) || 1;
         },
 
+        get maxClicksUnique() {
+            if (!this.tableState.sortedRows.length) return 1;
+            return Math.max(...this.tableState.sortedRows.map(r => Number(r.clicks_unique) || 0)) || 1;
+        },
+
         get maxUnsubscribes() {
             if (!this.tableState.sortedRows.length) return 1;
             return Math.max(...this.tableState.sortedRows.map(r => Number(r.unsubscribes) || 0)) || 1;

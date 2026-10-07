@@ -273,13 +273,36 @@
                     <x-data-table.column sortable="false">
                         <span x-text="activeTab === 'urls' ? '{{ __('URL / PAGE') }}' : (activeTab === 'audiences' ? '{{ __('AUDIENCE') }}' : (activeTab === 'automations' ? '{{ __('AUTOMATION') }}' : '{{ __('CAMPAIGN') }}'))"></span>
                     </x-data-table.column>
-                    <x-data-table.column state="tableState" key="sends" label="{{ __('Emails Sent') }}"/>
-                    <x-data-table.column state="tableState" key="opens" label="{{ __('Opens') }}"/>
-                    <x-data-table.column state="tableState" key="open_rate" label="{{ __('Open Rate') }}"/>
-                    <x-data-table.column state="tableState" key="clicks" label="{{ __('Clicks') }}"/>
-                    <x-data-table.column state="tableState" key="click_rate" label="{{ __('Click Rate') }}"/>
-                    <x-data-table.column state="tableState" key="bounces" label="{{ __('Bounces') }}"/>
-                    <x-data-table.column state="tableState" key="unsubscribes" label="{{ __('Unsubscribes') }}"/>
+
+                    <!-- Campaign / Audience / Automation columns -->
+                    <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="sends" label="{{ __('Emails Sent') }}"/>
+                    </template>
+                    <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="opens" label="{{ __('Opens') }}"/>
+                    </template>
+                    <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="open_rate" label="{{ __('Open Rate') }}"/>
+                    </template>
+
+                    <!-- Clicks column (always present) -->
+                    <x-data-table.column state="tableState" key="clicks" label="{{ __('Total Clicks') }}"/>
+
+                    <!-- Specific to URLs tab: Unique Clicks column -->
+                    <template x-if="activeTab === 'urls'">
+                        <x-data-table.column state="tableState" key="clicks_unique" label="{{ __('Unique Clicks') }}"/>
+                    </template>
+
+                    <!-- Campaign / Audience / Automation remaining columns -->
+                    <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="click_rate" label="{{ __('Click Rate') }}"/>
+                    </template>
+                    <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="bounces" label="{{ __('Bounces') }}"/>
+                    </template>
+                    <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="unsubscribes" label="{{ __('Unsubscribes') }}"/>
+                    </template>
                 </tr>
                 </thead>
                 <tbody>
@@ -296,35 +319,49 @@
                                 <div class="mailchimp-name-text" :title="row.name || row.id" x-text="row.name || row.id"></div>
                             </div>
                         </td>
-                        <td class="metric-cell">
-                            <div class="metric-val-main" x-text="formatNumber(row.sends)"></div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill mailchimp-bar-sends"
-                                     :style="`width: ${maxSends > 0 ? (row.sends / maxSends) * 100 : 0}%`"></div>
-                            </div>
-                        </td>
-                        <td class="metric-cell">
-                            <div class="metric-val-main" x-text="formatNumber(row.opens)"></div>
-                            <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                                <span title="{{ __('Human opens') }}" x-text="formatNumber(row.opens_standard) + 'h'"></span>
-                                <span class="opacity-40">·</span>
-                                <span title="{{ __('Apple MPP proxy opens') }}" x-text="formatNumber(row.opens_proxy) + 'p'"></span>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill mailchimp-bar-opens"
-                                     :style="`width: ${maxOpens > 0 ? (row.opens / maxOpens) * 100 : 0}%`"></div>
-                            </div>
-                        </td>
-                        <td class="metric-cell">
-                            <div class="metric-val-main" x-text="formatPercent(row.open_rate)"></div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill mailchimp-bar-open-rate"
-                                     :style="`width: ${row.open_rate * 100}%`"></div>
-                            </div>
-                        </td>
+
+                        <!-- Sends (only non-urls) -->
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatNumber(row.sends)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill mailchimp-bar-sends"
+                                         :style="`width: ${maxSends > 0 ? (row.sends / maxSends) * 100 : 0}%`"></div>
+                                </div>
+                            </td>
+                        </template>
+
+                        <!-- Opens (only non-urls) -->
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatNumber(row.opens)"></div>
+                                <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                    <span title="{{ __('Human opens') }}" x-text="formatNumber(row.opens_standard) + 'h'"></span>
+                                    <span class="opacity-40">·</span>
+                                    <span title="{{ __('Apple MPP proxy opens') }}" x-text="formatNumber(row.opens_proxy) + 'p'"></span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill mailchimp-bar-opens"
+                                         :style="`width: ${maxOpens > 0 ? (row.opens / maxOpens) * 100 : 0}%`"></div>
+                                </div>
+                            </td>
+                        </template>
+
+                        <!-- Open Rate (only non-urls) -->
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatPercent(row.open_rate)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill mailchimp-bar-open-rate"
+                                         :style="`width: ${row.open_rate * 100}%`"></div>
+                                </div>
+                            </td>
+                        </template>
+
+                        <!-- Clicks -->
                         <td class="metric-cell">
                             <div class="metric-val-main" x-text="formatNumber(row.clicks)"></div>
-                            <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" title="{{ __('Unique clickers') }}">
+                            <div x-show="activeTab !== 'urls'" class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" title="{{ __('Unique clickers') }}">
                                 <span x-text="formatNumber(row.clicks_unique) + ' {{ __('uniq') }}'"></span>
                             </div>
                             <div class="progress-bar-container">
@@ -332,32 +369,55 @@
                                      :style="`width: ${maxClicks > 0 ? (row.clicks / maxClicks) * 100 : 0}%`"></div>
                             </div>
                         </td>
-                        <td class="metric-cell">
-                            <div class="metric-val-main" x-text="formatPercent(row.click_rate)"></div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill mailchimp-bar-click-rate"
-                                     :style="`width: ${row.click_rate * 100}%`"></div>
-                            </div>
-                        </td>
-                        <td class="metric-cell">
-                            <div class="metric-val-main" x-text="formatNumber(row.bounces)"></div>
-                            <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                                <span title="{{ __('Hard bounces') }}" x-text="formatNumber(row.bounces_hard) + 'h'"></span>
-                                <span class="opacity-40">·</span>
-                                <span title="{{ __('Soft bounces') }}" x-text="formatNumber(row.bounces_soft) + 's'"></span>
-                            </div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill bg-rose-500"
-                                     :style="`width: ${maxBounces > 0 ? (row.bounces / maxBounces) * 100 : 0}%`"></div>
-                            </div>
-                        </td>
-                        <td class="metric-cell">
-                            <div class="metric-val-main" x-text="formatNumber(row.unsubscribes)"></div>
-                            <div class="progress-bar-container">
-                                <div class="progress-bar-fill mailchimp-bar-unsubscribes"
-                                     :style="`width: ${maxUnsubscribes > 0 ? (row.unsubscribes / maxUnsubscribes) * 100 : 0}%`"></div>
-                            </div>
-                        </td>
+
+                        <!-- Unique Clicks (only urls tab) -->
+                        <template x-if="activeTab === 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatNumber(row.clicks_unique)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill mailchimp-bar-clicks opacity-75"
+                                         :style="`width: ${maxClicksUnique > 0 ? (row.clicks_unique / maxClicksUnique) * 100 : 0}%`"></div>
+                                </div>
+                            </td>
+                        </template>
+
+                        <!-- Click Rate (only non-urls) -->
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatPercent(row.click_rate)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill mailchimp-bar-click-rate"
+                                         :style="`width: ${row.click_rate * 100}%`"></div>
+                                </div>
+                            </td>
+                        </template>
+
+                        <!-- Bounces (only non-urls) -->
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatNumber(row.bounces)"></div>
+                                <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                    <span title="{{ __('Hard bounces') }}" x-text="formatNumber(row.bounces_hard) + 'h'"></span>
+                                    <span class="opacity-40">·</span>
+                                    <span title="{{ __('Soft bounces') }}" x-text="formatNumber(row.bounces_soft) + 's'"></span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill bg-rose-500"
+                                         :style="`width: ${maxBounces > 0 ? (row.bounces / maxBounces) * 100 : 0}%`"></div>
+                                </div>
+                            </td>
+                        </template>
+
+                        <!-- Unsubscribes (only non-urls) -->
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatNumber(row.unsubscribes)"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill mailchimp-bar-unsubscribes"
+                                         :style="`width: ${maxUnsubscribes > 0 ? (row.unsubscribes / maxUnsubscribes) * 100 : 0}%`"></div>
+                                </div>
+                            </td>
+                        </template>
                     </x-data-table.row>
                 </template>
                 </tbody>
