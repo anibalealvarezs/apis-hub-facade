@@ -48,6 +48,7 @@ class MailchimpController extends Controller
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:campaigns,automations,audiences,urls',
+            'campaignType' => 'nullable|string|in:all,regular,rss,variate,plaintext',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
             'filters' => 'nullable|array',
@@ -286,7 +287,15 @@ class MailchimpController extends Controller
                 'channeledAccount' => (string) $validated['account'],
             ];
             if ($tab === 'campaigns') {
-                $tableFilters['campaignType'] = 'regular';
+                $typeFilter = $validated['campaignType'] ?? 'all';
+                if ($typeFilter && $typeFilter !== 'all') {
+                    $tableFilters['campaignType'] = $typeFilter;
+                } else {
+                    $tableFilters['campaignType'] = [
+                        'operator' => 'in',
+                        'value' => ['regular', 'rss', 'variate', 'ab_split', 'plaintext']
+                    ];
+                }
             } elseif ($tab === 'automations') {
                 $tableFilters['campaignType'] = ['operator' => 'in', 'value' => ['automation', 'automation-email']];
             }
@@ -465,6 +474,11 @@ class MailchimpController extends Controller
             $entry = $row;
             $entry['id'] = (string) $value;
             $entry['name'] = (string) $value;
+
+            if ($isCampaignDimension) {
+                $rawType = $lower['type'] ?? $lower['campaigntype'] ?? $lower['campaign_type'] ?? null;
+                $entry['campaign_type'] = $rawType ? (string) $rawType : ($activeTab === 'automations' ? 'automation' : 'regular');
+            }
 
             foreach (self::AVAILABLE_AGGS as $metric => $_) {
                 if (array_key_exists($metric, $lower)) {

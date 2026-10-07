@@ -48,6 +48,7 @@ class MailchimpDashboard extends Page
 
     public array $accounts = [];
     public string $activeTab = 'campaigns';
+    public string $campaignType = 'all';
 
     protected static function getChannelConfigKey(): string
     {
@@ -159,5 +160,10 @@ class MailchimpDashboard extends Page
     public function setActiveTab(string $tab): void
     {
         $this->activeTab = $tab;
+    }
+
+    public function setCampaignType(string $type): void
+    {
+        $this->campaignType = $type;
     }
 }

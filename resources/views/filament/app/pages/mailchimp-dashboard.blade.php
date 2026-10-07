@@ -9,6 +9,7 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
+        campaignType: @entangle('campaignType'),
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
         <div class="mailchimp-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
@@ -259,15 +260,47 @@
 
         <x-data-table variant="mailchimp" state="tableState" loading="isTableLoading" search>
             <x-slot:header>
-                <div class="tab-nav-mailchimp">
-                    <div class="tab-mailchimp" :class="activeTab === 'campaigns' ? 'active' : ''"
-                         @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
-                    <div class="tab-mailchimp" :class="activeTab === 'automations' ? 'active' : ''"
-                         @click="setTab('automations')">{{ __('AUTOMATIONS') }}</div>
-                    <div class="tab-mailchimp" :class="activeTab === 'audiences' ? 'active' : ''"
-                         @click="setTab('audiences')">{{ __('AUDIENCES') }}</div>
-                    <div class="tab-mailchimp" :class="activeTab === 'urls' ? 'active' : ''"
-                         @click="setTab('urls')">{{ __('URLS') }}</div>
+                <div class="tab-nav-mailchimp flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="tab-mailchimp" :class="activeTab === 'campaigns' ? 'active' : ''"
+                             @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
+                        <div class="tab-mailchimp" :class="activeTab === 'automations' ? 'active' : ''"
+                             @click="setTab('automations')">{{ __('AUTOMATIONS') }}</div>
+                        <div class="tab-mailchimp" :class="activeTab === 'audiences' ? 'active' : ''"
+                             @click="setTab('audiences')">{{ __('AUDIENCES') }}</div>
+                        <div class="tab-mailchimp" :class="activeTab === 'urls' ? 'active' : ''"
+                             @click="setTab('urls')">{{ __('URLS') }}</div>
+                    </div>
+
+                    <!-- Campaign Type Sub-Filter Pills (shown on CAMPAIGNS tab) -->
+                    <div x-show="activeTab === 'campaigns'" x-cloak class="flex items-center gap-1 px-4 py-2 overflow-x-auto">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mr-1.5 hidden sm:inline">{{ __('Type:') }}</span>
+                        <button type="button" @click="setCampaignType('all')"
+                                :class="campaignType === 'all' ? 'bg-primary-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer whitespace-nowrap">
+                            {{ __('All') }}
+                        </button>
+                        <button type="button" @click="setCampaignType('regular')"
+                                :class="campaignType === 'regular' ? 'bg-primary-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer whitespace-nowrap">
+                            {{ __('Regular') }}
+                        </button>
+                        <button type="button" @click="setCampaignType('rss')"
+                                :class="campaignType === 'rss' ? 'bg-primary-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer whitespace-nowrap">
+                            {{ __('RSS') }}
+                        </button>
+                        <button type="button" @click="setCampaignType('variate')"
+                                :class="campaignType === 'variate' ? 'bg-primary-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer whitespace-nowrap">
+                            {{ __('A/B Test') }}
+                        </button>
+                        <button type="button" @click="setCampaignType('plaintext')"
+                                :class="campaignType === 'plaintext' ? 'bg-primary-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer whitespace-nowrap">
+                            {{ __('Plaintext') }}
+                        </button>
+                    </div>
                 </div>
             </x-slot:header>
 
@@ -321,6 +354,11 @@
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
                                 <div class="mailchimp-name-text" :title="row.name || row.id" x-text="row.name || row.id"></div>
+                                <template x-if="activeTab === 'campaigns' && row.campaign_type">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider shrink-0"
+                                          :class="getCampaignTypeBadgeClass(row.campaign_type)"
+                                          x-text="formatCampaignType(row.campaign_type)"></span>
+                                </template>
                             </div>
                         </td>
 

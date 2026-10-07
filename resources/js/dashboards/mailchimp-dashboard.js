@@ -92,6 +92,7 @@ export function mailchimpDashboard(config = {}) {
         dateStart: config.dateStart || '',
         dateEnd: config.dateEnd || '',
         activeTab: config.activeTab || 'campaigns',
+        campaignType: config.campaignType || 'all',
         csrfToken: config.csrfToken || '',
 
         isSummaryLoading: false,
@@ -139,6 +140,10 @@ export function mailchimpDashboard(config = {}) {
             if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
             const tab = params.get('tab');
             if (tab && TABS.includes(tab)) this.activeTab = tab;
+            const cType = params.get('campaignType');
+            if (cType && ['all', 'regular', 'rss', 'variate', 'plaintext'].includes(cType)) {
+                this.campaignType = cType;
+            }
             const metricsParam = params.get('metrics');
             if (metricsParam) {
                 const enabledMetrics = metricsParam.split(',');
@@ -154,6 +159,9 @@ export function mailchimpDashboard(config = {}) {
             if (this.dateStart) params.set('dateStart', this.dateStart);
             if (this.dateEnd) params.set('dateEnd', this.dateEnd);
             if (this.activeTab) params.set('tab', this.activeTab);
+            if (this.activeTab === 'campaigns' && this.campaignType && this.campaignType !== 'all') {
+                params.set('campaignType', this.campaignType);
+            }
             const enabledMetrics = Object.entries(this.activeMetrics).filter(([k, v]) => v).map(([k]) => k);
             if (enabledMetrics.length > 0) params.set('metrics', enabledMetrics.join(','));
             const qs = params.toString();
@@ -219,6 +227,17 @@ export function mailchimpDashboard(config = {}) {
             this.fetchTable();
             if (this.$wire && typeof this.$wire.setActiveTab === 'function') {
                 this.$wire.setActiveTab(tab);
+            }
+        },
+
+        setCampaignType(type) {
+            this.campaignType = type;
+            this.tableState.currentPage = 1;
+            this.tableState.searchQuery = '';
+            this.syncToUrl();
+            this.fetchTable();
+            if (this.$wire && typeof this.$wire.setCampaignType === 'function') {
+                this.$wire.setCampaignType(type);
             }
         },
 
@@ -318,7 +337,8 @@ export function mailchimpDashboard(config = {}) {
 
         getCacheKey(endpoint, includeFilters = true) {
             const filterHash = includeFilters ? JSON.stringify(this.activeFilters) : 'no_filters';
-            return `mailchimp_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}`;
+            const cType = this.activeTab === 'campaigns' ? this.campaignType : 'na';
+            return `mailchimp_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${cType}_${filterHash}`;
         },
 
         async fetchAll() {
@@ -483,7 +503,8 @@ export function mailchimpDashboard(config = {}) {
                 account: this.account,
                 dateStart: this.dateStart,
                 dateEnd: this.dateEnd,
-                activeTab: this.activeTab
+                activeTab: this.activeTab,
+                campaignType: this.activeTab === 'campaigns' ? this.campaignType : 'all'
             };
 
             if (includeFilters && this.activeFilters) {
@@ -792,6 +813,44 @@ export function mailchimpDashboard(config = {}) {
         formatDecimals(num) {
             if (num === undefined || num === null) return '0.00';
             return Number(num).toFixed(2);
+        },
+
+        formatCampaignType(type) {
+            if (!type) return '';
+            const normalized = String(type).toLowerCase();
+            switch (normalized) {
+                case 'regular':
+                    return 'Regular';
+                case 'rss':
+                    return 'RSS';
+                case 'variate':
+                case 'ab_split':
+                    return 'A/B Test';
+                case 'plaintext':
+                    return 'Plaintext';
+                case 'automation':
+                case 'automation-email':
+                    return 'Automation';
+                default:
+                    return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+            }
+        },
+
+        getCampaignTypeBadgeClass(type) {
+            const normalized = String(type || '').toLowerCase();
+            switch (normalized) {
+                case 'regular':
+                    return 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30';
+                case 'rss':
+                    return 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30';
+                case 'variate':
+                case 'ab_split':
+                    return 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30';
+                case 'plaintext':
+                    return 'bg-gray-500/15 text-gray-700 dark:text-gray-300 border border-gray-500/30';
+                default:
+                    return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30';
+            }
         }
     };
 }
