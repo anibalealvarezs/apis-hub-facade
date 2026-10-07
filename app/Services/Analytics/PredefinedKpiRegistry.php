@@ -1125,6 +1125,299 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
+
+            // ================================================================
+            // Email Marketing (Mailchimp, Klaviyo) & Cross-Channel Synergies
+            // ================================================================
+
+            'email_click_responsiveness' => [
+                'name' => 'Email Click-to-Open Responsiveness (CTOR)',
+                'description' => 'Evaluates click responsiveness per open across campaigns and email templates. Separates copy & CTA performance from subject line open appeal.',
+                'scope' => 'asset',
+                'categories' => ['performance', 'clicks', 'email_marketing', 'crm', 'scope_asset', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'channeledCampaign',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'opens',
+                        ],
+                    ],
+                ],
+            ],
+
+            'email_click_momentum' => [
+                'name' => 'Email Click Momentum',
+                'description' => 'Detect whether audience engagement with email campaigns is accelerating or losing momentum over time using trend divergence (MACD).',
+                'scope' => 'asset',
+                'categories' => ['clicks', 'trends', 'email_marketing', 'crm', 'scope_asset', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing', 'clickable'],
+                'calculation_type' => 'calculate_macd',
+                'compatible_widgets' => ['combo_chart', 'line_chart'],
+                'optimal_widgets' => ['combo_chart'],
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                        'metric' => 'clicks',
+                    ],
+                ],
+            ],
+
+            'email_engagement_half_life' => [
+                'name' => 'Email Engagement Half-Life & Decay',
+                'description' => 'Measures how rapidly subscriber engagement decays after an email broadcast goes out.',
+                'scope' => 'asset',
+                'categories' => ['seasonality', 'email_marketing', 'crm', 'performance', 'scope_asset', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing'],
+                'calculation_type' => 'calculate_autocorrelation',
+                'compatible_widgets' => ['bar_chart'],
+                'optimal_widgets' => ['bar_chart'],
+                'template' => [
+                    'ast' => [
+                        'type' => 'metric',
+                        'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                        'metric' => 'clicks',
+                    ],
+                ],
+            ],
+
+            'email_deliverability_decay' => [
+                'name' => 'List Churn & Deliverability Vulnerability',
+                'description' => 'Detects diminishing sender quality and list degradation by modeling bounce volume scaling against broadcast size.',
+                'scope' => 'channel',
+                'categories' => ['performance', 'deliverability', 'email_marketing', 'crm', 'scalability', 'scope_channel', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing'],
+                'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'bounces',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'sends',
+                        ],
+                    ],
+                ],
+            ],
+
+            'paid_to_email_activation_halo' => [
+                'name' => 'Paid Ad to Email Engagement Halo Effect',
+                'description' => 'Predictive Attribution / Halo Effect. Evaluates whether top-of-funnel paid media campaigns stimulate delayed surges in newsletter open and engagement rates.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'performance', 'paid_media', 'email_marketing', 'agency', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'email_marketing'],
+                'calculation_type' => 'calculate_granger',
+                'compatible_widgets' => ['table', 'tile'],
+                'optimal_widgets' => ['table'],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'opens',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend',
+                        ],
+                    ],
+                ],
+            ],
+
+            'paid_spend_per_email_subscriber' => [
+                'name' => 'Paid Ad Spend to Email Volume Ratio',
+                'description' => 'Blended acquisition efficiency analyzing paid media spend required to drive email broadcast recipients.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'cost', 'paid_media', 'email_marketing', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'email_marketing'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'sends',
+                        ],
+                    ],
+                ],
+            ],
+
+            'email_traffic_elasticity' => [
+                'name' => 'Email Traffic Session Elasticity',
+                'description' => 'Measures web session generation elasticity relative to email link click volume. Identifies if email blasts produce sustained site visits.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'traffic', 'email_marketing', 'analytics', 'scalability', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing', 'traffic_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__',
+                            'metric' => 'sessions',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
+
+            'email_landing_page_quality_gap' => [
+                'name' => 'Email Landing Page Quality Gap (Toxic Email Link Detector)',
+                'description' => 'Identifies URLs and landing pages receiving strong email click volume but suffering from elevated website bounce rates.',
+                'scope' => 'asset',
+                'categories' => ['cross-channel', 'alerts', 'email_marketing', 'analytics', 'scope_asset', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing', 'behavior_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_granularity' => 'dimensions.page',
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'histogram',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__BEHAVIOR_TRACKED_CHANNEL_1__',
+                            'metric' => 'bounce_rate',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
+
+            'email_revenue_yield' => [
+                'name' => 'Email Revenue Yield per Send',
+                'description' => 'Models bottom-line revenue generated relative to email send volume across campaigns and audiences.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'revenue', 'email_marketing', 'ecommerce', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing', 'revenue_tracked'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__REVENUE_TRACKED_CHANNEL_1__',
+                            'metric' => 'revenue',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'sends',
+                        ],
+                    ],
+                ],
+            ],
+
+            'subscriber_purchase_elasticity' => [
+                'name' => 'Subscriber Purchase Elasticity',
+                'description' => 'Identifies order volume scaling ceiling relative to email click volume.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'ecommerce', 'email_marketing', 'scalability', 'performance', 'scope_global', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['email_marketing', 'conversion_tracked'],
+                'calculation_type' => 'calculate_elasticity',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot', 'gauge'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__CONVERSION_TRACKED_CHANNEL_1__',
+                            'metric' => 'conversions',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__EMAIL_MARKETING_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 
