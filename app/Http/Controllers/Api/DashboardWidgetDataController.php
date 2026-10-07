@@ -3713,6 +3713,16 @@
                 }
             }
 
+            if ($cleanDim === 'campaigntype') {
+                return match (strtolower($dimVal)) {
+                    'regular' => __('Regular Campaign'),
+                    'automation', 'automation-email' => __('Automation'),
+                    'rss' => __('RSS Campaign'),
+                    'variate', 'ab_split' => __('A/B Test Campaign'),
+                    default => ucfirst(str_replace(['_', '-'], ' ', $dimVal)),
+                };
+            }
+
             return $dimVal;
         }
 

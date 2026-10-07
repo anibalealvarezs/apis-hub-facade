@@ -27,6 +27,7 @@ class ChannelGranularityRegistry
             'facebook_organic' => self::getFbOrganicDimensions($dependency),
             'mailchimp' => [
                 'channeledCampaign' => __('Campaign'),
+                'campaignType' => __('Campaign Type'),
                 'dimensions.page' => __('Page / URL'),
             ],
             default => [],
