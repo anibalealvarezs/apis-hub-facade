@@ -256,6 +256,7 @@ class ConfigPayloadService
             'assetListKey' => $assetListKey,
             'remoteAssetKey' => $remoteAssetKey,
             'assetsListDb' => $assetsListDb,
+            'assetsListUi' => $assetsListUi,
         ];
     }
 }

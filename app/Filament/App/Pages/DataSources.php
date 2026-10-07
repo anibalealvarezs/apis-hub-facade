@@ -2272,6 +2272,7 @@
                 $assetListKey = $payloadData['assetListKey'];
                 $remoteAssetKey = $payloadData['remoteAssetKey'];
                 $assetsListDb = $payloadData['assetsListDb'];
+                $assetsListUi = $payloadData['assetsListUi'] ?? [];
 
                 if (!isset($dbState[$channel])) {
                     $dbState[$channel] = [];
@@ -2296,33 +2297,63 @@
 
                         // Sync status back from Remote Node
                         $remoteListKey = last(explode('.', $assetListKey));
-                        if (isset($response['config'][$channel][$remoteListKey])) {
-                            $remoteAssets = $response['config'][$channel][$remoteListKey];
+                        $remoteAssets = $response['config'][$channel][$remoteListKey]
+                            ?? $response['config'][$channel][$remoteAssetKey]
+                            ?? null;
+
+                        if (is_array($remoteAssets)) {
                             $remoteMap = [];
                             foreach ($remoteAssets as $ra) {
-                                $id = $ra['url'] ?? $ra['id'] ?? null;
-                                if ($id) {
-                                    $remoteMap[$id] = $ra;
+                                foreach (['id', 'url', 'platformId'] as $idKey) {
+                                    if (!empty($ra[$idKey])) {
+                                        $remoteMap[$ra[$idKey]] = $ra;
+                                    }
+                                }
+                            }
+
+                            // Build UI lookup map by ID/URL/platformId as well as index
+                            $uiMap = [];
+                            foreach ($assetsListUi as $uIdx => $uAsset) {
+                                foreach (['id', 'url', 'platformId'] as $idKey) {
+                                    if (!empty($uAsset[$idKey])) {
+                                        $uiMap[$uAsset[$idKey]] = $uAsset;
+                                    }
                                 }
                             }
 
                             // Update local db state with remote status
                             foreach ($assetsListDb as $index => &$dbAsset) {
-                                $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
-                                if ($id && isset($remoteMap[$id])) {
-                                    $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                                    $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                                $assetIdentifier = $dbAsset['id'] ?? $dbAsset['url'] ?? $dbAsset['platformId'] ?? null;
+                                $matchedUi = ($assetIdentifier && isset($uiMap[$assetIdentifier]))
+                                    ? $uiMap[$assetIdentifier]
+                                    : ($assetsListUi[$index] ?? []);
+
+                                $intendedEnabled = isset($matchedUi['enabled'])
+                                    ? filter_var($matchedUi['enabled'], FILTER_VALIDATE_BOOLEAN)
+                                    : filter_var($dbAsset['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                                $matchedRemote = ($assetIdentifier && isset($remoteMap[$assetIdentifier]))
+                                    ? $remoteMap[$assetIdentifier]
+                                    : null;
+
+                                if ($matchedRemote) {
+                                    $remoteEnabled = array_key_exists('enabled', $matchedRemote)
+                                        ? filter_var($matchedRemote['enabled'], FILTER_VALIDATE_BOOLEAN)
+                                        : $intendedEnabled;
 
                                     $dbAsset['enabled'] = $remoteEnabled;
 
                                     if ($intendedEnabled && !$remoteEnabled) {
-                                        $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
+                                        $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $assetIdentifier;
                                         $rejectedAssets[] = $assetName;
                                     }
 
-                                    if (isset($remoteMap[$id]['lost_access'])) {
-                                        $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                                    if (isset($matchedRemote['lost_access'])) {
+                                        $dbAsset['lost_access'] = filter_var($matchedRemote['lost_access'], FILTER_VALIDATE_BOOLEAN);
                                     }
+                                } else {
+                                    // Remote node didn't echo this asset explicitly, preserve intended state
+                                    $dbAsset['enabled'] = $intendedEnabled;
                                 }
                             }
                             unset($dbAsset);
