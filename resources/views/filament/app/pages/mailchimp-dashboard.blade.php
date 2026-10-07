@@ -192,8 +192,11 @@
                     </div>
                 </div>
 
-                <div class="card-stat-mailchimp"
+                <div class="card-stat-mailchimp" :class="activeMetrics.bounces ? 'active' : ''" @click="toggleMetric('bounces')"
                      data-metric="bounces">
+                    <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
+                        <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
+                    </div>
                     <div class="mailchimp-label">{{ __('Bounces (Undelivered)') }}</div>
                     <div class="card-metric-value" x-text="formatNumber(summary.bounces)"></div>
                     <div class="flex items-center gap-1.5 mt-2">
@@ -208,8 +211,9 @@
                             <span x-text="formatNumber(summary.bounces_soft) + ' {{ __('Soft') }}'"></span>
                         </span>
                     </div>
-                    <div class="card-metric-trend mt-2 text-xs text-gray-400 opacity-70">
-                        <span x-text="(summary.sends > 0 ? ((summary.bounces / summary.sends) * 100).toFixed(2) : '0.00') + '% {{ __('of sent') }}'"></span>
+                    <div class="card-metric-trend mt-2" :class="getVarianceClass(variance.bounces, true)">
+                        <span x-text="getVarianceIcon(variance.bounces, true)"></span>
+                        <span x-text="formatVariance(variance.bounces)"></span>
                     </div>
                 </div>
             </div>

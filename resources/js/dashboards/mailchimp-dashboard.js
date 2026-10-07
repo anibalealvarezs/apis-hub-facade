@@ -56,6 +56,14 @@ const MAILCHIMP_METRICS = {
         axis: 'yUnsubscribes',
         trendable: true,
     },
+    bounces: {
+        key: 'bounces',
+        label: 'Bounces',
+        color: '#F43F5E',
+        background: 'rgba(244, 63, 94, 0.1)',
+        axis: 'yBounces',
+        trendable: true,
+    },
 };
 
 const TABS = ['campaigns', 'automations', 'audiences', 'urls'];
@@ -104,6 +112,7 @@ export function mailchimpDashboard(config = {}) {
             open_rate: false,
             click_rate: false,
             unsubscribes: false,
+            bounces: false,
         },
 
         activeFilters: { campaigns: [], automations: [], audiences: [], urls: [] },
@@ -503,6 +512,7 @@ export function mailchimpDashboard(config = {}) {
                 open_rate: calc(this.summary.open_rate, this.previous.open_rate),
                 click_rate: calc(this.summary.click_rate, this.previous.click_rate),
                 unsubscribes: calc(this.summary.unsubscribes, this.previous.unsubscribes),
+                bounces: calc(this.summary.bounces, this.previous.bounces),
             };
         },
 
@@ -596,6 +606,7 @@ export function mailchimpDashboard(config = {}) {
                         yOpenRate: rateAxis('right'),
                         yClickRate: rateAxis('right'),
                         yUnsubscribes: counterAxis('right'),
+                        yBounces: counterAxis('right'),
                     }
                 }
             };
@@ -615,6 +626,7 @@ export function mailchimpDashboard(config = {}) {
                 opens: Number(row.opens) || 0,
                 clicks: Number(row.clicks) || 0,
                 unsubscribes: Number(row.unsubscribes) || 0,
+                bounces: Number(row.bounces) || 0,
                 open_rate: sends > 0 ? (Number(row.opens) || 0) / sends : 0,
                 click_rate: sends > 0 ? (Number(row.clicks) || 0) / sends : 0,
             };
