@@ -2341,7 +2341,8 @@
                             }
                         }
 
-                        $response = $service->updateCredentials($tenant, $payload);
+                        IlluminateSupportFacadesog::info("[datasources::save] sending payload to remote", ["payload" => $payload]);
+                        $response = $service->updatecredentials($tenant, $payload);
 
                         \Illuminate\Support\Facades\Log::info('[DataSources::save] Remote updateCredentials response', [
                             'channel' => $channel,
