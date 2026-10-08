@@ -2320,6 +2320,12 @@
                 }
                 unset($dbAsset);
 
+                // IMPORTANT: Inject the patched assets back into the payload before sending it to the remote node!
+                if (!isset($payload['assets'])) {
+                    $payload['assets'] = [];
+                }
+                $payload['assets'][$remoteAssetKey] = $assetsListDb;
+
                 // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
                 if (!$isFirstDeployment) {
                     try {
