@@ -340,7 +340,7 @@
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
-                if (!isset($config[$chan]['enabled'])) {
+                if (!array_key_exists('enabled', $config[$chan])) {
                     $config[$chan]['enabled'] = true;
                 }
                 // Always force max range, overriding previous values
@@ -2115,6 +2115,13 @@
             $uiState = $this->form->getState();
             $dbState = $tenant->sync_config ?? [];
 
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] UI & DB state captured', [
+                'activeChannel' => $this->activeChannel,
+                'ui_active_channel_enabled' => $uiState[$this->activeChannel . '_enabled'] ?? null,
+                'ui_active_channel_nested' => $uiState[$this->activeChannel] ?? null,
+                'db_active_channel' => $dbState[$this->activeChannel] ?? null,
+            ]);
+
             // Map global fallback toggles back into their channel configurations
             foreach ($uiState as $key => $value) {
                 if (is_string($key) && str_ends_with($key, '_enabled')) {
@@ -2127,7 +2134,7 @@
             }
             
             // Explicitly force enabled state from active channel if present in root state
-            if (isset($uiState[$this->activeChannel . '_enabled'])) {
+            if (array_key_exists($this->activeChannel . '_enabled', $uiState)) {
                 if (!isset($uiState[$this->activeChannel])) {
                     $uiState[$this->activeChannel] = [];
                 }
@@ -2140,21 +2147,33 @@
                 if (is_array($channelConfig)) {
                     $proposedState[$channel] = array_merge($proposedState[$channel] ?? [], $channelConfig);
                     // Ensure the enabled flag is explicitly carried over from UI state
-                    if (isset($channelConfig['enabled'])) {
+                    if (array_key_exists('enabled', $channelConfig)) {
                         $proposedState[$channel]['enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     }
                 }
             }
 
+            // Also check if root-level activeChannel_enabled exists in form data
+            if (isset($this->data[$this->activeChannel . '_enabled'])) {
+                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
+            } elseif (isset($this->data[$this->activeChannel]['enabled'])) {
+                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel]['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+
             // Fallback: If the user is saving the active channel but Livewire omitted the enabled flag
             // entirely (e.g. unmodified form), and the DB state doesn't have it either, force it to true
             // since the visual UI default is true.
-            if (!isset($proposedState[$this->activeChannel]['enabled'])) {
+            if (!isset($proposedState[$this->activeChannel]) || !array_key_exists('enabled', $proposedState[$this->activeChannel])) {
                 if (!isset($proposedState[$this->activeChannel])) {
                     $proposedState[$this->activeChannel] = [];
                 }
                 $proposedState[$this->activeChannel]['enabled'] = true;
             }
+
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] Proposed state resolved', [
+                'activeChannel' => $this->activeChannel,
+                'proposed_enabled' => $proposedState[$this->activeChannel]['enabled'] ?? null,
+            ]);
 
             // Detect if any channel's enabled state changed
             $hasChannelToggle = false;
@@ -2318,6 +2337,11 @@
 
                         $response = $service->updateCredentials($tenant, $payload);
 
+                        \Illuminate\Support\Facades\Log::info('[DataSources::save] Remote updateCredentials response', [
+                            'channel' => $channel,
+                            'remote_response_channel' => $response['config'][$channel] ?? null,
+                        ]);
+
                         // Sync status back from Remote Node
                         $remoteListKey = last(explode('.', $assetListKey));
                         $remoteAssets = $response['config'][$channel][$remoteListKey]
@@ -2401,6 +2425,12 @@
 
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             }
+
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] Updating tenant sync_config in DB', [
+                'activeChannel' => $this->activeChannel,
+                'dbState_channel_enabled' => $dbState[$this->activeChannel]['enabled'] ?? null,
+            ]);
+
             $tenant->update([
                 'sync_config' => $dbState,
                 'last_sync_started_at' => now(),
@@ -2411,6 +2441,12 @@
 
             // Refresh UI state seamlessly via Livewire so the user sees the actual final state
             $this->hydrateFormFromDb($dbState);
+
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] Hydrated form from dbState', [
+                'activeChannel' => $this->activeChannel,
+                'form_data_enabled' => $this->data[$this->activeChannel]['enabled'] ?? null,
+                'form_data_root_enabled' => $this->data[$this->activeChannel . '_enabled'] ?? null,
+            ]);
 
             if (count($rejectedAssets) > 0) {
                 $rejectedList = implode(', ', array_slice($rejectedAssets, 0, 5));
