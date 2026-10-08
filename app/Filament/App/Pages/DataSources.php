@@ -2278,6 +2278,29 @@
                     $dbState[$channel] = [];
                 }
 
+                // Build UI lookup map by ID/URL/platformId as well as index
+                $uiMap = [];
+                foreach ($assetsListUi as $uIdx => $uAsset) {
+                    foreach (['id', 'url', 'platformId'] as $idKey) {
+                        if (!empty($uAsset[$idKey])) {
+                            $uiMap[$uAsset[$idKey]] = $uAsset;
+                        }
+                    }
+                }
+
+                // First, unconditionally apply user's intended enabled toggle from the UI into $assetsListDb
+                foreach ($assetsListDb as $index => &$dbAsset) {
+                    $assetIdentifier = $dbAsset['id'] ?? $dbAsset['url'] ?? $dbAsset['platformId'] ?? null;
+                    $matchedUi = ($assetIdentifier && isset($uiMap[$assetIdentifier]))
+                        ? $uiMap[$assetIdentifier]
+                        : ($assetsListUi[$index] ?? []);
+
+                    if (isset($matchedUi['enabled'])) {
+                        $dbAsset['enabled'] = filter_var($matchedUi['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+                unset($dbAsset);
+
                 // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
                 if (!$isFirstDeployment) {
                     try {
@@ -2299,6 +2322,7 @@
                         $remoteListKey = last(explode('.', $assetListKey));
                         $remoteAssets = $response['config'][$channel][$remoteListKey]
                             ?? $response['config'][$channel][$remoteAssetKey]
+                            ?? $response['config'][$channel]['assets'][$remoteAssetKey]
                             ?? null;
 
                         if (is_array($remoteAssets)) {
@@ -2307,16 +2331,6 @@
                                 foreach (['id', 'url', 'platformId'] as $idKey) {
                                     if (!empty($ra[$idKey])) {
                                         $remoteMap[$ra[$idKey]] = $ra;
-                                    }
-                                }
-                            }
-
-                            // Build UI lookup map by ID/URL/platformId as well as index
-                            $uiMap = [];
-                            foreach ($assetsListUi as $uIdx => $uAsset) {
-                                foreach (['id', 'url', 'platformId'] as $idKey) {
-                                    if (!empty($uAsset[$idKey])) {
-                                        $uiMap[$uAsset[$idKey]] = $uAsset;
                                     }
                                 }
                             }
