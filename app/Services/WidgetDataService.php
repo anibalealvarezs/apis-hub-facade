@@ -42,9 +42,26 @@ class WidgetDataService
         // Start with widget controls as the base
         $resolved = $widgetControls;
 
+        $kpiUiState = [];
+        if ($widget->source_type === 'kpi' && $widget->customKpi) {
+            $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
+        }
+
         // Inherit global defaults where explicitly requested or missing
         foreach ($inheritableKeys as $key) {
             if (!isset($resolved[$key]) || $resolved[$key] === '__inherit__' || $resolved[$key] === '') {
+                // Priority 1: KPI-specific default (if applicable)
+                // Note: KPI uses start_date/end_date instead of date_start/date_end
+                $kpiKey = $key;
+                if ($key === 'date_start') $kpiKey = 'start_date';
+                if ($key === 'date_end') $kpiKey = 'end_date';
+
+                if (isset($kpiUiState[$kpiKey]) && $kpiUiState[$kpiKey] !== '') {
+                    $resolved[$key] = $kpiUiState[$kpiKey];
+                    continue;
+                }
+
+                // Priority 2: Dashboard global default
                 if (array_key_exists($key, $dashboardControls)) {
                     $resolved[$key] = $dashboardControls[$key];
                 }
@@ -53,11 +70,10 @@ class WidgetDataService
 
         // Inherit edge-case and max_ratio from KPI's _ui_state when applicable
         if ($widget->source_type === 'kpi' && $widget->customKpi) {
-            $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
-            if (!empty($kpiUiState['edge_case_grouping'])) {
+            if (!isset($resolved['edge_case_grouping']) && !empty($kpiUiState['edge_case_grouping'])) {
                 $resolved['edge_case_grouping'] = $kpiUiState['edge_case_grouping'];
             }
-            if (isset($kpiUiState['max_ratio'])) {
+            if (!isset($resolved['max_ratio']) && isset($kpiUiState['max_ratio'])) {
                 $resolved['max_ratio'] = $kpiUiState['max_ratio'];
             }
         }

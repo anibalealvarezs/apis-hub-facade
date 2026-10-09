@@ -606,15 +606,11 @@ trait LoadsDashboardViewData
                     $resolved['date_end'] = $uiState['end_date'];
                 }
 
-                // Zero handling: widget → KPI config → dashboard → 'remove'
-                if (!isset($widgetControls['zero_handling']) && isset($uiState['zero_handling'])) {
-                    $resolved['zero_handling'] = $uiState['zero_handling'];
-                }
+                // Zero handling: widget → dashboard
+                // (Handled consistently by WidgetDataService::resolveControls)
 
-                // Granularity: widget → KPI config → dashboard → 'daily'
-                if (!isset($widgetControls['granularity']) && isset($uiState['granularity'])) {
-                    $resolved['granularity'] = $uiState['granularity'];
-                }
+                // Granularity: widget → dashboard
+                // (Handled consistently by WidgetDataService::resolveControls)
 
                 // Max ratio: widget → KPI config → null (no cap)
                 if (!isset($widgetControls['max_ratio']) && isset($uiState['max_ratio'])) {
