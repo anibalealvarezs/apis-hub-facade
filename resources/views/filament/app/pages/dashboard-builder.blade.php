@@ -3191,12 +3191,18 @@
                                     <span class="text-xs font-bold text-gray-800 dark:text-white uppercase tracking-wider">{{ __('Granularity') }}</span>
                                 </div>
                                 <div class="p-6">
-                                    <x-ui.select-input x-model="sandboxForm.granularity" class="w-full">
+                                    <x-ui.select-input x-model="sandboxForm.granularity" @change="onSandboxGranularityChange()" class="w-full">
+                                        <option value="" x-text="'{{ __('Default') }} (' + getSandboxDefaultGranularityLabel() + ')'" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                         <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
                                         <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
                                         <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
                                         <x-ui.select-option value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
+                                        <x-ui.select-option value="semiannual">{{ __('Semiannual') }}</x-ui.select-option>
                                         <x-ui.select-option value="annually">{{ __('Annually') }}</x-ui.select-option>
+                                        <x-ui.select-option value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
+                                        <template x-if="getSandboxKpiNonTimelyGranularity()">
+                                            <option :value="getSandboxKpiNonTimelyGranularity()" x-text="inheritedControlLabel('granularity', getSandboxKpiNonTimelyGranularity())" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
+                                        </template>
                                     </x-ui.select-input>
                                 </div>
                             </div>
