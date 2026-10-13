@@ -585,19 +585,25 @@
                                         <template x-if="settingsSourceType === 'kpi'">
                                             <div class="w-full text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 py-2.5 px-4 cursor-not-allowed">
                                                 <span x-text="{
-                                                    'daily': 'Daily',
-                                                    'weekly': 'Weekly',
-                                                    'monthly': 'Monthly',
-                                                    'quarterly': 'Quarterly',
-                                                    'semiannual': 'Semiannual',
-                                                    'annually': 'Annually',
-                                                    'lifetime': 'Lifetime',
-                                                    'query': 'Query (SEO)',
-                                                    'dimensions.page': 'Page (SEO)',
-                                                    'country': 'Country',
-                                                    'device': 'Device',
-                                                    'post': 'Post / Media'
-                                                }[settingsBuilderControls.granularity] || settingsBuilderControls.granularity || 'Daily'"></span>
+                                                    'daily': '{{ __('Daily') }}',
+                                                    'weekly': '{{ __('Weekly') }}',
+                                                    'monthly': '{{ __('Monthly') }}',
+                                                    'quarterly': '{{ __('Quarterly') }}',
+                                                    'semiannual': '{{ __('Semiannual') }}',
+                                                    'annually': '{{ __('Annually') }}',
+                                                    'lifetime': '{{ __('Lifetime') }}',
+                                                    'query': '{{ __('Query (SEO)') }}',
+                                                    'dimensions.page': '{{ __('Page (SEO)') }}',
+                                                    'country': '{{ __('Country') }}',
+                                                    'device': '{{ __('Device') }}',
+                                                    'post': '{{ __('Post / Media') }}',
+                                                    'channeledCampaign': '{{ __('Campaign') }}',
+                                                    'campaign': '{{ __('Campaign') }}',
+                                                    'campaignType': '{{ __('Campaign Type') }}',
+                                                    'adset': '{{ __('Ad Set / Ad Group') }}',
+                                                    'ad': '{{ __('Ad / Creative') }}',
+                                                    'channeledAccount': '{{ __('Account') }}'
+                                                }[settingsBuilderControls.granularity] || (settingsBuilderControls.granularity ? (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1)) : '{{ __('Daily') }}')"></span>
                                             </div>
                                         </template>
                                         <template x-if="settingsSourceType !== 'kpi'">
@@ -616,11 +622,17 @@
                                                 <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
                                                     <optgroup label="{{ __('Dimension') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                                         <x-ui.select-option x-bind:value="settingsBuilderControls.granularity" x-text="{
-                                                            'query': 'Query (SEO)',
-                                                            'dimensions.page': 'Page (SEO)',
-                                                            'country': 'Country',
-                                                            'device': 'Device',
-                                                            'post': 'Post / Media'
+                                                            'query': '{{ __('Query (SEO)') }}',
+                                                            'dimensions.page': '{{ __('Page (SEO)') }}',
+                                                            'country': '{{ __('Country') }}',
+                                                            'device': '{{ __('Device') }}',
+                                                            'post': '{{ __('Post / Media') }}',
+                                                            'channeledCampaign': '{{ __('Campaign') }}',
+                                                            'campaign': '{{ __('Campaign') }}',
+                                                            'campaignType': '{{ __('Campaign Type') }}',
+                                                            'adset': '{{ __('Ad Set / Ad Group') }}',
+                                                            'ad': '{{ __('Ad / Creative') }}',
+                                                            'channeledAccount': '{{ __('Account') }}'
                                                         }[settingsBuilderControls.granularity] || (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1))"></x-ui.select-option>
                                                     </optgroup>
                                                 </template>

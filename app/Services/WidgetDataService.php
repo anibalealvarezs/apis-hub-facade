@@ -43,13 +43,32 @@ class WidgetDataService
         $resolved = $widgetControls;
 
         $kpiUiState = [];
-        if ($widget->source_type === 'kpi' && $widget->customKpi) {
-            $kpiUiState = $widget->customKpi->filters['_ui_state'] ?? [];
+        $kpi = null;
+        if ($widget->source_type === 'kpi') {
+            $kpi = $widget->relationLoaded('customKpi') ? $widget->customKpi : null;
+            if (!$kpi && !empty($widget->custom_kpi_id)) {
+                $kpi = $widget->customKpi;
+            }
+            if (!$kpi) {
+                $kpiId = $widget->source_config['custom_kpi_id'] ?? $widget->custom_kpi_id ?? null;
+                if ($kpiId) {
+                    $kpi = \App\Models\CustomKpi::find($kpiId);
+                }
+            }
+            if ($kpi) {
+                $kpiUiState = $kpi->filters['_ui_state'] ?? [];
+                if (empty($kpiUiState['granularity']) && !empty($kpiUiState['template_key'])) {
+                    $predefined = \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis();
+                    if (!empty($predefined[$kpiUiState['template_key']]['default_granularity'])) {
+                        $kpiUiState['granularity'] = $predefined[$kpiUiState['template_key']]['default_granularity'];
+                    }
+                }
+            }
         }
 
         // Inherit global defaults where explicitly requested or missing
         foreach ($inheritableKeys as $key) {
-            if (!isset($resolved[$key]) || $resolved[$key] === '__inherit__' || $resolved[$key] === '') {
+            if (!isset($resolved[$key]) || $resolved[$key] === '__inherit__' || $resolved[$key] === '' || $resolved[$key] === '__NOT_SET__') {
                 // Priority 1: KPI-specific default (if applicable)
                 // Note: KPI uses start_date/end_date instead of date_start/date_end
                 $kpiKey = $key;
@@ -68,8 +87,18 @@ class WidgetDataService
             }
         }
 
+        // For KPI widgets, non-temporal granularities (e.g. channeledCampaign, dimensions.page, query)
+        // are fixed by the KPI definition and cannot be overridden to temporal daily/weekly/etc.
+        if ($widget->source_type === 'kpi' && !empty($kpiUiState['granularity'])) {
+            $kpiGran = $kpiUiState['granularity'];
+            $isTimely = in_array($kpiGran, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'], true);
+            if (!$isTimely || !isset($widgetControls['granularity']) || $widgetControls['granularity'] === '__inherit__' || $widgetControls['granularity'] === '' || $widgetControls['granularity'] === '__NOT_SET__') {
+                $resolved['granularity'] = $kpiGran;
+            }
+        }
+
         // Inherit edge-case and max_ratio from KPI's _ui_state when applicable
-        if ($widget->source_type === 'kpi' && $widget->customKpi) {
+        if ($widget->source_type === 'kpi' && $kpi) {
             if (!isset($resolved['edge_case_grouping']) && !empty($kpiUiState['edge_case_grouping'])) {
                 $resolved['edge_case_grouping'] = $kpiUiState['edge_case_grouping'];
             }
