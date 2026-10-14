@@ -1344,7 +1344,7 @@
                         $accountCards[] = \Filament\Forms\Components\Placeholder::make('acc_'.$accId)
                             ->label('')
                             ->content(new \Illuminate\Support\HtmlString('
-                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs">
+                                <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs">
                                     <div class="flex flex-col gap-0.5">
                                         <span class="font-semibold text-gray-900 dark:text-white">'.$name.'</span>
                                         <span class="text-gray-400">DC: <span class="font-mono text-primary-500 font-medium">'.$prefix.'</span> &bull; '.$connAt.'</span>
