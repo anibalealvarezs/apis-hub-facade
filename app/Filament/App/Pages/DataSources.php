@@ -1218,7 +1218,11 @@
                             $escapedName = e(addslashes($acc['account_name'] ?? $acc['name'] ?? $accId));
                             $removeButtonHtml = '
                                 <button type="button"
-                                    @click="disconnectChannel = \'mailchimp\'; disconnectAccountId = \''.$escapedAccId.'\'; disconnectAccountName = \''.$escapedName.'\'; disconnectModalOpen = true"
+                                    x-on:click.stop="$dispatch(\'open-disconnect-account-modal\', {
+                                        channel: \'mailchimp\',
+                                        accountId: \''.$escapedAccId.'\',
+                                        accountName: \''.$escapedName.'\'
+                                    })"
                                     title="' . e(__('Disconnect account')) . '"
                                     class="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-500/10 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

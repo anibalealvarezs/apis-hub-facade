@@ -233,6 +233,13 @@
     disconnectAccountName: '',
     disableAssociatedAssets: true
 }"
+@open-disconnect-account-modal.window="
+    disconnectChannel = $event.detail.channel;
+    disconnectAccountId = $event.detail.accountId;
+    disconnectAccountName = $event.detail.accountName;
+    disableAssociatedAssets = true;
+    disconnectModalOpen = true;
+"
 @keydown.window.escape="disconnectModalOpen = false"
 >
     <x-confirm-modal
