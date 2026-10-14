@@ -99,8 +99,8 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'organic', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social'],
                 'calculation_type' => 'calculate_autocorrelation',
-                'compatible_widgets' => ['bar_chart'],
-                'optimal_widgets' => ['bar_chart'],
+                'compatible_widgets' => ['bar_chart', 'line_chart', 'tile', 'gauge', 'table'],
+                'optimal_widgets' => ['bar_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -233,8 +233,8 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'organic', 'performance', 'scope_asset', 'org_mkt_organic', 'source_src'],
                 'required_tags' => ['organic_social', 'reach_driven'],
                 'calculation_type' => 'calculate_autocorrelation',
-                'compatible_widgets' => ['bar_chart'],
-                'optimal_widgets' => ['bar_chart'],
+                'compatible_widgets' => ['bar_chart', 'line_chart', 'tile', 'gauge', 'table'],
+                'optimal_widgets' => ['bar_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
@@ -1188,8 +1188,8 @@ class PredefinedKpiRegistry
                 'categories' => ['seasonality', 'email_marketing', 'crm', 'performance', 'scope_asset', 'org_mkt_marketing', 'source_src'],
                 'required_tags' => ['email_marketing'],
                 'calculation_type' => 'calculate_autocorrelation',
-                'compatible_widgets' => ['bar_chart'],
-                'optimal_widgets' => ['bar_chart'],
+                'compatible_widgets' => ['bar_chart', 'line_chart', 'tile', 'gauge', 'table'],
+                'optimal_widgets' => ['bar_chart', 'line_chart'],
                 'template' => [
                     'ast' => [
                         'type' => 'metric',
