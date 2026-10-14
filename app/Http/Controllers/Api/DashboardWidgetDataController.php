@@ -4693,6 +4693,29 @@
                 return $fbmMappings[$project->id][$strAsset] ?? $asset;
             }
 
+            if ($channel === 'mailchimp') {
+                static $mcMappings = [];
+                if (!isset($mcMappings[$project->id])) {
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled Mailchimp", ['project_id' => $project->id]);
+                    $mcListT0 = microtime(true);
+                    $service = app(\App\Services\RemoteEngineService::class);
+                    $response = $service->listChanneled($project, 'mailchimp', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled Mailchimp", ['project_id' => $project->id, 'ms' => round((microtime(true) - $mcListT0) * 1000, 1)]);
+                    $mcMappings[$project->id] = [];
+                    if (isset($response['data']) && is_array($response['data'])) {
+                        foreach ($response['data'] as $aud) {
+                            $pid = (string)($aud['platformId'] ?? $aud['platform_id'] ?? $aud['id'] ?? '');
+                            if ($pid) {
+                                $mcMappings[$project->id][$pid] = (string)$aud['id'];
+                            }
+                        }
+                    }
+                }
+                $strAsset = (string)$asset;
+
+                return $mcMappings[$project->id][$strAsset] ?? $asset;
+            }
+
             if (is_numeric($asset) && $channel !== 'google_search_console') {
                 return $asset;
             }
@@ -4782,12 +4805,29 @@
                 throw new \RuntimeException("Channel {$channel} controller ({$controllerClass}) does not support action {$action}");
             }
 
+            // Normalization: Ensure tenant is an integer ID for controllers that require integer tenant (e.g. Mailchimp)
+            if (isset($payload['tenant']) && !is_numeric($payload['tenant'])) {
+                $proj = Project::where('slug', (string)$payload['tenant'])->first();
+                if ($proj) {
+                    $payload['tenant'] = $proj->id;
+                }
+            } elseif (isset($payload['tenant'])) {
+                $payload['tenant'] = (int)$payload['tenant'];
+            }
+
             // Normalization: If the controller does not expect an array account (like Mailchimp), unwrap array if passed
             if (!in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
                 if (is_array($payload['account'] ?? null)) {
                     $payload['account'] = !empty($payload['account']) ? (string)reset($payload['account']) : '';
                 } elseif (isset($payload['account'])) {
                     $payload['account'] = (string)$payload['account'];
+                }
+            }
+
+            if ($channel === 'mailchimp' && !empty($payload['account'])) {
+                $project = Project::find($payload['tenant']);
+                if ($project) {
+                    $payload['account'] = $this->resolveChanneledAccountId($project, 'mailchimp', $payload['account']);
                 }
             }
 
