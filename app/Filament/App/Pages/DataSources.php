@@ -2499,14 +2499,26 @@
 
             // If requested, disable all associated assets for this account
             $disabledCount = 0;
-            if ($disableAssets && !empty($syncConfig[$channel]['audiences']) && is_array($syncConfig[$channel]['audiences'])) {
-                foreach ($syncConfig[$channel]['audiences'] as &$aud) {
-                    if (($aud['account_id'] ?? null) === $accountId && !empty($aud['enabled'])) {
-                        $aud['enabled'] = false;
-                        $disabledCount++;
-                    }
+            if ($disableAssets) {
+                // Check both potential audience locations: assets.audiences and audiences
+                $audienceArrays = [];
+                if (!empty($syncConfig[$channel]['assets']['audiences']) && is_array($syncConfig[$channel]['assets']['audiences'])) {
+                    $audienceArrays[] = &$syncConfig[$channel]['assets']['audiences'];
                 }
-                unset($aud);
+                if (!empty($syncConfig[$channel]['audiences']) && is_array($syncConfig[$channel]['audiences'])) {
+                    $audienceArrays[] = &$syncConfig[$channel]['audiences'];
+                }
+
+                foreach ($audienceArrays as &$targetList) {
+                    foreach ($targetList as &$aud) {
+                        if (($aud['account_id'] ?? null) === $accountId && !empty($aud['enabled'])) {
+                            $aud['enabled'] = false;
+                            $disabledCount++;
+                        }
+                    }
+                    unset($aud);
+                }
+                unset($targetList);
             }
 
             // If no accounts remain, disable the channel in sync_config
@@ -2543,6 +2555,7 @@
             }
 
             $this->hydrateFormFromDb($syncConfig);
+            $this->form->schema($this->getDynamicSchema());
 
             $body = __('Account ":name" has been removed.', ['name' => $accountName]);
             if ($disableAssets && $disabledCount > 0) {
@@ -2604,12 +2617,14 @@
 
             foreach ($existingAccounts as $accId => $acc) {
                 $isSameKey = ($acc['api_key'] ?? '') === $apiKey;
-                $isSameRemoteAcc = (!empty($acc['remote_account_id']) && $remoteAccountId && $acc['remote_account_id'] === $remoteAccountId)
+                $isSameRemoteAcc = (!empty($acc['remote_account_id']) && $remoteAccountId && (string)$acc['remote_account_id'] === (string)$remoteAccountId)
                     || ($accId === $newAccountId);
 
                 if ($isSameKey || $isSameRemoteAcc) {
                     $conflictingAccountKey = $accId;
-                    $conflictingAccountName = $acc['account_name'] ?? $acc['name'] ?? $accId;
+                    $conflictingAccountName = !empty($acc['account_name'])
+                        ? $acc['account_name']
+                        : (!empty($acc['name']) ? $acc['name'] : (!empty($acc['remote_account_id']) ? 'Account ' . $acc['remote_account_id'] : $accId));
                     break;
                 }
             }
@@ -2626,10 +2641,10 @@
                     'server_prefix' => $serverPrefix,
                 ];
 
-                $this->dispatch('open-replace-account-modal', [
-                    'existingAccountName' => $conflictingAccountName,
-                    'newAccountName' => $finalAccountName,
-                ]);
+                $this->dispatch('open-replace-account-modal',
+                    existingAccountName: $conflictingAccountName,
+                    newAccountName: $finalAccountName,
+                );
 
                 return;
             }
@@ -2662,14 +2677,24 @@
             if ($conflictingKey !== $newAccountId) {
                 unset($syncConfig['mailchimp']['accounts'][$conflictingKey]);
 
+                // Remap both assets.audiences and audiences if present
+                $audienceArrays = [];
+                if (!empty($syncConfig['mailchimp']['assets']['audiences']) && is_array($syncConfig['mailchimp']['assets']['audiences'])) {
+                    $audienceArrays[] = &$syncConfig['mailchimp']['assets']['audiences'];
+                }
                 if (!empty($syncConfig['mailchimp']['audiences']) && is_array($syncConfig['mailchimp']['audiences'])) {
-                    foreach ($syncConfig['mailchimp']['audiences'] as &$aud) {
+                    $audienceArrays[] = &$syncConfig['mailchimp']['audiences'];
+                }
+
+                foreach ($audienceArrays as &$targetList) {
+                    foreach ($targetList as &$aud) {
                         if (($aud['account_id'] ?? null) === $conflictingKey) {
                             $aud['account_id'] = $newAccountId;
                         }
                     }
                     unset($aud);
                 }
+                unset($targetList);
             }
 
             $syncConfig['mailchimp']['accounts'][$newAccountId] = [
@@ -2696,6 +2721,7 @@
             }
 
             $this->hydrateFormFromDb($syncConfig);
+            $this->form->schema($this->getDynamicSchema());
 
             $this->pendingAccountReplacement = null;
 
@@ -2753,6 +2779,7 @@
             }
 
             $this->hydrateFormFromDb($syncConfig);
+            $this->form->schema($this->getDynamicSchema());
 
             Notification::make()
                 ->title(__('Mailchimp Account Connected'))

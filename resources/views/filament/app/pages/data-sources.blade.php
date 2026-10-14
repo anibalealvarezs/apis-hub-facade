@@ -285,8 +285,9 @@
     newAccountName: ''
 }"
 @open-replace-account-modal.window="
-    existingAccountName = $event.detail.existingAccountName;
-    newAccountName = $event.detail.newAccountName;
+    const detail = $event.detail || {};
+    existingAccountName = detail.existingAccountName || (detail[0] && detail[0].existingAccountName) || '';
+    newAccountName = detail.newAccountName || (detail[0] && detail[0].newAccountName) || '';
     replaceModalOpen = true;
 "
 @keydown.window.escape="replaceModalOpen = false"
@@ -303,8 +304,9 @@
         on-confirm="$wire.replaceExistingAccountKey(); replaceModalOpen = false;"
         on-cancel="$wire.cancelAccountReplacement(); replaceModalOpen = false;"
     >
-        <p class="text-sm text-gray-600 dark:text-gray-300">
-            {{ __('This Mailchimp account is already connected as') }} <strong class="text-gray-900 dark:text-white" x-text="existingAccountName"></strong>.
+        <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-1.5">
+            <span>{{ __('This Mailchimp account is already connected as') }}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30" x-text="existingAccountName || '{{ __('Existing Account') }}'"></span>.
         </p>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
             {{ __('Connecting multiple API keys for the same Mailchimp account causes duplicate asset tracking and redundant synchronizations.') }}
