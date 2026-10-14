@@ -19,4 +19,9 @@ interface ChannelProfileInterface
      * This defines both user-editable options and fixed system values.
      */
     public function getSchemaDefinition(): array;
+
+    /**
+     * Determine if this channel profile is actively connected for a project.
+     */
+    public function isConnected(\App\Models\Project $project): bool;
 }

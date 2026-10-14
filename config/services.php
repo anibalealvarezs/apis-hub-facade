@@ -90,5 +90,15 @@ return [
         'id' => env('GTM_ID'),
     ],
 
+    /*
+     * Private Composer (Satis) repository that serves the anibalealvarezs/* packages
+     * every tenant resolves while building. Deployment pre-flight probes this endpoint
+     * from the node before mutating a checkout, because an unreachable repository
+     * otherwise aborts the upgrade half-way with the containers already stopped.
+     */
+    'composer' => [
+        'repository_url' => env('COMPOSER_REPOSITORY_URL', 'https://satis.anibalalvarez.com'),
+    ],
+
 ];
 

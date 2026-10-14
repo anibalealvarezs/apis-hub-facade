@@ -24,6 +24,7 @@ class ConfigPayloadService
             'google_analytics' => 'google_analytics',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
+            'mailchimp' => 'audiences',
         ];
 
         $fields = $release->config_schemas[$channel]['fields'] ?? [];
@@ -157,6 +158,7 @@ class ConfigPayloadService
             'google_analytics'      => '2 years',
             'facebook_marketing'    => '2 years',
             'facebook_organic'      => '2 years',
+            'mailchimp'             => '2 years',
         ];
         $payload['cache_history_range'] = $maxRanges[$channel] ?? '1 year';
 
@@ -254,6 +256,7 @@ class ConfigPayloadService
             'assetListKey' => $assetListKey,
             'remoteAssetKey' => $remoteAssetKey,
             'assetsListDb' => $assetsListDb,
+            'assetsListUi' => $assetsListUi,
         ];
     }
 }

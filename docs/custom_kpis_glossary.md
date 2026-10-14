@@ -18,9 +18,16 @@ These are standard, mathematically deterministic metrics calculated natively by 
 
 ### Engagement Metrics
 - **Blended CTR (Click-Through Rate)**
-  - *Formula*: `(facebook_marketing.clicks + google_search_console.clicks) / (facebook_marketing.impressions + google_search_console.impressions)`
+  - *Formula*: `(facebook_marketing.clicks + google_search_console.clicks + mailchimp.clicks_unique) / (facebook_marketing.impressions + google_search_console.impressions + mailchimp.sends)`
+  - *Use*: Measures engagement across ads, search, and email.
 - **Blended CPC (Cost Per Click)**
   - *Formula*: `Total Spend / Total Clicks`
+- **True Human Open Rate**
+  - *Formula*: `mailchimp.opens_standard / mailchimp.sends`
+  - *Use*: Tracks human email engagement excluding Apple MPP proxy opens.
+- **Email Delivery Failure Rate**
+  - *Formula*: `(mailchimp.bounces_hard + mailchimp.bounces_soft) / mailchimp.sends`
+  - *Use*: Highlights permanent and temporary delivery failures across email lists.
 
 ---
 

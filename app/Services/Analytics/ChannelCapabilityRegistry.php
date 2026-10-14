@@ -17,6 +17,7 @@ class ChannelCapabilityRegistry
             'google' => ['spendable', 'clickable', 'impressionable', 'seo', 'traffic_tracked', 'conversion_tracked', 'revenue_tracked', 'behavior_tracked', 'analytics', 'paid_media'],
             'klaviyo' => ['revenue_tracked', 'conversion_tracked', 'email_marketing'],
             'shopify' => ['revenue_tracked', 'conversion_tracked', 'ecommerce'],
+            'mailchimp' => ['email_marketing', 'clickable', 'retention_driven'],
             
             // Sub-channels / Drivers (from Asset Groups)
             'facebook_marketing' => ['spendable', 'clickable', 'impressionable', 'paid_media'],

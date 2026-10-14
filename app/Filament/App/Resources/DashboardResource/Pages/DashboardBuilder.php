@@ -350,11 +350,19 @@ class DashboardBuilder extends Page
                 }
             }
             
-            $result[$kpi->id] = [
+            $uiState = $kpi->filters['_ui_state'] ?? [];
+            
+            $result[$kpi->id] = array_merge($uiState, [
                 'name' => static::parseLocalizedValue($kpi->name),
                 'compatible_widgets' => $compatible,
-                'optimal_widgets' => $optimal
-            ];
+                'optimal_widgets' => $optimal,
+                'granularity' => $uiState['granularity'] ?? null,
+                'zero_handling' => $uiState['zero_handling'] ?? null,
+                'edge_case_weighted' => $uiState['edge_case_weighted'] ?? null,
+                'edge_case_grouping' => $uiState['edge_case_grouping'] ?? null,
+                'start_date' => $uiState['start_date'] ?? null,
+                'end_date' => $uiState['end_date'] ?? null,
+            ]);
         }
         
         return (array) (object) $result;

@@ -136,6 +136,29 @@ it('does not apply KPI _ui_state overrides to non-kpi widgets', function () {
     expect($resolved)->not->toHaveKey('max_ratio');
 });
 
+it('resolves fixed non-temporal granularity from the KPI _ui_state even when widget controls specify daily', function () {
+    $kpi = new CustomKpi(['filters' => ['_ui_state' => ['granularity' => 'channeledCampaign']]]);
+    $widget = heritageWidget([
+        'source_type' => 'kpi',
+        'controls' => ['granularity' => 'daily'],
+    ]);
+    $widget->setRelation('customKpi', $kpi);
+
+    $resolved = (new WidgetDataService())->resolveControls(heritageDashboard(['granularity' => 'daily']), $widget);
+
+    expect($resolved['granularity'])->toBe('channeledCampaign');
+});
+
+it('resolves granularity from KPI template default_granularity when not explicitly in _ui_state', function () {
+    $kpi = new CustomKpi(['filters' => ['_ui_state' => ['template_key' => 'email_click_responsiveness']]]);
+    $widget = heritageWidget(['source_type' => 'kpi']);
+    $widget->setRelation('customKpi', $kpi);
+
+    $resolved = (new WidgetDataService())->resolveControls(heritageDashboard(['granularity' => 'daily']), $widget);
+
+    expect($resolved['granularity'])->toBe('channeledCampaign');
+});
+
 it('produces a full resolved control set for every compatible widget type (heritage to view)', function ($source, $widgetType) {
     $dashboard = heritageDashboard(['granularity' => 'weekly', 'zero_handling' => 'keep', 'date_end' => '2026-07-01']);
     $widget = heritageWidget([

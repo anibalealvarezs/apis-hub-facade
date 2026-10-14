@@ -26,6 +26,8 @@ class LocalAssetDiscoveryService
                     return $this->fetchGoogleSearchConsoleSites($project);
                 case 'google_analytics':
                     return $this->fetchGoogleAnalyticsProperties($project);
+                case 'mailchimp':
+                    return $this->fetchMailchimpAssets($project);
                 default:
                     return [
                         'success' => false,
@@ -43,6 +45,67 @@ class LocalAssetDiscoveryService
                 'message' => $e->getMessage() . " | File: " . $e->getFile() . " | Line: " . $e->getLine(),
             ];
         }
+    }
+
+    protected function fetchMailchimpAssets(Project $project): array
+    {
+        $syncConfig = $project->sync_config ?? [];
+        $accounts = $syncConfig['mailchimp']['accounts'] ?? [];
+
+        if (empty($accounts)) {
+            return [
+                'success' => true,
+                'assets' => ['audiences' => []],
+            ];
+        }
+
+        $allAudiences = [];
+
+        foreach ($accounts as $accountId => $account) {
+            $apiKey = $account['api_key'] ?? null;
+            $accessToken = $account['access_token'] ?? null;
+            $serverPrefix = $account['server_prefix'] ?? 'us1';
+            $accountName = $account['account_name'] ?? $account['name'] ?? $accountId;
+
+            if (empty($apiKey) && empty($accessToken)) {
+                continue;
+            }
+
+            try {
+                $client = new \Anibalealvarezs\MailchimpApi\Services\Marketing\MarketingApi(
+                    apiKey: $apiKey,
+                    serverPrefix: $serverPrefix,
+                    accessToken: $accessToken,
+                );
+
+                $response = $client->getListsInfo(count: 1000);
+                $lists = $response['lists'] ?? [];
+
+                foreach ($lists as $list) {
+                    if (empty($list['id'])) {
+                        continue;
+                    }
+                    $allAudiences[] = [
+                        'id' => (string)$list['id'],
+                        'name' => ($list['name'] ?? 'Untitled Audience') . " ({$accountName})",
+                        'account_id' => (string)$accountId,
+                        'data' => [
+                            'account_id' => (string)$accountId,
+                            'account_name' => $accountName,
+                            'stats' => $list['stats'] ?? [],
+                            'date_created' => $list['date_created'] ?? null,
+                        ],
+                    ];
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Failed to fetch Mailchimp lists for account {$accountId} on project {$project->id}: " . $e->getMessage());
+            }
+        }
+
+        return [
+            'success' => true,
+            'assets' => ['audiences' => $allAudiences],
+        ];
     }
 
     protected function getFacebookClient(Project $project): FacebookGraphApi

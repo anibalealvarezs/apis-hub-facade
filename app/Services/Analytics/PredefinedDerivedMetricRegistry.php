@@ -568,6 +568,105 @@ class PredefinedDerivedMetricRegistry
                     'right' => ['type' => 'metric', 'metric' => 'b'],
                 ],
             ],
+
+            // ================================================================
+            // Email Marketing (Mailchimp, Klaviyo) & Cross-Channel Synergies
+            // ================================================================
+
+            'click_to_open_rate' => [
+                'name' => 'Click-to-Open Rate (CTOR)',
+                'description' => 'Percentage of opened emails that resulted in a link click. The definitive gauge of email content quality, relevance, and call-to-action effectiveness.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['email_marketing', 'crm', 'performance', 'engagement'],
+                'required_tags' => ['email_marketing'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Email Clicks', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Opens', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'opens', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
+            'email_bounce_rate' => [
+                'name' => 'Email Bounce Rate',
+                'description' => 'Percentage of sent emails that bounced (hard or soft). Crucial for monitoring deliverability health, sender domain reputation, and list quality.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['email_marketing', 'crm', 'deliverability', 'retention'],
+                'required_tags' => ['email_marketing'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Bounces', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'bounces', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Sends', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'sends', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
+            'email_unsubscribe_rate' => [
+                'name' => 'Email Unsubscribe Rate',
+                'description' => 'Percentage of sent emails resulting in opt-outs. Tracks audience fatigue, list decay, and message frequency resonance.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['email_marketing', 'crm', 'retention'],
+                'required_tags' => ['email_marketing', 'retention_driven'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Unsubscribes', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'unsubscribes', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Sends', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'sends', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
+            'email_revenue_per_recipient' => [
+                'name' => 'Revenue per Email Recipient (RPR)',
+                'description' => 'Average e-commerce revenue generated per email sent. The gold-standard bottom-line efficiency metric for promotional blasts and flows.',
+                'format' => 'currency',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'email_marketing', 'ecommerce', 'revenue', 'performance'],
+                'required_tags' => ['email_marketing', 'revenue_tracked'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Revenue', 'channel' => '__REVENUE_TRACKED_CHANNEL_1__', 'metric' => 'revenue', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Sends', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'sends', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
+            'email_traffic_share' => [
+                'name' => 'Email to Web Session Traffic Share',
+                'description' => 'Ratio of email click-through volume to total tracked web sessions. Measures how much your owned email audience fuels overall website traffic.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'email_marketing', 'analytics', 'traffic', 'performance'],
+                'required_tags' => ['email_marketing', 'traffic_tracked'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Email Clicks', 'channel' => '__EMAIL_MARKETING_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Web Sessions', 'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__', 'metric' => 'sessions', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
         ];
     }
 

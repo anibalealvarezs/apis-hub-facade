@@ -41,29 +41,97 @@ export function dashboardBuilder(config = {}) {
         canScrollSandboxSeriesLeft: false,
         canScrollSandboxSeriesRight: false,
         ephemeralOverrides: {},
+        sandboxKpiConfig: null,
+
+        getSandboxDefaultGranularity() {
+            const w = this.sandboxTargetWidget;
+            if (!w) return this.dashboardControls.granularity || 'daily';
+            if (w.source_type === 'kpi') {
+                const kpiId = w.source_config?.custom_kpi_id;
+                const kpi = (kpiId && this.kpis) ? this.kpis[kpiId] : null;
+                if (kpi && kpi.granularity) {
+                    return kpi.granularity;
+                }
+                if (this.sandboxKpiConfig && this.sandboxKpiConfig.granularity) {
+                    return this.sandboxKpiConfig.granularity;
+                }
+                if (this.widgetKpiConfig && this.widgetKpiConfig.granularity) {
+                    return this.widgetKpiConfig.granularity;
+                }
+            }
+            return this.dashboardControls.granularity || 'daily';
+        },
+
+        getSandboxDefaultGranularityLabel() {
+            const gran = this.getSandboxDefaultGranularity();
+            return this.inheritedControlLabel('granularity', gran) || gran || 'Daily';
+        },
+
+        getSandboxKpiNonTimelyGranularity() {
+            const defaultGran = this.getSandboxDefaultGranularity();
+            const timely = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'];
+            if (defaultGran && !timely.includes(defaultGran)) {
+                return defaultGran;
+            }
+            return null;
+        },
+
+        onSandboxGranularityChange() {
+            this._scopedMetricsCache = {};
+            if (this.sandboxVariables) {
+                Object.entries(this.sandboxVariables).forEach(([vKey, vConfig]) => {
+                    const ch = vConfig?.channel;
+                    if (!ch || !this.$wire) return;
+                    const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
+                    const effectiveGran = this.sandboxForm?.granularity || this.getSandboxDefaultGranularity() || null;
+                    this.$wire.getMetricsForChannel(ch, effectiveGran, dep || null).then(metrics => {
+                        if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
+                        const cacheKey = ch + '::' + dep + '::' + (effectiveGran || '');
+                        this._scopedMetricsCache[cacheKey] = metrics || {};
+                        const availableKeys = Object.keys(metrics || {});
+                        if (availableKeys.length > 0 && vConfig?.index !== undefined) {
+                            const currentM = this.sandboxForm.metrics[vConfig.index];
+                            if (!currentM || !availableKeys.includes(currentM)) {
+                                this.sandboxForm.metrics[vConfig.index] = availableKeys[0];
+                            }
+                        }
+                    });
+                });
+            }
+        },
 
         openSandboxModal(widget) {
             this.sandboxTargetWidget = widget;
-            const current = {
-                ...this.resolveWidgetControls(widget),
-                ...(this.ephemeralOverrides[widget.id] || {})
-            };
+            this.sandboxKpiConfig = null;
+            const wc = widget.controls || {};
+            const resolved = this.resolveWidgetControls(widget);
+            const eph = this.ephemeralOverrides[widget.id] || {};
+
+            let initGranularity = '';
+            if (eph.granularity !== undefined) {
+                initGranularity = eph.granularity;
+            } else if (wc.granularity && wc.granularity !== '__inherit__') {
+                initGranularity = wc.granularity;
+            } else {
+                initGranularity = '';
+            }
+
             this.sandboxForm = {
-                date_start: current.date_start || '',
-                date_end: current.date_end || '',
-                granularity: current.granularity || 'daily',
-                zero_handling: current.zero_handling || 'keep',
-                edge_case_weighted: current.edge_case_weighted !== undefined ? current.edge_case_weighted : true,
-                edge_case_grouping: current.edge_case_grouping || 'none',
-                max_ratio: current.max_ratio ?? null,
-                remove_unknown: current.remove_unknown !== undefined ? current.remove_unknown : true,
-                block_first_col: current.block_first_col !== undefined ? current.block_first_col : true,
-                channel: current.channel || '',
-                metrics: Array.isArray(current.metrics) ? [...current.metrics] : (current.metrics ? Object.values(current.metrics) : []),
-                series_assets: current.series_assets ? JSON.parse(JSON.stringify(current.series_assets)) : {},
-                series_asset_groups: current.series_asset_groups ? JSON.parse(JSON.stringify(current.series_asset_groups)) : {},
-                series_dependencies: current.series_dependencies ? JSON.parse(JSON.stringify(current.series_dependencies)) : {},
-                combo_chart_config: current.combo_chart_config ? JSON.parse(JSON.stringify(current.combo_chart_config)) : {},
+                date_start: eph.date_start !== undefined ? eph.date_start : (wc.date_start || ''),
+                date_end: eph.date_end !== undefined ? eph.date_end : (wc.date_end || ''),
+                granularity: initGranularity,
+                zero_handling: eph.zero_handling !== undefined ? eph.zero_handling : (wc.zero_handling || resolved.zero_handling || 'keep'),
+                edge_case_weighted: eph.edge_case_weighted !== undefined ? eph.edge_case_weighted : (resolved.edge_case_weighted !== undefined ? resolved.edge_case_weighted : true),
+                edge_case_grouping: eph.edge_case_grouping !== undefined ? eph.edge_case_grouping : (resolved.edge_case_grouping || 'none'),
+                max_ratio: eph.max_ratio !== undefined ? eph.max_ratio : (resolved.max_ratio ?? null),
+                remove_unknown: eph.remove_unknown !== undefined ? eph.remove_unknown : (wc.remove_unknown !== undefined ? wc.remove_unknown : true),
+                block_first_col: eph.block_first_col !== undefined ? eph.block_first_col : (wc.block_first_col !== undefined ? wc.block_first_col : true),
+                channel: eph.channel !== undefined ? eph.channel : (resolved.channel || ''),
+                metrics: eph.metrics !== undefined ? [...eph.metrics] : (Array.isArray(resolved.metrics) ? [...resolved.metrics] : []),
+                series_assets: eph.series_assets ? JSON.parse(JSON.stringify(eph.series_assets)) : (resolved.series_assets ? JSON.parse(JSON.stringify(resolved.series_assets)) : {}),
+                series_asset_groups: eph.series_asset_groups ? JSON.parse(JSON.stringify(eph.series_asset_groups)) : (resolved.series_asset_groups ? JSON.parse(JSON.stringify(resolved.series_asset_groups)) : {}),
+                series_dependencies: eph.series_dependencies ? JSON.parse(JSON.stringify(eph.series_dependencies)) : (resolved.series_dependencies ? JSON.parse(JSON.stringify(resolved.series_dependencies)) : {}),
+                combo_chart_config: eph.combo_chart_config ? JSON.parse(JSON.stringify(eph.combo_chart_config)) : (resolved.combo_chart_config ? JSON.parse(JSON.stringify(resolved.combo_chart_config)) : {}),
             };
 
             this.sandboxVariables = {};
@@ -243,6 +311,7 @@ export function dashboardBuilder(config = {}) {
 
                 if (kpiId && this.$wire) {
                     this.$wire.getKpiConfiguration(kpiId).then(cfg => {
+                        this.sandboxKpiConfig = cfg;
                         setupKpiVariables(cfg);
                     }).catch(() => {
                         setupKpiVariables(this.widgetKpiConfig || {});
@@ -346,14 +415,15 @@ export function dashboardBuilder(config = {}) {
             const ch = vConfig?.channel;
             if (!ch) return {};
             const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
-            const cacheKey = ch + '::' + dep;
+            const gran = this.sandboxForm?.granularity || this.getSandboxDefaultGranularity() || '';
+            const cacheKey = ch + '::' + dep + '::' + gran;
             if (this._scopedMetricsCache && this._scopedMetricsCache[cacheKey]) {
                 return this._scopedMetricsCache[cacheKey];
             }
             if (this.$wire && (!this._fetchingScopedMetrics || !this._fetchingScopedMetrics[cacheKey])) {
                 if (!this._fetchingScopedMetrics) this._fetchingScopedMetrics = {};
                 this._fetchingScopedMetrics[cacheKey] = true;
-                this.$wire.getMetricsForChannel(ch, this.sandboxForm?.granularity || null, dep || null).then(metrics => {
+                this.$wire.getMetricsForChannel(ch, gran || null, dep || null).then(metrics => {
                     if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
                     this._scopedMetricsCache[cacheKey] = metrics || {};
                     delete this._fetchingScopedMetrics[cacheKey];
@@ -401,9 +471,10 @@ export function dashboardBuilder(config = {}) {
         onSandboxDependencyChange(vKey, vConfig) {
             const ch = vConfig?.channel;
             const dep = this.sandboxForm?.series_dependencies?.[vKey] || '';
+            const gran = this.sandboxForm?.granularity || this.getSandboxDefaultGranularity() || '';
             if (!ch || !this.$wire) return;
-            const cacheKey = ch + '::' + dep;
-            this.$wire.getMetricsForChannel(ch, this.sandboxForm?.granularity || null, dep || null).then(metrics => {
+            const cacheKey = ch + '::' + dep + '::' + gran;
+            this.$wire.getMetricsForChannel(ch, gran || null, dep || null).then(metrics => {
                 if (!this._scopedMetricsCache) this._scopedMetricsCache = {};
                 this._scopedMetricsCache[cacheKey] = metrics || {};
                 const availableKeys = Object.keys(metrics || {});
@@ -541,9 +612,24 @@ export function dashboardBuilder(config = {}) {
                 return;
             }
             targetEl.innerHTML = '';
+            const resolved = this.resolveWidgetControls(widget);
+            const eph = this.ephemeralOverrides[widget.id] || {};
+            const overrides = { ...eph };
+            if (overrides.granularity === '' || overrides.granularity === '__inherit__') {
+                delete overrides.granularity;
+            }
+            if (overrides.zero_handling === '' || overrides.zero_handling === '__inherit__') {
+                delete overrides.zero_handling;
+            }
+            if (overrides.date_start === '' || overrides.date_start === '__inherit__') {
+                delete overrides.date_start;
+            }
+            if (overrides.date_end === '' || overrides.date_end === '__inherit__') {
+                delete overrides.date_end;
+            }
             const effectiveControls = {
-                ...this.resolveWidgetControls(widget),
-                ...(this.ephemeralOverrides[widget.id] || {})
+                ...resolved,
+                ...overrides
             };
             window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
         },
@@ -643,17 +729,88 @@ export function dashboardBuilder(config = {}) {
             const dc = this.dashboardControls || {};
             const resolved = { ...wc };
 
-            if (!resolved.date_start && dc.date_start) resolved.date_start = dc.date_start;
-            if (!resolved.date_end && dc.date_end) resolved.date_end = dc.date_end;
-            if (!resolved.zero_handling && dc.zero_handling) resolved.zero_handling = dc.zero_handling;
-            if (!resolved.granularity && dc.granularity) resolved.granularity = dc.granularity;
-            if (resolved.edge_case_weighted === undefined && dc.edge_case_weighted !== undefined) {
-                resolved.edge_case_weighted = dc.edge_case_weighted;
+            let kpi = null;
+            if (widget.source_type === 'kpi') {
+                const kpiId = widget.source_config?.custom_kpi_id;
+                kpi = (kpiId && this.kpis) ? this.kpis[kpiId] : null;
+                if (!kpi && this.sandboxTargetWidget?.id === widget.id && this.sandboxKpiConfig) {
+                    kpi = this.sandboxKpiConfig;
+                }
+                if (!kpi && this.widgetControlsTarget?.id === widget.id && this.widgetKpiConfig) {
+                    kpi = this.widgetKpiConfig;
+                }
             }
-            if (!resolved.edge_case_grouping && dc.edge_case_grouping) {
-                resolved.edge_case_grouping = dc.edge_case_grouping;
+
+            // date_start
+            if (!resolved.date_start || resolved.date_start === '__inherit__') {
+                if (kpi && kpi.start_date) {
+                    resolved.date_start = kpi.start_date;
+                } else if (dc.date_start) {
+                    resolved.date_start = dc.date_start;
+                }
             }
-            if (dc.asset_group) {
+
+            // date_end
+            if (!resolved.date_end || resolved.date_end === '__inherit__') {
+                if (kpi && kpi.end_date) {
+                    resolved.date_end = kpi.end_date;
+                } else if (dc.date_end) {
+                    resolved.date_end = dc.date_end;
+                }
+            }
+
+            // zero_handling
+            if (!resolved.zero_handling || resolved.zero_handling === '__inherit__') {
+                if (kpi && kpi.zero_handling) {
+                    resolved.zero_handling = kpi.zero_handling;
+                } else if (dc.zero_handling) {
+                    resolved.zero_handling = dc.zero_handling;
+                } else {
+                    resolved.zero_handling = 'remove';
+                }
+            }
+
+            // granularity
+            if (!resolved.granularity || resolved.granularity === '__inherit__') {
+                if (kpi && kpi.granularity) {
+                    resolved.granularity = kpi.granularity;
+                } else if (dc.granularity) {
+                    resolved.granularity = dc.granularity;
+                } else {
+                    resolved.granularity = 'daily';
+                }
+            }
+
+            // edge_case_weighted
+            if (resolved.edge_case_weighted === undefined || resolved.edge_case_weighted === null || resolved.edge_case_weighted === '__inherit__') {
+                if (kpi && kpi.edge_case_weighted !== undefined && kpi.edge_case_weighted !== null) {
+                    resolved.edge_case_weighted = !!kpi.edge_case_weighted;
+                } else if (dc.edge_case_weighted !== undefined) {
+                    resolved.edge_case_weighted = !!dc.edge_case_weighted;
+                } else {
+                    resolved.edge_case_weighted = true;
+                }
+            }
+
+            // edge_case_grouping
+            if (!resolved.edge_case_grouping || resolved.edge_case_grouping === '__inherit__') {
+                if (kpi && kpi.edge_case_grouping) {
+                    resolved.edge_case_grouping = kpi.edge_case_grouping;
+                } else if (dc.edge_case_grouping) {
+                    resolved.edge_case_grouping = dc.edge_case_grouping;
+                } else {
+                    resolved.edge_case_grouping = 'none';
+                }
+            }
+
+            // max_ratio
+            if (resolved.max_ratio === undefined || resolved.max_ratio === null) {
+                if (kpi && kpi.max_ratio !== undefined && kpi.max_ratio !== null) {
+                    resolved.max_ratio = kpi.max_ratio;
+                }
+            }
+
+            if (dc.asset_group && !resolved.asset_group) {
                 resolved.asset_group = dc.asset_group;
             }
             return resolved;
@@ -2463,7 +2620,24 @@ export function dashboardBuilder(config = {}) {
         inheritedControlLabel(key, value) {
             const labels = {
                 zero_handling: { remove: 'Remove zeros', keep: 'Keep zeros', trim: 'Trim zeros' },
-                granularity: { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', query: 'Query', 'dimensions.page': 'Page', country: 'Country', device: 'Device', post: 'Post' },
+                granularity: {
+                    daily: 'Daily',
+                    weekly: 'Weekly',
+                    monthly: 'Monthly',
+                    quarterly: 'Quarterly',
+                    semiannual: 'Semiannual',
+                    annually: 'Annually',
+                    lifetime: 'Lifetime',
+                    channeledCampaign: 'Campaign',
+                    campaignType: 'Campaign Type',
+                    query: 'Query',
+                    'dimensions.page': 'Page',
+                    country: 'Country',
+                    device: 'Device',
+                    post: 'Post',
+                    instagram_account: 'Instagram Account',
+                    facebook_page: 'Facebook Page',
+                },
                 max_ratio: 'Cap at {value}',
             };
             if (key === 'max_ratio') {
@@ -2659,10 +2833,10 @@ export function dashboardBuilder(config = {}) {
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
                 date_end: wc.date_end || this.dashboardControls.date_end || '',
-                zero_inherit: wc.zero_handling === undefined,
-                zero_handling: wc.zero_handling || this.dashboardControls.zero_handling || 'remove',
-                granularity_inherit: wc.granularity === undefined,
-                granularity: wc.granularity || this.dashboardControls.granularity || 'daily',
+                zero_inherit: wc.zero_handling === undefined || wc.zero_handling === '' || wc.zero_handling === '__inherit__',
+                zero_handling: (wc.zero_handling && wc.zero_handling !== '__inherit__') ? wc.zero_handling : (this.dashboardControls.zero_handling || 'remove'),
+                granularity_inherit: wc.granularity === undefined || wc.granularity === '' || wc.granularity === '__inherit__',
+                granularity: (wc.granularity && wc.granularity !== '__inherit__') ? wc.granularity : (this.dashboardControls.granularity || 'daily'),
                 dependency: wc.dependency || null,
                 channel: wc.channel || '',
                 assets: wc.assets || [],

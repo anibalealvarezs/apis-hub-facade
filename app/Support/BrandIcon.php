@@ -6,6 +6,55 @@ use Illuminate\Support\HtmlString;
 
 class BrandIcon
 {
+    /**
+     * Emitted by svg() as the icon's own sizing. Overridable via forProvider().
+     */
+    private const CLASS_ATTRIBUTE = 'class="h-6 w-6"';
+
+    /**
+     * Provider key => brand mark method name.
+     *
+     * Keys are matched case-insensitively after trimming. Add an entry here to make a
+     * new provider's branded mark resolvable from a provider key (Data Sources sidebar,
+     * navigation icons, etc.) without touching the individual mark methods.
+     */
+    public const PROVIDER_METHODS = [
+        'amazon' => 'amazon',
+        'bigcommerce' => 'bigcommerce',
+        'facebook' => 'facebook',
+        'google' => 'google',
+        'hubspot' => 'hubspot',
+        'klaviyo' => 'klaviyo',
+        'linkedin' => 'linkedin',
+        'mailchimp' => 'mailchimp',
+        'meta' => 'meta',
+        'netsuite' => 'netsuite',
+        'pinterest' => 'pinterest',
+        'salesforce' => 'salesforce',
+        'shopify' => 'shopify',
+        'tiktok' => 'tiktok',
+        'triple_whale' => 'tripleWhale',
+        'x' => 'x',
+    ];
+
+    /**
+     * Resolve the branded mark for a provider key (e.g. "google", "triple_whale").
+     *
+     * Returns null when the provider has no branded mark so the caller can fall back to
+     * its own generic icon rather than rendering a blank slot.
+     */
+    public static function forProvider(?string $provider, string $classes = 'h-6 w-6'): ?HtmlString
+    {
+        $key = strtolower(trim((string) $provider));
+        $method = self::PROVIDER_METHODS[$key] ?? null;
+
+        if ($method === null || ! method_exists(self::class, $method)) {
+            return null;
+        }
+
+        return self::withClasses(self::$method(), $classes);
+    }
+
     public static function facebook(): HtmlString
     {
         return self::svg('<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>');
@@ -76,6 +125,12 @@ class BrandIcon
         return self::svg('<path d="M13.339 7.219a5.62 5.62 0 0 1 4.063-1.74c2.078 0 3.938 1.203 4.917 2.943c.844-.401 1.802-.604 2.802-.604c3.802 0 6.88 3.12 6.88 6.964c0 3.839-3.083 6.958-6.901 6.958a7.3 7.3 0 0 1-1.359-.141a5 5 0 0 1-4.401 2.604a5.3 5.3 0 0 1-2.198-.5a5.76 5.76 0 0 1-5.302 3.495a5.74 5.74 0 0 1-5.401-3.755a5 5 0 0 1-1.099.099c-2.938 0-5.339-2.401-5.339-5.401c0-2 1.078-3.74 2.677-4.677A6.1 6.1 0 0 1 2.157 11c0-3.438 2.802-6.198 6.203-6.198c2.042 0 3.797.938 4.958 2.401z"/>', '0 0 32 32');
     }
 
+    public static function mailchimp(): HtmlString
+    {
+        // Mailchimp (chimp) mark, drawn on a 32x32 viewBox.
+        return self::svg('<path d="M28.5 6.7c-1.2-.6-2.5-.9-3.9-1.1a13.9 13.9 0 0 0-.5-1.1 7.6 7.6 0 0 0-6.9 1.9 3.5 3.5 0 0 0-1.6 1.6 12.9 12.9 0 0 0-4.6 1.4C7.6 7.3 4.4 8.5 2.6 10.2c-2.2 2.2-1.7 5.6.2 8.2 1.6 2.2 4.4 3.9 7.5 4.2 1.1.1 2.3-.1 3.3-.6l.1-.1-.1-.1c-1.1-.4-2.1-1-3-1.8l.1-.1c2.2 1 4.7 1.5 7.2 1.4 5.7-.2 11-3.1 13.2-7.6 1.5-2.9.6-6.6-2.6-8.8zM11.2 9.6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm8 6.4c-2.1 3.4-6.4 5.4-11.2 5.4-4.8 0-9.1-2-11.2-5.4a.9.9 0 0 1 0-1.3c2.1-3.4 6.4-5.4 11.2-5.4s9.1 2 11.2 5.4c.3.4.3.9 0 1.3zm-.2-3.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>', '0 0 30 30');
+    }
+
     public static function hubspot(): HtmlString
     {
         return self::svg('<path d="M18.164 7.93V5.084a2.198 2.198 0 001.267-1.978v-.067A2.2 2.2 0 0017.238.845h-.067a2.2 2.2 0 00-2.193 2.193v.067a2.196 2.196 0 001.252 1.973l.013.006v2.852a6.22 6.22 0 00-2.969 1.31l.012-.01-7.828-6.095A2.497 2.497 0 104.3 4.656l-.012.006 7.697 5.991a6.176 6.176 0 00-1.038 3.446c0 1.343.425 2.588 1.147 3.607l-.013-.02-2.342 2.343a1.968 1.968 0 00-.58-.095h-.002a2.033 2.033 0 102.033 2.033 1.978 1.978 0 00-.1-.595l.005.014 2.317-2.317a6.247 6.247 0 104.782-11.134l-.036-.005zm-.964 9.378a3.206 3.206 0 113.215-3.207v.002a3.206 3.206 0 01-3.207 3.207z"/>');
@@ -84,7 +139,22 @@ class BrandIcon
     protected static function svg(string $inner, string $viewBox = '0 0 24 24'): HtmlString
     {
         return new HtmlString(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'.$viewBox.'" fill="currentColor" class="h-6 w-6" aria-hidden="true">'.$inner.'</svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'.$viewBox.'" fill="currentColor" '.self::CLASS_ATTRIBUTE.' aria-hidden="true">'.$inner.'</svg>'
+        );
+    }
+
+    /**
+     * Re-size an already-built mark. The replacement targets the exact class attribute
+     * emitted by svg(), so it stays a no-op-safe single substitution.
+     */
+    private static function withClasses(HtmlString $icon, string $classes): HtmlString
+    {
+        if ($classes === 'h-6 w-6') {
+            return $icon;
+        }
+
+        return new HtmlString(
+            str_replace(self::CLASS_ATTRIBUTE, 'class="'.$classes.'"', $icon->toHtml())
         );
     }
 }

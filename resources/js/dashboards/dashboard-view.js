@@ -935,13 +935,23 @@ export function dashboardView(config = {}) {
                 }
             }
 
-            if (!this.settingsControls.granularity) {
+            this.settingsGranularityOnTheGo = granularityOnTheGo;
+            this.settingsSourceType = sourceType || "";
+
+            if (this.settingsSourceType === "kpi") {
+                const kpiGran =
+                    this.settingsBuilderControls.granularity ||
+                    this.settingsControls.granularity ||
+                    widgetObj?.resolved_controls?.granularity ||
+                    "";
+                if (kpiGran) {
+                    this.settingsBuilderControls.granularity = kpiGran;
+                    this.settingsControls.granularity = kpiGran;
+                }
+            } else if (!this.settingsControls.granularity) {
                 this.settingsControls.granularity =
                     this.settingsBuilderControls.granularity || "daily";
             }
-
-            this.settingsGranularityOnTheGo = granularityOnTheGo;
-            this.settingsSourceType = sourceType || "";
             this.openSettings = true;
             this.settingsSearchQueries = {};
             for (const key in seriesOptions) {

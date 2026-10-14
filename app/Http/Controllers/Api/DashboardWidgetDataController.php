@@ -1468,6 +1468,135 @@
                     }
                 }
 
+                // ── Autocorrelation result reshaping ────────────────────────────────────
+                // apis-hub returns Autocorrelation results as a flat object:
+                //   {autocorrelation, lag_days, data_points}
+                // Reshape here for bar_chart, tile/gauge, and table so frontend renderers work seamlessly.
+                if (isset($data['autocorrelation']) && $widget->source_type === 'kpi') {
+                    $acf = (float)$data['autocorrelation'];
+                    $lagDays = (int)($data['lag_days'] ?? 7);
+                    $dataPoints = (int)($data['data_points'] ?? 0);
+
+                    // Strength descriptor
+                    $strength = abs($acf) > 0.5 ? 'Strong'
+                        : (abs($acf) > 0.3 ? 'Moderate'
+                            : (abs($acf) > 0.1 ? 'Weak' : 'Negligible'));
+                    $direction = $acf > 0 ? 'Positive' : ($acf < 0 ? 'Negative' : 'Zero');
+                    $summaryDesc = "$strength $direction (" . number_format($acf, 3) . ")";
+
+                    // Best-effort metric label from KPI ui_state or runtime controls
+                    $_uiState = $widget->customKpi?->filters['_ui_state'] ?? [];
+                    $depMetric = $_uiState['dependent_metric'] ?? ($resolvedControls['metrics'][0] ?? 'Metric');
+                    $depChannel = $_uiState['dependent_channel'] ?? '';
+                    $depLabel = ($depChannel ? ucwords(str_replace('_', ' ', $depChannel)) . ' ' : '') . ucwords(str_replace('_', ' ', $depMetric));
+
+                    if ($effectiveWidgetType === 'bar_chart' || $effectiveWidgetType === 'line_chart') {
+                        $correlogram = $data['correlogram'] ?? [];
+                        if (!empty($correlogram)) {
+                            $labels = [];
+                            $values = [];
+                            $bgColors = [];
+                            foreach ($correlogram as $point) {
+                                $labels[] = $point['label'] ?? "Lag {$point['lag']}d";
+                                $val = round((float)($point['autocorrelation'] ?? 0), 4);
+                                $values[] = $val;
+                                $bgColors[] = $val >= 0 ? '#3B82F6' : '#EF4444';
+                            }
+                        } else {
+                            $labels = ["Lag {$lagDays}d"];
+                            $values = [round($acf, 4)];
+                            $bgColors = [$acf >= 0 ? '#3B82F6' : '#EF4444'];
+                        }
+
+                        $data = [
+                            'labels' => $labels,
+                            'datasets' => [
+                                [
+                                    'label' => 'Autocorrelation',
+                                    'data' => $values,
+                                    'backgroundColor' => $effectiveWidgetType === 'bar_chart' ? $bgColors : '#3B82F6',
+                                    'borderColor' => '#3B82F6',
+                                    'borderWidth' => 2,
+                                    'fill' => false,
+                                    'metric' => 'autocorrelation',
+                                ],
+                            ],
+                            'scales' => [
+                                'y' => [
+                                    'min' => -1.0,
+                                    'max' => 1.0,
+                                    'beginAtZero' => true,
+                                ],
+                            ],
+                            '_meta' => [
+                                'lag_days' => $lagDays,
+                                'data_points' => $dataPoints,
+                                'autocorrelation' => $acf,
+                                'half_life_days' => $data['half_life_days'] ?? null,
+                                'confidence_band' => $data['confidence_band'] ?? null,
+                            ],
+                        ];
+                    } elseif (in_array($effectiveWidgetType, ['tile', 'gauge'])) {
+                        $pctValue = round($acf * 100, 1);
+                        $halfLifeDays = $data['half_life_days'] ?? null;
+                        $halfLifeText = $halfLifeDays ? " · Half-life: {$halfLifeDays}d" : '';
+                        $lagText = "{$lagDays}-day lag ({$dataPoints} pts){$halfLifeText}";
+                        $data = [
+                            'value' => $pctValue,
+                            'current' => $pctValue,
+                            'label' => "{$summaryDesc} · {$lagText}",
+                            'format' => 'percentage',
+                            'percentage' => true,
+                            'prefix' => '',
+                            'suffix' => '',
+                        ];
+                    } elseif ($effectiveWidgetType === 'table') {
+                        $correlogram = $data['correlogram'] ?? [];
+                        if (!empty($correlogram)) {
+                            $rows = [];
+                            foreach ($correlogram as $point) {
+                                $ptAcf = (float)($point['autocorrelation'] ?? 0);
+                                $ptStrength = abs($ptAcf) > 0.5 ? 'Strong' : (abs($ptAcf) > 0.3 ? 'Moderate' : (abs($ptAcf) > 0.1 ? 'Weak' : 'Negligible'));
+                                $ptDir = $ptAcf > 0 ? 'Positive' : ($ptAcf < 0 ? 'Negative' : 'Zero');
+                                $rows[] = [
+                                    'lag' => "Lag {$point['lag']}d",
+                                    'autocorrelation' => number_format($ptAcf, 4),
+                                    'strength' => "{$ptStrength} {$ptDir}",
+                                    'significant' => !empty($point['significant']) ? 'Yes ✓' : 'No',
+                                ];
+                            }
+                            $data = [
+                                'columns' => [
+                                    ['key' => 'lag', 'label' => 'Lag Interval'],
+                                    ['key' => 'autocorrelation', 'label' => 'Autocorrelation'],
+                                    ['key' => 'strength', 'label' => 'Strength'],
+                                    ['key' => 'significant', 'label' => 'Significant (95%)'],
+                                ],
+                                'rows' => $rows,
+                            ];
+                        } else {
+                            $data = [
+                                'columns' => [
+                                    ['key' => 'metric', 'label' => 'Metric'],
+                                    ['key' => 'autocorrelation', 'label' => 'Autocorrelation'],
+                                    ['key' => 'lag_days', 'label' => 'Lag (days)', 'format' => 'number'],
+                                    ['key' => 'strength', 'label' => 'Strength'],
+                                    ['key' => 'data_points', 'label' => 'Data Points', 'format' => 'number'],
+                                ],
+                                'rows' => [
+                                    [
+                                        'metric' => $depLabel,
+                                        'autocorrelation' => number_format($acf, 4),
+                                        'lag_days' => $lagDays,
+                                        'strength' => $strength . ' ' . $direction,
+                                        'data_points' => $dataPoints,
+                                    ],
+                                ],
+                            ];
+                        }
+                    }
+                }
+
                 // If tile or gauge and data is still in series format, aggregate to a single value
                 if (in_array($effectiveWidgetType, ['tile', 'gauge']) && !isset($data['value'])) {
                     if (isset($data['summary'])) {
@@ -3673,10 +3802,54 @@
                     $dimVal = '/'.$dimVal;
                 }
 
-                // Canonicalize trailing slashes so '/page/' and '/page' match across GSC and GA4
+                // Strip email & marketing tracking parameters (utm_*, mc_cid, mc_eid, etc.) so cross-channel page paths align
+                if ($isPageDimension && str_contains($dimVal, '?')) {
+                    [$basePath, $rawQuery] = explode('?', $dimVal, 2);
+                    parse_str($rawQuery, $queryParams);
+                    if (is_array($queryParams) && !empty($queryParams)) {
+                        $filtered = [];
+                        $trackingPrefixes = ['utm_', 'mc_'];
+                        $trackingKeys = ['gclid', 'fbclid', 'msclkid', 'ttclid', 'dclid', '_hsenc', '_hsmi', 'ref', 'source'];
+
+                        foreach ($queryParams as $pKey => $pVal) {
+                            $lowerKey = strtolower((string)$pKey);
+                            $isTracking = in_array($lowerKey, $trackingKeys, true);
+                            if (!$isTracking) {
+                                foreach ($trackingPrefixes as $prefix) {
+                                    if (str_starts_with($lowerKey, $prefix)) {
+                                        $isTracking = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!$isTracking) {
+                                $filtered[$pKey] = $pVal;
+                            }
+                        }
+
+                        if (!empty($filtered)) {
+                            ksort($filtered);
+                            $dimVal = $basePath . '?' . http_build_query($filtered);
+                        } else {
+                            $dimVal = $basePath;
+                        }
+                    }
+                }
+
+                // Canonicalize trailing slashes so '/page/' and '/page' match across GSC, GA4, Mailchimp, etc.
                 if ($isPageDimension && $dimVal !== '/' && str_ends_with($dimVal, '/')) {
                     $dimVal = rtrim($dimVal, '/');
                 }
+            }
+
+            if ($cleanDim === 'campaigntype') {
+                return match (strtolower($dimVal)) {
+                    'regular' => __('Regular Campaign'),
+                    'automation', 'automation-email' => __('Automation'),
+                    'rss' => __('RSS Campaign'),
+                    'variate', 'ab_split' => __('A/B Test Campaign'),
+                    default => ucfirst(str_replace(['_', '-'], ' ', $dimVal)),
+                };
             }
 
             return $dimVal;

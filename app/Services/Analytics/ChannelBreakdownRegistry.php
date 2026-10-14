@@ -61,6 +61,24 @@ class ChannelBreakdownRegistry
                 ],
             ],
 
+            'mailchimp' => [
+                'channeledCampaign' => [
+                    'label' => __('Campaign'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
+                'campaignType' => [
+                    'label' => __('Campaign Type'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
+                'dimensions.page' => [
+                    'label' => __('Page / URL'),
+                    'type' => 'dimension',
+                    'operators' => $defaultOperators,
+                ],
+            ],
+
             default => [],
         };
     }

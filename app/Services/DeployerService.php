@@ -40,6 +40,21 @@ class DeployerService
 
         Log::info("Starting deployment for {$project->name} on {$server->ip_address}");
 
+        // The build cannot succeed without the private Composer repository, and a first
+        // deploy has no previous state to fall back to. Fail fast with a clear cause
+        // rather than surfacing Composer's usage text as an unknown deployment error.
+        if (! $this->assertComposerRepositoryReachable($server)) {
+            Log::error("Aborting deployment of {$project->name}: the private Composer repository did not respond from the node.");
+
+            return [
+                'status' => 'error',
+                'code' => 'composer_repository_unreachable',
+                'auto_recovered' => false,
+                'output' => "The deployment was aborted before any change was made: {$this->composerRepositoryLabel()} did not respond from {$server->ip_address}.\n\n"
+                    . "Restore the Composer repository, then retry the deployment.",
+            ];
+        }
+
         // 1. Prepare Directory & Clone
         $commands = [
             "mkdir -p {$path}",
@@ -768,8 +783,27 @@ EOT;
         $currentVersionArg = escapeshellarg($currentVersionRaw);
         
         $oldTag = escapeshellarg($project->apisHubRelease ? $project->apisHubRelease->version_tag : $targetRelease->version_tag);
+        $oldRelease = $project->apisHubRelease;
 
         Log::info("Upgrading project {$project->name} from {$currentVersionRaw} to release {$targetRelease->version_tag}");
+
+        // ── Pre-flight ──────────────────────────────────────────────────────────
+        // Everything below mutates the tenant: it checks out the new tag, stops the
+        // containers and rewrites .env. If the private Composer repository cannot be
+        // reached from the node, the build dies during `composer install` and leaves
+        // the tenant stopped with the new code on disk. Probing first lets us abort
+        // while the project is still serving traffic.
+        if (! $this->assertComposerRepositoryReachable($project->server)) {
+            Log::error("Aborting upgrade of {$project->name} to {$targetRelease->version_tag}: the private Composer repository did not respond from the node. The project was left untouched.");
+
+            return [
+                'status' => 'error',
+                'code' => 'composer_repository_unreachable',
+                'auto_recovered' => false,
+                'output' => "The upgrade was aborted before any change was made: {$this->composerRepositoryLabel()} did not respond from {$project->server->ip_address}.\n\n"
+                    . "The project is untouched and still running {$currentVersionRaw}. Restore the Composer repository, then retry the upgrade.",
+            ];
+        }
 
         $commands = [
             "cd {$path}",
@@ -791,7 +825,11 @@ EOT;
             "MSYS_NO_PATHCONV=1 docker run --rm -v {$path}:/app -w /app composer:latest install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs",
             
             // 4. Execute Migration Sequencer in an isolated container (bypassing entrypoint.sh so crons/workers don't start)
-            "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
+            // __MIGRATION_FAILED__ marks the point of no return: migrations may already be
+            // partially applied, so a code rollback is no longer safe. Past this point
+            // failures are escalated instead of auto-reverted.
+            "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo '__MIGRATION_FAILED__'; echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
+            "echo '__MIGRATIONS_APPLIED__'",
             
             // 4.5. Run non-blocking historical query semantic classification backfill
             "docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true",
@@ -803,7 +841,197 @@ EOT;
             "docker compose up -d --force-recreate --remove-orphans master"
         ];
 
-        return $this->runSshCommands($project->server, $commands, timeout: 1100);
+        $result = $this->runSshCommands($project->server, $commands, timeout: 1100);
+
+        if (($result['status'] ?? 'error') === 'success') {
+            return $result;
+        }
+
+        $output = (string) ($result['output'] ?? '');
+
+        // Anything that happened before the Migration Sequencer started is reversible:
+        // the schema is untouched, so returning to the previous tag cannot desynchronise
+        // code from database. Once either sentinel is present we stop and escalate.
+        if (str_contains($output, self::MIGRATION_FAILED_MARKER) || str_contains($output, self::MIGRATIONS_APPLIED_MARKER)) {
+            Log::error("Upgrade of {$project->name} to {$targetRelease->version_tag} failed after migrations started. Automatic rollback skipped; manual intervention required.\n{$output}");
+
+            $result['code'] = 'upgrade_failed_after_migration';
+            $result['auto_recovered'] = false;
+
+            return $result;
+        }
+
+        return $this->recoverPreMigrationUpgrade(
+            $project,
+            $path,
+            $oldTag,
+            $oldRelease,
+            $targetRelease,
+            $output
+        );
+    }
+
+    /**
+     * Sentinels written to the remote output so the upgrade phase can be identified
+     * without splitting the SSH chain (a second connection would eat into the
+     * single-call timeout budget the Docker build relies on).
+     */
+    public const MIGRATION_FAILED_MARKER = '__MIGRATION_FAILED__';
+    public const MIGRATIONS_APPLIED_MARKER = '__MIGRATIONS_APPLIED__';
+
+    /**
+     * Human readable label for the private Composer repository.
+     */
+    protected function composerRepositoryLabel(): string
+    {
+        return 'the private Composer repository (' . config('services.composer.repository_url') . ')';
+    }
+
+    /**
+     * Probe the private Composer repository from the node itself.
+     *
+     * The probe deliberately runs on the tenant node rather than on the facade: the
+     * node is the party that must download the packages, and only its network path
+     * (egress rules, DNS, VPN) determines whether the build will succeed.
+     */
+    protected function assertComposerRepositoryReachable(Server $server, int $timeout = 60): bool
+    {
+        $url = escapeshellarg($this->composerRepositoryPackagesUrl());
+
+        // curl first, wget as a fallback, and a hard failure when neither exists so a
+        // node without HTTP tooling blocks the upgrade instead of failing opaquely later.
+        $command = "if command -v curl >/dev/null 2>&1; then "
+            . "curl -sf -o /dev/null --max-time 20 {$url}; "
+            . "elif command -v wget >/dev/null 2>&1; then "
+            . "wget -q -O /dev/null --timeout=20 {$url}; "
+            . "else exit 2; fi";
+
+        $result = $this->runSshCommands($server, [$command], timeout: $timeout);
+
+        return ($result['status'] ?? 'error') === 'success';
+    }
+
+    protected function composerRepositoryPackagesUrl(): string
+    {
+        return rtrim((string) config('services.composer.repository_url'), '/') . '/packages.json';
+    }
+
+    /**
+     * Decide whether a pre-migration failure was caused by an unreachable dependency
+     * repository, as opposed to a genuine build or configuration fault.
+     *
+     * Only the former is safe to paper over automatically: retrying later cannot fix a
+     * broken Dockerfile, and reverting a tenant because of one would hide a real defect.
+     */
+    public function isDependencyRepositoryFailure(string $output): bool
+    {
+        $patterns = [
+            '/could not be downloaded/i',
+            '/failed to download .* from dist/i',
+            '/source fallback is disabled/i',
+            '/policy\.ignore-unreachable/i',
+            '/HTTP\/\d(?:\.\d)?\s+5(?:2[0-9]|3[0-9])/',
+            '/connection timed out/i',
+            '/could not resolve host/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $output)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Restore a tenant to its previous release after a failure that happened before
+     * any migration ran.
+     *
+     * The master container bind-mounts the checkout over /app (see the worker's
+     * bin/build-deployment.php), so the running code is whatever sits on disk and
+     * /app/vendor comes from the host too. Reverting the checkout is therefore
+     * mandatory: restarting the containers alone would boot the new release's code
+     * against the previous vendor tree and crash-loop. The vendor directory already
+     * matches the previous lock file because step 3.5 never completed, which is what
+     * lets us skip Composer entirely — the one dependency that is known to be down.
+     */
+    protected function recoverPreMigrationUpgrade(
+        Project $project,
+        string $path,
+        string $oldTag,
+        ?\App\Models\ApisHubRelease $oldRelease,
+        \App\Models\ApisHubRelease $targetRelease,
+        string $failureOutput
+    ): array {
+        if (! $this->isDependencyRepositoryFailure($failureOutput)) {
+            Log::error("Upgrade of {$project->name} to {$targetRelease->version_tag} failed before migrations for an unrecognised reason. Automatic rollback skipped; manual intervention required.\n{$failureOutput}");
+
+            return [
+                'status' => 'error',
+                'code' => 'upgrade_failed_pre_migration',
+                'auto_recovered' => false,
+                'output' => trim("The upgrade to {$targetRelease->version_tag} failed before any migration ran, and the cause was not recognised as a dependency download failure. The tenant was left in place for inspection.\n\n" . $failureOutput),
+            ];
+        }
+
+        $restoredTag = $oldRelease?->version_tag ?? 'the previous release';
+
+        Log::warning("Dependency repository unreachable while upgrading {$project->name} to {$targetRelease->version_tag}. Rolling the tenant back to {$restoredTag}.");
+
+        $reverted = $this->runSshCommands($project->server, [
+            "cd {$path}",
+            "git checkout {$oldTag}",
+        ], timeout: 300);
+
+        if (($reverted['status'] ?? 'error') !== 'success') {
+            Log::error("Rollback of {$project->name} could not check out {$restoredTag}.");
+
+            return [
+                'status' => 'error',
+                'code' => 'rollback_failed',
+                'auto_recovered' => false,
+                'output' => trim("The upgrade failed because {$this->composerRepositoryLabel()} was unreachable, and the automatic rollback could not restore {$restoredTag}.\n\n" . (string) ($reverted['output'] ?? '')),
+            ];
+        }
+
+        // Step 2.5 already overwrote .env with values derived from the new release, so
+        // regenerate it against the release we are returning to. Written over SSH stdin
+        // to avoid re-introducing shell-escaping problems for secrets with odd characters.
+        if ($oldRelease) {
+            $this->writeRemoteFile($project->server, "{$path}/.env", $this->generateEnvContent($project, $oldRelease), timeout: 120);
+        }
+
+        // No --build on purpose: the previous image is still present and rebuilding it
+        // would re-enter the same failing Composer download.
+        $revived = $this->runSshCommands($project->server, [
+            "cd {$path}",
+            "docker compose up -d --force-recreate --remove-orphans",
+        ], timeout: 600);
+
+        if (($revived['status'] ?? 'error') !== 'success') {
+            Log::error("Rollback of {$project->name} restored {$restoredTag} on disk but the containers did not come back up.");
+
+            return [
+                'status' => 'error',
+                'code' => 'rollback_restart_failed',
+                'auto_recovered' => false,
+                'output' => trim("{$restoredTag} was restored on disk, but the containers failed to restart. The tenant needs manual attention.\n\n" . (string) ($revived['output'] ?? '')),
+            ];
+        }
+
+        Log::info("Rolled back {$project->name} to {$restoredTag} after a dependency repository failure; the tenant is serving again.");
+
+        return [
+            'status' => 'rolled_back',
+            'code' => 'rolled_back',
+            'auto_recovered' => true,
+            'output' => trim(
+                "The upgrade to {$targetRelease->version_tag} was rolled back automatically because {$this->composerRepositoryLabel()} could not be reached from the node.\n\n"
+                . "The project is running {$restoredTag} again and its version was left unchanged. Fix the repository, then retry the upgrade.\n\n"
+                . "Original failure:\n" . $failureOutput
+            ),
+        ];
     }
 
     /**

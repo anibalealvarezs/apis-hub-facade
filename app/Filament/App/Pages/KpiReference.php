@@ -390,6 +390,66 @@ class KpiReference extends Page
                 'use_case' => 'Ideal for measuring if UX/UI changes on the website are improving the retention and conversion rate, independent of the traffic source quality.',
                 'interpretation' => 'A value above 1 means your site converts traffic highly efficiently (compounding returns). A value below 1 means your site struggles to convert increased traffic volumes.',
             ],
+            'email_click_responsiveness' => [
+                'type_label' => 'Email Click-to-Open Responsiveness (CTOR)',
+                'explanation' => 'Evaluates click responsiveness per open across campaigns and email templates. Separates copy & CTA performance from subject line open appeal.',
+                'use_case' => 'You want to know if your email content is actually driving action once opened, rather than just relying on clickbaity subject lines.',
+                'interpretation' => 'A rising trend means your email body content and calls-to-action are compelling. A falling trend means people open but don\'t click, indicating a mismatch between subject and content.',
+            ],
+            'email_click_momentum' => [
+                'type_label' => 'Email Click Momentum',
+                'explanation' => 'Detect whether audience engagement with email campaigns is accelerating or losing momentum over time using trend divergence (MACD).',
+                'use_case' => 'Are your newsletters losing their appeal over time? This cuts through open-rate noise (like Apple MPP) to see if real click engagement is trending down.',
+                'interpretation' => 'A bullish MACD crossover means your recent campaigns are re-engaging your list. A bearish crossover means fatigue is setting in.',
+            ],
+            'email_engagement_half_life' => [
+                'type_label' => 'Email Engagement Half-Life & Decay',
+                'explanation' => 'Measures how rapidly subscriber engagement decays after an email broadcast goes out.',
+                'use_case' => 'Helps determine the optimal frequency for email campaigns. If your half-life is 12 hours, sending daily might cause fatigue. If it\'s 3 days, you can space them out.',
+                'interpretation' => 'Longer half-lives mean your emails have staying power and people return to them. Shorter half-lives mean the value is immediate and fleeting.',
+            ],
+            'email_deliverability_decay' => [
+                'type_label' => 'List Churn & Deliverability Vulnerability',
+                'explanation' => 'Detects diminishing sender quality and list degradation by modeling bounce volume scaling against broadcast size.',
+                'use_case' => 'You are growing your email list quickly, but are they valid emails? This tracks if your bounce rate is accelerating disproportionately as you send more.',
+                'interpretation' => 'A value above 1 means your bounces are growing faster than your list size—urgent list cleaning needed. A value below 1 means healthy list growth.',
+            ],
+            'paid_to_email_activation_halo' => [
+                'type_label' => 'Paid Ad to Email Engagement Halo Effect',
+                'explanation' => 'Predictive Attribution / Halo Effect. Evaluates whether top-of-funnel paid media campaigns stimulate delayed surges in newsletter open and engagement rates.',
+                'use_case' => 'You run Facebook Ads. Do those ads remind existing subscribers to open your recent emails? This tests for that cross-channel stimulation.',
+                'interpretation' => 'A positive result confirms paid media lifts email engagement. A negative result means the two channels operate in silos.',
+            ],
+            'paid_spend_per_email_subscriber' => [
+                'type_label' => 'Paid Ad Spend to Email Volume Ratio',
+                'explanation' => 'Blended acquisition efficiency analyzing paid media spend required to drive email broadcast recipients.',
+                'use_case' => 'If you run lead generation ads, this measures how effectively your ad spend translates into actual email list volume over time.',
+                'interpretation' => 'A declining trend means you are acquiring subscribers more cheaply. An increasing trend means your lead generation costs are rising.',
+            ],
+            'email_traffic_elasticity' => [
+                'type_label' => 'Email Traffic Session Elasticity',
+                'explanation' => 'Measures web session generation elasticity relative to email link click volume. Identifies if email blasts produce sustained site visits.',
+                'use_case' => 'When people click your emails, do they browse your site or immediately leave? This measures the true traffic value of email clicks.',
+                'interpretation' => 'Values near or above 1 mean email clicks turn into high-quality, sustained web sessions. Low values mean email clicks are accidental or low-intent.',
+            ],
+            'email_landing_page_quality_gap' => [
+                'type_label' => 'Email Landing Page Quality Gap',
+                'explanation' => 'Identifies URLs and landing pages receiving strong email click volume but suffering from elevated website bounce rates.',
+                'use_case' => 'You send a promo email that gets lots of clicks, but no sales. This KPI flags the specific landing pages that are failing to engage those email visitors.',
+                'interpretation' => 'Higher values indicate toxic landing pages where email visitors bounce immediately. Fix the page UX or ensure the email promise matches the landing page.',
+            ],
+            'email_revenue_yield' => [
+                'type_label' => 'Email Revenue Yield per Send',
+                'explanation' => 'Models bottom-line revenue generated relative to email send volume across campaigns and audiences.',
+                'use_case' => 'What is the actual dollar value of sending an email to your list? This calculates the direct revenue efficiency of your broadcast volume.',
+                'interpretation' => 'Rising yield means your emails are becoming more profitable. Falling yield means you might be over-emailing your list with low-converting offers.',
+            ],
+            'subscriber_purchase_elasticity' => [
+                'type_label' => 'Subscriber Purchase Elasticity',
+                'explanation' => 'Identifies order volume scaling ceiling relative to email click volume.',
+                'use_case' => 'If you get twice as many email clicks, do you get twice as many orders? This finds the diminishing returns point for your email promotions.',
+                'interpretation' => 'A value above 1 means your email clicks scale beautifully into purchases. A value below 1 means you are hitting audience saturation for buying intent.',
+            ],
         ];
 
         return $guidance[$key] ?? [

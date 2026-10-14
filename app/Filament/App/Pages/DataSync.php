@@ -175,11 +175,13 @@ class DataSync extends Page
         $syncConfig = $project->sync_config ?? [];
         $gscConfig = $syncConfig['google_search_console'] ?? null;
 
-        if (!$gscConfig || empty($gscConfig['enabled'])) {
-            return false;
+        // True if GSC is enabled in sync settings, OR if the channel is currently connected,
+        // OR if historical accounts exist for this channel in sync_config.
+        if (!empty($gscConfig['enabled']) || $project->isChannelConnected('google_search_console')) {
+            return true;
         }
 
-        return $project->isChannelConnected('google_search_console');
+        return !empty($gscConfig['accounts']);
     }
 
     protected function getHeaderActions(): array
@@ -222,13 +224,15 @@ class DataSync extends Page
                 ->form(function () use ($tenant) {
                     $channels = [];
                     $syncConfig = $tenant->sync_config ?? [];
-                    if (isset($this->syncData['channels']) && is_array($this->syncData['channels'])) {
-                        foreach (array_keys($this->syncData['channels']) as $c) {
-                            $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
-                            $isConnected = $tenant->isChannelConnected($c);
-                            if ($isConfigured && $isConnected) {
-                                $channels[$c] = ucwords(str_replace('_', ' ', $c));
-                            }
+                    $candidateChannels = (isset($this->syncData['channels']) && is_array($this->syncData['channels']) && !empty($this->syncData['channels']))
+                        ? array_keys($this->syncData['channels'])
+                        : array_keys($syncConfig);
+
+                    foreach ($candidateChannels as $c) {
+                        $isConfigured = isset($syncConfig[$c]['enabled']) && $syncConfig[$c]['enabled'];
+                        $isConnected = $tenant->isChannelConnected($c);
+                        if ($isConfigured && $isConnected) {
+                            $channels[$c] = ucwords(str_replace('_', ' ', $c));
                         }
                     }
 

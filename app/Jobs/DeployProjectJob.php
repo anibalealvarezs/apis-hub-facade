@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -21,6 +22,23 @@ class DeployProjectJob implements ShouldQueue
     public function __construct(
         public Project $project
     ) {}
+
+    /**
+     * Get the middleware the job should pass through.
+     * Prevents concurrent deployments on the same physical server to avoid Docker daemon contention and Caddy reload races.
+     *
+     * @return array
+     */
+    public function middleware(): array
+    {
+        $serverId = $this->project->server_id ?? 'default';
+
+        return [
+            (new WithoutOverlapping("server-deploy:{$serverId}"))
+                ->releaseAfter(600)
+                ->expireAfter(900),
+        ];
+    }
 
     public function handle(DeployerService $deployer): void
     {

@@ -620,16 +620,47 @@ class Project extends Model
      */
     public function isChannelConnected(string $channel): bool
     {
-        if (str_starts_with($channel, 'facebook_')) {
-            return !empty($this->facebook_user_token);
+        $registry = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class);
+        $profile = $registry->get($channel);
+
+        if ($profile) {
+            return $profile->isConnected($this);
         }
-        if (str_starts_with($channel, 'google_')) {
-            return !empty($this->google_refresh_token);
-        }
-        
-        // Fallback for other providers (shopify, klaviyo, etc.) using ProjectCredential
+
+        // Generic fallback for any channel that does not have a registered profile class yet
         $provider = explode('_', $channel)[0];
-        return $this->credentials()->where('provider', $provider)->whereNotNull('token')->exists();
+
+        // 1. ChannelProfile OAuth relation
+        $profileIdColumn = "{$provider}_profile_id";
+        if (!empty($this->{$profileIdColumn})) {
+            $cp = $this->getRelationValue($provider . 'Profile')
+                ?? \App\Models\ChannelProfile::find($this->{$profileIdColumn});
+
+            if ($cp) {
+                if (is_array($cp->authorized_channels)) {
+                    return in_array($channel, $cp->authorized_channels, true) && !empty($cp->access_token);
+                }
+
+                return !empty($cp->access_token);
+            }
+        }
+
+        // 2. ProjectCredential DB table
+        if ($this->credentials()->where('provider', $provider)->whereNotNull('token')->exists()) {
+            return true;
+        }
+
+        // 3. sync_config accounts map
+        $accounts = $this->sync_config[$channel]['accounts'] ?? [];
+        if (is_array($accounts) && !empty($accounts)) {
+            foreach ($accounts as $acc) {
+                if (!empty($acc['api_key']) || !empty($acc['access_token']) || !empty($acc['token'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

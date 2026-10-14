@@ -11,6 +11,48 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Mailchimp Data Explorer KPI & Sub-Metric Breakdown Redesign (2026-10-06)
+- **Context & Design:**
+  - Redesigned the Mailchimp KPI cards and campaign table cells to clearly explain the newly supported granular metric variations (`opens_standard`, `opens_proxy`, `clicks_unique`, `bounces_hard`, `bounces_soft`).
+  - Separated Bounces into its own dedicated KPI card (`Bounces (Undelivered)`) with permanent delivery failure badges (`Hard`) and temporary delivery failure badges (`Soft`), alongside the % of sent bounce rate.
+  - Added clear contextual badges with tooltips to Opens (`Human` vs `Apple MPP` proxy) and Clicks (`Unique` recipient clickers).
+  - Added a dedicated `Bounces` column to the Data Explorer table with hard (`h`) and soft (`s`) breakdown indicators, as well as human/proxy (`h`/`p`) indicators under Opens and unique (`uniq`) indicators under Clicks.
+
+### Mailchimp Data Explorer Channel Resolution (2026-10-01)
+- **Problem & Context:**
+  - In Mailchimp Data Explorer (`/api/mailchimp/summary`, `/chart`, `/table`), all metrics were returning `null`.
+  - APIs Hub aggregation planner diagnostics revealed metric resolution was misattributing requests to `channel: google_search_console` with `missing_metric_equivalence_in_universal`.
+  - Cause: `MailchimpController` only passed `['channeledAccount' => ...]` in `$baseFilters` without `'channel' => 'mailchimp'`. When `channel` is omitted in the filter bag, `AggregationPlanner` defaulted to evaluating the first registered tenant profile (`google_search_console`), which lacks Mailchimp canonical metrics (`sends`, `opens`, `clicks`, `bounces`, `unsubscribes`, `orders`, `revenue`).
+- **Implementation:**
+  - `MailchimpController.php`: Added `'channel' => 'mailchimp'` to `$baseFilters` in `summary()` and `chart()`, and added `tableFilters` with `'channel' => 'mailchimp'` plus `applyDynamicFilters()` in `table()`.
+  - `MailchimpProfile.php`: Added `metrics_strategy` (`default`) and `metrics_config` (`[]`) system fields to conform with standard channel profile schema.
+
+### Deployment Resilience: Composer Repository Outages (2026-09-26)
+- **Problem & Context:**
+  - Upgrading project `mabe-2-dev` to `v1.17.0` failed and surfaced as `Deployment failed due to an unknown issue. (install [--prefer-source] ...)`.
+  - Actual cause was **not** a code defect: `satis.anibalalvarez.com` (private Composer/Satis repo) returned **HTTP 522** (Cloudflare could not reach origin) for both `packages.json` and dist zips. `v1.17.0` introduced packages absent from tenant caches (`anibalealvarezs/mailchimp-api`, `anibalealvarezs/mailchimp-hub-driver`, `anibalealvarezs/api-driver-core` v1.1.2), so they had to be downloaded.
+  - Failure hit at step 3 (`docker compose build` → Dockerfile `stage-0 RUN composer install`, exit 100), i.e. **after** `docker compose stop` had already stopped every container. The existing inline rollback at step 4 never fired, so the tenant was left stopped (heartbeat `502`) with `v1.17.0` code on disk.
+- **Critical architectural fact (drives all rollback decisions):**
+  - The worker's `bin/build-deployment.php` bind-mounts the checkout over the app: `"$projectPathHost:/app"`. The container therefore runs the **code on disk**, and `/app/vendor` comes from the **host** too. `docker-compose.yml` and `vendor/` are both gitignored.
+  - Consequence: restarting containers **without** reverting the checkout boots the new release's code against the previous vendor tree → guaranteed crash loop. Any recovery MUST `git checkout` the old tag first.
+  - `bin/build-deployment.php` was verified **identical between v1.16.0 and v1.17.0**, so the stale generated manifest is harmless for that specific pair (do not rely on this in general).
+- **Implementation:**
+  - `config/services.php`: new `services.composer.repository_url` (`COMPOSER_REPOSITORY_URL`, default `https://satis.anibalalvarez.com`).
+  - `DeployerService::assertComposerRepositoryReachable()`: pre-flight probe (`curl`, falling back to `wget`, hard-fail if neither exists) run **on the tenant node** — the node is the party that must download. Aborts while the project is still serving traffic. Also applied to `DeployerService::deploy()`.
+  - `DeployerService::upgradeRelease()`: returns `code: composer_repository_unreachable` and mutates nothing when the probe fails.
+  - Phase detection via explicit sentinels `__MIGRATION_FAILED__` / `__MIGRATIONS_APPLIED__` (`DeployerService::MIGRATION_FAILED_MARKER`, `MIGRATIONS_APPLIED_MARKER`) rather than a second SSH call — a split would have cut the single-call 1100s timeout budget the Docker build depends on. Past either sentinel, code rollback is unsafe (schema may be ahead of code), so failures escalate.
+  - `DeployerService::isDependencyRepositoryFailure()`: narrow classifier (522/5xx, `could not be downloaded`, `Source fallback is disabled`, `policy.ignore-unreachable`, connection timeouts). Unrecognised pre-migration failures are **not** auto-reverted, so real build defects are not masked.
+  - `DeployerService::recoverPreMigrationUpgrade()`: revert checkout → rewrite `.env` for the old release via `writeRemoteFile()` (SSH stdin, avoids re-introducing shell-escaping problems with secrets) → `docker compose up -d --force-recreate --remove-orphans` **without `--build`** (rebuilding would re-enter the failing download). Reuses the still-present previous image and the host `vendor/` that already matches the old lock. Returns distinct codes: `rolled_back`, `rollback_failed`, `rollback_restart_failed`, `upgrade_failed_pre_migration`, `upgrade_failed_after_migration`.
+  - `UpgradeProjectReleaseJob`: `timeout` 1200 → 2400 and `WithoutOverlapping` `releaseAfter`/`expireAfter` → 2400/2700 to fit probe + chain + recovery while keeping the lock alive for the whole run. New `rolled_back` status maps to `health_status = online` plus a `ProjectStatusLog` entry; `apis_hub_release_id` is still only updated on success, so the pinned version is unchanged.
+  - `ProjectDeploymentLog::getSummaryMessage()`: now scans the **whole** output instead of the last line only. Composer prints the actionable error *above* its usage block, which is exactly why this outage was reported as an "unknown issue". Broad progress phrases (`container`, `restarting`, …) are now only matched for non-failed statuses, since they co-occur with the real error in failure logs.
+- **Known remaining fragility (not addressed, out of scope):**
+  - `DeployerService::runSshCommands()` wraps the whole chain in raw double quotes (`ssh … "{$allCommands}"`) while the chain contains unescaped `"` (`--entrypoint "php"`) and arbitrary `.env` content. It works today only because those quotes happen to balance. A `"`, `$`, or backtick in a project name, DB password, or client secret would corrupt every downstream command, including the Composer step. `writeRemoteFile()` is the safe pattern already in the codebase.
+- **Verification:**
+  - `tests/Feature/DeploymentResilienceTest.php` (new, 9 tests / 33 assertions) covers: pre-flight abort leaves no mutating command; rollback on dependency failure; no rollback after `__MIGRATIONS_APPLIED__`; no rollback on unrecognised pre-migration failure; `rollback_failed` reporting; the outage classifier; and all three `getSummaryMessage()` paths. Uses `Process::fake()` with a self-collected command log (Laravel 12's `Process\Factory` has no public `recorded()`).
+  - `ProjectDeploymentTest.php` + `DeploymentResilienceTest.php`: 14 passed.
+  - Full facade suite: **17 failed, 368 passed** — same 17 pre-existing failures as the clean baseline, 368 = 359 previous passes + 9 new.
+  - `lang/es.json` valid JSON; both new summary keys added.
+
 ### Tenant MCP Server Activation & Caddy Routing for API-Eligible Tenants (2026-09-25)
 - **Problem & Context:**
   - In `DeployerService::generateEnvContent()`, `DEPLOY_MCP_SERVER=false` was hardcoded, preventing the tenant's containerized MCP server (`node mcp-server/index.js`, port 3000) from ever starting, even for projects on API-eligible tiers (`ULTRA`, `FOUNDER`, `ENTERPRISE`).
@@ -843,5 +885,77 @@
   - Resolved controls: ensured `$resolvedControls['metrics']` is auto-populated from `scatter_data['metrics']` or curve series definitions when missing.
   - Scale constraints: position-based metrics automatically set `min: 1` with reversed axis, while impressions/volume metrics begin at zero.
 
+### Mailchimp Data Explorer (2026-09-26)
+- **What was added:** full Data Explorer page for Mailchimp, mirroring the GSC architecture.
+  - `app/Filament/App/Pages/MailchimpDashboard.php` (cluster `DataExplorer`, slug `mailchimp`, nav group `Email Marketing`).
+  - `app/Http/Controllers/Api/MailchimpController.php` with `summary` / `chart` / `table` / `trend`.
+  - Routes in `routes/web.php` → `POST /api/mailchimp/{summary,chart,table,trend}`, each behind `['web','auth','channel.asset.access:mailchimp']`.
+  - `resources/views/filament/app/pages/mailchimp-dashboard.blade.php`, `resources/js/dashboards/mailchimp-dashboard.js` (registered in `app.js`), plus a `mailchimp` variant in `components/data-table.blade.php` and `public/css/dashboards.css`.
+  - `BrandIcon::mailchimp()` and Spanish strings in `lang/es.json`.
+- **Metric vocabulary is NOT the UI vocabulary.** Worker canonical metrics are `sends`, `opens`, `clicks`, `bounces`, `unsubscribes`, `orders`, `revenue` (see `MailchimpDriver::getCanonicalMetricDictionary()`). The UI shows "Total Emails Sent" but must map it to `sends`; `open_rate` / `click_rate` are **derived in the facade** (`opens/sends`, `clicks/sends`) and must never be requested from the worker.
+- **Mailchimp assets are audiences (lists), not sites.** `sync_config.mailchimp.assets.audiences[].id` is the raw Mailchimp list id — do **not** `md5()` it (GSC sites are hashed; Mailchimp is not). Selector is filtered by `enabled` and matched against the worker's `channeled_account` `platformId`.
+- **Grouping dimensions** (from `Services\Aggregation\AggregationGroupingResolver`): the `metric` entity only supports `daily|weekly|monthly|quarterly|yearly`, `query|page|country|device`, `channeledCampaign`, `channeledAccount`, and `dimensions.<key>`. A single temporal + one known entity is also allowed. So the tabs map to `channeledCampaign` (campaigns) and `channeledAccount` (audiences); the chart uses `['daily']`.
+- **Rates must be recomputed per day** on the client (`withDerivedRates()`) so a rate line never contradicts the counters plotted next to it.
+- **Known worker-side gap (unresolved, worker repo):** Mailchimp engagement events carry `campaign_id` + `action` but no `audience_id`/`list_id`, so date-filtered opens/clicks cannot be reliably split by audience. Also `AgnosticPreAggregationEngine::persistCanonicalMetricSlice()` looked like a no-op in the inspected build — verify the live `mailchimp/metric/aggregate` response before treating empty dashboards as a facade bug.
+- **House style observed here:** controllers use fully-qualified `\Illuminate\Support\Facades\Log::` (no `use` import); session cache keys are namespaced per channel; `data-table.blade.php` maps a `variant` prop to prefixed CSS classes.
+- **Test baseline:** 17 tests were already failing on a clean `develop` (WidgetConfigHeritage, AssetFiltering, WidgetDataIntegrity, DashboardTranslation KPI, ProjectSoftDelete, ProjectTransfer, UserTierManagement). Verified by `git stash --include-untracked` + full run: identical 17 before and after this change (357 → 359 passing = the 2 new `DataExplorerBrandIconsTest` cases).
+- **Nav icon test:** any new Data Explorer page must be added to `tests/Feature/DataExplorerBrandIconsTest.php` (both the page provider and the monochrome-SVG provider).
 
+
+
+
+### Data Sources provider/channel ordering + branded icons (2026-09-26)
+- **Replaced the sidebar heroicons with the real brand marks.** `data-sources.blade.php` previously hard-coded `@if($pKey === 'google')` / `@elseif($pKey === 'facebook')` / `@else`, so 4 of 6 providers fell back to `heroicon-o-server-stack`. It now calls `BrandIcon::forProvider($pKey, 'h-5 w-5')` and keeps the heroicon only as a null fallback. All 6 catalog providers (google, facebook, tiktok, klaviyo, shopify, mailchimp) resolve to a real mark.
+- **New resolver: `BrandIcon::forProvider()`.** `app/Support/BrandIcon.php` gains `PROVIDER_METHODS` (provider key => mark method, 17 entries) and `forProvider(?string, string $classes = 'h-6 w-6'): ?HtmlString`. Returns **null** for unknown providers so callers can fall back rather than render a blank slot. The `$classes` arg re-sizes the mark via a single substitution of the `CLASS_ATTRIBUTE` const that `svg()` emits; the default is byte-identical to the previous hard-coded `class="h-6 w-6"`, so the 5 existing Data Explorer nav icons are unchanged. `triple_whale` maps to the camelCase `tripleWhale()`; keys are matched case-insensitively after trimming.
+- **Ordering is now compatibility/enablement-driven, not asset-count-driven.** Both `usort`/`uasort` comparators in `getProviders()` dropped the `count DESC` primary key (the sidebar used to re-order itself every time you toggled an asset) in favour of: providers with >=1 compatible channel, then those with >=1 **enabled compatible** channel, then `strcasecmp(label)`; channels by compatible, then enabled (compatible only), then `strcasecmp(label)`. `uasort` is still used so the blade keeps its string provider keys.
+- **Per-channel flags are now on the payload.** Each channel carries `compatible` and `enabled` alongside `status`/`count`, and each provider carries `has_compatible`/`has_enabled`. The blade's green/grey status dot now reads `$channel['enabled']` instead of re-deriving `isset($this->data[$key.'_enabled'])` - the dot and the sort can no longer disagree. `getChannelAssetCount()` is still called and `count` is still shipped for display; it is just no longer a sort key.
+- **New helper `DataSources::isChannelEnabled()`** reads the nested `$this->data[<key>]['enabled']` as canonical and falls back to the flat `<key>_enabled` mirror. The mirror is only written by `hydrateFormFromDb()` (line ~374) and the Toggle binds to it, so checking both is what makes live re-ordering work when the user flips a channel switch.
+- **Order-dependent side effects to be aware of:** `hydrateFormFromDb()` derives staggered `cron_time` defaults from this iteration order (04:00 + 15 min per enabled channel index), and `mount()` auto-selects the first `Active` channel. Changing the order therefore changes the generated default sync times for channels that have **never saved** `cron_time` - existing projects keep their persisted values. This is now release-driven and stable rather than asset-count-driven, which is the more predictable behaviour, but it is a behaviour change.
+- **Unspecified groups:** the request only defined ordering for the compatible/enabled groups. Providers with no enabled channel, non-compatible channels, and disabled channels fall back to `strcasecmp(label)` (deterministic) rather than preserving catalog insertion order.
+- **Tests:** new `tests/Feature/Pages/DataSourcesProviderOrderingTest.php` (13 tests) covers each ordering rule, the mirror fallback, the nested-wins precedence, and a Livewire render assertion that all six brand marks appear in the sidebar. `DataExplorerBrandIconsTest.php` gained 10 `forProvider()` cases (all 6 catalog providers, case/trim, null for unknown, class override, default size).
+- **Blade gotcha hit here:** the inline one-liner `@php($icon = ...)` inside the sidebar produced `syntax error, unexpected token "endif"`. Use the explicit `@php` / `@endphp` block form, matching what the loop above already does.
+- **Do not Pint-format `DataSources.php`.** That file is 2,398 lines of pre-existing 4-space style and already fails Pint at HEAD with 21 fixers; running Pint on it would bury the diff. Verified the fixer set is *identical* before and after this change, so nothing new was introduced. The new test file and `DataExplorerBrandIconsTest.php` are Pint-clean.
+- **Test baseline after this change:** 391 passed / 17 failed - the same 17 pre-existing locale failures (359 + 9 deployment + 23 new here).
+### Mailchimp connect reverted to "Not Connected" (2026-09-26)
+- **Symptom:** connecting Mailchimp with a valid API key showed "Account connected successfully. Discovering audiences...", the toast then vanished, and the page fell back to the "Not Connected" block. Reproduced after the missing-SDK-class fix, so the two issues were unrelated.
+- **Root cause: `mergeDiscoveredAssets()` destroyed the credentials it had just saved.** The connect action persists `sync_config.mailchimp.accounts` (api_key, server_prefix, account_name) at `DataSources.php:881`, then discovers audiences and calls `mergeDiscoveredAssets()`. That method rebuilds the channel from **form state** (`$this->form->getState()`) and did a hard replace:
+  `$fullDbState[$this->activeChannel] = Arr::get($currentData, $this->activeChannel, []);`
+  The Mailchimp form schema (`MailchimpProfile::getSchemaDefinition()`) only defines `enabled`, `cron_recent_hour/minute` and `audiences` - there is **no `accounts` field**, because credentials are deliberately stored outside the form. So the replace dropped `accounts` and `$tenant->update()` at the end of the method persisted the gutted config. `isConnected()` then read `sync_config.mailchimp.accounts` as empty and the UI reverted.
+- **Why it was silent:** the notification was sent *before* the wipe, so the UI reported success and then immediately showed the opposite state. Filament toasts also auto-dismiss after a few seconds, which made it look like a failing request rather than a successful one followed by a state rollback. Nothing threw.
+- **Fix:** merge instead of replace, so keys the form does not manage survive:
+  ```php
+  $fullDbState[$this->activeChannel] = array_merge(
+      is_array($fullDbState[$this->activeChannel] ?? null) ? $fullDbState[$this->activeChannel] : [],
+      (array) \Illuminate\Support\Arr::get($currentData, $this->activeChannel, [])
+  );
+  ```
+  Form values still win on overlapping keys (`enabled`, `audiences`, `cron_*`), and other channels are untouched because only the active channel is reassigned.
+- **This was never Mailchimp-specific.** Any channel whose credentials live in `sync_config.<channel>` outside the form schema was being wiped by every asset merge. The same `mergeDiscoveredAssets()` is used by the OAuth connect path (~line 1032) and the manual discovery path, so all of them were affected. Klaviyo/Shopify/Google/Facebook/TikTok credentials are the same shape and were equally at risk.
+- **Regression test:** `tests/Feature/Pages/DataSourcesMergeAssetsTest.php` builds a release with a mailchimp schema that (like production) has no `accounts` field, seeds `sync_config.mailchimp.accounts` in the DB, then invokes the protected `mergeDiscoveredAssets()` and asserts the credentials survive. Verified it genuinely catches the bug: reverting the fix fails with `Undefined array key "accounts"`.
+- **Test-baseline note:** the form schema adds a `required()` `cron_time` TimePicker, so `$page->data` in the test must supply `mailchimp.cron_time` or `getState()` throws a ValidationException. Set form state explicitly rather than reusing the DB `sync_config` - the divergence between the two is the whole point of the test.
+- **Test baseline after this change:** 393 passed / 17 failed (391 + 2 new; the same 17 pre-existing locale failures).
+
+### Mailchimp Data Explorer asset selector empty fix (2026-10-01)
+- **Symptom:** The Mailchimp Data Explorer page displayed "No audiences available." in the audience dropdown selector despite having connected Mailchimp and discovered audiences in Data Sources.
+- **Root causes:**
+  1. `MailchimpDashboard::loadAccounts()` strictly gated account population on `$response['data']` from `$service->listChanneled($tenant, 'mailchimp', 'channeled_account')`. If the worker node had not synced `channeled_accounts` yet, or was running in a dev/offline environment, `$response['data']` was empty, leaving `$this->accounts` completely empty with no fallback.
+  2. Discovered audiences in Data Sources default to `enabled: false`. If audiences were discovered but not yet explicitly toggled on or if worker sync was pending, `$enabledIds` was empty.
+- **Fix:**
+  - Added fallback in [MailchimpDashboard.php](file:///D:/laragon/www/apis-hub-facade/app/Filament/App/Pages/MailchimpDashboard.php): if remote `channeled_accounts` returns empty (or before worker persistence runs), populate `$this->accounts` directly from `$tenant->sync_config['mailchimp']['assets']['audiences']` (or `sync_config['mailchimp']['audiences']`).
+  - If no audiences are explicitly toggled enabled yet, fall back to showing all discovered audiences in the selector so it is never empty.
+  - Added test coverage in [MailchimpDashboardAccountsTest.php](file:///D:/laragon/www/apis-hub-facade/tests/Feature/Pages/MailchimpDashboardAccountsTest.php).
+
+### Channel Connection Architecture: Polymorphic ChannelProfile Refactor (2026-10-01)
+- **Problem:**
+  - `Project::isChannelConnected()` and `DataSources::isConnected()` previously had fragmented, hardcoded `if/else` checks for specific providers (`facebook_`, `google_`, `mailchimp`, etc.). Adding new drivers required adding more ad-hoc conditionals across multiple models and pages.
+- **Architectural Solution:**
+  - Added `isConnected(Project $project): bool` to `ChannelProfileInterface` (`app/Domain/ChannelProfiles/Contracts/ChannelProfileInterface.php`).
+  - Implemented standard, reusable connection resolution in `AbstractChannelProfile`:
+    1. Checks the provider's `ChannelProfile` model (with `authorized_channels` support for OAuth channels).
+    2. Checks legacy `ProjectCredential` table tokens.
+    3. Checks provider/channel accounts stored in `$project->sync_config[$channel]['accounts']` (for API-key / multi-account integrations like Mailchimp).
+  - Any channel profile can override `isConnected()` if it requires custom validation.
+  - Refactored `Project::isChannelConnected($channel)` to delegate directly to `ChannelProfileRegistry::get($channel)->isConnected($this)`.
+  - Refactored `DataSources::isConnected($channel)` to delegate directly to `$tenant->isChannelConnected($channel)`.
+  - In `DataSync`, candidate channels for Nuclear Resync fall back to `sync_config` keys if background telemetry (`syncData['channels']`) hasn't loaded yet.
 

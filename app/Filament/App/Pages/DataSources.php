@@ -15,6 +15,7 @@
     use Filament\Forms\Form;
     use Filament\Notifications\Notification;
     use Filament\Pages\Page;
+    use Illuminate\Support\Facades\Log;
     use Illuminate\Support\Str;
     use Livewire\Attributes\Url;
 
@@ -332,17 +333,18 @@
                 'google_analytics' => '2 years',
                 'facebook_marketing' => '2 years',
                 'facebook_organic' => '2 years',
+                'mailchimp' => '2 years',
             ];
 
-            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing'] as $chan) {
+            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing', 'mailchimp'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
-                if (!isset($config[$chan]['enabled'])) {
+                if (!array_key_exists('enabled', $config[$chan])) {
                     $config[$chan]['enabled'] = true;
                 }
                 // Always force max range, overriding previous values
-                $config[$chan]['cache_history_range'] = $maxRanges[$chan] ?? '1 year';
+                $config[$chan]['cache_history_range'] = $isFreeTier ? '6 months' : ($maxRanges[$chan] ?? '2 years');
             }
 
             if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
@@ -456,6 +458,29 @@
             return $count;
         }
 
+        /**
+         * Whether a channel is toggled on for this project.
+         *
+         * The nested `$this->data[<key>]['enabled']` entry is canonical; the flat
+         * `$this->data[<key>_enabled']` mirror is what the Toggle binds to and is only
+         * present after hydrateFormFromDb() has run. Check both so getProviders() is
+         * correct during mount(), before the mirror exists.
+         */
+        public function isChannelEnabled(string $channelKey): bool
+        {
+            $channelData = $this->data[$channelKey] ?? null;
+            if (is_array($channelData) && array_key_exists('enabled', $channelData)) {
+                return filter_var($channelData['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $mirror = $this->data[$channelKey . '_enabled'] ?? null;
+            if ($mirror !== null) {
+                return filter_var($mirror, FILTER_VALIDATE_BOOLEAN);
+            }
+
+            return false;
+        }
+
         public function getProviders(): array
         {
             $tenant = Filament::getTenant();
@@ -503,35 +528,67 @@
                         ['key' => 'shopify_customers', 'label' => 'Shopify Customers'],
                     ],
                 ],
+                'mailchimp' => [
+                    'label'    => 'Mailchimp',
+                    'channels' => [
+                        ['key' => 'mailchimp', 'label' => 'Mailchimp'],
+                    ],
+                ],
             ];
 
-            // Sort channels inside providers and set dynamic status
+            // Annotate each channel with its release compatibility and enabled state, then
+            // derive the per-provider rollups the provider sort depends on.
             foreach ($providers as $pKey => &$provider) {
                 $providerCount = 0;
-                foreach ($provider['channels'] as &$channel) {
-                    $channel['status'] = in_array($channel['key'], $supportedChannels) ? 'Active' : 'Coming Soon';
-                    $channel['count'] = $this->getChannelAssetCount($channel['key']);
-                    $providerCount += $channel['count'];
-                }
-                $provider['count'] = $providerCount;
+                $hasCompatible = false;
+                $hasEnabledCompatible = false;
 
+                foreach ($provider['channels'] as &$channel) {
+                    $isCompatible = in_array($channel['key'], $supportedChannels, true);
+                    $isEnabled = $this->isChannelEnabled($channel['key']);
+
+                    $channel['compatible'] = $isCompatible;
+                    $channel['enabled'] = $isEnabled;
+                    $channel['status'] = $isCompatible ? 'Active' : 'Coming Soon';
+                    $channel['count'] = $this->getChannelAssetCount($channel['key']);
+
+                    $providerCount += $channel['count'];
+                    $hasCompatible = $hasCompatible || $isCompatible;
+                    $hasEnabledCompatible = $hasEnabledCompatible || ($isCompatible && $isEnabled);
+                }
+
+                $provider['count'] = $providerCount;
+                $provider['has_compatible'] = $hasCompatible;
+                $provider['has_enabled'] = $hasEnabledCompatible;
+
+                // Channels the current release cannot run are demoted below usable ones, then
+                // enabled channels are lifted above disabled ones, then alphabetical.
                 usort($provider['channels'], function ($a, $b) {
-                    if ($a['count'] !== $b['count']) {
-                        return $b['count'] <=> $a['count']; // Higher count first
+                    if ($a['compatible'] !== $b['compatible']) {
+                        return $a['compatible'] ? -1 : 1;
                     }
 
-                    return strcmp($a['label'], $b['label']); // Then alphabetical
+                    if ($a['compatible'] && $a['enabled'] !== $b['enabled']) {
+                        return $a['enabled'] ? -1 : 1;
+                    }
+
+                    return strcasecmp($a['label'], $b['label']);
                 });
             }
             unset($provider); // break reference
 
-            // Sort providers
+            // Providers exposing at least one compatible channel lead, then those with
+            // something actually turned on, then alphabetical by label.
             uasort($providers, function ($a, $b) {
-                if ($a['count'] !== $b['count']) {
-                    return $b['count'] <=> $a['count'];
+                if ($a['has_compatible'] !== $b['has_compatible']) {
+                    return $a['has_compatible'] ? -1 : 1;
                 }
 
-                return strcmp($a['label'], $b['label']);
+                if ($a['has_compatible'] && $a['has_enabled'] !== $b['has_enabled']) {
+                    return $a['has_enabled'] ? -1 : 1;
+                }
+
+                return strcasecmp($a['label'], $b['label']);
             });
 
             return $providers;
@@ -550,39 +607,20 @@
             return __('Configuration');
         }
 
-        public function isConnected($channel): bool
+        public function isConnected(string $channel): bool
         {
             $tenant = Filament::getTenant();
-            $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
-            $profileIdColumn = "{$provider}_profile_id";
 
-            if (!$tenant->{$profileIdColumn}) {
-                return false;
-            }
-
-            $profile = \App\Models\ChannelProfile::find($tenant->{$profileIdColumn});
-            if ($profile && is_array($profile->authorized_channels)) {
-                return in_array($channel, $profile->authorized_channels) && !empty($profile->access_token);
-            }
-
-            // Fallback for legacy connections before the column was added
-            if ($provider === 'facebook') {
-                return $tenant->facebook_user_id !== null;
-            }
-            if ($provider === 'google') {
-                return $tenant->google_user_id !== null;
-            }
-
-            return false;
+            return $tenant ? $tenant->isChannelConnected($channel) : false;
         }
 
-        public function getLastSyncTime($channel): string
+        public function getLastSyncTime(string $channel): string
         {
             // To be implemented via SDK or local tenant timestamp
             return 'Never';
         }
 
-        public function isProfileShared($channel): bool
+        public function isProfileShared(string $channel): bool
         {
             $tenant = Filament::getTenant();
             $provider = str_contains($channel, 'facebook') ? 'facebook' : 'google';
@@ -660,6 +698,7 @@
                             'facebook_marketing'    => 'ad_accounts',
                             'facebook_organic'      => 'pages',
                             'shopify'               => 'stores',
+                            'mailchimp'             => 'audiences',
                         ];
                         $resourceKey = $resourceKeyMap[$this->activeChannel] ?? $this->activeChannel;
 
@@ -741,9 +780,105 @@
                 ->icon('heroicon-o-link')
                 ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
-                ->form(fn() => $this->getChannelSelectionForm())
+                ->form(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return [
+                            \Filament\Forms\Components\TextInput::make('account_name')
+                                ->label(__('Account Label / Name'))
+                                ->placeholder(__('e.g. Primary Store, European Audience'))
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('api_key')
+                                ->label(__('Mailchimp API Key'))
+                                ->placeholder(__('Enter your Mailchimp API key'))
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->helperText(__('Enter your Mailchimp API key. The data center prefix (e.g. us14) will be extracted automatically.')),
+                        ];
+                    }
+
+                    return $this->getChannelSelectionForm();
+                })
+                ->modalHeading(fn () => $this->activeChannel === 'mailchimp' ? __('Connect Mailchimp Account') : __('Connect Account'))
                 ->action(function (array $data) {
                     $tenant = Filament::getTenant();
+
+                    if ($this->activeChannel === 'mailchimp') {
+                        $apiKey = trim((string)($data['api_key'] ?? ''));
+                        $accountName = trim((string)($data['account_name'] ?? 'Default Account'));
+
+                        // Extract data center (server prefix) from api key (e.g. "key-us14")
+                        $parts = explode('-', $apiKey);
+                        $serverPrefix = count($parts) > 1 ? end($parts) : 'us1';
+
+                        // Verify connectivity via MarketingApi ping
+                        try {
+                            $client = new \Anibalealvarezs\MailchimpApi\Services\Marketing\MarketingApi(
+                                apiKey: $apiKey,
+                                serverPrefix: $serverPrefix,
+                            );
+                            $ping = $client->ping();
+                            if (($ping['health_status'] ?? '') !== "Everything's Chimpy!") {
+                                throw new \Exception(__('Mailchimp ping returned unhealthy status.'));
+                            }
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title(__('Connection Failed'))
+                                ->danger()
+                                ->body(__('Could not connect to Mailchimp with this API key: :error', ['error' => $e->getMessage()]))
+                                ->send();
+                            return;
+                        }
+
+                        $accountId = 'mc_' . substr(md5($apiKey), 0, 10);
+                        $syncConfig = $tenant->sync_config ?? [];
+                        if (!isset($syncConfig['mailchimp']) || !is_array($syncConfig['mailchimp'])) {
+                            $syncConfig['mailchimp'] = ['enabled' => true];
+                        }
+                        if (!isset($syncConfig['mailchimp']['accounts']) || !is_array($syncConfig['mailchimp']['accounts'])) {
+                            $syncConfig['mailchimp']['accounts'] = [];
+                        }
+
+                        $syncConfig['mailchimp']['accounts'][$accountId] = [
+                            'account_id' => $accountId,
+                            'account_name' => $accountName,
+                            'api_key' => $apiKey,
+                            'server_prefix' => $serverPrefix,
+                            'connected_at' => now()->toIso8601String(),
+                        ];
+
+                        $tenant->update(['sync_config' => $syncConfig]);
+
+                        // Push credentials to remote node if deployed
+                        try {
+                            $service = app(\App\Services\RemoteEngineService::class);
+                            $service->execute($tenant, function ($client) use ($syncConfig) {
+                                return $client->importCredentials('mailchimp', '', [
+                                    'accounts' => $syncConfig['mailchimp']['accounts'],
+                                ]);
+                            });
+                        } catch (\Throwable $e) {
+                            Log::warning("Could not push Mailchimp credentials to remote node: " . $e->getMessage());
+                        }
+
+                        $this->hydrateFormFromDb($syncConfig);
+
+                        Notification::make()
+                            ->title(__('Mailchimp Account Connected'))
+                            ->body(__('Account ":name" connected successfully. Discovering audiences...', ['name' => $accountName]))
+                            ->success()
+                            ->send();
+
+                        // Automatically discover assets
+                        $discService = app(\App\Services\LocalAssetDiscoveryService::class);
+                        $discResponse = $discService->fetchAssets($tenant, 'mailchimp');
+                        if (!empty($discResponse['assets']['audiences'])) {
+                            $this->mergeDiscoveredAssets(['audiences' => $discResponse['assets']['audiences']]);
+                        }
+
+                        return;
+                    }
+
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
                     $types = implode(',', $data['channels']);
 
@@ -758,16 +893,117 @@
         public function updateCredentialsAction(): Action
         {
             return Action::make('updateCredentials')
-                ->label(__('Update Permissions'))
-                ->icon('heroicon-o-key')
+                ->label(fn () => $this->activeChannel === 'mailchimp' ? __('Manage Accounts') : __('Update Permissions'))
+                ->icon(fn () => $this->activeChannel === 'mailchimp' ? 'heroicon-o-user-plus' : 'heroicon-o-key')
                 ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
-                ->form(fn() => $this->getChannelSelectionForm())
-                ->requiresConfirmation()
-                ->modalHeading(fn() => (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Update Credentials') : __('Update Credentials Safely'))
-                ->modalDescription(fn() => (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.') : __('Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.'))
+                ->form(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return [
+                            \Filament\Forms\Components\TextInput::make('account_name')
+                                ->label(__('Account Label / Name'))
+                                ->placeholder(__('e.g. Secondary Store, Regional Audience'))
+                                ->required(),
+                            \Filament\Forms\Components\TextInput::make('api_key')
+                                ->label(__('Mailchimp API Key'))
+                                ->placeholder(__('Enter your Mailchimp API key'))
+                                ->password()
+                                ->revealable()
+                                ->required()
+                                ->helperText(__('Enter another Mailchimp API key to connect an additional account.')),
+                        ];
+                    }
+
+                    return $this->getChannelSelectionForm();
+                })
+                ->requiresConfirmation(fn () => $this->activeChannel !== 'mailchimp')
+                ->modalHeading(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return __('Add Mailchimp Account');
+                    }
+                    return (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Update Credentials') : __('Update Credentials Safely');
+                })
+                ->modalDescription(function () {
+                    if ($this->activeChannel === 'mailchimp') {
+                        return __('Add an additional Mailchimp account to sync audiences and campaigns simultaneously.');
+                    }
+                    return (!Filament::getTenant()->last_deployed_at || $this->apiHubUnreachable) ? __('Select the channels to re-authorize. Your sync engine is currently offline, so it is safe to update credentials immediately.') : __('Select the channels to re-authorize. To update these credentials safely, we must first stop active synchronizations. This process can take up to 2 hours. We will send you a notification when it is safe to proceed.');
+                })
                 ->action(function (array $data) {
                     $tenant = Filament::getTenant();
+
+                    if ($this->activeChannel === 'mailchimp') {
+                        $apiKey = trim((string)($data['api_key'] ?? ''));
+                        $accountName = trim((string)($data['account_name'] ?? 'Additional Account'));
+
+                        $parts = explode('-', $apiKey);
+                        $serverPrefix = count($parts) > 1 ? end($parts) : 'us1';
+
+                        try {
+                            $client = new \Anibalealvarezs\MailchimpApi\Services\Marketing\MarketingApi(
+                                apiKey: $apiKey,
+                                serverPrefix: $serverPrefix,
+                            );
+                            $ping = $client->ping();
+                            if (($ping['health_status'] ?? '') !== "Everything's Chimpy!") {
+                                throw new \Exception(__('Mailchimp ping returned unhealthy status.'));
+                            }
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title(__('Connection Failed'))
+                                ->danger()
+                                ->body(__('Could not connect to Mailchimp with this API key: :error', ['error' => $e->getMessage()]))
+                                ->send();
+                            return;
+                        }
+
+                        $accountId = 'mc_' . substr(md5($apiKey), 0, 10);
+                        $syncConfig = $tenant->sync_config ?? [];
+                        if (!isset($syncConfig['mailchimp']) || !is_array($syncConfig['mailchimp'])) {
+                            $syncConfig['mailchimp'] = ['enabled' => true];
+                        }
+                        if (!isset($syncConfig['mailchimp']['accounts']) || !is_array($syncConfig['mailchimp']['accounts'])) {
+                            $syncConfig['mailchimp']['accounts'] = [];
+                        }
+
+                        $syncConfig['mailchimp']['accounts'][$accountId] = [
+                            'account_id' => $accountId,
+                            'account_name' => $accountName,
+                            'api_key' => $apiKey,
+                            'server_prefix' => $serverPrefix,
+                            'connected_at' => now()->toIso8601String(),
+                        ];
+
+                        $tenant->update(['sync_config' => $syncConfig]);
+
+                        try {
+                            $service = app(\App\Services\RemoteEngineService::class);
+                            $service->execute($tenant, function ($client) use ($syncConfig) {
+                                return $client->importCredentials('mailchimp', '', [
+                                    'accounts' => $syncConfig['mailchimp']['accounts'],
+                                ]);
+                            });
+                        } catch (\Throwable $e) {
+                            Log::warning("Could not push Mailchimp credentials to remote node: " . $e->getMessage());
+                        }
+
+                        $this->hydrateFormFromDb($syncConfig);
+
+                        Notification::make()
+                            ->title(__('Mailchimp Account Added'))
+                            ->body(__('Account ":name" connected successfully.', ['name' => $accountName]))
+                            ->success()
+                            ->send();
+
+                        $discService = app(\App\Services\LocalAssetDiscoveryService::class);
+                        $discResponse = $discService->fetchAssets($tenant, 'mailchimp');
+                        if (!empty($discResponse['assets']['audiences'])) {
+                            $this->mergeDiscoveredAssets(['audiences' => $discResponse['assets']['audiences']]);
+                        }
+
+                        return;
+                    }
+
                     $provider = str_contains($this->activeChannel, 'facebook') ? 'facebook' : 'google';
                     $types = implode(',', $data['channels']);
 
@@ -908,7 +1144,10 @@
             \Illuminate\Support\Arr::set($currentData, $this->activeChannel.'.'.$assetListKey, array_values($mergedAssets));
 
             // Merge the active channel's data back into the full DB state
-            $fullDbState[$this->activeChannel] = \Illuminate\Support\Arr::get($currentData, $this->activeChannel, []);
+            $fullDbState[$this->activeChannel] = array_merge(
+                is_array($fullDbState[$this->activeChannel] ?? null) ? $fullDbState[$this->activeChannel] : [],
+                (array) \Illuminate\Support\Arr::get($currentData, $this->activeChannel, [])
+            );
 
             $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
 
@@ -1088,6 +1327,42 @@
                 }
             }
 
+            if ($this->activeChannel === 'mailchimp') {
+                $accounts = $tenant->sync_config['mailchimp']['accounts'] ?? [];
+                $accountCards = [];
+
+                if (empty($accounts)) {
+                    $accountCards[] = \Filament\Forms\Components\Placeholder::make('no_accounts')
+                        ->label('')
+                        ->content(new \Illuminate\Support\HtmlString('<span class="text-xs text-gray-500 italic">' . __('No accounts connected yet.') . '</span>'));
+                } else {
+                    foreach ($accounts as $accId => $acc) {
+                        $name = e($acc['account_name'] ?? $acc['name'] ?? $accId);
+                        $prefix = e($acc['server_prefix'] ?? 'us1');
+                        $connAt = !empty($acc['connected_at']) ? \Carbon\Carbon::parse($acc['connected_at'])->diffForHumans() : __('Recently');
+
+                        $accountCards[] = \Filament\Forms\Components\Placeholder::make('acc_'.$accId)
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="flex items-center justify-between p-2.5 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="font-semibold text-gray-900 dark:text-white">'.$name.'</span>
+                                        <span class="text-gray-400">DC: <span class="font-mono text-primary-500 font-medium">'.$prefix.'</span> &bull; '.$connAt.'</span>
+                                    </div>
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success-500/10 text-success-600 dark:text-success-400 border border-success-500/20">
+                                        ' . __('Connected') . '
+                                    </span>
+                                </div>
+                            '));
+                    }
+                }
+
+                $secondarySections[] = \Filament\Forms\Components\Section::make(__('Connected Accounts'))
+                    ->description(__('Manage connected Mailchimp accounts and their data center endpoints.'))
+                    ->schema($accountCards)
+                    ->columns(1);
+            }
+
             $mainContent = array_merge($parts['main'], $parts['repeaters']);
 
             if (empty($secondarySections)) {
@@ -1210,7 +1485,7 @@
                 $type = $definition['type'] ?? 'string';
 
                 // Preserve data objects and identifying strings in the form state invisibly
-                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'platformId'])) {
+                if ($type === 'object' || in_array($key, ['id', 'url', 'title', 'name', 'account_id', 'hostname', 'created_time', 'link', 'ig_account', 'ig_account_name', 'ig_hostname', 'ig_created_time', 'platformId'])) {
                     $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
 
                     continue;
@@ -1239,9 +1514,12 @@
                             $this->activeChannel === 'facebook_marketing' ? 'ID: '.($get('id') ?? 'N/A') :
                                 ($this->activeChannel === 'google_search_console' ? 'ID: <a href="https://'.preg_replace('/^sc-domain:/', '', preg_replace('/^https?:\/\//', '', rtrim((string)($get('url') ?? $get('id')), '/'))).'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>' :
                                     ($this->activeChannel === 'google_analytics' ? 'Property ID: '.($get('platformId') ?? 'N/A') :
-                                    'ID: <a href="'.($get('link') ?? $get('url') ?? '#').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>')
+                                        ($this->activeChannel === 'mailchimp' ? 'Audience ID: '.($get('id') ?? 'N/A').($get('account_id') ? ' (Account: '.$get('account_id').')' : '') :
+                                        'ID: <a href="'.($get('link') ?? $get('url') ?? '#').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.($get('id') ?? $get('url') ?? 'N/A').'</a>')
+                                    )
+                                )
                             )
-                        )))
+                        ))
                         ->inline(false)
                         ->default(true)
                         ->columnSpan(4);
@@ -1837,6 +2115,13 @@
             $uiState = $this->form->getState();
             $dbState = $tenant->sync_config ?? [];
 
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] UI & DB state captured', [
+                'activeChannel' => $this->activeChannel,
+                'ui_active_channel_enabled' => $uiState[$this->activeChannel . '_enabled'] ?? null,
+                'ui_active_channel_nested' => $uiState[$this->activeChannel] ?? null,
+                'db_active_channel' => $dbState[$this->activeChannel] ?? null,
+            ]);
+
             // Map global fallback toggles back into their channel configurations
             foreach ($uiState as $key => $value) {
                 if (is_string($key) && str_ends_with($key, '_enabled')) {
@@ -1849,7 +2134,7 @@
             }
             
             // Explicitly force enabled state from active channel if present in root state
-            if (isset($uiState[$this->activeChannel . '_enabled'])) {
+            if (array_key_exists($this->activeChannel . '_enabled', $uiState)) {
                 if (!isset($uiState[$this->activeChannel])) {
                     $uiState[$this->activeChannel] = [];
                 }
@@ -1862,21 +2147,33 @@
                 if (is_array($channelConfig)) {
                     $proposedState[$channel] = array_merge($proposedState[$channel] ?? [], $channelConfig);
                     // Ensure the enabled flag is explicitly carried over from UI state
-                    if (isset($channelConfig['enabled'])) {
+                    if (array_key_exists('enabled', $channelConfig)) {
                         $proposedState[$channel]['enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     }
                 }
             }
 
+            // Also check if root-level activeChannel_enabled exists in form data
+            if (isset($this->data[$this->activeChannel . '_enabled'])) {
+                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
+            } elseif (isset($this->data[$this->activeChannel]['enabled'])) {
+                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel]['enabled'], FILTER_VALIDATE_BOOLEAN);
+            }
+
             // Fallback: If the user is saving the active channel but Livewire omitted the enabled flag
             // entirely (e.g. unmodified form), and the DB state doesn't have it either, force it to true
             // since the visual UI default is true.
-            if (!isset($proposedState[$this->activeChannel]['enabled'])) {
+            if (!isset($proposedState[$this->activeChannel]) || !array_key_exists('enabled', $proposedState[$this->activeChannel])) {
                 if (!isset($proposedState[$this->activeChannel])) {
                     $proposedState[$this->activeChannel] = [];
                 }
                 $proposedState[$this->activeChannel]['enabled'] = true;
             }
+
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] Proposed state resolved', [
+                'activeChannel' => $this->activeChannel,
+                'proposed_enabled' => $proposedState[$this->activeChannel]['enabled'] ?? null,
+            ]);
 
             // Detect if any channel's enabled state changed
             $hasChannelToggle = false;
@@ -1969,6 +2266,7 @@
                 'google_analytics'      => 'google_analytics',
                 'facebook_marketing'    => 'ad_accounts',
                 'facebook_organic'      => 'pages',
+                'mailchimp'             => 'audiences',
             ];
 
             $release = $tenant->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->first();
@@ -1993,45 +2291,113 @@
                 $assetListKey = $payloadData['assetListKey'];
                 $remoteAssetKey = $payloadData['remoteAssetKey'];
                 $assetsListDb = $payloadData['assetsListDb'];
+                $assetsListUi = $payloadData['assetsListUi'] ?? [];
 
                 if (!isset($dbState[$channel])) {
                     $dbState[$channel] = [];
                 }
 
+                // Build UI lookup map by ID/URL/platformId as well as index
+                $uiMap = [];
+                foreach ($assetsListUi as $uIdx => $uAsset) {
+                    foreach (['id', 'url', 'platformId'] as $idKey) {
+                        if (!empty($uAsset[$idKey])) {
+                            $uiMap[$uAsset[$idKey]] = $uAsset;
+                        }
+                    }
+                }
+
+                // First, unconditionally apply user's intended enabled toggle from the UI into $assetsListDb
+                foreach ($assetsListDb as $index => &$dbAsset) {
+                    $assetIdentifier = $dbAsset['id'] ?? $dbAsset['url'] ?? $dbAsset['platformId'] ?? null;
+                    $matchedUi = ($assetIdentifier && isset($uiMap[$assetIdentifier]))
+                        ? $uiMap[$assetIdentifier]
+                        : ($assetsListUi[$index] ?? []);
+
+                    if (isset($matchedUi['enabled'])) {
+                        $dbAsset['enabled'] = filter_var($matchedUi['enabled'], FILTER_VALIDATE_BOOLEAN);
+                    }
+                }
+                unset($dbAsset);
+
+                // IMPORTANT: Inject the patched assets back into the payload before sending it to the remote node!
+                if (!isset($payload['assets'])) {
+                    $payload['assets'] = [];
+                }
+                $payload['assets'][$remoteAssetKey] = $assetsListDb;
+
                 // If the project HAS been deployed before, we MUST validate the configuration with the remote server.
                 if (!$isFirstDeployment) {
                     try {
+                        if ($channel === 'mailchimp' && !empty($tenant->sync_config['mailchimp']['accounts'])) {
+                            try {
+                                $service->execute($tenant, function ($client) use ($tenant) {
+                                    return $client->importCredentials('mailchimp', '', [
+                                        'accounts' => $tenant->sync_config['mailchimp']['accounts'],
+                                    ]);
+                                });
+                            } catch (\Throwable $e) {
+                                Log::warning("Could not sync Mailchimp accounts to remote node: " . $e->getMessage());
+                            }
+                        }
+
                         $response = $service->updateCredentials($tenant, $payload);
+
+                        \Illuminate\Support\Facades\Log::info('[DataSources::save] Remote updateCredentials response', [
+                            'channel' => $channel,
+                            'remote_response_channel' => $response['config'][$channel] ?? null,
+                        ]);
 
                         // Sync status back from Remote Node
                         $remoteListKey = last(explode('.', $assetListKey));
-                        if (isset($response['config'][$channel][$remoteListKey])) {
-                            $remoteAssets = $response['config'][$channel][$remoteListKey];
+                        $remoteAssets = $response['config'][$channel][$remoteListKey]
+                            ?? $response['config'][$channel][$remoteAssetKey]
+                            ?? $response['config'][$channel]['assets'][$remoteAssetKey]
+                            ?? null;
+
+                        if (is_array($remoteAssets)) {
                             $remoteMap = [];
                             foreach ($remoteAssets as $ra) {
-                                $id = $ra['url'] ?? $ra['id'] ?? null;
-                                if ($id) {
-                                    $remoteMap[$id] = $ra;
+                                foreach (['id', 'url', 'platformId'] as $idKey) {
+                                    if (!empty($ra[$idKey])) {
+                                        $remoteMap[$ra[$idKey]] = $ra;
+                                    }
                                 }
                             }
 
                             // Update local db state with remote status
                             foreach ($assetsListDb as $index => &$dbAsset) {
-                                $id = $dbAsset['url'] ?? $dbAsset['id'] ?? null;
-                                if ($id && isset($remoteMap[$id])) {
-                                    $intendedEnabled = filter_var($assetsListUi[$index]['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
-                                    $remoteEnabled = filter_var($remoteMap[$id]['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                                $assetIdentifier = $dbAsset['id'] ?? $dbAsset['url'] ?? $dbAsset['platformId'] ?? null;
+                                $matchedUi = ($assetIdentifier && isset($uiMap[$assetIdentifier]))
+                                    ? $uiMap[$assetIdentifier]
+                                    : ($assetsListUi[$index] ?? []);
+
+                                $intendedEnabled = isset($matchedUi['enabled'])
+                                    ? filter_var($matchedUi['enabled'], FILTER_VALIDATE_BOOLEAN)
+                                    : filter_var($dbAsset['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                                $matchedRemote = ($assetIdentifier && isset($remoteMap[$assetIdentifier]))
+                                    ? $remoteMap[$assetIdentifier]
+                                    : null;
+
+                                if ($matchedRemote) {
+                                    $remoteEnabled = array_key_exists('enabled', $matchedRemote)
+                                        ? filter_var($matchedRemote['enabled'], FILTER_VALIDATE_BOOLEAN)
+                                        : $intendedEnabled;
 
                                     $dbAsset['enabled'] = $remoteEnabled;
 
                                     if ($intendedEnabled && !$remoteEnabled) {
-                                        $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $id;
+                                        $assetName = $dbAsset['title'] ?? $dbAsset['name'] ?? $assetIdentifier;
                                         $rejectedAssets[] = $assetName;
                                     }
 
-                                    if (isset($remoteMap[$id]['lost_access'])) {
-                                        $dbAsset['lost_access'] = filter_var($remoteMap[$id]['lost_access'], FILTER_VALIDATE_BOOLEAN);
+                                    if (isset($matchedRemote['lost_access'])) {
+                                        $dbAsset['lost_access'] = filter_var($matchedRemote['lost_access'], FILTER_VALIDATE_BOOLEAN);
                                     }
+                                } else {
+                                    // Remote node didn't echo this asset explicitly, preserve intended state
+                                    $dbAsset['enabled'] = $intendedEnabled;
                                 }
                             }
                             unset($dbAsset);
@@ -2065,6 +2431,12 @@
 
                 \Illuminate\Support\Arr::set($dbState[$channel], $assetListKey, $assetsListDb);
             }
+
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] Updating tenant sync_config in DB', [
+                'activeChannel' => $this->activeChannel,
+                'dbState_channel_enabled' => $dbState[$this->activeChannel]['enabled'] ?? null,
+            ]);
+
             $tenant->update([
                 'sync_config' => $dbState,
                 'last_sync_started_at' => now(),
@@ -2075,6 +2447,12 @@
 
             // Refresh UI state seamlessly via Livewire so the user sees the actual final state
             $this->hydrateFormFromDb($dbState);
+
+            \Illuminate\Support\Facades\Log::info('[DataSources::save] Hydrated form from dbState', [
+                'activeChannel' => $this->activeChannel,
+                'form_data_enabled' => $this->data[$this->activeChannel]['enabled'] ?? null,
+                'form_data_root_enabled' => $this->data[$this->activeChannel . '_enabled'] ?? null,
+            ]);
 
             if (count($rejectedAssets) > 0) {
                 $rejectedList = implode(', ', array_slice($rejectedAssets, 0, 5));

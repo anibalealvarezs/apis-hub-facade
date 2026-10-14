@@ -169,14 +169,23 @@ trait LoadsDashboardViewData
 
             $uiState = [];
             $kpiAssetMode = 'multiple';
-            if ($widgetModel->source_type === 'kpi' && ! empty($widgetModel->source_config['custom_kpi_id'])) {
-                $kpi = CustomKpi::find($widgetModel->source_config['custom_kpi_id']);
+            $kpi = null;
+            if ($widgetModel->source_type === 'kpi') {
+                $kpiId = $widgetModel->source_config['custom_kpi_id'] ?? $widgetModel->custom_kpi_id ?? null;
+                if (!empty($kpiId)) {
+                    $kpi = CustomKpi::find($kpiId);
+                } elseif ($widgetModel->customKpi) {
+                    $kpi = $widgetModel->customKpi;
+                }
                 if ($kpi) {
                     $uiState = $kpi->filters['_ui_state'] ?? [];
 
                     $templateKey = $uiState['template_key'] ?? null;
                     if ($templateKey) {
                         $predefined = PredefinedKpiRegistry::getPredefinedKpis();
+                        if (empty($uiState['granularity']) && !empty($predefined[$templateKey]['default_granularity'])) {
+                            $uiState['granularity'] = $predefined[$templateKey]['default_granularity'];
+                        }
                         if (isset($predefined[$templateKey]['asset_selection_mode'])) {
                             $kpiAssetMode = $predefined[$templateKey]['asset_selection_mode'];
                         } elseif (isset($predefined[$templateKey]['scope']) && $predefined[$templateKey]['scope'] === 'asset') {
@@ -606,14 +615,15 @@ trait LoadsDashboardViewData
                     $resolved['date_end'] = $uiState['end_date'];
                 }
 
-                // Zero handling: widget → KPI config → dashboard → 'remove'
-                if (!isset($widgetControls['zero_handling']) && isset($uiState['zero_handling'])) {
-                    $resolved['zero_handling'] = $uiState['zero_handling'];
-                }
+                // Zero handling: widget → dashboard
+                // (Handled consistently by WidgetDataService::resolveControls)
 
-                // Granularity: widget → KPI config → dashboard → 'daily'
-                if (!isset($widgetControls['granularity']) && isset($uiState['granularity'])) {
-                    $resolved['granularity'] = $uiState['granularity'];
+                // Granularity: widget → KPI config → dashboard
+                if (!empty($uiState['granularity'])) {
+                    $isTimely = in_array($uiState['granularity'], ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'], true);
+                    if (!$isTimely || !isset($widgetControls['granularity']) || $widgetControls['granularity'] === '__inherit__' || $widgetControls['granularity'] === '' || $widgetControls['granularity'] === '__NOT_SET__') {
+                        $resolved['granularity'] = $uiState['granularity'];
+                    }
                 }
 
                 // Max ratio: widget → KPI config → null (no cap)
