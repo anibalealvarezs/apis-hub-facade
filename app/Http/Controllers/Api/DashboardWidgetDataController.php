@@ -3045,6 +3045,7 @@
 
                 $effectiveGranularity = $controls['granularity'] ?? $derivedMetric->output_granularity ?? 'daily';
                 $fetchedSeries = [];
+                $ssBreakdownData = [];
 
                 // Map each source series in DM to its corresponding card's asset filter
                 foreach ($sourceSeries as $ssIdx => $ss) {
@@ -4528,7 +4529,7 @@
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] getValidAssetsForChannel ENTER", ['channel' => $channel, 'project_id' => $project->id]);
             $config = $project->sync_config[$channel] ?? [];
             $assets = [];
-            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
+            $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties', 'audiences'];
 
             foreach ($assetKeys as $assetKey) {
                 if (!empty($config[$assetKey]) && is_array($config[$assetKey])) {
@@ -4750,22 +4751,44 @@
         {
             $t0 = microtime(true);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint ENTER", ['channel' => $channel, 'action' => $action, 'tenant' => $payload['tenant'] ?? '?']);
-            $endpoints = [
-                'facebook_marketing'    => \App\Http\Controllers\Api\FacebookMarketingController::class,
-                'facebook_organic'      => \App\Http\Controllers\Api\FacebookOrganicController::class,
-                'google_search_console' => \App\Http\Controllers\Api\GoogleSearchConsoleController::class,
-                'google_analytics'      => \App\Http\Controllers\Api\GoogleAnalyticsController::class,
-            ];
 
-            $controllerClass = $endpoints[$channel] ?? null;
-            if (!$controllerClass) {
-                throw new \RuntimeException("Unknown channel: {$channel}");
+            // 1. Resolve controller class via ChannelProfileRegistry (Option 2)
+            $controllerClass = null;
+            try {
+                $registry = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class);
+                $profile = $registry->get($channel);
+                if ($profile) {
+                    $controllerClass = $profile->getApiControllerClass();
+                }
+            } catch (\Throwable $e) {
+                // Profile resolution fallback
+            }
+
+            // 2. Fallback to StudlyCase naming convention (Option 1)
+            if (!$controllerClass || !class_exists($controllerClass)) {
+                $conventionClass = 'App\\Http\\Controllers\\Api\\' . \Illuminate\Support\Str::studly($channel) . 'Controller';
+                if (class_exists($conventionClass)) {
+                    $controllerClass = $conventionClass;
+                }
+            }
+
+            if (!$controllerClass || !class_exists($controllerClass)) {
+                throw new \RuntimeException("Unknown channel or missing controller for: {$channel}");
             }
 
             $controller = app($controllerClass);
 
             if (!method_exists($controller, $action)) {
-                throw new \RuntimeException("Channel {$channel} does not support action {$action}");
+                throw new \RuntimeException("Channel {$channel} controller ({$controllerClass}) does not support action {$action}");
+            }
+
+            // Normalization: If the controller does not expect an array account (like Mailchimp), unwrap array if passed
+            if (!in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
+                if (is_array($payload['account'] ?? null)) {
+                    $payload['account'] = !empty($payload['account']) ? (string)reset($payload['account']) : '';
+                } elseif (isset($payload['account'])) {
+                    $payload['account'] = (string)$payload['account'];
+                }
             }
 
             if (in_array($channel, ['facebook_marketing', 'facebook_organic'])) {

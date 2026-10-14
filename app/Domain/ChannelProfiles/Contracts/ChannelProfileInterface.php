@@ -24,4 +24,11 @@ interface ChannelProfileInterface
      * Determine if this channel profile is actively connected for a project.
      */
     public function isConnected(\App\Models\Project $project): bool;
+
+    /**
+     * Get the controller class that handles API requests for this channel.
+     *
+     * @return class-string|null
+     */
+    public function getApiControllerClass(): ?string;
 }
