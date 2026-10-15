@@ -262,7 +262,7 @@ class MailchimpController extends Controller
             $rows = $results['chart']['data'] ?? [];
 
             return response()->json([
-                'chart' => $this->normalizeChartRows($rows),
+                'chart' => $this->normalizeChartRows($rows, $validated['breakdown'] ?? null),
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['chart']['retryable']),
             ]);
@@ -384,7 +384,7 @@ class MailchimpController extends Controller
      * Coerce aggregate rows into a stable shape for the chart renderer:
      * a `daily` date string plus numeric counters.
      */
-    private function normalizeChartRows($rows): array
+    private function normalizeChartRows($rows, ?string $breakdown = null): array
     {
         if (!is_array($rows)) {
             return [];
@@ -400,14 +400,20 @@ class MailchimpController extends Controller
             $lower = array_change_key_case($row, CASE_LOWER);
             $date = $lower['daily'] ?? $lower['date'] ?? $lower['metric_date'] ?? null;
 
-            if (empty($date)) {
+            // When broken down without daily date (e.g. lifetime breakdown), keep the row
+            if (empty($date) && empty($breakdown)) {
                 continue;
             }
 
-            $entry = ['daily' => (string) $date];
+            $entry = $row;
+            if (!empty($date)) {
+                $entry['daily'] = (string) $date;
+            }
 
             foreach (self::AVAILABLE_AGGS as $metric => $_) {
-                $entry[$metric] = (float) ($lower[$metric] ?? 0);
+                if (isset($lower[$metric])) {
+                    $entry[$metric] = (float) ($lower[$metric] ?? 0);
+                }
             }
 
             $normalized[] = $entry;

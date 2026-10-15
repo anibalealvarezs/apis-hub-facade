@@ -224,4 +224,97 @@
         </div>
     </div>
 </div>
+
+{{-- Disconnect Account Confirmation Modal --}}
+<div x-data="{
+    disconnectModalOpen: false,
+    disconnectChannel: '',
+    disconnectAccountId: '',
+    disconnectAccountName: '',
+    disableAssociatedAssets: true
+}"
+@open-disconnect-account-modal.window="
+    disconnectChannel = $event.detail.channel;
+    disconnectAccountId = $event.detail.accountId;
+    disconnectAccountName = $event.detail.accountName;
+    disableAssociatedAssets = true;
+    disconnectModalOpen = true;
+"
+@keydown.window.escape="disconnectModalOpen = false"
+>
+    <x-confirm-modal
+        open="disconnectModalOpen"
+        title="{{ __('Disconnect Account') }}"
+        icon="heroicon-o-trash"
+        color="danger"
+        confirm-label="{{ __('Disconnect') }}"
+        confirm-color="danger"
+        confirm-icon="heroicon-o-trash"
+        on-confirm="$wire.removeConnectedAccount(disconnectChannel, disconnectAccountId, disableAssociatedAssets)"
+    >
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+            {{ __('Are you sure you want to disconnect account') }} <strong class="text-gray-900 dark:text-white" x-text="disconnectAccountName"></strong>?
+        </p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {{ __('Removing this API key revokes synchronization authentication for this account.') }}
+        </p>
+
+        <div class="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox"
+                    x-model="disableAssociatedAssets"
+                    class="mt-0.5 rounded border-gray-300 dark:border-gray-600 text-primary-600 shadow-sm focus:ring-primary-500 dark:bg-gray-800"
+                />
+                <div class="flex flex-col text-xs">
+                    <span class="font-medium text-gray-900 dark:text-white">
+                        {{ __('Also disable associated assets') }}
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400 mt-0.5">
+                        {{ __('If unchecked, assets remain enabled and visible on dashboards, but synchronization will not run until an API key is re-connected.') }}
+                    </span>
+                </div>
+            </label>
+        </div>
+    </x-confirm-modal>
+</div>
+
+{{-- Duplicate Account / Replace Key Confirmation Modal --}}
+<div x-data="{
+    replaceModalOpen: false,
+    existingAccountName: '',
+    newAccountName: ''
+}"
+@open-replace-account-modal.window="
+    const detail = $event.detail || {};
+    existingAccountName = detail.existingAccountName || (detail[0] && detail[0].existingAccountName) || '';
+    newAccountName = detail.newAccountName || (detail[0] && detail[0].newAccountName) || '';
+    replaceModalOpen = true;
+"
+@keydown.window.escape="replaceModalOpen = false"
+>
+    <x-confirm-modal
+        open="replaceModalOpen"
+        title="{{ __('Mailchimp Account Already Connected') }}"
+        icon="heroicon-o-exclamation-triangle"
+        color="warning"
+        confirm-label="{{ __('Replace API Key') }}"
+        confirm-color="primary"
+        confirm-icon="heroicon-o-arrow-path"
+        cancel-label="{{ __('Keep Existing Key') }}"
+        on-confirm="$wire.replaceExistingAccountKey(); replaceModalOpen = false;"
+        on-cancel="$wire.cancelAccountReplacement(); replaceModalOpen = false;"
+    >
+        <p class="text-sm text-gray-600 dark:text-gray-300 flex items-center flex-wrap gap-1.5">
+            <span>{{ __('This Mailchimp account is already connected as') }}</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30" x-text="existingAccountName || '{{ __('Existing Account') }}'"></span>.
+        </p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {{ __('Connecting multiple API keys for the same Mailchimp account causes duplicate asset tracking and redundant synchronizations.') }}
+        </p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            {{ __('Would you like to replace the existing API key with this new one, or keep the existing key?') }}
+        </p>
+    </x-confirm-modal>
+</div>
 </x-filament-panels::page>
+

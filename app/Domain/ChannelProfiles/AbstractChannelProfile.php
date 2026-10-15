@@ -85,4 +85,17 @@ abstract class AbstractChannelProfile implements ChannelProfileInterface
 
         return false;
     }
+
+    /**
+     * Get the controller class that handles API requests for this channel.
+     * Default implementation resolves App\Http\Controllers\Api\{StudlyChannelKey}Controller.
+     *
+     * @return class-string|null
+     */
+    public function getApiControllerClass(): ?string
+    {
+        $className = 'App\\Http\\Controllers\\Api\\' . \Illuminate\Support\Str::studly($this->getChannelKey()) . 'Controller';
+
+        return class_exists($className) ? $className : null;
+    }
 }
