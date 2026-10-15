@@ -333,12 +333,13 @@
             $maxRanges = [
                 'google_search_console' => '16 months',
                 'google_analytics' => '2 years',
+                'google_ads' => '2 years',
                 'facebook_marketing' => '2 years',
                 'facebook_organic' => '2 years',
                 'mailchimp' => '2 years',
             ];
 
-            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing', 'mailchimp'] as $chan) {
+            foreach (['google_search_console', 'google_analytics', 'google_ads', 'facebook_organic', 'facebook_marketing', 'mailchimp'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
@@ -697,6 +698,7 @@
                         $resourceKeyMap = [
                             'google_search_console' => 'sites',
                             'google_analytics'      => 'properties',
+                            'google_ads'            => 'ad_accounts',
                             'facebook_marketing'    => 'ad_accounts',
                             'facebook_organic'      => 'pages',
                             'shopify'               => 'stores',
@@ -2183,6 +2185,7 @@
             $remoteAssetKeyMap = [
                 'google_search_console' => 'gsc',
                 'google_analytics'      => 'google_analytics',
+                'google_ads'            => 'ad_accounts',
                 'facebook_marketing'    => 'ad_accounts',
                 'facebook_organic'      => 'pages',
                 'mailchimp'             => 'audiences',

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Project;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\GoogleApi\Services\AnalyticsAdmin\AnalyticsAdminApi;
+use Anibalealvarezs\GoogleApi\Services\GoogleAds\GoogleAdsApi;
 use Anibalealvarezs\GoogleApi\Services\SearchConsole\SearchConsoleApi;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +27,8 @@ class LocalAssetDiscoveryService
                     return $this->fetchGoogleSearchConsoleSites($project);
                 case 'google_analytics':
                     return $this->fetchGoogleAnalyticsProperties($project);
+                case 'google_ads':
+                    return $this->fetchGoogleAdsAccounts($project);
                 case 'mailchimp':
                     return $this->fetchMailchimpAssets($project);
                 default:
@@ -162,6 +165,76 @@ class LocalAssetDiscoveryService
             scopes: config('services.google.channel_scopes.google_analytics') ?? [],
             token: $profile->access_token ?? ''
         );
+    }
+
+    protected function getGoogleAdsClient(Project $project): GoogleAdsApi
+    {
+        $profile = $project->googleProfile;
+        if (!$profile || !$profile->refresh_token) {
+            throw new Exception("Google profile not linked or missing refresh token.");
+        }
+
+        $syncConfig = $project->sync_config ?? [];
+        $gadsConfig = $syncConfig['google_ads'] ?? [];
+
+        $developerToken = $gadsConfig['developer_token']
+            ?? config('services.google.developer_token')
+            ?? env('GOOGLE_ADS_DEVELOPER_TOKEN')
+            ?? '';
+
+        $loginCustomerId = $gadsConfig['login_customer_id']
+            ?? config('services.google.login_customer_id')
+            ?? env('GOOGLE_ADS_LOGIN_CUSTOMER_ID')
+            ?? null;
+
+        return new GoogleAdsApi(
+            redirectUrl: config('services.google.redirect'),
+            clientId: config('services.google.client_id'),
+            clientSecret: config('services.google.client_secret'),
+            refreshToken: $profile->refresh_token,
+            userId: $profile->provider_account_id ?? '',
+            developerToken: $developerToken,
+            loginCustomerId: $loginCustomerId ? (string)$loginCustomerId : null,
+            scopes: config('services.google.channel_scopes.google_ads') ?? ['https://www.googleapis.com/auth/adwords'],
+            token: $profile->access_token ?? ''
+        );
+    }
+
+    protected function fetchGoogleAdsAccounts(Project $project): array
+    {
+        $client = $this->getGoogleAdsClient($project);
+        $accessibleCustomers = $client->getAccessibleCustomers();
+        $resourceNames = $accessibleCustomers['resourceNames'] ?? [];
+
+        $adAccounts = [];
+
+        foreach ($resourceNames as $resourceName) {
+            $customerId = str_replace('customers/', '', $resourceName);
+
+            try {
+                $clientsResponse = $client->getCustomerClients($customerId);
+                $clients = $clientsResponse['results'] ?? [];
+
+                foreach ($clients as $clientWrapper) {
+                    $cClient = $clientWrapper['customerClient'] ?? null;
+                    if ($cClient && empty($cClient['hidden'])) {
+                        $cleanId = (string)$cClient['id'];
+                        $adAccounts[$cleanId] = [
+                            'id'   => $cleanId,
+                            'name' => $cClient['descriptiveName'] ?? 'Account ' . $cleanId,
+                            'data' => $cClient,
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Could not fetch customer clients for accessible customer {$customerId}: " . $e->getMessage());
+            }
+        }
+
+        return [
+            'success' => true,
+            'assets'  => ['ad_accounts' => array_values($adAccounts)],
+        ];
     }
 
     protected function fetchGoogleAnalyticsProperties(Project $project): array
