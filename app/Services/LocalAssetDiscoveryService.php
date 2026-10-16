@@ -193,10 +193,13 @@ class LocalAssetDiscoveryService
         $syncConfig = $project->sync_config ?? [];
         $gadsConfig = $syncConfig['google_ads'] ?? [];
 
-        $developerToken = $gadsConfig['developer_token']
-            ?? config('services.google.developer_token')
-            ?? env('GOOGLE_ADS_DEVELOPER_TOKEN')
-            ?? '';
+        $developerToken = !empty($gadsConfig['developer_token'])
+            ? $gadsConfig['developer_token']
+            : (config('services.google.developer_token') ?: env('GOOGLE_ADS_DEVELOPER_TOKEN'));
+
+        if (empty($developerToken)) {
+            throw new Exception("Google Ads Developer Token is not configured. Please set GOOGLE_ADS_DEVELOPER_TOKEN in your environment or provide it in the Google Ads configuration.");
+        }
 
         $loginCustomerId = $gadsConfig['login_customer_id']
             ?? config('services.google.login_customer_id')

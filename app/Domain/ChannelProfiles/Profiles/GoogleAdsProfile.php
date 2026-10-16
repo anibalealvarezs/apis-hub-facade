@@ -22,6 +22,10 @@ class GoogleAdsProfile extends AbstractChannelProfile
             'type' => $this->getChannelKey(),
             'fields' => [
                 'enabled' => $this->configurableField('boolean', true),
+                'developer_token' => $this->configurableField('string', '', null, [
+                    'label' => 'Developer Token',
+                    'helper_text' => 'Google Ads API Developer Token (leave blank to use system default).',
+                ]),
                 'cache_history_range' => $this->configurableField('string', '2 years', [
                     '1 month' => '1 Month',
                     '3 months' => '3 Months',

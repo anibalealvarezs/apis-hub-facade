@@ -63,6 +63,8 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'),
+        'login_customer_id' => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
         'channel_scopes' => [
             'google_search_console' => [
                 'https://www.googleapis.com/auth/webmasters.readonly',
