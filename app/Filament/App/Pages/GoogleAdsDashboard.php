@@ -54,6 +54,12 @@ class GoogleAdsDashboard extends Page
         if (!$user || !$user->can('view_data')) {
             return false;
         }
+
+        $tenant = Filament::getTenant();
+        if ($tenant && method_exists($tenant, 'releaseSupportsGoogleAds') && !$tenant->releaseSupportsGoogleAds()) {
+            return false;
+        }
+
         return static::isChannelEnabled();
     }
 

@@ -224,12 +224,12 @@
             $this->data = $config;
 
             // Validate URL-set activeChannel against available providers
+            $providers = $this->getProviders();
             if ($this->activeChannel) {
                 $valid = false;
-                $providers = $this->getProviders();
                 foreach ($providers as $provider) {
                     foreach ($provider['channels'] as $channel) {
-                        if ($channel['key'] === $this->activeChannel) {
+                        if ($channel['key'] === $this->activeChannel && !empty($channel['compatible'])) {
                             $valid = true;
                             break 2;
                         }
@@ -242,10 +242,9 @@
 
             // Auto-select first active channel if none set via URL
             if (!$this->activeChannel) {
-                $providers = $providers ?? $this->getProviders();
                 foreach ($providers as $provider) {
                     foreach ($provider['channels'] as $channel) {
-                        if (($channel['status'] ?? '') === 'Active') {
+                        if (($channel['status'] ?? '') === 'Active' && !empty($channel['compatible'])) {
                             $this->activeChannel = $channel['key'];
 
                             break 2;
@@ -253,11 +252,15 @@
                     }
                 }
 
-                // Fallback if no active channel is found
+                // Fallback if no active channel is found: select first compatible channel
                 if (!$this->activeChannel) {
-                    $firstProvider = reset($providers);
-                    if ($firstProvider && !empty($firstProvider['channels'])) {
-                        $this->activeChannel = $firstProvider['channels'][0]['key'];
+                    foreach ($providers as $provider) {
+                        foreach ($provider['channels'] as $channel) {
+                            if (!empty($channel['compatible'])) {
+                                $this->activeChannel = $channel['key'];
+                                break 2;
+                            }
+                        }
                     }
                 }
             }
@@ -617,6 +620,23 @@
             return $tenant ? $tenant->isChannelConnected($channel) : false;
         }
 
+        public function isChannelCompatible(string $channel): bool
+        {
+            $tenant = Filament::getTenant();
+            if (!$tenant) {
+                return false;
+            }
+
+            if (method_exists($tenant, 'releaseSupportsChannel')) {
+                return $tenant->releaseSupportsChannel($channel);
+            }
+
+            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first();
+            $supportedChannels = $release && is_array($release->supported_channels) ? $release->supported_channels : [];
+
+            return in_array($channel, $supportedChannels, true);
+        }
+
         public function getLastSyncTime(string $channel): string
         {
             // To be implemented via SDK or local tenant timestamp
@@ -687,7 +707,7 @@
             return Action::make('discoverAssets')
                 ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
-                ->visible(fn() => $this->isConnected($this->activeChannel))
+                ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                 ->action(function (LocalAssetDiscoveryService $service) {
                     $tenant = Filament::getTenant();
@@ -754,7 +774,9 @@
 
             $options = [];
             foreach (array_keys($config) as $channelKey) {
-                $options[$channelKey] = \Illuminate\Support\Str::headline(str_replace('_', ' ', $channelKey));
+                if ($this->isChannelCompatible((string)$channelKey)) {
+                    $options[$channelKey] = \Illuminate\Support\Str::headline(str_replace('_', ' ', $channelKey));
+                }
             }
 
             $tenant = Filament::getTenant();
@@ -782,7 +804,7 @@
             return Action::make('connect')
                 ->label(__('Connect Account'))
                 ->icon('heroicon-o-link')
-                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
+                ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(function () {
                     if ($this->activeChannel === 'mailchimp') {
@@ -830,7 +852,7 @@
             return Action::make('updateCredentials')
                 ->label(fn () => $this->activeChannel === 'mailchimp' ? __('Add accounts') : __('Update Permissions'))
                 ->icon(fn () => $this->activeChannel === 'mailchimp' ? 'heroicon-o-plus-circle' : 'heroicon-o-key')
-                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
+                ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(function () {
                     if ($this->activeChannel === 'mailchimp') {
@@ -1039,6 +1061,25 @@
         protected function getDynamicSchema(): array
         {
             $tenant = Filament::getTenant();
+
+            if (!$this->isChannelCompatible((string)$this->activeChannel)) {
+                return [
+                    \Filament\Forms\Components\Placeholder::make('channel_unsupported')
+                        ->label('')
+                        ->content(new \Illuminate\Support\HtmlString(
+                            '<div class="flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-white/10">' .
+                            '<span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 mb-3">' .
+                            '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>' .
+                            '</span>' .
+                            '<h3 class="text-base font-semibold text-gray-950 dark:text-white">' . __('Channel Not Available in this Release') . '</h3>' .
+                            '<p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-sm">' .
+                            __('This integration is supported starting in APIs Hub v1.18.0. Please upgrade your project release to access it.') .
+                            '</p>' .
+                            '</div>'
+                        )),
+                ];
+            }
+
             $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
 
             $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];

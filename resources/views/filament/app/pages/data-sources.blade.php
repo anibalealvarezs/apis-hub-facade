@@ -184,7 +184,17 @@
                 </div>
             @endif
 
-            @if(!$this->isConnected($activeChannel))
+            @if(!$this->isChannelCompatible($activeChannel))
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                        <x-heroicon-o-lock-closed class="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ __('Channel Not Available in this Release') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+                        {{ __('This integration requires APIs Hub v1.18.0 or higher. Please upgrade your project release to access this channel.') }}
+                    </p>
+                </div>
+            @elseif(!$this->isConnected($activeChannel))
                 <div id="ds-connect-block" class="flex flex-col items-center justify-center py-12 text-center">
                     <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                         <x-heroicon-o-link class="w-8 h-8 text-gray-400" />

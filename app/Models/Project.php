@@ -252,6 +252,40 @@ class Project extends Model
         return version_compare($version, '1.16.0', '>=');
     }
 
+    /**
+     * Check if the deployed apis-hub release version supports a given channel.
+     */
+    public function releaseSupportsChannel(string $channel): bool
+    {
+        $release = $this->apisHubRelease ?? \App\Models\ApisHubRelease::where('is_active', true)->where('is_default', true)->first();
+        if (!$release) {
+            return false;
+        }
+
+        if (is_array($release->supported_channels)) {
+            return in_array($channel, $release->supported_channels, true);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the deployed apis-hub release version technically supports Google Ads (>= v1.18.0 or explicit supported_channels).
+     */
+    public function releaseSupportsGoogleAds(): bool
+    {
+        if ($this->releaseSupportsChannel('google_ads')) {
+            return true;
+        }
+
+        if (!$this->apisHubRelease) {
+            return false;
+        }
+
+        $version = ltrim($this->apisHubRelease->version_tag, 'v');
+        return version_compare($version, '1.18.0', '>=');
+    }
+
     public function supportsAiClassification(): bool
     {
         if (!$this->releaseSupportsAiClassification()) {
