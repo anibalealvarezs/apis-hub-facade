@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
 
-    <div class="google-ads-page" x-data="googleAdsDashboard({
+    <div class="fb-marketing-page google-ads-page" x-data="googleAdsDashboard({
         tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
         accounts: @js($selectedAccounts),
         accountNames: @js($accounts),
@@ -10,8 +10,8 @@
         activeTab: 'campaigns',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
-        <div class="gads-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
-            <div class="flex items-center gap-4 flex-wrap">
+        <div class="fb-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
+            <div class="fb-header-controls">
                 <x-ui.export-pdf-button />
                 <x-ui.asset-selector model="accounts" options="accountNames" placeholder="{{ __('Select Google Ads Accounts...') }}" :multiple="true" :all-keys="json_encode(array_keys($accounts))" size="sm" />
                 <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
@@ -27,68 +27,123 @@
             </div>
         </div>
 
-        <div class="dash-overview-section mb-6">
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 relative">
+        <div class="dash-overview-section">
+            <div class="metrics-grid-fb relative">
                 <div x-show="isSummaryLoading"
                      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                     <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
                 </div>
 
-                <div class="card-stat-fb cursor-pointer p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
-                     :class="activeMetrics.spend ? 'ring-2 ring-primary-500' : ''" @click="toggleMetric('spend')">
-                    <div class="text-xs uppercase font-medium text-gray-500 dark:text-gray-400">{{ __('Cost / Spend') }}</div>
-                    <div class="text-xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatCurrency(summary.spend)"></div>
-                    <div class="text-xs font-semibold mt-1" :class="getVarianceClass(variance.spend, true)">
+                <div class="card-stat-fb" :class="activeMetrics.spend ? 'active' : ''" @click="toggleMetric('spend')"
+                     data-metric="spend">
+                    <div class="fb-label">{{ __('Cost / Spend') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.spend)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.spend, true)">
                         <span x-text="getVarianceIcon(variance.spend, true)"></span>
                         <span x-text="formatVariance(variance.spend)"></span>
                     </div>
                 </div>
 
-                <div class="card-stat-fb cursor-pointer p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
-                     :class="activeMetrics.clicks ? 'ring-2 ring-primary-500' : ''" @click="toggleMetric('clicks')">
-                    <div class="text-xs uppercase font-medium text-gray-500 dark:text-gray-400">{{ __('Clicks') }}</div>
-                    <div class="text-xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatNumber(summary.clicks)"></div>
-                    <div class="text-xs font-semibold mt-1" :class="getVarianceClass(variance.clicks)">
+                <div class="card-stat-fb" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
+                     data-metric="clicks">
+                    <div class="fb-label">{{ __('Clicks') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.clicks)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.clicks)">
                         <span x-text="getVarianceIcon(variance.clicks)"></span>
                         <span x-text="formatVariance(variance.clicks)"></span>
                     </div>
                 </div>
 
-                <div class="card-stat-fb cursor-pointer p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
-                     :class="activeMetrics.impressions ? 'ring-2 ring-primary-500' : ''" @click="toggleMetric('impressions')">
-                    <div class="text-xs uppercase font-medium text-gray-500 dark:text-gray-400">{{ __('Impressions') }}</div>
-                    <div class="text-xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatNumber(summary.impressions)"></div>
-                    <div class="text-xs font-semibold mt-1" :class="getVarianceClass(variance.impressions)">
+                <div class="card-stat-fb" :class="activeMetrics.impressions ? 'active' : ''" @click="toggleMetric('impressions')"
+                     data-metric="impressions">
+                    <div class="fb-label">{{ __('Impressions') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.impressions)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.impressions)">
                         <span x-text="getVarianceIcon(variance.impressions)"></span>
                         <span x-text="formatVariance(variance.impressions)"></span>
                     </div>
                 </div>
 
-                <div class="card-stat-fb cursor-pointer p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
-                     :class="activeMetrics.conversions ? 'ring-2 ring-primary-500' : ''" @click="toggleMetric('conversions')">
-                    <div class="text-xs uppercase font-medium text-gray-500 dark:text-gray-400">{{ __('Conversions') }}</div>
-                    <div class="text-xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatNumber(summary.conversions)"></div>
-                    <div class="text-xs font-semibold mt-1" :class="getVarianceClass(variance.conversions)">
+                <div class="card-stat-fb" :class="activeMetrics.conversions ? 'active' : ''" @click="toggleMetric('conversions')"
+                     data-metric="conversions">
+                    <div class="fb-label">{{ __('Conversions') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.conversions)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.conversions)">
                         <span x-text="getVarianceIcon(variance.conversions)"></span>
                         <span x-text="formatVariance(variance.conversions)"></span>
                     </div>
                 </div>
 
-                <div class="card-stat-fb cursor-pointer p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
-                     :class="activeMetrics.conversion_value ? 'ring-2 ring-primary-500' : ''" @click="toggleMetric('conversion_value')">
-                    <div class="text-xs uppercase font-medium text-gray-500 dark:text-gray-400">{{ __('Conv. Value') }}</div>
-                    <div class="text-xl font-bold mt-1 text-gray-900 dark:text-white" x-text="formatCurrency(summary.conversion_value)"></div>
-                    <div class="text-xs font-semibold mt-1" :class="getVarianceClass(variance.conversion_value)">
+                <div class="card-stat-fb" :class="activeMetrics.conversion_value ? 'active' : ''" @click="toggleMetric('conversion_value')"
+                     data-metric="conversion_value">
+                    <div class="fb-label">{{ __('Conv. Value') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.conversion_value)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.conversion_value)">
                         <span x-text="getVarianceIcon(variance.conversion_value)"></span>
                         <span x-text="formatVariance(variance.conversion_value)"></span>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{{ __('Performance Over Time') }}</h3>
-            <div id="google-ads-chart"></div>
+                <div class="card-stat-fb" :class="activeMetrics.ctr ? 'active' : ''" @click="toggleMetric('ctr')"
+                     data-metric="ctr">
+                    <div class="fb-label">{{ __('CTR') }}</div>
+                    <div class="card-metric-value" x-text="formatPercent(summary.ctr)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.ctr)">
+                        <span x-text="getVarianceIcon(variance.ctr)"></span>
+                        <span x-text="formatVariance(variance.ctr)"></span>
+                    </div>
+                </div>
+
+                <div class="card-stat-fb" :class="activeMetrics.cpc ? 'active' : ''" @click="toggleMetric('cpc')"
+                     data-metric="cpc">
+                    <div class="fb-label">{{ __('Avg. CPC') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cpc)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cpc, true)">
+                        <span x-text="getVarianceIcon(variance.cpc, true)"></span>
+                        <span x-text="formatVariance(variance.cpc)"></span>
+                    </div>
+                </div>
+
+                <div class="card-stat-fb" :class="activeMetrics.cost_per_conversion ? 'active' : ''" @click="toggleMetric('cost_per_conversion')"
+                     data-metric="cost_per_conversion">
+                    <div class="fb-label">{{ __('Cost / Conv.') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_conversion)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_conversion, true)">
+                        <span x-text="getVarianceIcon(variance.cost_per_conversion, true)"></span>
+                        <span x-text="formatVariance(variance.cost_per_conversion)"></span>
+                    </div>
+                </div>
+
+                <div class="card-stat-fb" :class="activeMetrics.conversion_rate ? 'active' : ''" @click="toggleMetric('conversion_rate')"
+                     data-metric="conversion_rate">
+                    <div class="fb-label">{{ __('Conv. Rate') }}</div>
+                    <div class="card-metric-value" x-text="formatPercent(summary.conversion_rate)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.conversion_rate)">
+                        <span x-text="getVarianceIcon(variance.conversion_rate)"></span>
+                        <span x-text="formatVariance(variance.conversion_rate)"></span>
+                    </div>
+                </div>
+
+                <div class="card-stat-fb" :class="activeMetrics.roas_purchase ? 'active' : ''" @click="toggleMetric('roas_purchase')"
+                     data-metric="roas_purchase">
+                    <div class="fb-label">{{ __('ROAS') }}</div>
+                    <div class="card-metric-value" x-text="formatDecimal(summary.roas_purchase) + 'x'"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.roas_purchase)">
+                        <span x-text="getVarianceIcon(variance.roas_purchase)"></span>
+                        <span x-text="formatVariance(variance.roas_purchase)"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container-fb relative w-full" wire:ignore>
+                <div x-show="isChartLoading"
+                     class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
+                    <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
+                </div>
+                <div class="dash-chart-canvas">
+                    <canvas x-ref="canvas"></canvas>
+                </div>
+            </div>
         </div>
 
         <div x-show="hasAnyFilters" x-cloak

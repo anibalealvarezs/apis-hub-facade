@@ -76,6 +76,7 @@ const registerAlpineComponents = (Alpine) => {
     Alpine.data('fboDashboard', fboDashboard);
     Alpine.data('ga4Dashboard', ga4Dashboard);
     Alpine.data('mailchimpDashboard', mailchimpDashboard);
+    Alpine.data('googleAdsDashboard', googleAdsDashboard);
     Alpine.data('kpiBrowser', kpiBrowser);
     Alpine.data('dashboardView', dashboardView);
     Alpine.data('widgetHeader', widgetHeader);

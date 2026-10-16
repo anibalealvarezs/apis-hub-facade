@@ -28,6 +28,11 @@
 .fb-marketing-page .card-stat-fb[data-metric="cost_per_result"] { --color: var(--fb-cpr); }
 .fb-marketing-page .card-stat-fb[data-metric="result_rate"] { --color: var(--fb-rr); }
 .fb-marketing-page .card-stat-fb[data-metric="purchase_roas"] { --color: var(--fb-roas); }
+.fb-marketing-page .card-stat-fb[data-metric="conversions"] { --color: #14b8a6; }
+.fb-marketing-page .card-stat-fb[data-metric="conversion_value"] { --color: #10b981; }
+.fb-marketing-page .card-stat-fb[data-metric="cost_per_conversion"] { --color: #a855f7; }
+.fb-marketing-page .card-stat-fb[data-metric="conversion_rate"] { --color: #ef4444; }
+.fb-marketing-page .card-stat-fb[data-metric="roas_purchase"] { --color: var(--fb-roas); }
 .card-stat-ga4[data-metric="sessions"] { --color: var(--ga4-sessions); }
 .card-stat-ga4[data-metric="activeUsers"] { --color: var(--ga4-activeUsers); }
 .card-stat-ga4[data-metric="newUsers"] { --color: var(--ga4-newUsers); }
