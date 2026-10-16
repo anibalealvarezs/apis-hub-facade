@@ -45,7 +45,7 @@
 
         <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
-        <div id="ds-channels-sidebar" class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
+        <div id="ds-channels-sidebar" class="w-full md:w-80 md:flex-none flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
             @foreach($this->getProviders() as $pKey => $provider)
                 @php
                     $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
@@ -124,11 +124,11 @@
         </div>
 
         <!-- Content Area -->
-        <div class="w-full relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6 ds-content">
+        <div class="w-full flex-1 min-w-0 relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6 ds-content">
             
             <div wire:loading.flex wire:target="activeChannel, save" class="absolute inset-0 rounded-xl ds-loading-overlay">
                 <div class="fixed inset-0 flex items-center justify-center pointer-events-none ds-loading-inner">
-                    <svg class="animate-spin text-primary-500 drop-shadow-lg ds-loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin text-primary-500 drop-shadow-lg ds-loading-spinner w-12 h-12" style="width: 3rem !important; height: 3rem !important; max-width: 3rem !important; max-height: 3rem !important;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
