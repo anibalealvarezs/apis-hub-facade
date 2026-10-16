@@ -151,6 +151,16 @@ class ConfigPayloadService
 
             unset($payload['entity_sync_depth']);
             unset($payload['metrics_level']);
+        } elseif ($channel === 'google_ads') {
+            $payload['max_workers'] = 2;
+
+            $devToken = $channelConfig['developer_token']
+                ?? config('services.google.developer_token')
+                ?? env('GOOGLE_ADS_DEVELOPER_TOKEN');
+
+            if ($devToken) {
+                $payload['developer_token'] = $devToken;
+            }
         }
 
         // FORCE CACHE HISTORY RANGE UNCONDITIONALLY
@@ -160,6 +170,7 @@ class ConfigPayloadService
             'facebook_marketing'    => '2 years',
             'facebook_organic'      => '2 years',
             'mailchimp'             => '2 years',
+            'google_ads'            => '2 years',
         ];
         $payload['cache_history_range'] = $maxRanges[$channel] ?? '1 year';
 
