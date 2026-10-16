@@ -38,14 +38,30 @@ class LocalAssetDiscoveryService
                     ];
             }
         } catch (\Throwable $e) {
-            Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", [
+            $context = [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-            ]);
+            ];
+
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                try {
+                    $body = (string)$e->getResponse()->getBody();
+                    $context['response_body'] = $body;
+                } catch (\Throwable) {}
+            } elseif ($e->getPrevious() && method_exists($e->getPrevious(), 'getResponse') && $e->getPrevious()->getResponse()) {
+                try {
+                    $body = (string)$e->getPrevious()->getResponse()->getBody();
+                    $context['response_body'] = $body;
+                } catch (\Throwable) {}
+            }
+
+            Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", $context);
+
+            $detailedMessage = $context['response_body'] ?? $e->getMessage();
 
             return [
                 'success' => false,
-                'message' => $e->getMessage() . " | File: " . $e->getFile() . " | Line: " . $e->getLine(),
+                'message' => $detailedMessage . " | File: " . $e->getFile() . " | Line: " . $e->getLine(),
             ];
         }
     }
