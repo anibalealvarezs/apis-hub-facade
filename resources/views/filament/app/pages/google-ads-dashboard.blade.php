@@ -91,21 +91,46 @@
             <div id="google-ads-chart"></div>
         </div>
 
+        <div x-show="hasAnyFilters" x-cloak
+             class="mb-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm"
+             x-transition>
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                    <x-heroicon-o-funnel class="w-4 h-4 text-primary-500"/>
+                    {{ __('Active Filters') }}
+                </h3>
+                <button @click="clearFilters()"
+                        class="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">{{ __('Clear All') }}</button>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <template x-for="(values, tab) in activeFilters" :key="tab">
+                    <template x-for="val in values" :key="val">
+                        <span
+                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+                            <span class="opacity-70 uppercase bd-text-2xs mr-1" x-text="tab + ':'"></span>
+                            <span x-text="filterLabels[val] || val" class="max-w-xs truncate"
+                                  :title="filterLabels[val] || val"></span>
+                            <button @click.stop="toggleFilter(tab, val)"
+                                    class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
+                                <x-heroicon-m-x-mark class="w-3 h-3"/>
+                            </button>
+                        </span>
+                    </template>
+                </template>
+            </div>
+        </div>
+
         <x-data-table variant="fb" state="tableState" loading="isTableLoading" search>
             <x-slot:header>
-                <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 pb-2">
-                    <button type="button" class="text-sm font-semibold px-3 py-1 rounded-md"
-                            :class="activeTab === 'campaigns' ? 'bg-primary-600 text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
-                            @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</button>
-                    <button type="button" class="text-sm font-semibold px-3 py-1 rounded-md"
-                            :class="activeTab === 'adgroups' ? 'bg-primary-600 text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
-                            @click="setTab('adgroups')">{{ __('AD GROUPS') }}</button>
-                    <button type="button" class="text-sm font-semibold px-3 py-1 rounded-md"
-                            :class="activeTab === 'ads' ? 'bg-primary-600 text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
-                            @click="setTab('ads')">{{ __('ADS') }}</button>
-                    <button type="button" class="text-sm font-semibold px-3 py-1 rounded-md"
-                            :class="activeTab === 'devices' ? 'bg-primary-600 text-white' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'"
-                            @click="setTab('devices')">{{ __('DEVICES') }}</button>
+                <div class="tab-nav-fb">
+                    <div class="tab-fb" :class="activeTab === 'campaigns' ? 'active' : ''"
+                         @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'adgroups' ? 'active' : ''"
+                         @click="setTab('adgroups')">{{ __('AD GROUPS') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'ads' ? 'active' : ''"
+                         @click="setTab('ads')">{{ __('ADS') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'devices' ? 'active' : ''"
+                         @click="setTab('devices')">{{ __('DEVICES') }}</div>
                 </div>
             </x-slot:header>
 
