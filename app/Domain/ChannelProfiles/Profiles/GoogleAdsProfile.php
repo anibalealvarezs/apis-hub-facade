@@ -38,7 +38,7 @@ class GoogleAdsProfile extends AbstractChannelProfile
                 'cron_entities_minute' => $this->systemField('integer', 0),
                 'cron_recent_hour' => $this->systemField('integer', 5),
                 'cron_recent_minute' => $this->systemField('integer', 0),
-                'max_workers' => $this->systemField('integer', 2),
+                'max_workers' => $this->systemField('integer', 3),
                 'granular_sync' => $this->systemField('boolean', true),
                 
                 'metrics_strategy' => $this->systemField('string', 'default'),
