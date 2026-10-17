@@ -1460,21 +1460,21 @@
                             }
 
                             if ($this->activeChannel === 'facebook_marketing') {
-                                $idStr = 'ID: ' . ($get('id') ?? 'N/A');
+                                $idStr = '<div>ID: ' . ($get('id') ?? 'N/A') . '</div>';
                                 $data = $get('data') ?? [];
                                 $businessName = $data['business_name'] ?? ($data['business']['name'] ?? null);
                                 if ($businessName) {
-                                    $idStr .= ' <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 ml-1.5" title="' . e(__('Business Manager')) . '"><svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path></svg>' . e($businessName) . '</span>';
+                                    $idStr .= '<div class="mt-2"><span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" title="' . e(__('Business Manager')) . '"><svg class="w-3 h-3 mr-1 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path></svg>' . e($businessName) . '</span></div>';
                                 }
                                 return new \Illuminate\Support\HtmlString($idStr);
                             }
 
                             if ($this->activeChannel === 'google_ads') {
-                                $idStr = 'Customer ID: ' . ($get('id') ?? 'N/A');
+                                $idStr = '<div>Customer ID: ' . ($get('id') ?? 'N/A') . '</div>';
                                 $data = $get('data') ?? [];
                                 $managerName = $data['manager_name'] ?? null;
                                 if ($managerName) {
-                                    $idStr .= ' <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 ml-1.5" title="' . e(__('Manager Account (MCC)')) . '"><svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 00-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm0 4a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>' . e($managerName) . '</span>';
+                                    $idStr .= '<div class="mt-2"><span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" title="' . e(__('Manager Account (MCC)')) . '"><svg class="w-3 h-3 mr-1 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 00-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm0 4a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>' . e($managerName) . '</span></div>';
                                 }
                                 return new \Illuminate\Support\HtmlString($idStr);
                             }
