@@ -1470,7 +1470,13 @@
                             }
 
                             if ($this->activeChannel === 'google_ads') {
-                                $idStr = '<div>Customer ID: ' . ($get('id') ?? 'N/A') . '</div>';
+                                $rawId = (string)($get('id') ?? '');
+                                $digits = preg_replace('/\D/', '', $rawId);
+                                $formattedId = strlen($digits) === 10
+                                    ? substr($digits, 0, 3) . '-' . substr($digits, 3, 3) . '-' . substr($digits, 6, 4)
+                                    : ($rawId ?: 'N/A');
+
+                                $idStr = '<div>Customer ID: ' . e($formattedId) . '</div>';
                                 $data = $get('data') ?? [];
                                 $managerName = $data['manager_name'] ?? null;
                                 if ($managerName) {
