@@ -171,7 +171,7 @@
             @endif
 
             @if($this->isConnected($activeChannel) && $this->isProfileShared($activeChannel))
-                <div class="mb-6 p-4 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">
+                <div class="mb-5 p-4 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">
                     <div class="flex items-start gap-3">
                         <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-warning-600 dark:text-warning-500 shrink-0 mt-0.5" />
                         <div>
