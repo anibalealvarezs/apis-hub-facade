@@ -746,9 +746,15 @@
                         $this->mergeDiscoveredAssets($payload);
                         Notification::make()->title(__('Assets Refreshed'))->success()->send();
                     } else {
-                        // Check if it's a connection error (cURL)
-                        $errMsg = $response['message'] ?? '';
-                        if (str_contains($errMsg, 'cURL error') || str_contains($errMsg, 'Connection refused') || str_contains($errMsg, 'resolve host')) {
+                        // Check if it's a configuration notice / warning (e.g., missing developer token)
+                        if (!empty($response['warning']) || str_contains($errMsg, 'Google Ads Developer Token is not configured')) {
+                            Notification::make()
+                                ->title(__('Action Required'))
+                                ->warning()
+                                ->body($errMsg)
+                                ->persistent()
+                                ->send();
+                        } elseif (str_contains($errMsg, 'cURL error') || str_contains($errMsg, 'Connection refused') || str_contains($errMsg, 'resolve host')) {
                             $this->apiHubUnreachable = true;
                             Notification::make()
                                 ->title(__('Connection Failed'))

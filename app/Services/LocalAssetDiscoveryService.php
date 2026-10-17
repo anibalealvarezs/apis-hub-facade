@@ -55,13 +55,21 @@ class LocalAssetDiscoveryService
                 } catch (\Throwable) {}
             }
 
-            Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", $context);
+            // If it's a configuration issue like missing developer token, log as warning
+            $isConfigWarning = str_contains($e->getMessage(), 'Google Ads Developer Token is not configured');
 
-            $detailedMessage = $context['response_body'] ?? $e->getMessage();
+            if ($isConfigWarning) {
+                Log::warning("Local Asset Discovery Notice: {$project->name} [{$channel}] - " . $e->getMessage());
+            } else {
+                Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", $context);
+            }
+
+            $userMessage = $context['response_body'] ?? $e->getMessage();
 
             return [
                 'success' => false,
-                'message' => $detailedMessage . " | File: " . $e->getFile() . " | Line: " . $e->getLine(),
+                'warning' => $isConfigWarning,
+                'message' => $userMessage,
             ];
         }
     }
@@ -234,16 +242,41 @@ class LocalAssetDiscoveryService
                 $clientsResponse = $client->getCustomerClients($customerId);
                 $clients = $clientsResponse['results'] ?? [];
 
+                // Identify if this customer is an MCC
+                $managerName = null;
+                foreach ($clients as $clientWrapper) {
+                    $c = $clientWrapper['customerClient'] ?? null;
+                    if ($c && (string)($c['id'] ?? '') === (string)$customerId) {
+                        if (!empty($c['manager'])) {
+                            $managerName = $c['descriptiveName'] ?? "Manager ($customerId)";
+                        }
+                        break;
+                    }
+                }
+
                 foreach ($clients as $clientWrapper) {
                     $cClient = $clientWrapper['customerClient'] ?? null;
-                    if ($cClient && empty($cClient['hidden'])) {
-                        $cleanId = (string)$cClient['id'];
-                        $adAccounts[$cleanId] = [
-                            'id'   => $cleanId,
-                            'name' => $cClient['descriptiveName'] ?? 'Account ' . $cleanId,
-                            'data' => $cClient,
-                        ];
+                    if (!$cClient || !empty($cClient['hidden'])) {
+                        continue;
                     }
+
+                    // Filter out manager accounts
+                    if (!empty($cClient['manager'])) {
+                        continue;
+                    }
+
+                    $cleanId = (string)$cClient['id'];
+
+                    if ($managerName) {
+                        $cClient['login_customer_id'] = $customerId;
+                        $cClient['manager_name'] = $managerName;
+                    }
+
+                    $adAccounts[$cleanId] = [
+                        'id'   => $cleanId,
+                        'name' => $cClient['descriptiveName'] ?? 'Account ' . $cleanId,
+                        'data' => $cClient,
+                    ];
                 }
             } catch (\Throwable $e) {
                 Log::warning("Could not fetch customer clients for accessible customer {$customerId}: " . $e->getMessage());
