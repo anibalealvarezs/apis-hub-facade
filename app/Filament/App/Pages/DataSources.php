@@ -746,6 +746,8 @@
                         $this->mergeDiscoveredAssets($payload);
                         Notification::make()->title(__('Assets Refreshed'))->success()->send();
                     } else {
+                        $errMsg = $response['message'] ?? '';
+
                         // Check if it's a configuration notice / warning (e.g., missing developer token)
                         if (!empty($response['warning']) || str_contains($errMsg, 'Google Ads Developer Token is not configured')) {
                             Notification::make()
