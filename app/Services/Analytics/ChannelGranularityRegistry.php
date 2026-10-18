@@ -71,6 +71,7 @@ class ChannelGranularityRegistry
                 'adgroup_level' => __('Ad Group Level'),
                 'ad_level' => __('Ad Level'),
                 'device_level' => __('Device Level'),
+                'search_term_level' => __('Search Terms / Queries Level'),
             ],
             'google_analytics' => [
                 'traffic_matrix' => __('Traffic Matrix (Session)'),
@@ -156,11 +157,17 @@ class ChannelGranularityRegistry
             'device_level' => [
                 'device' => __('Device'),
             ],
+            'search_term_level' => [
+                'channeledCampaign' => __('Campaign'),
+                'adGroup' => __('Ad Group'),
+                'query' => __('Search Term / Query'),
+            ],
             default => [
                 'channeledCampaign' => __('Campaign'),
                 'adGroup' => __('Ad Group'),
                 'ad' => __('Ad'),
                 'device' => __('Device'),
+                'query' => __('Search Term / Query'),
             ],
         };
     }

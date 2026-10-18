@@ -186,6 +186,8 @@
                          @click="setTab('ads')">{{ __('ADS') }}</div>
                     <div class="tab-fb" :class="activeTab === 'devices' ? 'active' : ''"
                          @click="setTab('devices')">{{ __('DEVICES') }}</div>
+                    <div class="tab-fb" :class="activeTab === 'search_terms' ? 'active' : ''"
+                         @click="setTab('search_terms')">{{ __('SEARCH TERMS') }}</div>
                 </div>
             </x-slot:header>
 

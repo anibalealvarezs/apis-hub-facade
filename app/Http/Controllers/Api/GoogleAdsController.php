@@ -253,10 +253,11 @@ class GoogleAdsController extends Controller
 
             $tab = $validated['activeTab'] ?? 'campaigns';
             $groupByDimension = match ($tab) {
-                'adgroups' => 'adGroup',
-                'ads'      => 'ad',
-                'devices'  => 'device',
-                default    => 'channeledCampaign',
+                'adgroups'                     => 'adGroup',
+                'ads'                          => 'ad',
+                'devices'                      => 'device',
+                'search_terms', 'queries'      => 'query',
+                default                        => 'channeledCampaign',
             };
 
             $aggregations = [
@@ -301,6 +302,9 @@ class GoogleAdsController extends Controller
                 } elseif (isset($rowLower['device'])) {
                     $row['id'] = $rowLower['device_id'] ?? $rowLower['device'];
                     $row['name'] = ucfirst(strtolower((string)$rowLower['device']));
+                } elseif (isset($rowLower['query'])) {
+                    $row['id'] = $rowLower['query_id'] ?? $rowLower['query'];
+                    $row['name'] = $rowLower['query'];
                 } else {
                     $row['id'] = $row['id'] ?? 'Unknown';
                     $row['name'] = $row['name'] ?? 'Unknown';

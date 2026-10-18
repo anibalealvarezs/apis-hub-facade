@@ -65,6 +65,11 @@ class ChannelBreakdownRegistry
                     'type' => 'relational',
                     'operators' => $defaultOperators,
                 ],
+                'query' => [
+                    'label' => __('Search Term / Query'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
             ],
 
             'google_analytics' => self::getGa4Breakdowns($dependency, $defaultOperators),

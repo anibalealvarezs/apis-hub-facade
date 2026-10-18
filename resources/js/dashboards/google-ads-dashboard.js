@@ -54,7 +54,7 @@ export function googleAdsDashboard(config = {}) {
             conversion_rate: false
         },
 
-        activeFilters: { campaigns: [], adgroups: [], ads: [], devices: [] },
+        activeFilters: { campaigns: [], adgroups: [], ads: [], devices: [], search_terms: [] },
         filterLabels: {},
 
         get hasAnyFilters() {
@@ -73,7 +73,7 @@ export function googleAdsDashboard(config = {}) {
             const de = params.get('dateEnd');
             if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
             const tab = params.get('tab');
-            if (tab && ['campaigns', 'adgroups', 'ads', 'devices'].includes(tab)) this.activeTab = tab;
+            if (tab && ['campaigns', 'adgroups', 'ads', 'devices', 'search_terms'].includes(tab)) this.activeTab = tab;
             const metricsParam = params.get('metrics');
             if (metricsParam) {
                 const enabledMetrics = metricsParam.split(',');
@@ -225,7 +225,7 @@ export function googleAdsDashboard(config = {}) {
         },
 
         clearFiltersLocal() {
-            this.activeFilters = { campaigns: [], adgroups: [], ads: [], devices: [] };
+            this.activeFilters = { campaigns: [], adgroups: [], ads: [], devices: [], search_terms: [] };
             this.filterLabels = {};
         },
 
@@ -242,6 +242,7 @@ export function googleAdsDashboard(config = {}) {
             if (tab === 'campaigns') return this.accounts.length === 1;
             if (tab === 'adgroups') return this.accounts.length === 1 && this.activeFilters.campaigns.length === 1;
             if (tab === 'ads') return this.accounts.length === 1 && this.activeFilters.campaigns.length === 1 && this.activeFilters.adgroups.length === 1;
+            if (tab === 'search_terms') return false;
             return false;
         },
 
@@ -301,11 +302,16 @@ export function googleAdsDashboard(config = {}) {
                 filters.campaigns = [];
                 filters.adgroups = [];
                 filters.ads = [];
+                filters.search_terms = [];
             } else if (this.activeTab === 'adgroups') {
                 filters.adgroups = [];
                 filters.ads = [];
+                filters.search_terms = [];
             } else if (this.activeTab === 'ads') {
                 filters.ads = [];
+                filters.search_terms = [];
+            } else if (this.activeTab === 'search_terms') {
+                filters.search_terms = [];
             }
             return filters;
         },
