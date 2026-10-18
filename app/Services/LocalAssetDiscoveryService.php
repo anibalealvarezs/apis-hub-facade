@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Project;
 use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\GoogleApi\Services\AnalyticsAdmin\AnalyticsAdminApi;
+use Anibalealvarezs\GoogleApi\Services\GoogleAds\GoogleAdsApi;
 use Anibalealvarezs\GoogleApi\Services\SearchConsole\SearchConsoleApi;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +27,8 @@ class LocalAssetDiscoveryService
                     return $this->fetchGoogleSearchConsoleSites($project);
                 case 'google_analytics':
                     return $this->fetchGoogleAnalyticsProperties($project);
+                case 'google_ads':
+                    return $this->fetchGoogleAdsAccounts($project);
                 case 'mailchimp':
                     return $this->fetchMailchimpAssets($project);
                 default:
@@ -35,14 +38,38 @@ class LocalAssetDiscoveryService
                     ];
             }
         } catch (\Throwable $e) {
-            Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", [
+            $context = [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-            ]);
+            ];
+
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                try {
+                    $body = (string)$e->getResponse()->getBody();
+                    $context['response_body'] = $body;
+                } catch (\Throwable) {}
+            } elseif ($e->getPrevious() && method_exists($e->getPrevious(), 'getResponse') && $e->getPrevious()->getResponse()) {
+                try {
+                    $body = (string)$e->getPrevious()->getResponse()->getBody();
+                    $context['response_body'] = $body;
+                } catch (\Throwable) {}
+            }
+
+            // If it's a configuration issue like missing developer token, log as warning
+            $isConfigWarning = str_contains($e->getMessage(), 'Google Ads Developer Token is not configured');
+
+            if ($isConfigWarning) {
+                Log::warning("Local Asset Discovery Notice: {$project->name} [{$channel}] - " . $e->getMessage());
+            } else {
+                Log::error("Local Asset Discovery Failed: {$project->name} [{$channel}]", $context);
+            }
+
+            $userMessage = $context['response_body'] ?? $e->getMessage();
 
             return [
                 'success' => false,
-                'message' => $e->getMessage() . " | File: " . $e->getFile() . " | Line: " . $e->getLine(),
+                'warning' => $isConfigWarning,
+                'message' => $userMessage,
             ];
         }
     }
@@ -162,6 +189,104 @@ class LocalAssetDiscoveryService
             scopes: config('services.google.channel_scopes.google_analytics') ?? [],
             token: $profile->access_token ?? ''
         );
+    }
+
+    protected function getGoogleAdsClient(Project $project): GoogleAdsApi
+    {
+        $profile = $project->googleProfile;
+        if (!$profile || !$profile->refresh_token) {
+            throw new Exception("Google profile not linked or missing refresh token.");
+        }
+
+        $syncConfig = $project->sync_config ?? [];
+        $gadsConfig = $syncConfig['google_ads'] ?? [];
+
+        $developerToken = !empty($gadsConfig['developer_token'])
+            ? $gadsConfig['developer_token']
+            : (config('services.google.developer_token') ?: env('GOOGLE_ADS_DEVELOPER_TOKEN'));
+
+        if (empty($developerToken)) {
+            throw new Exception("Google Ads Developer Token is not configured. Please set GOOGLE_ADS_DEVELOPER_TOKEN in your environment or provide it in the Google Ads configuration.");
+        }
+
+        $loginCustomerId = $gadsConfig['login_customer_id']
+            ?? config('services.google.login_customer_id')
+            ?? env('GOOGLE_ADS_LOGIN_CUSTOMER_ID')
+            ?? null;
+
+        return new GoogleAdsApi(
+            redirectUrl: config('services.google.redirect'),
+            clientId: config('services.google.client_id'),
+            clientSecret: config('services.google.client_secret'),
+            refreshToken: $profile->refresh_token,
+            userId: $profile->provider_account_id ?? '',
+            developerToken: $developerToken,
+            loginCustomerId: $loginCustomerId ? (string)$loginCustomerId : null,
+            scopes: config('services.google.channel_scopes.google_ads') ?? ['https://www.googleapis.com/auth/adwords'],
+            token: $profile->access_token ?? ''
+        );
+    }
+
+    protected function fetchGoogleAdsAccounts(Project $project): array
+    {
+        $client = $this->getGoogleAdsClient($project);
+        $accessibleCustomers = $client->getAccessibleCustomers();
+        $resourceNames = $accessibleCustomers['resourceNames'] ?? [];
+
+        $adAccounts = [];
+
+        foreach ($resourceNames as $resourceName) {
+            $customerId = str_replace('customers/', '', $resourceName);
+
+            try {
+                $clientsResponse = $client->getCustomerClients($customerId);
+                $clients = $clientsResponse['results'] ?? [];
+
+                // Identify if this customer is an MCC
+                $managerName = null;
+                foreach ($clients as $clientWrapper) {
+                    $c = $clientWrapper['customerClient'] ?? null;
+                    if ($c && (string)($c['id'] ?? '') === (string)$customerId) {
+                        if (!empty($c['manager'])) {
+                            $managerName = $c['descriptiveName'] ?? "Manager ($customerId)";
+                        }
+                        break;
+                    }
+                }
+
+                foreach ($clients as $clientWrapper) {
+                    $cClient = $clientWrapper['customerClient'] ?? null;
+                    if (!$cClient || !empty($cClient['hidden'])) {
+                        continue;
+                    }
+
+                    // Filter out manager accounts
+                    if (!empty($cClient['manager'])) {
+                        continue;
+                    }
+
+                    $cleanId = (string)$cClient['id'];
+
+                    if ($managerName) {
+                        $cClient['login_customer_id'] = $customerId;
+                        $cClient['manager_name'] = $managerName;
+                    }
+
+                    $adAccounts[$cleanId] = [
+                        'id'   => $cleanId,
+                        'name' => $cClient['descriptiveName'] ?? 'Account ' . $cleanId,
+                        'data' => $cClient,
+                    ];
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Could not fetch customer clients for accessible customer {$customerId}: " . $e->getMessage());
+            }
+        }
+
+        return [
+            'success' => true,
+            'assets'  => ['ad_accounts' => array_values($adAccounts)],
+        ];
     }
 
     protected function fetchGoogleAnalyticsProperties(Project $project): array

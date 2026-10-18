@@ -182,6 +182,49 @@ class PredefinedDerivedMetricRegistry
                 ],
             ],
 
+            'cpm' => [
+                'name' => 'Cost per Mille / Thousand Impressions (CPM)',
+                'description' => 'Average cost per 1,000 ad impressions. Natively provided by Facebook Marketing, but essential as a derived metric for Google Ads search/display campaigns to benchmark inventory cost against social media.',
+                'format' => 'currency',
+                'output_granularity' => 'daily',
+                'categories' => ['cost', 'paid_media', 'performance'],
+                'required_tags' => ['spendable', 'impressionable'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Spend', 'channel' => '__SPENDABLE_CHANNEL_1__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Impressions', 'channel' => '__IMPRESSIONABLE_CHANNEL_1__', 'metric' => 'impressions', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '*',
+                    'left' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => ['type' => 'metric', 'metric' => 'a'],
+                        'right' => ['type' => 'metric', 'metric' => 'b'],
+                    ],
+                    'right' => ['type' => 'constant', 'value' => 1000],
+                ],
+            ],
+
+            'conversion_rate' => [
+                'name' => 'Conversion Rate (Conversions / Clicks)',
+                'description' => 'Percentage of clicks that resulted in a tracked conversion. Standard across Google Ads and Facebook Marketing to gauge landing page conversion efficiency.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['results', 'paid_media', 'performance'],
+                'required_tags' => ['conversion_tracked', 'clickable'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Conversions', 'channel' => '__CONVERSION_TRACKED_CHANNEL_1__', 'metric' => 'conversions', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Clicks', 'channel' => '__CLICKABLE_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
             // ================================================================
             // Single-Channel: Organic Social (Facebook Organic)
             // ================================================================
@@ -448,6 +491,73 @@ class PredefinedDerivedMetricRegistry
                     'operator' => '/',
                     'left' => ['type' => 'metric', 'metric' => 'a'],
                     'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
+            'blended_paid_cpc' => [
+                'name' => 'Blended Cross-Channel CPC',
+                'description' => 'Average cost per click aggregated across Google Ads and Facebook Marketing. Evaluates whether omnichannel traffic acquisition cost is trending up or down.',
+                'format' => 'currency',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'cost', 'paid_media', 'performance'],
+                'required_tags' => ['spendable', 'clickable'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Spend (Channel 1)', 'channel' => '__SPENDABLE_CHANNEL_1__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Spend (Channel 2)', 'channel' => '__SPENDABLE_CHANNEL_2__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'c', 'label' => 'Clicks (Channel 1)', 'channel' => '__CLICKABLE_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                    ['key' => 'd', 'label' => 'Clicks (Channel 2)', 'channel' => '__CLICKABLE_CHANNEL_2__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'a'],
+                        'right' => ['type' => 'metric', 'metric' => 'b'],
+                    ],
+                    'right' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'c'],
+                        'right' => ['type' => 'metric', 'metric' => 'd'],
+                    ],
+                ],
+            ],
+
+            'blended_paid_cpm' => [
+                'name' => 'Blended Cross-Channel CPM',
+                'description' => 'Combined cost per thousand impressions across all active paid channels (Search + Social). Provides a macroeconomic view of overall ad inventory inflation.',
+                'format' => 'currency',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'cost', 'paid_media', 'performance'],
+                'required_tags' => ['spendable', 'impressionable'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Spend (Channel 1)', 'channel' => '__SPENDABLE_CHANNEL_1__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Spend (Channel 2)', 'channel' => '__SPENDABLE_CHANNEL_2__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'c', 'label' => 'Impressions (Channel 1)', 'channel' => '__IMPRESSIONABLE_CHANNEL_1__', 'metric' => 'impressions', 'granularity' => 'daily'],
+                    ['key' => 'd', 'label' => 'Impressions (Channel 2)', 'channel' => '__IMPRESSIONABLE_CHANNEL_2__', 'metric' => 'impressions', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '*',
+                    'left' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => ['type' => 'metric', 'metric' => 'a'],
+                            'right' => ['type' => 'metric', 'metric' => 'b'],
+                        ],
+                        'right' => [
+                            'type' => 'operator',
+                            'operator' => '+',
+                            'left' => ['type' => 'metric', 'metric' => 'c'],
+                            'right' => ['type' => 'metric', 'metric' => 'd'],
+                        ],
+                    ],
+                    'right' => ['type' => 'constant', 'value' => 1000],
                 ],
             ],
 

@@ -24,6 +24,7 @@ class ConfigPayloadService
             'google_analytics' => 'google_analytics',
             'facebook_marketing' => 'ad_accounts',
             'facebook_organic' => 'pages',
+            'google_ads' => 'ad_accounts',
             'mailchimp' => 'audiences',
         ];
 
@@ -150,6 +151,44 @@ class ConfigPayloadService
 
             unset($payload['entity_sync_depth']);
             unset($payload['metrics_level']);
+        } elseif ($channel === 'google_ads') {
+            $userTier = $tenant->billingProfile?->tier;
+            $payload['max_workers'] = match ($userTier) {
+                \App\Enums\UserTier::ULTRA,
+                \App\Enums\UserTier::FOUNDER,
+                \App\Enums\UserTier::ENTERPRISE => 4,
+                \App\Enums\UserTier::FREE => 1,
+                default => 3, // PRO or default without billing profile
+            };
+
+            // Force extraction granularity to Ad Level (Level 4), aggregating upward identical to Facebook Marketing
+            $payload['feature_toggles'] = [
+                'campaigns' => true,
+                'adgroups' => true,
+                'ads' => true,
+
+                'ad_account_metrics' => false,
+                'campaign_metrics' => false,
+                'adgroup_metrics' => false,
+                'ad_metrics' => true,
+            ];
+
+            $payload['metrics_strategy'] = 'default';
+            $payload['metrics_config'] = [];
+
+            $payload['entity_filters'] = [
+                'CAMPAIGN' => $channelConfig['CAMPAIGN']['cache_include'] ?? '',
+                'AD_GROUP' => $channelConfig['AD_GROUP']['cache_include'] ?? '',
+                'AD' => $channelConfig['AD']['cache_include'] ?? '',
+            ];
+
+            $devToken = $channelConfig['developer_token']
+                ?? config('services.google.developer_token')
+                ?? env('GOOGLE_ADS_DEVELOPER_TOKEN');
+
+            if ($devToken) {
+                $payload['developer_token'] = $devToken;
+            }
         }
 
         // FORCE CACHE HISTORY RANGE UNCONDITIONALLY
@@ -159,6 +198,7 @@ class ConfigPayloadService
             'facebook_marketing'    => '2 years',
             'facebook_organic'      => '2 years',
             'mailchimp'             => '2 years',
+            'google_ads'            => '2 years',
         ];
         $payload['cache_history_range'] = $maxRanges[$channel] ?? '1 year';
 

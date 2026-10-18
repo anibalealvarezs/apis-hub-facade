@@ -45,7 +45,7 @@
 
         <div class="flex flex-col md:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
-        <div id="ds-channels-sidebar" class="w-full flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
+        <div id="ds-channels-sidebar" class="w-full md:w-80 md:flex-none flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
             @foreach($this->getProviders() as $pKey => $provider)
                 @php
                     $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
@@ -124,11 +124,11 @@
         </div>
 
         <!-- Content Area -->
-        <div class="w-full relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6 ds-content">
+        <div class="w-full flex-1 min-w-0 relative bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-6 ds-content">
             
             <div wire:loading.flex wire:target="activeChannel, save" class="absolute inset-0 rounded-xl ds-loading-overlay">
                 <div class="fixed inset-0 flex items-center justify-center pointer-events-none ds-loading-inner">
-                    <svg class="animate-spin text-primary-500 drop-shadow-lg ds-loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin text-primary-500 drop-shadow-lg ds-loading-spinner w-12 h-12" style="width: 3rem !important; height: 3rem !important; max-width: 3rem !important; max-height: 3rem !important;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -171,7 +171,7 @@
             @endif
 
             @if($this->isConnected($activeChannel) && $this->isProfileShared($activeChannel))
-                <div class="mb-6 p-4 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">
+                <div class="mb-5 p-4 rounded-lg bg-warning-50 dark:bg-warning-500/10 border border-warning-200 dark:border-warning-500/20">
                     <div class="flex items-start gap-3">
                         <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-warning-600 dark:text-warning-500 shrink-0 mt-0.5" />
                         <div>
@@ -184,7 +184,17 @@
                 </div>
             @endif
 
-            @if(!$this->isConnected($activeChannel))
+            @if(!$this->isChannelCompatible($activeChannel))
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                        <x-heroicon-o-lock-closed class="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ __('Channel Not Available in this Release') }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">
+                        {{ __('This integration requires APIs Hub v1.18.0 or higher. Please upgrade your project release to access this channel.') }}
+                    </p>
+                </div>
+            @elseif(!$this->isConnected($activeChannel))
                 <div id="ds-connect-block" class="flex flex-col items-center justify-center py-12 text-center">
                     <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
                         <x-heroicon-o-link class="w-8 h-8 text-gray-400" />

@@ -70,18 +70,23 @@ class GoogleSearchConsoleController extends Controller
         }
 
         $dimensionMap = [
-            'queries' => 'query',
-            'pages' => 'dimensions.page',
+            'queries'   => 'query',
+            'pages'     => 'dimensions.page',
             'countries' => 'country',
-            'devices' => 'device',
+            'devices'   => 'device',
+            'intents'   => 'dimensions.intent',
         ];
 
         foreach ($dimensionMap as $tab => $dimKey) {
             if (!empty($activeFilters[$tab])) {
-                if (count($activeFilters[$tab]) === 1) {
-                    $filters[$dimKey] = $activeFilters[$tab][0];
+                $values = is_array($activeFilters[$tab]) ? array_values(array_filter($activeFilters[$tab])) : [$activeFilters[$tab]];
+                if (empty($values)) {
+                    continue;
+                }
+                if (count($values) === 1) {
+                    $filters[$dimKey] = $values[0];
                 } else {
-                    $filters[$dimKey] = ['operator' => 'in', 'value' => $activeFilters[$tab]];
+                    $filters[$dimKey] = ['operator' => 'in', 'value' => $values];
                 }
             }
         }
@@ -230,8 +235,9 @@ class GoogleSearchConsoleController extends Controller
                 'limit' => 5000 // reasonable limit for frontend rendering
             ];
 
-            if ($tab === 'queries') $tabPayload['groupBy'] = ['query'];
-            elseif ($tab === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
+            if ($tab === 'queries') {
+                $tabPayload['groupBy'] = ['query', 'dimensions.intent'];
+            } elseif ($tab === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
             elseif ($tab === 'countries') $tabPayload['groupBy'] = ['country'];
             elseif ($tab === 'devices') $tabPayload['groupBy'] = ['device'];
             elseif ($tab === 'appearances') {
@@ -265,6 +271,10 @@ class GoogleSearchConsoleController extends Controller
                 if (!$val || $val === 'null' || $val === '(not set)') $val = 'Unknown';
                 $row['id'] = $val;
                 $row['name'] = $val;
+
+                if (isset($rowLower['dimensions.intent']) || isset($rowLower['intent'])) {
+                    $row['intent'] = $rowLower['dimensions.intent'] ?? $rowLower['intent'];
+                }
             }
 
             return response()->json([

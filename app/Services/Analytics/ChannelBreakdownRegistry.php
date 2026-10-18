@@ -44,6 +44,8 @@ class ChannelBreakdownRegistry
                 ],
             ],
 
+            'google_ads' => self::getGoogleAdsBreakdowns($defaultOperators),
+
             'google_analytics' => self::getGa4Breakdowns($dependency, $defaultOperators),
             'google_search_console' => self::getGscBreakdowns($dependency, $defaultOperators),
             'facebook_organic' => self::getFacebookOrganicBreakdowns($dependency, $defaultOperators),
@@ -81,6 +83,65 @@ class ChannelBreakdownRegistry
 
             default => [],
         };
+    }
+
+    private static function getGoogleAdsBreakdowns(array $defaultOperators): array
+    {
+        $breakdowns = [
+            'channeledCampaign' => [
+                'label' => __('Campaign'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'campaignType' => [
+                'label' => __('Campaign Type'),
+                'type' => 'relational',
+                'operators' => ['eq', 'neq', 'in', 'not_in'],
+            ],
+            'adGroup' => [
+                'label' => __('Ad Group'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'ad' => [
+                'label' => __('Ad'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'device' => [
+                'label' => __('Device'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'query' => [
+                'label' => __('Search Term / Query'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+        ];
+
+        $tenant = \Filament\Facades\Filament::getTenant();
+        if ($tenant instanceof \App\Models\Project && !$tenant->supportsAiClassification()) {
+            return $breakdowns;
+        }
+
+        $breakdowns['dimensions.intent'] = [
+            'label' => __('Search Intent (AI)'),
+            'type' => 'dimension',
+            'operators' => $defaultOperators,
+        ];
+        $breakdowns['dimensions.brand_relation'] = [
+            'label' => __('Brand Relation (AI)'),
+            'type' => 'dimension',
+            'operators' => $defaultOperators,
+        ];
+        $breakdowns['dimensions.business_relevance'] = [
+            'label' => __('Business Relevance (AI)'),
+            'type' => 'dimension',
+            'operators' => $defaultOperators,
+        ];
+
+        return $breakdowns;
     }
 
     private static function getGscBreakdowns(?string $dependency, array $defaultOperators): array

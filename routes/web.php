@@ -139,6 +139,10 @@ Route::post('/api/ga4/list-properties', [\App\Http\Controllers\Api\GoogleAnalyti
 Route::post('/api/mailchimp/summary', [\App\Http\Controllers\Api\MailchimpController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
 Route::post('/api/mailchimp/chart', [\App\Http\Controllers\Api\MailchimpController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
 Route::post('/api/mailchimp/table', [\App\Http\Controllers\Api\MailchimpController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
+
+Route::post('/api/google-ads/summary', [\App\Http\Controllers\Api\GoogleAdsController::class, 'summary'])->middleware(['web', 'auth', 'channel.asset.access:google_ads']);
+Route::post('/api/google-ads/chart', [\App\Http\Controllers\Api\GoogleAdsController::class, 'chart'])->middleware(['web', 'auth', 'channel.asset.access:google_ads']);
+Route::post('/api/google-ads/table', [\App\Http\Controllers\Api\GoogleAdsController::class, 'table'])->middleware(['web', 'auth', 'channel.asset.access:google_ads']);
 Route::post('/api/mailchimp/trend', [\App\Http\Controllers\Api\MailchimpController::class, 'trend'])->middleware(['web', 'auth', 'channel.asset.access:mailchimp']);
 
 Route::post('/api/dashboard/widget/{widget}/data', [\App\Http\Controllers\Api\DashboardWidgetDataController::class, 'show'])->middleware(['web']);

@@ -224,12 +224,12 @@
             $this->data = $config;
 
             // Validate URL-set activeChannel against available providers
+            $providers = $this->getProviders();
             if ($this->activeChannel) {
                 $valid = false;
-                $providers = $this->getProviders();
                 foreach ($providers as $provider) {
                     foreach ($provider['channels'] as $channel) {
-                        if ($channel['key'] === $this->activeChannel) {
+                        if ($channel['key'] === $this->activeChannel && !empty($channel['compatible'])) {
                             $valid = true;
                             break 2;
                         }
@@ -242,10 +242,9 @@
 
             // Auto-select first active channel if none set via URL
             if (!$this->activeChannel) {
-                $providers = $providers ?? $this->getProviders();
                 foreach ($providers as $provider) {
                     foreach ($provider['channels'] as $channel) {
-                        if (($channel['status'] ?? '') === 'Active') {
+                        if (($channel['status'] ?? '') === 'Active' && !empty($channel['compatible'])) {
                             $this->activeChannel = $channel['key'];
 
                             break 2;
@@ -253,11 +252,15 @@
                     }
                 }
 
-                // Fallback if no active channel is found
+                // Fallback if no active channel is found: select first compatible channel
                 if (!$this->activeChannel) {
-                    $firstProvider = reset($providers);
-                    if ($firstProvider && !empty($firstProvider['channels'])) {
-                        $this->activeChannel = $firstProvider['channels'][0]['key'];
+                    foreach ($providers as $provider) {
+                        foreach ($provider['channels'] as $channel) {
+                            if (!empty($channel['compatible'])) {
+                                $this->activeChannel = $channel['key'];
+                                break 2;
+                            }
+                        }
                     }
                 }
             }
@@ -333,12 +336,13 @@
             $maxRanges = [
                 'google_search_console' => '16 months',
                 'google_analytics' => '2 years',
+                'google_ads' => '2 years',
                 'facebook_marketing' => '2 years',
                 'facebook_organic' => '2 years',
                 'mailchimp' => '2 years',
             ];
 
-            foreach (['google_search_console', 'google_analytics', 'facebook_organic', 'facebook_marketing', 'mailchimp'] as $chan) {
+            foreach (['google_search_console', 'google_analytics', 'google_ads', 'facebook_organic', 'facebook_marketing', 'mailchimp'] as $chan) {
                 if (!isset($config[$chan])) {
                     $config[$chan] = [];
                 }
@@ -616,6 +620,23 @@
             return $tenant ? $tenant->isChannelConnected($channel) : false;
         }
 
+        public function isChannelCompatible(string $channel): bool
+        {
+            $tenant = Filament::getTenant();
+            if (!$tenant) {
+                return false;
+            }
+
+            if (method_exists($tenant, 'releaseSupportsChannel')) {
+                return $tenant->releaseSupportsChannel($channel);
+            }
+
+            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first();
+            $supportedChannels = $release && is_array($release->supported_channels) ? $release->supported_channels : [];
+
+            return in_array($channel, $supportedChannels, true);
+        }
+
         public function getLastSyncTime(string $channel): string
         {
             // To be implemented via SDK or local tenant timestamp
@@ -686,7 +707,7 @@
             return Action::make('discoverAssets')
                 ->label(__('Refresh / Discover'))
                 ->icon('heroicon-o-arrow-path')
-                ->visible(fn() => $this->isConnected($this->activeChannel))
+                ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
                 ->action(function (LocalAssetDiscoveryService $service) {
                     $tenant = Filament::getTenant();
@@ -697,6 +718,7 @@
                         $resourceKeyMap = [
                             'google_search_console' => 'sites',
                             'google_analytics'      => 'properties',
+                            'google_ads'            => 'ad_accounts',
                             'facebook_marketing'    => 'ad_accounts',
                             'facebook_organic'      => 'pages',
                             'shopify'               => 'stores',
@@ -724,9 +746,17 @@
                         $this->mergeDiscoveredAssets($payload);
                         Notification::make()->title(__('Assets Refreshed'))->success()->send();
                     } else {
-                        // Check if it's a connection error (cURL)
                         $errMsg = $response['message'] ?? '';
-                        if (str_contains($errMsg, 'cURL error') || str_contains($errMsg, 'Connection refused') || str_contains($errMsg, 'resolve host')) {
+
+                        // Check if it's a configuration notice / warning (e.g., missing developer token)
+                        if (!empty($response['warning']) || str_contains($errMsg, 'Google Ads Developer Token is not configured')) {
+                            Notification::make()
+                                ->title(__('Action Required'))
+                                ->warning()
+                                ->body($errMsg)
+                                ->persistent()
+                                ->send();
+                        } elseif (str_contains($errMsg, 'cURL error') || str_contains($errMsg, 'Connection refused') || str_contains($errMsg, 'resolve host')) {
                             $this->apiHubUnreachable = true;
                             Notification::make()
                                 ->title(__('Connection Failed'))
@@ -752,7 +782,9 @@
 
             $options = [];
             foreach (array_keys($config) as $channelKey) {
-                $options[$channelKey] = \Illuminate\Support\Str::headline(str_replace('_', ' ', $channelKey));
+                if ($this->isChannelCompatible((string)$channelKey)) {
+                    $options[$channelKey] = \Illuminate\Support\Str::headline(str_replace('_', ' ', $channelKey));
+                }
             }
 
             $tenant = Filament::getTenant();
@@ -780,7 +812,7 @@
             return Action::make('connect')
                 ->label(__('Connect Account'))
                 ->icon('heroicon-o-link')
-                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
+                ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && !$this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(function () {
                     if ($this->activeChannel === 'mailchimp') {
@@ -828,7 +860,7 @@
             return Action::make('updateCredentials')
                 ->label(fn () => $this->activeChannel === 'mailchimp' ? __('Add accounts') : __('Update Permissions'))
                 ->icon(fn () => $this->activeChannel === 'mailchimp' ? 'heroicon-o-plus-circle' : 'heroicon-o-key')
-                ->visible(fn() => \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
+                ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
                 ->form(function () {
                     if ($this->activeChannel === 'mailchimp') {
@@ -1037,6 +1069,25 @@
         protected function getDynamicSchema(): array
         {
             $tenant = Filament::getTenant();
+
+            if (!$this->isChannelCompatible((string)$this->activeChannel)) {
+                return [
+                    \Filament\Forms\Components\Placeholder::make('channel_unsupported')
+                        ->label('')
+                        ->content(new \Illuminate\Support\HtmlString(
+                            '<div class="flex flex-col items-center justify-center p-8 text-center bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-white/10">' .
+                            '<span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 mb-3">' .
+                            '<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /></svg>' .
+                            '</span>' .
+                            '<h3 class="text-base font-semibold text-gray-950 dark:text-white">' . __('Channel Not Available in this Release') . '</h3>' .
+                            '<p class="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-sm">' .
+                            __('This integration is supported starting in APIs Hub v1.18.0. Please upgrade your project release to access it.') .
+                            '</p>' .
+                            '</div>'
+                        )),
+                ];
+            }
+
             $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
 
             $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
@@ -1409,7 +1460,29 @@
                             }
 
                             if ($this->activeChannel === 'facebook_marketing') {
-                                return new \Illuminate\Support\HtmlString('ID: ' . ($get('id') ?? 'N/A'));
+                                $idStr = '<div>ID: ' . ($get('id') ?? 'N/A') . '</div>';
+                                $data = $get('data') ?? [];
+                                $businessName = $data['business_name'] ?? ($data['business']['name'] ?? null);
+                                if ($businessName) {
+                                    $idStr .= '<div class="mt-2"><span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20" title="' . e(__('Business Manager')) . '"><svg class="w-3 h-3 mr-1 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"></path></svg>' . e($businessName) . '</span></div>';
+                                }
+                                return new \Illuminate\Support\HtmlString($idStr);
+                            }
+
+                            if ($this->activeChannel === 'google_ads') {
+                                $rawId = (string)($get('id') ?? '');
+                                $digits = preg_replace('/\D/', '', $rawId);
+                                $formattedId = strlen($digits) === 10
+                                    ? substr($digits, 0, 3) . '-' . substr($digits, 3, 3) . '-' . substr($digits, 6, 4)
+                                    : ($rawId ?: 'N/A');
+
+                                $idStr = '<div>Customer ID: ' . e($formattedId) . '</div>';
+                                $data = $get('data') ?? [];
+                                $managerName = $data['manager_name'] ?? null;
+                                if ($managerName) {
+                                    $idStr .= '<div class="mt-2"><span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20" title="' . e(__('Manager Account (MCC)')) . '"><svg class="w-3 h-3 mr-1 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 00-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm0 4a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>' . e($managerName) . '</span></div>';
+                                }
+                                return new \Illuminate\Support\HtmlString($idStr);
                             }
 
                             if ($this->activeChannel === 'google_search_console') {
@@ -2183,6 +2256,7 @@
             $remoteAssetKeyMap = [
                 'google_search_console' => 'gsc',
                 'google_analytics'      => 'google_analytics',
+                'google_ads'            => 'ad_accounts',
                 'facebook_marketing'    => 'ad_accounts',
                 'facebook_organic'      => 'pages',
                 'mailchimp'             => 'audiences',

@@ -130,6 +130,7 @@ class DeployerService
         $fbAppSecret = config('services.facebook.client_secret');
         $googleClientId = config('services.google.client_id');
         $googleClientSecret = config('services.google.client_secret');
+        $googleDeveloperToken = config('services.google.developer_token') ?? env('GOOGLE_ADS_DEVELOPER_TOKEN') ?? '';
         $facadeUrl = config('app.url') . '/api/heartbeat';
         $alertFacadeUrl = config('app.url') . '/api/alerts/triggered';
 
@@ -205,6 +206,7 @@ FACEBOOK_TOKEN_PATH=./storage/tokens/facebook_tokens.json
 GOOGLE_CLIENT_ID={$googleClientId}
 GOOGLE_CLIENT_SECRET={$googleClientSecret}
 GOOGLE_TOKEN_PATH=./storage/tokens/google_tokens.json
+GOOGLE_ADS_DEVELOPER_TOKEN={$googleDeveloperToken}
 
 # Token Authority (Facade Integration)
 TOKEN_AUTHORITY_ENABLED={$tokenAuthorityEnabled}
