@@ -54,8 +54,28 @@ export function googleAdsDashboard(config = {}) {
             conversion_rate: false
         },
 
-        activeFilters: { campaigns: [], adgroups: [], ads: [], devices: [], search_terms: [] },
+        activeFilters: { campaigns: [], adgroups: [], ads: [], devices: [], search_terms: [], campaign_types: [], intents: [] },
         filterLabels: {},
+
+        campaignTypeOptions: {
+            'SEARCH': 'Search',
+            'PERFORMANCE_MAX': 'Performance Max',
+            'DISPLAY': 'Display',
+            'SHOPPING': 'Shopping',
+            'VIDEO': 'Video',
+            'DISCOVERY': 'Demand Gen / Discovery',
+            'LOCAL': 'Local',
+            'HOTEL': 'Hotel',
+            'SMART': 'Smart'
+        },
+
+        intentOptions: {
+            'transactional': 'Transactional',
+            'commercial': 'Commercial',
+            'informational': 'Informational',
+            'navigational': 'Navigational',
+            'unclassified': 'Unclassified'
+        },
 
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
@@ -225,8 +245,64 @@ export function googleAdsDashboard(config = {}) {
         },
 
         clearFiltersLocal() {
-            this.activeFilters = { campaigns: [], adgroups: [], ads: [], devices: [], search_terms: [] };
+            this.activeFilters = { campaigns: [], adgroups: [], ads: [], devices: [], search_terms: [], campaign_types: [], intents: [] };
             this.filterLabels = {};
+        },
+
+        filterDropdownChanged() {
+            this.saveFilters();
+            this.fetchSummary();
+            this.fetchChart();
+            this.fetchTable();
+        },
+
+        removeFilter(tab, val) {
+            if (this.activeFilters[tab]) {
+                this.activeFilters[tab] = this.activeFilters[tab].filter(item => String(item) !== String(val));
+                this.saveFilters();
+                this.fetchSummary();
+                this.fetchChart();
+                this.fetchTable();
+            }
+        },
+
+        formatFilterTab(tab) {
+            const map = {
+                campaigns: 'Campaign',
+                adgroups: 'Ad Group',
+                ads: 'Ad',
+                devices: 'Device',
+                search_terms: 'Search Term',
+                campaign_types: 'Campaign Type',
+                intents: 'Intent'
+            };
+            return map[tab] || tab;
+        },
+
+        getFilterLabel(tab, val) {
+            if (tab === 'campaign_types') {
+                return this.campaignTypeOptions[val] || this.formatCampaignType(val);
+            }
+            if (tab === 'intents') {
+                return this.intentOptions[val] || (String(val).charAt(0).toUpperCase() + String(val).slice(1));
+            }
+            return this.filterLabels[val] || val;
+        },
+
+        formatCampaignType(type) {
+            if (!type) return '';
+            return this.campaignTypeOptions[type] || type.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+        },
+
+        getIntentBadgeClass(intent) {
+            const map = {
+                transactional: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700',
+                commercial: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-300 dark:border-amber-700',
+                informational: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-300 dark:border-blue-700',
+                navigational: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300 dark:border-purple-700',
+                unclassified: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+            };
+            return map[String(intent).toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-600';
         },
 
         clearFilters() {

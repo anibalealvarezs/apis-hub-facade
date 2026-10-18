@@ -44,20 +44,26 @@ class GoogleAdsController extends Controller
         }
 
         $dimensionMap = [
-            'campaigns'    => 'channeledCampaign',
-            'adgroups'     => 'adGroup',
-            'ads'          => 'ad',
-            'devices'      => 'device',
-            'search_terms' => 'query',
-            'queries'      => 'query',
+            'campaigns'       => 'channeledCampaign',
+            'adgroups'        => 'adGroup',
+            'ads'             => 'ad',
+            'devices'         => 'device',
+            'search_terms'    => 'query',
+            'queries'         => 'query',
+            'campaign_types'  => 'campaignType',
+            'intents'         => 'dimensions.intent',
         ];
 
         foreach ($dimensionMap as $tab => $dimKey) {
             if (!empty($activeFilters[$tab])) {
-                if (count($activeFilters[$tab]) === 1) {
-                    $filters[$dimKey] = $activeFilters[$tab][0];
+                $values = is_array($activeFilters[$tab]) ? array_values(array_filter($activeFilters[$tab])) : [$activeFilters[$tab]];
+                if (empty($values)) {
+                    continue;
+                }
+                if (count($values) === 1) {
+                    $filters[$dimKey] = $values[0];
                 } else {
-                    $filters[$dimKey] = ['operator' => 'in', 'value' => $activeFilters[$tab]];
+                    $filters[$dimKey] = ['operator' => 'in', 'value' => $values];
                 }
             }
         }
@@ -262,6 +268,13 @@ class GoogleAdsController extends Controller
                 default                        => 'channeledCampaign',
             };
 
+            $groupBy = [$groupByDimension];
+            if ($tab === 'campaigns') {
+                $groupBy[] = 'campaignType';
+            } elseif (in_array($tab, ['search_terms', 'queries'], true)) {
+                $groupBy[] = 'dimensions.intent';
+            }
+
             $aggregations = [
                 'spend'               => 'spend',
                 'clicks'              => 'clicks',
@@ -278,7 +291,7 @@ class GoogleAdsController extends Controller
             $payloads = [
                 'table' => [
                     'aggregations' => $aggregations,
-                    'groupBy'      => [$groupByDimension],
+                    'groupBy'      => $groupBy,
                     'filters'      => $baseFilters,
                     'startDate'    => $validated['dateStart'],
                     'endDate'      => $validated['dateEnd']
@@ -310,6 +323,13 @@ class GoogleAdsController extends Controller
                 } else {
                     $row['id'] = $row['id'] ?? 'Unknown';
                     $row['name'] = $row['name'] ?? 'Unknown';
+                }
+
+                if (isset($rowLower['campaigntype'])) {
+                    $row['campaign_type'] = $rowLower['campaigntype'];
+                }
+                if (isset($rowLower['dimensions.intent']) || isset($rowLower['intent'])) {
+                    $row['intent'] = $rowLower['dimensions.intent'] ?? $rowLower['intent'];
                 }
             }
 

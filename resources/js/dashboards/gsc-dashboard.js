@@ -83,7 +83,15 @@ export function gscDashboard(config = {}) {
 
         activeMetrics: { clicks: true, impressions: true, ctr: false, position: false },
 
-        activeFilters: { queries: [], pages: [], countries: [], devices: [] },
+        activeFilters: { queries: [], pages: [], countries: [], devices: [], intents: [] },
+
+        intentOptions: {
+            'transactional': 'Transactional',
+            'commercial': 'Commercial',
+            'informational': 'Informational',
+            'navigational': 'Navigational',
+            'unclassified': 'Unclassified'
+        },
 
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
@@ -210,7 +218,53 @@ export function gscDashboard(config = {}) {
         },
 
         clearFiltersLocal() {
-            this.activeFilters = { queries: [], pages: [], countries: [], devices: [] };
+            this.activeFilters = { queries: [], pages: [], countries: [], devices: [], intents: [] };
+        },
+
+        filterDropdownChanged() {
+            this.saveFilters();
+            this.fetchSummary();
+            this.fetchChart();
+            this.fetchTable();
+        },
+
+        removeFilter(tab, val) {
+            if (this.activeFilters[tab]) {
+                this.activeFilters[tab] = this.activeFilters[tab].filter(item => String(item) !== String(val));
+                this.saveFilters();
+                this.fetchSummary();
+                this.fetchChart();
+                this.fetchTable();
+            }
+        },
+
+        formatFilterTab(tab) {
+            const map = {
+                queries: 'Query',
+                pages: 'Page',
+                countries: 'Country',
+                devices: 'Device',
+                intents: 'Intent'
+            };
+            return map[tab] || tab;
+        },
+
+        getFilterLabel(tab, val) {
+            if (tab === 'intents') {
+                return this.intentOptions[val] || (String(val).charAt(0).toUpperCase() + String(val).slice(1));
+            }
+            return val;
+        },
+
+        getIntentBadgeClass(intent) {
+            const map = {
+                transactional: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700',
+                commercial: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 border border-amber-300 dark:border-amber-700',
+                informational: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-300 dark:border-blue-700',
+                navigational: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-300 dark:border-purple-700',
+                unclassified: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+            };
+            return map[String(intent).toLowerCase()] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-600';
         },
 
         clearFilters() {
@@ -218,6 +272,7 @@ export function gscDashboard(config = {}) {
             this.saveFilters();
             this.fetchSummary();
             this.fetchChart();
+            this.fetchTable();
         },
 
         toggleFilter(tab, value) {

@@ -13,7 +13,7 @@
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
         <div class="gsc-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
-            <div class="gsc-header-controls">
+            <div class="gsc-header-controls flex-wrap">
                 <x-ui.export-pdf-button />
                 <div class="flex items-center mr-2 gap-2">
                     <button type="button" 
@@ -82,6 +82,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         </div>
                     </div>
                 </div>
+                <x-ui.asset-selector model="activeFilters.intents" options="intentOptions" placeholder="{{ __('All Search Intents') }}" :multiple="true" size="sm" changeEvent="filterDropdownChanged()" />
                 <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
                 <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
                 <button type="button" @click="forceRefresh()"
@@ -173,9 +174,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="val in values" :key="val">
                         <span
                             class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/40 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
-                            <span class="opacity-70 uppercase bd-text-2xs mr-1" x-text="tab + ':'"></span>
-                            <span x-text="val" class="max-w-xs truncate" :title="val"></span>
-                            <button @click.stop="toggleFilter(tab, val)"
+                            <span class="opacity-70 uppercase bd-text-2xs mr-1" x-text="formatFilterTab(tab) + ':'"></span>
+                            <span x-text="getFilterLabel(tab, val)" class="max-w-xs truncate" :title="getFilterLabel(tab, val)"></span>
+                            <button @click.stop="removeFilter(tab, val)"
                                     class="ml-1 text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200">
                                 <x-heroicon-m-x-mark class="w-3 h-3"/>
                             </button>
@@ -220,11 +221,16 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                       active="isFilterActive(activeTab, row.id)"
                                       inactive-class="" disabled-class="">
                         <td>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <div x-show="isFilterActive(activeTab, row.id)" class="text-primary-500">
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
                                 <div class="gsc-url-text" :title="row.id" x-text="row.id"></div>
+                                <template x-if="row.intent">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider"
+                                          :class="getIntentBadgeClass(row.intent)"
+                                          x-text="row.intent"></span>
+                                </template>
                             </div>
                         </td>
                         <td class="metric-cell">
