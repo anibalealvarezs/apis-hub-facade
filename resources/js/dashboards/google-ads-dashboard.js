@@ -396,9 +396,13 @@ export function googleAdsDashboard(config = {}) {
                 const response = await fetch('/api/google-ads/table', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
-                    const rows = (data.data || []).map(r => ({
-                        ...r,
-                        name: r.name || r.id || 'Unknown',
+                    const rows = (data.data || []).map(r => {
+                        const name = r.name || r.channeledcampaign || r.channeledCampaign || r.adgroup || r.adGroup || r.ad || r.device || r.id || 'Unknown';
+                        const id = r.id || r.channeledcampaign_id || r.channeledCampaign_id || r.adgroup_id || r.adGroup_id || r.ad_id || r.device_id || name;
+                        return {
+                            ...r,
+                            id: id,
+                            name: name,
                         spend: parseFloat(r.spend) || 0,
                         clicks: parseInt(r.clicks) || 0,
                         impressions: parseInt(r.impressions) || 0,
@@ -409,7 +413,8 @@ export function googleAdsDashboard(config = {}) {
                         roas_purchase: parseFloat(r.roas_purchase) || 0,
                         cost_per_conversion: parseFloat(r.cost_per_conversion) || 0,
                         conversion_rate: parseFloat(r.conversion_rate) || 0,
-                    }));
+                    };
+                });
                     this.safeCacheSet(cacheKey, JSON.stringify(rows));
                     this.tableState.rows = rows;
                     this.tableState.currentPage = 1;

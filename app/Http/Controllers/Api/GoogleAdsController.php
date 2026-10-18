@@ -284,8 +284,31 @@ class GoogleAdsController extends Controller
 
             $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $payloads);
 
+            $tableData = $results['table']['data'] ?? [];
+
+            foreach ($tableData as &$row) {
+                $rowLower = array_change_key_case($row, CASE_LOWER);
+
+                if (isset($rowLower['channeledcampaign'])) {
+                    $row['id'] = $rowLower['channeledcampaign_id'] ?? $rowLower['channeledcampaign'];
+                    $row['name'] = $rowLower['channeledcampaign'];
+                } elseif (isset($rowLower['adgroup'])) {
+                    $row['id'] = $rowLower['adgroup_id'] ?? $rowLower['adgroup'];
+                    $row['name'] = $rowLower['adgroup'];
+                } elseif (isset($rowLower['ad'])) {
+                    $row['id'] = $rowLower['ad_id'] ?? $rowLower['ad'];
+                    $row['name'] = $rowLower['ad'];
+                } elseif (isset($rowLower['device'])) {
+                    $row['id'] = $rowLower['device_id'] ?? $rowLower['device'];
+                    $row['name'] = ucfirst(strtolower((string)$rowLower['device']));
+                } else {
+                    $row['id'] = $row['id'] ?? 'Unknown';
+                    $row['name'] = $row['name'] ?? 'Unknown';
+                }
+            }
+
             return response()->json([
-                'data' => $results['table']['data'] ?? [],
+                'data' => $tableData,
                 'retryable' => !empty($results['table']['retryable'])
             ]);
         } catch (\Exception $e) {
