@@ -371,6 +371,22 @@ class KpiFormBuilder
             ];
         }
 
+        // Scope-specific metrics override for Google Ads
+        if ($channel === 'google_ads') {
+            return [
+                'spend' => __('Spend / Cost'),
+                'clicks' => __('Clicks'),
+                'impressions' => __('Impressions'),
+                'ctr' => __('CTR'),
+                'cpc' => __('Avg. CPC'),
+                'conversions' => __('Conversions'),
+                'conversion_value' => __('Conversion Value'),
+                'cost_per_conversion' => __('Cost per Conversion'),
+                'conversion_rate' => __('Conversion Rate'),
+                'roas_purchase' => __('ROAS'),
+            ];
+        }
+
         // Scope-specific metrics override for Google Analytics
         if ($channel === 'google_analytics') {
             return match ($dependency) {

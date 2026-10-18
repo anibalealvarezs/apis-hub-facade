@@ -20,11 +20,11 @@ class ChannelCapabilityRegistry
             'mailchimp' => ['email_marketing', 'clickable', 'retention_driven'],
             
             // Sub-channels / Drivers (from Asset Groups)
-            'facebook_marketing' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
+            'facebook_marketing' => ['spendable', 'clickable', 'impressionable', 'paid_media', 'conversion_tracked', 'revenue_tracked', 'reach_driven'],
             'facebook_organic' => ['organic_social', 'reach_driven', 'impressionable'],
             'google_search_console' => ['clickable', 'impressionable', 'seo'],
             'google_analytics' => ['traffic_tracked', 'conversion_tracked', 'revenue_tracked', 'behavior_tracked', 'analytics'],
-            'google_ads' => ['spendable', 'clickable', 'impressionable', 'paid_media'],
+            'google_ads' => ['spendable', 'clickable', 'impressionable', 'paid_media', 'conversion_tracked', 'revenue_tracked'],
         ];
     }
 

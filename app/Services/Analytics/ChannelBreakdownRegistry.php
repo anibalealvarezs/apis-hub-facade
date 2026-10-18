@@ -44,6 +44,29 @@ class ChannelBreakdownRegistry
                 ],
             ],
 
+            'google_ads' => [
+                'channeledCampaign' => [
+                    'label' => __('Campaign'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
+                'adGroup' => [
+                    'label' => __('Ad Group'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
+                'ad' => [
+                    'label' => __('Ad'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
+                'device' => [
+                    'label' => __('Device'),
+                    'type' => 'relational',
+                    'operators' => $defaultOperators,
+                ],
+            ],
+
             'google_analytics' => self::getGa4Breakdowns($dependency, $defaultOperators),
             'google_search_console' => self::getGscBreakdowns($dependency, $defaultOperators),
             'facebook_organic' => self::getFacebookOrganicBreakdowns($dependency, $defaultOperators),

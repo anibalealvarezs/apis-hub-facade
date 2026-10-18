@@ -25,6 +25,7 @@ class ChannelGranularityRegistry
             'google_analytics' => self::getGa4Dimensions($dependency),
             'facebook_marketing' => self::getFbMarketingDimensions($dependency),
             'facebook_organic' => self::getFbOrganicDimensions($dependency),
+            'google_ads' => self::getGoogleAdsDimensions($dependency),
             'mailchimp' => [
                 'channeledCampaign' => __('Campaign'),
                 'campaignType' => __('Campaign Type'),
@@ -43,6 +44,7 @@ class ChannelGranularityRegistry
             'facebook_organic' => 'instagram_account',
             'google_search_console' => 'non-searchAppearance',
             'google_analytics' => 'traffic_matrix',
+            'google_ads' => 'campaign_level',
             default => null,
         };
     }
@@ -63,6 +65,12 @@ class ChannelGranularityRegistry
                 'account_level' => __('Account Level'),
                 'campaign_level' => __('Campaign Level'),
                 'adset_level' => __('Ad Set Level'),
+            ],
+            'google_ads' => [
+                'campaign_level' => __('Campaign Level'),
+                'adgroup_level' => __('Ad Group Level'),
+                'ad_level' => __('Ad Level'),
+                'device_level' => __('Device Level'),
             ],
             'google_analytics' => [
                 'traffic_matrix' => __('Traffic Matrix (Session)'),
@@ -125,6 +133,35 @@ class ChannelGranularityRegistry
                 'level' => __('Ad Level'),
             ],
             default => [],
+        };
+    }
+
+    private static function getGoogleAdsDimensions(?string $dependency): array
+    {
+        $dependency = $dependency ?? self::getDefaultDependencyForChannel('google_ads');
+
+        return match ($dependency) {
+            'campaign_level' => [
+                'channeledCampaign' => __('Campaign'),
+            ],
+            'adgroup_level' => [
+                'channeledCampaign' => __('Campaign'),
+                'adGroup' => __('Ad Group'),
+            ],
+            'ad_level' => [
+                'channeledCampaign' => __('Campaign'),
+                'adGroup' => __('Ad Group'),
+                'ad' => __('Ad'),
+            ],
+            'device_level' => [
+                'device' => __('Device'),
+            ],
+            default => [
+                'channeledCampaign' => __('Campaign'),
+                'adGroup' => __('Ad Group'),
+                'ad' => __('Ad'),
+                'device' => __('Device'),
+            ],
         };
     }
 
