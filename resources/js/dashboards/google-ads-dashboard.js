@@ -295,12 +295,39 @@ export function googleAdsDashboard(config = {}) {
             });
         },
 
-        getCacheKey(endpoint) {
-            const accountKey = [...this.accounts].sort().join('_');
-            return `gads_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}`;
+        getTableFilters() {
+            const filters = JSON.parse(JSON.stringify(this.activeFilters));
+            if (this.activeTab === 'campaigns') {
+                filters.campaigns = [];
+                filters.adgroups = [];
+                filters.ads = [];
+            } else if (this.activeTab === 'adgroups') {
+                filters.adgroups = [];
+                filters.ads = [];
+            } else if (this.activeTab === 'ads') {
+                filters.ads = [];
+            }
+            return filters;
         },
 
-        getFetchOptions(extra = {}) {
+        getCacheKey(endpoint, filterMode = 'all') {
+            const accountKey = [...this.accounts].sort().join('_');
+            let filtersObj = {};
+            if (filterMode === 'all') filtersObj = this.activeFilters;
+            else if (filterMode === 'table') filtersObj = this.getTableFilters();
+
+            const filterHash = filterMode === 'none' ? 'no_filters' : JSON.stringify(filtersObj);
+            return `gads_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}`;
+        },
+
+        getFetchOptions(filterMode = 'all', extra = {}) {
+            let activeFilters = this.activeFilters;
+            if (filterMode === 'table') {
+                activeFilters = this.getTableFilters();
+            } else if (filterMode === 'none') {
+                activeFilters = {};
+            }
+
             return {
                 method: 'POST',
                 headers: {
@@ -314,7 +341,7 @@ export function googleAdsDashboard(config = {}) {
                     dateStart: this.dateStart,
                     dateEnd: this.dateEnd,
                     activeTab: this.activeTab,
-                    activeFilters: this.activeFilters,
+                    activeFilters: activeFilters,
                     ...extra
                 })
             };
@@ -329,7 +356,7 @@ export function googleAdsDashboard(config = {}) {
 
         async fetchSummary() {
             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('summary');
+            const cacheKey = this.getCacheKey('summary', 'all');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -340,7 +367,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/google-ads/summary', this.getFetchOptions());
+                const response = await fetch('/api/google-ads/summary', this.getFetchOptions('all'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -356,7 +383,7 @@ export function googleAdsDashboard(config = {}) {
 
         async fetchChart() {
             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('chart');
+            const cacheKey = this.getCacheKey('chart', 'all');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -367,7 +394,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/google-ads/chart', this.getFetchOptions());
+                const response = await fetch('/api/google-ads/chart', this.getFetchOptions('all'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -383,7 +410,7 @@ export function googleAdsDashboard(config = {}) {
 
         async fetchTable() {
             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('table');
+            const cacheKey = this.getCacheKey('table', 'table');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -393,7 +420,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/google-ads/table', this.getFetchOptions());
+                const response = await fetch('/api/google-ads/table', this.getFetchOptions('table'));
                 const data = await response.json();
                 if (!data.error) {
                     const rows = (data.data || []).map(r => {

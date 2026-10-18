@@ -201,6 +201,7 @@
                     <x-data-table.column state="tableState" key="ctr" label="{{ __('CTR') }}"/>
                     <x-data-table.column state="tableState" key="cpc" label="{{ __('Avg. CPC') }}"/>
                     <x-data-table.column state="tableState" key="conversions" label="{{ __('Conversions') }}"/>
+                    <x-data-table.column state="tableState" key="conversion_value" label="{{ __('Conv. Value') }}"/>
                     <x-data-table.column state="tableState" key="cost_per_conversion" label="{{ __('Cost / Conv.') }}"/>
                     <x-data-table.column state="tableState" key="conversion_rate" label="{{ __('Conv. Rate') }}"/>
                     <x-data-table.column state="tableState" key="roas_purchase" label="{{ __('ROAS') }}"/>
@@ -226,13 +227,14 @@
                         <td class="metric-cell" x-text="formatPercent(row.ctr)"></td>
                         <td class="metric-cell" x-text="formatCurrency(row.cpc)"></td>
                         <td class="metric-cell" x-text="formatNumber(row.conversions)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.conversion_value)"></td>
                         <td class="metric-cell" x-text="formatCurrency(row.cost_per_conversion)"></td>
                         <td class="metric-cell" x-text="formatPercent(row.conversion_rate)"></td>
                         <td class="metric-cell" x-text="formatDecimal(row.roas_purchase) + 'x'"></td>
                     </x-data-table.row>
                 </template>
                 <tr x-show="tableState.paginatedRows.length === 0">
-                    <td colspan="10" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                    <td colspan="11" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
                 </tr>
                 </tbody>
             </table>
