@@ -87,16 +87,16 @@ class GoogleAdsController extends Controller
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
 
             $aggregations = [
-                'total_spend'               => 'spend',
-                'total_clicks'              => 'clicks',
-                'total_impressions'         => 'impressions',
-                'total_conversions'         => 'conversions',
-                'total_conversion_value'    => 'conversion_value',
-                'average_ctr'               => 'ctr',
-                'average_cpc'               => 'cpc',
-                'average_roas_purchase'     => 'roas_purchase',
+                'total_spend'                 => 'spend',
+                'total_clicks'                => 'clicks',
+                'total_impressions'           => 'impressions',
+                'total_conversions'           => 'conversions',
+                'total_conversion_value'      => 'total_revenue',
+                'average_ctr'                 => 'ctr',
+                'average_cpc'                 => 'cpc',
+                'average_roas_purchase'       => 'roas_purchase',
                 'average_cost_per_conversion' => 'cost_per_conversion',
-                'average_conversion_rate'   => 'conversion_rate',
+                'average_conversion_rate'     => 'conversion_rate',
             ];
 
             $payloads = [
@@ -182,7 +182,7 @@ class GoogleAdsController extends Controller
                 'clicks'              => 'clicks',
                 'impressions'         => 'impressions',
                 'conversions'         => 'conversions',
-                'conversion_value'    => 'conversion_value',
+                'conversion_value'    => 'total_revenue',
                 'ctr'                 => 'ctr',
                 'cpc'                 => 'cpc',
                 'roas_purchase'       => 'roas_purchase',
