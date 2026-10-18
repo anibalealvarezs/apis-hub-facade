@@ -387,7 +387,7 @@ export function googleAdsDashboard(config = {}) {
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                this.tableState.setRows(data);
+                this.tableState.rows = data || [];
                 return;
             }
 
@@ -411,7 +411,8 @@ export function googleAdsDashboard(config = {}) {
                         conversion_rate: parseFloat(r.conversion_rate) || 0,
                     }));
                     this.safeCacheSet(cacheKey, JSON.stringify(rows));
-                    this.tableState.setRows(rows);
+                    this.tableState.rows = rows;
+                    this.tableState.currentPage = 1;
                 }
             } catch (e) {
                 console.error('Google Ads table error:', e);
