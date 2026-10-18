@@ -18,7 +18,7 @@ class GoogleAdsController extends Controller
             'account.*' => 'nullable',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,adgroups,ads,devices',
+            'activeTab' => 'nullable|string|in:campaigns,adgroups,ads,devices,search_terms,queries',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
             'filters' => 'nullable|array',
@@ -44,10 +44,12 @@ class GoogleAdsController extends Controller
         }
 
         $dimensionMap = [
-            'campaigns' => 'channeledCampaign',
-            'adgroups'  => 'adGroup',
-            'ads'       => 'ad',
-            'devices'   => 'device',
+            'campaigns'    => 'channeledCampaign',
+            'adgroups'     => 'adGroup',
+            'ads'          => 'ad',
+            'devices'      => 'device',
+            'search_terms' => 'query',
+            'queries'      => 'query',
         ];
 
         foreach ($dimensionMap as $tab => $dimKey) {
