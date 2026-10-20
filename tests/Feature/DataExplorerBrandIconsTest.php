@@ -112,4 +112,53 @@ class DataExplorerBrandIconsTest extends TestCase
     {
         $this->assertSame(BrandIcon::google()->toHtml(), BrandIcon::forProvider('google')->toHtml());
     }
+
+    public function test_for_channel_resolves_specific_sub_channel_icons(): void
+    {
+        $ga4 = BrandIcon::forChannel('google_analytics_4');
+        $this->assertNotNull($ga4);
+        $this->assertSame(BrandIcon::googleAnalytics()->toHtml(), $ga4->toHtml());
+
+        $gsc = BrandIcon::forChannel('google_search_console');
+        $this->assertNotNull($gsc);
+        $this->assertSame(BrandIcon::googleSearchConsole()->toHtml(), $gsc->toHtml());
+
+        $gads = BrandIcon::forChannel('google_ads');
+        $this->assertNotNull($gads);
+        $this->assertSame(BrandIcon::googleAds()->toHtml(), $gads->toHtml());
+    }
+
+    public function test_for_channel_handles_facebook_organic_edge_cases(): void
+    {
+        // When asset dependency is an Instagram account
+        $igFromDep = BrandIcon::forChannel('facebook_organic', 'instagram_account');
+        $this->assertNotNull($igFromDep);
+        $this->assertSame(BrandIcon::instagram()->toHtml(), $igFromDep->toHtml());
+
+        // When subType or granularity is ig_post / instagram
+        $igFromSubType = BrandIcon::forChannel('facebook_organic', null, 'ig_post');
+        $this->assertNotNull($igFromSubType);
+        $this->assertSame(BrandIcon::instagram()->toHtml(), $igFromSubType->toHtml());
+
+        // When dependency is a Facebook page, fall back to Facebook mark
+        $fbFromDep = BrandIcon::forChannel('facebook_organic', 'facebook_page');
+        $this->assertNotNull($fbFromDep);
+        $this->assertSame(BrandIcon::facebook()->toHtml(), $fbFromDep->toHtml());
+
+        // Direct facebook_marketing channel
+        $fbMarketing = BrandIcon::forChannel('facebook_marketing');
+        $this->assertNotNull($fbMarketing);
+        $this->assertSame(BrandIcon::facebook()->toHtml(), $fbMarketing->toHtml());
+    }
+
+    public function test_for_channel_falls_back_to_provider(): void
+    {
+        $shopify = BrandIcon::forChannel('shopify');
+        $this->assertNotNull($shopify);
+        $this->assertSame(BrandIcon::shopify()->toHtml(), $shopify->toHtml());
+
+        $mailchimp = BrandIcon::forChannel('mailchimp');
+        $this->assertNotNull($mailchimp);
+        $this->assertSame(BrandIcon::mailchimp()->toHtml(), $mailchimp->toHtml());
+    }
 }

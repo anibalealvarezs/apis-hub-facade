@@ -38,6 +38,27 @@ class BrandIcon
     ];
 
     /**
+     * Specific channel key => brand mark method name.
+     */
+    public const CHANNEL_METHODS = [
+        'google_analytics'        => 'googleAnalytics',
+        'google_analytics_4'      => 'googleAnalytics',
+        'ga4'                     => 'googleAnalytics',
+        'google_search_console'   => 'googleSearchConsole',
+        'gsc'                     => 'googleSearchConsole',
+        'google_ads'              => 'googleAds',
+        'gads'                    => 'googleAds',
+        'google_business_profile' => 'google',
+        'gbp'                     => 'google',
+        'instagram'               => 'instagram',
+        'ig'                      => 'instagram',
+        'facebook'                => 'facebook',
+        'fb'                      => 'facebook',
+        'facebook_marketing'      => 'facebook',
+        'facebook_organic'        => 'facebook',
+    ];
+
+    /**
      * Resolve the branded mark for a provider key (e.g. "google", "triple_whale").
      *
      * Returns null when the provider has no branded mark so the caller can fall back to
@@ -53,6 +74,60 @@ class BrandIcon
         }
 
         return self::withClasses(self::$method(), $classes);
+    }
+
+    /**
+     * Resolve the hierarchical branded mark for a channel, taking into account
+     * channel-specific sub-assets (e.g. Instagram under facebook_organic).
+     *
+     * Fallback hierarchy:
+     * 1. Sub-type / asset dependency check (e.g. dependency === 'instagram_account' -> Instagram).
+     * 2. Specific channel method (e.g. google_analytics_4 -> Google Analytics bar mark).
+     * 3. Parent provider method (e.g. facebook_organic -> facebook / meta; google_search_console -> google).
+     * 4. Null if neither exists.
+     */
+    public static function forChannel(?string $channel, ?string $dependency = null, ?string $subType = null, string $classes = 'h-6 w-6'): ?HtmlString
+    {
+        $c = strtolower(trim((string) $channel));
+        $dep = strtolower(trim((string) $dependency));
+        $st = strtolower(trim((string) $subType));
+
+        // 1. Edge case: facebook_organic containing Instagram vs Facebook assets
+        if ($c === 'facebook_organic' || str_contains($c, 'facebook') || str_contains($c, 'meta')) {
+            $isInstagram = $dep === 'instagram_account'
+                || in_array($st, ['instagram', 'ig_post', 'instagram_account'], true)
+                || str_contains($dep, 'instagram')
+                || str_contains($st, 'instagram');
+
+            if ($isInstagram) {
+                return self::withClasses(self::instagram(), $classes);
+            }
+        }
+
+        // 2. Direct channel-specific method
+        if (isset(self::CHANNEL_METHODS[$c])) {
+            $method = self::CHANNEL_METHODS[$c];
+            if (method_exists(self::class, $method)) {
+                return self::withClasses(self::$method(), $classes);
+            }
+        }
+
+        // 3. Fall back to provider resolution (or provider prefix extraction)
+        $providerIcon = self::forProvider($c, $classes);
+        if ($providerIcon !== null) {
+            return $providerIcon;
+        }
+
+        // Try extracting provider prefix (e.g. 'google_analytics_4' -> 'google')
+        $prefix = explode('_', $c)[0];
+        if ($prefix && $prefix !== $c) {
+            $providerIcon = self::forProvider($prefix, $classes);
+            if ($providerIcon !== null) {
+                return $providerIcon;
+            }
+        }
+
+        return null;
     }
 
     public static function facebook(): HtmlString
@@ -127,8 +202,32 @@ class BrandIcon
 
     public static function mailchimp(): HtmlString
     {
-        // Mailchimp (chimp) mark, drawn on a 32x32 viewBox.
-        return self::svg('<path d="M28.5 6.7c-1.2-.6-2.5-.9-3.9-1.1a13.9 13.9 0 0 0-.5-1.1 7.6 7.6 0 0 0-6.9 1.9 3.5 3.5 0 0 0-1.6 1.6 12.9 12.9 0 0 0-4.6 1.4C7.6 7.3 4.4 8.5 2.6 10.2c-2.2 2.2-1.7 5.6.2 8.2 1.6 2.2 4.4 3.9 7.5 4.2 1.1.1 2.3-.1 3.3-.6l.1-.1-.1-.1c-1.1-.4-2.1-1-3-1.8l.1-.1c2.2 1 4.7 1.5 7.2 1.4 5.7-.2 11-3.1 13.2-7.6 1.5-2.9.6-6.6-2.6-8.8zM11.2 9.6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm8 6.4c-2.1 3.4-6.4 5.4-11.2 5.4-4.8 0-9.1-2-11.2-5.4a.9.9 0 0 1 0-1.3c2.1-3.4 6.4-5.4 11.2-5.4s9.1 2 11.2 5.4c.3.4.3.9 0 1.3zm-.2-3.4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>', '0 0 30 30');
+        // Official Mailchimp Freddie mark (Simple Icons / official SVG mark)
+        return self::svg('<path d="M11.267 0C6.791-.015-1.82 10.246 1.397 12.964l.79.669a3.88 3.88 0 0 0-.22 1.792c.074 1.303.883 2.274 2.146 2.589-.044.296-.06.602-.043.916.104 1.83 1.942 3.125 4.108 2.894a4.57 4.57 0 0 0 1.96-.757 8.01 8.01 0 0 0 5.467 2.868c2.951.272 5.62-.843 7.37-3.003 1.62-1.996 2.179-4.708 1.532-7.442-.647-2.73-2.38-4.89-4.757-5.932-.095-.503-.357-.962-.756-1.314-1.222-1.077-3.136-.884-4.276.43-.538-.076-1.09-.108-1.65-.094-.356-.63-.9-1.12-1.57-1.4a4.18 4.18 0 0 0-2.02-.387l.564-1.28c.304-.69.21-1.492-.244-2.083A2.39 2.39 0 0 0 11.267 0zm.014 1.674c.245 0 .493.09.684.27.228.216.31.547.214.85l-.744 2.338a.837.837 0 0 0 .54 1.05c.87.274 1.547.882 1.907 1.713a.837.837 0 0 0 .99.467c.602-.132 1.205-.183 1.795-.152a.837.837 0 0 0 .852-.638c.28-.96 1.092-1.649 2.072-1.761.98-.112 1.928.36 2.42 1.206.184.316.516.51.88.514.072 0 .144-.008.214-.025 1.947-.468 3.865.755 4.283 2.73.418 1.977-.674 3.96-2.439 4.432a.837.837 0 0 0-.616.73c-.09 1.488-.67 2.898-1.636 3.97-1.516 1.683-3.66 2.502-6.037 2.302a7.35 7.35 0 0 1-4.783-2.296.837.837 0 0 0-.96-.17c-.886.41-1.897.54-2.852.37-1.144-.204-1.96-.983-2.097-1.996a.837.837 0 0 0-.583-.69c-.843-.284-1.378-.897-1.428-1.642-.05-.745.385-1.433 1.161-1.84.26-.137.426-.399.44-.694.015-.296-.123-.578-.367-.743l-.75-.51C1.047 11.218 5.6 4.31 9.176 3.738l.617 1.942a.837.837 0 0 0 1.05.54.837.837 0 0 0 .54-1.05l-.47-1.479c.12-.012.242-.017.368-.017z"/>');
+    }
+
+    public static function googleAnalytics(): HtmlString
+    {
+        // Google Analytics 4 (GA4 bar chart mark)
+        return self::svg('<path d="M21.36 10.96a2.64 2.64 0 0 0-2.64 2.64v7.76a2.64 2.64 0 1 0 5.28 0V13.6a2.64 2.64 0 0 0-2.64-2.64zM12 5.68A2.64 2.64 0 0 0 9.36 8.32v13.04a2.64 2.64 0 1 0 5.28 0V8.32A2.64 2.64 0 0 0 12 5.68zM2.64 16.24A2.64 2.64 0 0 0 0 18.88v2.48a2.64 2.64 0 0 0 5.28 0v-2.48a2.64 2.64 0 0 0-2.64-2.64z"/>');
+    }
+
+    public static function googleSearchConsole(): HtmlString
+    {
+        // Google Search Console (Search console magnifying glass with chart report)
+        return self::svg('<path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm-2-3h1.5v-3H7.5v3zm3 0H12V7h-1.5v4z"/>');
+    }
+
+    public static function googleAds(): HtmlString
+    {
+        // Google Ads mark (interlocking loop / badge mark)
+        return self::svg('<path d="M3.73 15.34a6.52 6.52 0 0 1 8.91-2.39l.23.14 3.73-6.46-.23-.14A13.97 13.97 0 0 0 .2 12.06c-1.39 4.79.46 9.94 4.54 12.65l3.73-6.46a6.5 6.5 0 0 1-4.74-2.91zm16.54-6.68a6.52 6.52 0 0 0-8.91 2.39l-.23-.14-3.73 6.46.23.14a13.97 13.97 0 0 0 16.17-5.57c2.6-4.3 1.83-9.87-1.74-13.34l-3.73 6.46a6.5 6.5 0 0 0 1.94 3.6zm-8.27 4.77a3.26 3.26 0 1 1 0-6.52 3.26 3.26 0 0 1 0 6.52z"/>');
+    }
+
+    public static function instagram(): HtmlString
+    {
+        // Instagram camera glyph
+        return self::svg('<path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>');
     }
 
     public static function hubspot(): HtmlString

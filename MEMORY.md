@@ -959,3 +959,18 @@
   - Refactored `DataSources::isConnected($channel)` to delegate directly to `$tenant->isChannelConnected($channel)`.
   - In `DataSync`, candidate channels for Nuclear Resync fall back to `sync_config` keys if background telemetry (`syncData['channels']`) hasn't loaded yet.
 
+### Hierarchical Brand & Channel Logos in Custom Dashboard Widgets (2026-10-20)
+- **Problem & Requirements:**
+  - Mailchimp SVG logo mark in `BrandIcon::mailchimp()` was a placeholder shape. Replaced with official Mailchimp "Freddie" mark.
+  - Custom dashboard widgets needed provider and channel brand logos placed next to channel names in both:
+    1. Chart custom legend items (when `show_channel` is active).
+    2. Datapoint hover tooltips (inline with each dataset row before the series/channel label).
+  - Icons needed to be monochromatic (`fill="currentColor"`, subtle opacity) so they don't clash with chart dataset color swatches.
+  - Needed hierarchical brand resolution: Google Ads (`google_ads`), Google Analytics (`google_analytics_4`), and Google Search Console (`google_search_console`) have distinct marks.
+  - Handled the edge case of `facebook_organic`: Facebook Organic is a single channel that contains both Facebook Page/Post assets and Instagram Account/Media assets. When `dependency === 'instagram_account'`, `granularity === 'ig_post'`, or series label includes `[IG]` / `Instagram`, resolve to the Instagram camera mark; otherwise resolve to the Facebook mark.
+- **Implementation:**
+  - `app/Support/BrandIcon.php`: Added official Freddie Mailchimp SVG, added `googleAnalytics()`, `googleSearchConsole()`, `googleAds()`, `instagram()`, `CHANNEL_METHODS`, and `BrandIcon::forChannel(?string $channel, ?string $dependency = null, ?string $subType = null, string $classes = 'h-6 w-6'): ?HtmlString`.
+  - `app/Http/Controllers/Api/DashboardWidgetDataController.php`: Passed `channel` and `dependency` on all single-series, multi-series, and fan-out breakdown datasets.
+  - `public/js/dashboard-renderer.js`: Defined `BRAND_ICONS` map and `getChannelIconSvg(channel, dependency, label)`. Updated `_renderCustomLegend` to place the icon between the color swatch and the series label. Updated `_externalTooltipHandler` to render the icon between the color dot and series name.
+  - `tests/Feature/DataExplorerBrandIconsTest.php`: Added tests for `forChannel()`, sub-channels (GA4, GSC, GAds), and Facebook Organic Instagram vs Facebook resolution.
+
