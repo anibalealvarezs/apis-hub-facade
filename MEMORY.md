@@ -992,3 +992,14 @@
   - `app/Filament/App/Pages/FacebookMarketingDashboard.php`: Navigation label updated to `'Meta Ads'`, icon updated to `BrandIcon::meta()`.
   - `app/Filament/App/Pages/FacebookOrganicDashboard.php`: Navigation label updated to `'Meta Organic'`, icon updated to `BrandIcon::meta()`.
   - Tests updated and verified passing: `tests/Feature/Pages/DataSourcesProviderOrderingTest.php` (13/13 passing) and `tests/Feature/DataExplorerBrandIconsTest.php` (35/35 passing).
+
+### Official Brand Logos & Chart Tooltip Rendering Refinement (2026-10-20)
+- **Official Logos:**
+  - **Mailchimp:** Replaced with the complete, official Simple Icons vector for Freddie in both `BrandIcon::mailchimp()` and `dashboard-renderer.js`.
+  - **Google Ads:** Replaced with the official Simple Icons vector (angled ad loop and dot mark) in both `BrandIcon::googleAds()` and `dashboard-renderer.js`.
+- **Meta Ads & Meta Organic Branding:**
+  - Updated `BrandIcon::CHANNEL_METHODS` and `dashboard-renderer.js` so `facebook_marketing`, `facebook_organic`, `meta_ads`, and `meta_organic` default to the official Meta infinity loop logo (`BrandIcon::meta()`) instead of the Facebook "F" mark. Instagram mark is preserved for specific Instagram assets under Meta Organic.
+- **Chart Datapoint Tooltips:**
+  - Fixed live hover tooltips in `dashboard-renderer.js` (`_externalTooltipHandler`): injected `this.getChannelIconSvg(dp.dataset.channel, dp.dataset.dependency, dp.dataset.label || yMN)` between the color dot swatch and the series text.
+  - Enhanced `getChannelIconSvg()` in `dashboard-renderer.js` to detect channel prefixes without brackets (e.g., `GSC - Clics`, `GA4 - Sessions`, `GAds - Clicks`, `IG - `, `FB - `, `Meta - `) as well as bracketed indicators (`[Google Analytics]`, `[GSC]`, `[Meta Ads]`).
+

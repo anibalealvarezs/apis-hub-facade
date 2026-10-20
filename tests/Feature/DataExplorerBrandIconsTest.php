@@ -141,15 +141,15 @@ class DataExplorerBrandIconsTest extends TestCase
         $this->assertNotNull($igFromSubType);
         $this->assertSame(BrandIcon::instagram()->toHtml(), $igFromSubType->toHtml());
 
-        // When dependency is a Facebook page, fall back to Facebook mark
-        $fbFromDep = BrandIcon::forChannel('facebook_organic', 'facebook_page');
-        $this->assertNotNull($fbFromDep);
-        $this->assertSame(BrandIcon::facebook()->toHtml(), $fbFromDep->toHtml());
+        // When dependency is a Facebook page, resolve to Meta or Facebook mark
+        $metaOrganic = BrandIcon::forChannel('facebook_organic');
+        $this->assertNotNull($metaOrganic);
+        $this->assertSame(BrandIcon::meta()->toHtml(), $metaOrganic->toHtml());
 
-        // Direct facebook_marketing channel
+        // Direct facebook_marketing / meta_ads channel resolves to Meta mark
         $fbMarketing = BrandIcon::forChannel('facebook_marketing');
         $this->assertNotNull($fbMarketing);
-        $this->assertSame(BrandIcon::facebook()->toHtml(), $fbMarketing->toHtml());
+        $this->assertSame(BrandIcon::meta()->toHtml(), $fbMarketing->toHtml());
     }
 
     public function test_for_channel_falls_back_to_provider(): void
