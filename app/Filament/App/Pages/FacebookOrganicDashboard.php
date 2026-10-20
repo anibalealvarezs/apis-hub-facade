@@ -15,12 +15,12 @@ class FacebookOrganicDashboard extends Page
 
     public static function getNavigationIcon(): string | \Illuminate\Contracts\Support\Htmlable | null
     {
-        return \App\Support\BrandIcon::facebook();
+        return \App\Support\BrandIcon::meta();
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('Facebook Organic');
+        return __('Meta Organic');
     }
 
     

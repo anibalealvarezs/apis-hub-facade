@@ -974,3 +974,21 @@
   - `public/js/dashboard-renderer.js`: Defined `BRAND_ICONS` map and `getChannelIconSvg(channel, dependency, label)`. Updated `_renderCustomLegend` to place the icon between the color swatch and the series label. Updated `_externalTooltipHandler` to render the icon between the color dot and series name.
   - `tests/Feature/DataExplorerBrandIconsTest.php`: Added tests for `forChannel()`, sub-channels (GA4, GSC, GAds), and Facebook Organic Instagram vs Facebook resolution.
 
+### Data Sources & Data Explorer Menu Channel Logos & Meta Face-Value Rebranding (2026-10-20)
+- **Requirements:**
+  1. Add channel logos next to channel names in the Data Sources page internal sidebar menu.
+  2. Adjust the Data Explorer menu to display channel-specific brand marks (Google Ads, Google Analytics 4, Google Search Console, Meta).
+  3. Rebrand Facebook to Meta at the **face value (UI only)** without changing the underlying logical keys (`facebook_marketing`, `facebook_organic`, provider key `facebook`):
+     - Provider label updated from "Facebook" to "Meta".
+     - Provider icon for `facebook` updated to Meta brand mark (`BrandIcon::meta()`).
+     - Channel labels updated to "Meta Ads" and "Meta Organic".
+- **Implementation:**
+  - `resources/views/filament/app/pages/data-sources.blade.php`: In the nested channel buttons loop, rendered `\App\Support\BrandIcon::forChannel($channel['key'], null, null, 'w-4 h-4 shrink-0')` inline with the label across Active, Maintenance, and Coming Soon channel states.
+  - `app/Filament/App/Pages/DataSources.php`: Updated the `getProviders()` definition so the `facebook` provider has label `'Meta'` with channels `'Meta Ads'` and `'Meta Organic'`.
+  - `app/Support/BrandIcon.php`: Updated `PROVIDER_METHODS['facebook']` to map to `'meta'` so `BrandIcon::forProvider('facebook')` renders the Meta infinity loop mark.
+  - `app/Filament/App/Pages/GoogleAdsDashboard.php`: `getNavigationIcon()` now returns `BrandIcon::googleAds()`.
+  - `app/Filament/App/Pages/GoogleAnalyticsDashboard.php`: `getNavigationIcon()` now returns `BrandIcon::googleAnalytics()`.
+  - `app/Filament/App/Pages/GoogleSearchConsoleDashboard.php`: `getNavigationIcon()` now returns `BrandIcon::googleSearchConsole()`.
+  - `app/Filament/App/Pages/FacebookMarketingDashboard.php`: Navigation label updated to `'Meta Ads'`, icon updated to `BrandIcon::meta()`.
+  - `app/Filament/App/Pages/FacebookOrganicDashboard.php`: Navigation label updated to `'Meta Organic'`, icon updated to `BrandIcon::meta()`.
+  - Tests updated and verified passing: `tests/Feature/Pages/DataSourcesProviderOrderingTest.php` (13/13 passing) and `tests/Feature/DataExplorerBrandIconsTest.php` (35/35 passing).

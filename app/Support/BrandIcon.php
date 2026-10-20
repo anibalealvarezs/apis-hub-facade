@@ -21,7 +21,7 @@ class BrandIcon
     public const PROVIDER_METHODS = [
         'amazon' => 'amazon',
         'bigcommerce' => 'bigcommerce',
-        'facebook' => 'facebook',
+        'facebook' => 'meta',
         'google' => 'google',
         'hubspot' => 'hubspot',
         'klaviyo' => 'klaviyo',

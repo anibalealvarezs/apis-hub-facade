@@ -16,7 +16,7 @@ class GoogleAnalyticsDashboard extends Page
 
     public static function getNavigationIcon(): string | \Illuminate\Contracts\Support\Htmlable | null
     {
-        return \App\Support\BrandIcon::google();
+        return \App\Support\BrandIcon::googleAnalytics();
     }
 
     public static function getNavigationLabel(): string

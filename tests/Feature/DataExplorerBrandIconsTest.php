@@ -26,10 +26,11 @@ class DataExplorerBrandIconsTest extends TestCase
     public static function channelPagesProvider(): array
     {
         return [
-            'facebook marketing' => [FacebookMarketingDashboard::class, BrandIcon::facebook()->toHtml()],
-            'facebook organic' => [FacebookOrganicDashboard::class, BrandIcon::facebook()->toHtml()],
-            'google analytics' => [GoogleAnalyticsDashboard::class, BrandIcon::google()->toHtml()],
-            'google search console' => [GoogleSearchConsoleDashboard::class, BrandIcon::google()->toHtml()],
+            'facebook marketing' => [FacebookMarketingDashboard::class, BrandIcon::meta()->toHtml()],
+            'facebook organic' => [FacebookOrganicDashboard::class, BrandIcon::meta()->toHtml()],
+            'google ads' => [\App\Filament\App\Pages\GoogleAdsDashboard::class, BrandIcon::googleAds()->toHtml()],
+            'google analytics' => [GoogleAnalyticsDashboard::class, BrandIcon::googleAnalytics()->toHtml()],
+            'google search console' => [GoogleSearchConsoleDashboard::class, BrandIcon::googleSearchConsole()->toHtml()],
             'mailchimp' => [MailchimpDashboard::class, BrandIcon::mailchimp()->toHtml()],
         ];
     }
@@ -80,7 +81,7 @@ class DataExplorerBrandIconsTest extends TestCase
         // The six providers hard-coded in DataSources::getProviders().
         return [
             'google' => ['google', 'google'],
-            'facebook' => ['facebook', 'facebook'],
+            'facebook' => ['facebook', 'meta'],
             'tiktok' => ['tiktok', 'tiktok'],
             'klaviyo' => ['klaviyo', 'klaviyo'],
             'shopify' => ['shopify', 'shopify'],
