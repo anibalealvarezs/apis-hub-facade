@@ -69,7 +69,10 @@ export function dashboardBuilder(config = {}) {
 
         getSandboxKpiNonTimelyGranularity() {
             const defaultGran = this.getSandboxDefaultGranularity();
-            const timely = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'];
+            const timely = [
+                'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+                'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+            ];
             if (defaultGran && !timely.includes(defaultGran)) {
                 return defaultGran;
             }
@@ -2627,6 +2630,11 @@ export function dashboardBuilder(config = {}) {
                     quarterly: 'Quarterly',
                     semiannual: 'Semiannual',
                     annually: 'Annually',
+                    trailing_weekly: 'Trailing 7 Days (Rolling Week)',
+                    trailing_monthly: 'Trailing 30 Days (Rolling Month)',
+                    trailing_quarterly: 'Trailing 90 Days (Rolling Quarter)',
+                    trailing_semiannual: 'Trailing 180 Days (Rolling Half-Year)',
+                    trailing_annually: 'Trailing 365 Days (Anualizado / TTM)',
                     lifetime: 'Lifetime',
                     channeledCampaign: 'Campaign',
                     campaignType: 'Campaign Type',

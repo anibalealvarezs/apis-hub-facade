@@ -91,7 +91,10 @@ class WidgetDataService
         // are fixed by the KPI definition and cannot be overridden to temporal daily/weekly/etc.
         if ($widget->source_type === 'kpi' && !empty($kpiUiState['granularity'])) {
             $kpiGran = $kpiUiState['granularity'];
-            $isTimely = in_array($kpiGran, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'], true);
+            $isTimely = in_array($kpiGran, [
+                'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+                'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+            ], true);
             if (!$isTimely || !isset($widgetControls['granularity']) || $widgetControls['granularity'] === '__inherit__' || $widgetControls['granularity'] === '' || $widgetControls['granularity'] === '__NOT_SET__') {
                 $resolved['granularity'] = $kpiGran;
             }
