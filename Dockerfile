@@ -45,6 +45,7 @@ RUN { \
     echo 'upload_max_filesize=100M'; \
     echo 'post_max_size=100M'; \
     echo 'memory_limit=512M'; \
+    echo 'session.upload_progress.enabled=0'; \
     } > /usr/local/etc/php/conf.d/docker-php-performance.ini
 
 # Get latest Composer
