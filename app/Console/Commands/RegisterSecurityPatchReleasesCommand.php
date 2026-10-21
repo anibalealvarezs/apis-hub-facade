@@ -78,7 +78,7 @@ class RegisterSecurityPatchReleasesCommand extends Command
             $this->info('Dispatching queued upgrade jobs for deployed tenants...');
 
             // Upgrades for 1.17.0 -> 1.17.1
-            $projects17 = Project::whereNotNull('deployed_at')
+            $projects17 = Project::whereNotNull('last_deployed_at')
                 ->where('apis_hub_release_id', $rel170?->id)
                 ->get();
 
@@ -88,7 +88,7 @@ class RegisterSecurityPatchReleasesCommand extends Command
             }
 
             // Upgrades for 1.18.0 -> 1.18.1
-            $projects18 = Project::whereNotNull('deployed_at')
+            $projects18 = Project::whereNotNull('last_deployed_at')
                 ->where('apis_hub_release_id', $rel180?->id)
                 ->get();
 
