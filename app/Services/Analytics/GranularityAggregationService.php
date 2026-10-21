@@ -11,16 +11,32 @@ class GranularityAggregationService
         $this->ratioMetrics = $ratioMetrics;
     }
 
-    public function aggregateRows(array $rows, string $granularity, string $dateKey = 'date'): array
+    public function aggregateRows(array $rows, string $granularity, string $dateKey = 'date', ?string $endDate = null): array
     {
-        $needsAggregation = in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($rows) > 1;
+        $timelyGranularities = [
+            'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+            'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+        ];
+        $needsAggregation = in_array($granularity, $timelyGranularities, true) && count($rows) > 1;
         if (!$needsAggregation) {
             return $rows;
         }
 
+        // If endDate is not provided, deduce it from the latest date in rows
+        if (!$endDate && !empty($rows)) {
+            $latestDate = '';
+            foreach ($rows as $r) {
+                $d = (string) ($r[$dateKey] ?? '');
+                if ($d > $latestDate) {
+                    $latestDate = $d;
+                }
+            }
+            $endDate = $latestDate ?: null;
+        }
+
         $groups = [];
         foreach ($rows as $row) {
-            $gKey = $this->groupKey($row[$dateKey] ?? '', $granularity);
+            $gKey = $this->groupKey($row[$dateKey] ?? '', $granularity, $endDate);
 
             if (!isset($groups[$gKey])) {
                 $groups[$gKey] = ['date' => $gKey, 'metrics' => [], 'companion' => []];
@@ -98,7 +114,7 @@ class GranularityAggregationService
         return $aggregated;
     }
 
-    public function aggregateFlatMap(array $dateValueMap, string $granularity): array
+    public function aggregateFlatMap(array $dateValueMap, string $granularity, ?string $endDate = null): array
     {
         if ($granularity === 'daily' || empty($dateValueMap)) {
             return $dateValueMap;
@@ -106,7 +122,7 @@ class GranularityAggregationService
 
         $buckets = [];
         foreach ($dateValueMap as $date => $value) {
-            $periodStart = $this->periodStartDate($date, $granularity);
+            $periodStart = $this->periodStartDate($date, $granularity, $endDate);
             $buckets[$periodStart] = ($buckets[$periodStart] ?? 0) + $value;
         }
 
@@ -115,10 +131,14 @@ class GranularityAggregationService
         return $buckets;
     }
 
-    public function periodStartDate(string $date, string $granularity): string
+    public function periodStartDate(string $date, string $granularity, ?string $endDate = null): string
     {
         if ($granularity === 'lifetime') {
             return 'Lifetime';
+        }
+
+        if (str_starts_with($granularity, 'trailing_')) {
+            return $this->resolveTrailingBucket($date, $granularity, $endDate);
         }
 
         $dt = \Carbon\Carbon::parse($date);
@@ -144,10 +164,14 @@ class GranularityAggregationService
         return $dt->format('Y-m-d');
     }
 
-    public function groupKey(string $date, string $granularity): string
+    public function groupKey(string $date, string $granularity, ?string $endDate = null): string
     {
         if ($granularity === 'daily') {
             return $date;
+        }
+
+        if (str_starts_with($granularity, 'trailing_')) {
+            return $this->resolveTrailingBucket($date, $granularity, $endDate);
         }
 
         $dt = \Carbon\Carbon::parse($date);
@@ -169,6 +193,52 @@ class GranularityAggregationService
             default:
                 return $date;
         }
+    }
+
+    private function resolveTrailingBucket(string $date, string $granularity, ?string $endDate): string
+    {
+        $dt = \Carbon\Carbon::parse($date);
+        $anchor = $endDate ? \Carbon\Carbon::parse($endDate) : \Carbon\Carbon::now();
+
+        // If date is beyond the anchor, clamp to anchor
+        if ($dt->greaterThan($anchor)) {
+            $cursor = $anchor->copy();
+        } else {
+            $cursor = $anchor->copy();
+            // Step backwards until cursor covers $dt
+            while (true) {
+                $prev = $cursor->copy();
+                match ($granularity) {
+                    'trailing_weekly' => $cursor->subWeek(),
+                    'trailing_monthly' => $cursor->subMonth(),
+                    'trailing_quarterly' => $cursor->subMonths(3),
+                    'trailing_semiannual' => $cursor->subMonths(6),
+                    'trailing_annually' => $cursor->subYear(),
+                    default => $cursor->subYear(),
+                };
+
+                // The interval is ($cursor, $prev]
+                if ($dt->greaterThan($cursor) && $dt->lessThanOrEqualTo($prev)) {
+                    $cursor = $prev;
+                    break;
+                }
+
+                // Safety guard: if already past date by far, break
+                if ($cursor->lessThan($dt)) {
+                    $cursor = $prev;
+                    break;
+                }
+            }
+        }
+
+        return match ($granularity) {
+            'trailing_weekly' => 'Trailing 7D (to ' . $cursor->format('M d') . ')',
+            'trailing_monthly' => 'Trailing 30D (to ' . $cursor->format('M d') . ')',
+            'trailing_quarterly' => 'Trailing 90D (to ' . $cursor->format('M d') . ')',
+            'trailing_semiannual' => 'Trailing 180D (to ' . $cursor->format('M d') . ')',
+            'trailing_annually' => 'TTM (to ' . $cursor->format('M d, Y') . ')',
+            default => 'Trailing (to ' . $cursor->format('Y-m-d') . ')',
+        };
     }
 
     private function isRatioOrPosition(string $ck): bool

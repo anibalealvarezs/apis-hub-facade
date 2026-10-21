@@ -219,6 +219,122 @@ window.dashboardRenderer = {
 
         return f0 || null;
     },
+
+    BRAND_ICONS: {
+        facebook: { viewBox: "0 0 24 24", path: 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' },
+        instagram: { viewBox: "0 0 24 24", path: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z' },
+        google: { viewBox: "0 0 24 24", path: 'M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z' },
+        google_analytics: { viewBox: "0 0 24 24", path: 'M21.36 10.96a2.64 2.64 0 0 0-2.64 2.64v7.76a2.64 2.64 0 1 0 5.28 0V13.6a2.64 2.64 0 0 0-2.64-2.64zM12 5.68A2.64 2.64 0 0 0 9.36 8.32v13.04a2.64 2.64 0 1 0 5.28 0V8.32A2.64 2.64 0 0 0 12 5.68zM2.64 16.24A2.64 2.64 0 0 0 0 18.88v2.48a2.64 2.64 0 0 0 5.28 0v-2.48a2.64 2.64 0 0 0-2.64-2.64z' },
+        google_search_console: { viewBox: "0 0 24 24", path: 'M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm-2-3h1.5v-3H7.5v3zm3 0H12V7h-1.5v4z' },
+        google_ads: { viewBox: "0 0 24 24", path: 'M3.9998 22.9291C1.7908 22.9291 0 21.1383 0 18.9293s1.7908-3.9998 3.9998-3.9998 3.9998 1.7908 3.9998 3.9998-1.7908 3.9998-3.9998 3.9998zm19.4643-6.0004L15.4632 3.072C14.3586 1.1587 11.9121.5028 9.9988 1.6074S7.4295 5.1585 8.5341 7.0718l8.0009 13.8567c1.1046 1.9133 3.5511 2.5679 5.4644 1.4646 1.9134-1.1046 2.568-3.5511 1.4647-5.4644zM7.5137 4.8438L1.5645 15.1484A4.5 4.5 0 0 1 4 14.4297c2.5597-.0075 4.6248 2.1585 4.4941 4.7148l3.2168-5.5723-3.6094-6.25c-.4499-.7793-.6322-1.6394-.5878-2.4784z' },
+        mailchimp: { viewBox: "0 0 24 24", path: 'M11.267 0C6.791-.015-1.82 10.246 1.397 12.964l.79.669a3.88 3.88 0 0 0-.22 1.792c.084.84.518 1.644 1.22 2.266.666.59 1.542.964 2.392.964 1.406 3.24 4.62 5.228 8.386 5.34 4.04.12 7.433-1.776 8.854-5.182.093-.24.488-1.316.488-2.267 0-.956-.54-1.352-.885-1.352-.01-.037-.078-.286-.172-.586-.093-.3-.19-.51-.19-.51.375-.563.382-1.065.332-1.35-.053-.353-.2-.653-.496-.964-.296-.311-.902-.63-1.753-.868l-.446-.124c-.002-.019-.024-1.053-.043-1.497-.014-.32-.042-.822-.197-1.315-.186-.668-.508-1.253-.911-1.627 1.112-1.152 1.806-2.422 1.804-3.511-.003-2.095-2.576-2.729-5.746-1.416l-.672.285A678.22 678.22 0 0 0 12.7.504C12.304.159 11.817.002 11.267 0zm.073.873c.166 0 .322.019.465.058.297.084 1.28 1.224 1.28 1.224s-1.826 1.013-3.52 2.426c-2.28 1.757-4.005 4.311-5.037 7.082-.811.158-1.526.618-1.963 1.253-.261-.218-.748-.64-.834-.804-.698-1.326.761-3.902 1.781-5.357C5.834 3.44 9.37.867 11.34.873zm3.286 3.273c.04-.002.06.05.028.074-.143.11-.299.26-.413.414a.04.04 0 0 0 .031.064c.659.004 1.587.235 2.192.574.041.023.012.103-.034.092-.915-.21-2.414-.369-3.97.01-1.39.34-2.45.863-3.224 1.426-.04.028-.086-.023-.055-.06.896-1.035 1.999-1.935 2.987-2.44.034-.018.07.019.052.052-.079.143-.23.447-.278.678-.007.035.032.063.062.042.615-.42 1.684-.868 2.622-.926zm3.023 3.205l.056.001a.896.896 0 0 1 .456.146c.534.355.61 1.216.638 1.845.015.36.059 1.229.074 1.478.034.571.184.651.487.751.17.057.33.098.563.164.706.198 1.125.4 1.39.658.157.162.23.333.253.497.083.608-.472 1.36-1.942 2.041-1.607.746-3.557.935-4.904.785l-.471-.053c-1.078-.145-1.693 1.247-1.046 2.201.417.615 1.552 1.015 2.688 1.015 2.604 0 4.605-1.111 5.35-2.072a.987.987 0 0 0 .06-.085c.036-.055.006-.085-.04-.054-.608.416-3.31 2.069-6.2 1.571 0 0-.351-.057-.672-.182-.255-.1-.788-.344-.853-.891 2.333.72 3.801.039 3.801.039a.072.072 0 0 0 .042-.072.067.067 0 0 0-.074-.06s-1.911.283-3.718-.378c.197-.64.72-.408 1.51-.345a11.045 11.045 0 0 0 3.647-.394c.818-.234 1.892-.697 2.727-1.356.281.618.38 1.299.38 1.299s.219-.04.4.073c.173.106.299.326.213.895-.176 1.063-.628 1.926-1.387 2.72a5.714 5.714 0 0 1-1.666 1.244c-.34.18-.704.334-1.087.46-2.863.935-5.794-.093-6.739-2.3a3.545 3.545 0 0 1-.189-.522c-.403-1.455-.06-3.2 1.008-4.299.065-.07.132-.153.132-.256 0-.087-.055-.179-.102-.243-.374-.543-1.669-1.466-1.409-3.254.187-1.284 1.31-2.189 2.357-2.135.089.004.177.01.266.015.453.027.85.085 1.223.1.625.028 1.187-.063 1.853-.618.225-.187.405-.35.71-.401.028-.005.092-.028.215-.028zm.022 2.18a.42.42 0 0 0-.06.005c-.335.054-.347.468-.228 1.04.068.32.187.595.32.765.175-.02.343-.022.498 0 .089-.205.104-.557.024-.942-.112-.535-.261-.872-.554-.868zm-3.66 1.546a1.724 1.724 0 0 0-1.016.326c-.16.117-.311.28-.29.378.008.032.031.056.088.063.131.015.592-.217 1.122-.25.374-.023.684.094.923.2.239.104.386.173.443.113.037-.038.026-.11-.031-.204-.118-.192-.36-.387-.618-.497a1.601 1.601 0 0 0-.621-.129zm4.082.81c-.171-.003-.313.186-.317.42-.004.236.131.43.303.432.172.003.314-.185.318-.42.004-.236-.132-.429-.304-.432zm-3.58.172c-.05 0-.102.002-.155.008-.311.05-.483.152-.593.247-.094.082-.152.173-.152.237a.075.075 0 0 0 .075.076c.07 0 .228-.063.228-.063a1.98 1.98 0 0 1 1.001-.104c.157.018.23.027.265-.026.01-.016.022-.049-.01-.1-.063-.103-.311-.269-.66-.275zm2.26.4c-.127 0-.235.051-.283.148-.075.154.035.363.246.466.21.104.443.063.52-.09.075-.155-.035-.364-.246-.467a.542.542 0 0 0-.237-.058zm-11.635.024c.048 0 .098 0 .149.003.73.04 1.806.6 2.052 2.19.217 1.41-.128 2.843-1.449 3.069-.123.02-.248.029-.374.026-1.22-.033-2.539-1.132-2.67-2.435-.145-1.44.591-2.548 1.894-2.811.117-.024.252-.04.398-.042zm-.07.927a1.144 1.144 0 0 0-.847.364c-.38.418-.439.988-.366 1.19.027.073.07.094.1.098.064.008.16-.039.22-.2a1.2 1.2 0 0 0 .017-.052 1.58 1.58 0 0 1 .157-.37.689.689 0 0 1 .955-.199c.266.174.369.5.255.81-.058.161-.154.469-.133.721.043.511.357.717.64.738.274.01.466-.143.515-.256.029-.067.005-.107-.011-.125-.043-.053-.113-.037-.18-.021a.638.638 0 0 1-.16.022.347.347 0 0 1-.294-.148c-.078-.12-.073-.3.013-.504.011-.028.025-.058.04-.092.138-.308.368-.825.11-1.317-.195-.37-.513-.602-.894-.65a1.135 1.135 0 0 0-.138-.01z' },
+        shopify: { viewBox: "0 0 24 24", path: 'M15.337 23.979l7.216-1.561s-2.604-17.613-2.625-17.73c-.018-.116-.114-.192-.211-.192s-1.929-.136-1.929-.136-1.275-1.274-1.439-1.411c-.045-.037-.075-.057-.121-.074l-.914 21.104h.023zM11.71 11.305s-.81-.424-1.774-.424c-1.447 0-1.504.906-1.504 1.141 0 1.232 3.24 1.715 3.24 4.629 0 2.295-1.44 3.76-3.406 3.76-2.354 0-3.54-1.465-3.54-1.465l.646-2.086s1.245 1.066 2.28 1.066c.675 0 .975-.545.975-.932 0-1.619-2.654-1.694-2.654-4.359-.034-2.237 1.571-4.416 4.827-4.416 1.257 0 1.875.361 1.875.361l-.945 2.715-.02.01zM11.17.83c.136 0 .271.038.405.135-.984.465-2.064 1.639-2.508 3.992-.656.213-1.293.405-1.889.578C7.697 3.75 8.951.84 11.17.84V.83zm1.235 2.949v.135c-.754.232-1.583.484-2.394.736.466-1.777 1.333-2.645 2.085-2.971.193.501.309 1.176.309 2.1zm.539-2.234c.694.074 1.141.867 1.429 1.755-.349.114-.735.231-1.158.366v-.252c0-.752-.096-1.371-.271-1.871v.002zm2.992 1.289c-.02 0-.06.021-.078.021s-.289.075-.714.21c-.423-1.233-1.176-2.37-2.508-2.37h-.115C12.135.209 11.669 0 11.265 0 8.159 0 6.675 3.877 6.21 5.846c-1.194.365-2.063.636-2.16.674-.675.213-.694.232-.772.87-.075.462-1.83 14.063-1.83 14.063L15.009 24l.927-21.166z' },
+        klaviyo: { viewBox: "0 0 24 24", path: 'M7.053.921h9.894a6.132 6.132 0 0 1 6.132 6.132v9.894a6.132 6.132 0 0 1-6.132 6.132H7.053a6.132 6.132 0 0 1-6.132-6.132V7.053a6.132 6.132 0 0 1 6.132-6.132zM6.188 8.112v7.776h11.624l-2.44-3.888 2.44-3.888z' },
+        tiktok: { viewBox: "0 0 24 24", path: 'M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z' },
+        meta: { viewBox: "0 0 24 24", path: 'M6.915 4.03c-1.968 0-3.683 1.28-4.871 3.113C.704 9.208 0 11.883 0 14.449c0 .706.07 1.369.21 1.973a6.624 6.624 0 0 0 .265.86 5.297 5.297 0 0 0 .371.761c.696 1.159 1.818 1.927 3.593 1.927 1.497 0 2.633-.671 3.965-2.444.76-1.012 1.144-1.626 2.663-4.32l.756-1.339.186-.325c.061.1.121.196.183.3l2.152 3.595c.724 1.21 1.665 2.556 2.47 3.314 1.046.987 1.992 1.22 3.06 1.22 1.075 0 1.876-.355 2.455-.843a3.743 3.743 0 0 0 .81-.973c.542-.939.861-2.127.861-3.745 0-2.72-.681-5.357-2.084-7.45-1.282-1.912-2.957-2.93-4.716-2.93-1.047 0-2.088.467-3.053 1.308-.652.57-1.257 1.29-1.82 2.05-.69-.875-1.335-1.547-1.958-2.056-1.182-.966-2.315-1.303-3.454-1.303zm10.16 2.053c1.147 0 2.188.758 2.992 1.999 1.132 1.748 1.647 4.195 1.647 6.4 0 1.548-.368 2.9-1.839 2.9-.58 0-1.027-.23-1.664-1.004-.496-.601-1.343-1.878-2.832-4.358l-.617-1.028a44.908 44.908 0 0 0-1.255-1.98c.07-.109.141-.224.211-.327 1.12-1.667 2.118-2.602 3.358-2.602zm-10.201.553c1.265 0 2.058.791 2.675 1.446.307.327.737.871 1.234 1.579l-1.02 1.566c-.757 1.163-1.882 3.017-2.837 4.338-1.191 1.649-1.81 1.817-2.486 1.817-.524 0-1.038-.237-1.383-.794-.263-.426-.464-1.13-.464-2.046 0-2.221.63-4.535 1.66-6.088.454-.687.964-1.226 1.533-1.533a2.264 2.264 0 0 1 1.088-.285z' },
+        pinterest: { viewBox: "0 0 24 24", path: 'M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607 0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017 0z' },
+        linkedin: { viewBox: "0 0 24 24", path: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037c-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85c3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.06 2.06 0 0 1-2.063-2.065a2.064 2.064 0 1 1 2.063 2.065m1.782 13.019H3.555V9h3.564zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0z' },
+        x: { viewBox: "0 0 24 24", path: 'M14.234 10.162 22.977 0h-2.072l-7.591 8.824L7.251 0H.258l9.168 13.343L.258 24H2.33l8.016-9.318L16.749 24h6.993zm-2.837 3.299-.929-1.329L3.076 1.56h3.182l5.965 8.532.929 1.329 7.754 11.09h-3.182z' },
+    },
+
+    /**
+     * Resolves the hierarchical brand or channel SVG string.
+     * Takes dataset channel, dependency, and label to handle edge cases like
+     * Facebook Organic (which includes both Facebook and Instagram assets).
+     */
+    getChannelIconSvg(channel, dependency, label) {
+        let c = String(channel || "").trim().toLowerCase();
+        const dep = String(dependency || "").trim().toLowerCase();
+        const lbl = String(label || "").trim().toLowerCase();
+
+        // 1. Detect channel/provider from bracketed or prefixed label if channel isn't set directly
+        // e.g. "[IG] Likes", "[Google Analytics] - Sessions", "GSC - Clics", "GA4 - Sessions", "GAds - Clicks"
+        if (!c && lbl) {
+            const bracketMatch = lbl.match(/^\[([a-z0-9_\-\s]+)\]/i);
+            if (bracketMatch) {
+                const tag = bracketMatch[1].trim().toLowerCase();
+                if (['ig', 'instagram'].includes(tag)) c = 'instagram';
+                else if (['fb', 'facebook'].includes(tag)) c = 'facebook';
+                else if (['meta', 'meta ads', 'meta organic'].includes(tag)) c = 'meta';
+                else if (['ga4', 'google analytics', 'google_analytics'].includes(tag)) c = 'google_analytics';
+                else if (['gsc', 'google search console', 'google_search_console'].includes(tag)) c = 'google_search_console';
+                else if (['gads', 'google ads', 'google_ads'].includes(tag)) c = 'google_ads';
+                else if (['gbp', 'google business profile'].includes(tag)) c = 'google';
+                else c = tag;
+            } else {
+                const prefixMatch = lbl.match(/^([a-z0-9_]+)\s*[-—:]/i);
+                if (prefixMatch) {
+                    const tag = prefixMatch[1].trim().toLowerCase();
+                    if (tag === 'gsc') c = 'google_search_console';
+                    else if (tag === 'ga4') c = 'google_analytics';
+                    else if (tag === 'gads') c = 'google_ads';
+                    else if (tag === 'ig') c = 'instagram';
+                    else if (tag === 'fb') c = 'facebook';
+                    else if (tag === 'meta') c = 'meta';
+                }
+            }
+        }
+
+        // 2. Meta / Facebook ecosystem:
+        // By user requirement, Meta Ads and Meta Organic default to the official Meta infinity logo.
+        // Instagram assets under Facebook Organic (e.g. instagram_account dependency or [ig] prefix) use Instagram.
+        if (['meta', 'meta_ads', 'meta_organic', 'facebook_marketing', 'facebook_organic', 'facebook', 'fb'].includes(c)) {
+            const isInstagram = dep === 'instagram_account' ||
+                dep.includes('instagram') ||
+                lbl.startsWith('[ig]') ||
+                lbl.startsWith('ig - ') ||
+                lbl.includes('instagram') ||
+                lbl.includes('ig_post');
+            if (isInstagram) {
+                const icon = this.BRAND_ICONS.instagram;
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+            }
+            if (c === 'facebook' || c === 'fb') {
+                const fbIcon = this.BRAND_ICONS.facebook;
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${fbIcon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${fbIcon.path}"/></svg>`;
+            }
+            const metaIcon = this.BRAND_ICONS.meta;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${metaIcon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${metaIcon.path}"/></svg>`;
+        }
+
+        // 3. Instagram direct match
+        if (c === 'instagram' || c === 'ig') {
+            const icon = this.BRAND_ICONS.instagram;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+
+        // 4. Google sub-channels
+        if (['google_analytics', 'google_analytics_4', 'ga4'].includes(c) || lbl.startsWith('[ga4]') || lbl.startsWith('ga4 - ')) {
+            const icon = this.BRAND_ICONS.google_analytics;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+        if (['google_search_console', 'gsc'].includes(c) || lbl.startsWith('[gsc]') || lbl.startsWith('gsc - ')) {
+            const icon = this.BRAND_ICONS.google_search_console;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+        if (['google_ads', 'gads'].includes(c) || lbl.startsWith('[gads]') || lbl.startsWith('gads - ')) {
+            const icon = this.BRAND_ICONS.google_ads;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+        if (c.startsWith('google') || lbl.startsWith('[gbp]')) {
+            const icon = this.BRAND_ICONS.google;
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+
+        // 5. Direct or provider-prefix match
+        const directKey = c.replace(/-/g, '_');
+        if (this.BRAND_ICONS[directKey]) {
+            const icon = this.BRAND_ICONS[directKey];
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+        const prefix = directKey.split('_')[0];
+        if (prefix && this.BRAND_ICONS[prefix]) {
+            const icon = this.BRAND_ICONS[prefix];
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.viewBox}" fill="currentColor" style="width:12px;height:12px;display:inline-block;vertical-align:-1.5px;flex-shrink:0;opacity:0.85;" aria-hidden="true"><path d="${icon.path}"/></svg>`;
+        }
+
+        return "";
+    },
     _concurrencyLimit: 4,
     _activeRequests: 0,
     _queue: [],
@@ -3260,13 +3376,24 @@ window.dashboardRenderer = {
                 ].join(";");
             }
 
+            item.appendChild(swatch);
+
+            // Channel / Brand Icon (if available or detected from label/dataset)
+            const iconSvg = this.getChannelIconSvg(it.ds?.channel, it.ds?.dependency, it.label);
+            if (iconSvg) {
+                const iconContainer = document.createElement("span");
+                iconContainer.className = "legend-channel-icon";
+                iconContainer.style.cssText = "display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.75;";
+                iconContainer.innerHTML = iconSvg;
+                item.appendChild(iconContainer);
+            }
+
             // Label
             const label = document.createElement("span");
             label.style.cssText = "overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
             label.textContent = it.label;
             label.title = it.label;
 
-            item.appendChild(swatch);
             item.appendChild(label);
 
             // Hover
@@ -3471,11 +3598,13 @@ window.dashboardRenderer = {
                 const isLine = ds.type === "line";
                 const color = ds.borderColor || ds.backgroundColor || "#3B82F6";
                 const colorStr = Array.isArray(color) ? color[el.index] : color;
+                const iconSvg = this.getChannelIconSvg(ds.channel, ds.dependency, ds.label);
                 html +=
                     '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                     '<span style="width:8px;height:8px;border-radius:50%;background:' +
                     colorStr +
                     ';flex-shrink:0;"></span>' +
+                    (iconSvg ? '<span style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.75;margin-right:-2px;">' + iconSvg + '</span>' : "") +
                     (isLine && !isMulti
                         ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
                         : "") +
@@ -3966,11 +4095,21 @@ window.dashboardRenderer = {
                         dp.dataset.borderColor ||
                         dp.dataset.backgroundColor ||
                         "#3B82F6";
+                    const iconSvg = this.getChannelIconSvg(
+                        dp.dataset.channel,
+                        dp.dataset.dependency,
+                        dp.dataset.label || yMN
+                    );
                     html +=
                         '<div style="display:flex;align-items:center;gap:6px;padding:1px 0;">' +
                         '<span style="width:8px;height:8px;border-radius:50%;background:' +
                         color +
                         ';flex-shrink:0;"></span>' +
+                        (iconSvg
+                            ? '<span style="display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0.75;margin-right:-2px;">' +
+                              iconSvg +
+                              '</span>'
+                            : "") +
                         (isLine && !isMulti
                             ? '<span style="font-weight:500;color:#9ca3af;font-size:11px;">Trend: </span>'
                             : "") +

@@ -73,11 +73,19 @@
                     <!-- Nested Channels -->
                     <div x-show="expanded" x-collapse class="flex flex-col gap-1 ml-2 border-l-2 border-gray-100 dark:border-white/5 pl-2 mt-1">
                         @foreach($provider['channels'] as $channel)
+                            @php
+                                $channelIcon = \App\Support\BrandIcon::forChannel($channel['key'], null, null, 'w-4 h-4 shrink-0');
+                            @endphp
                             @if($channel['status'] === 'Active')
                                 <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-950 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'">
-                                    <span class="truncate pr-2">{{ $channel['label'] }}</span>
+                                    <div class="flex items-center gap-2 truncate pr-2">
+                                        @if($channelIcon)
+                                            {!! $channelIcon !!}
+                                        @endif
+                                        <span class="truncate">{{ $channel['label'] }}</span>
+                                    </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <span class="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-md"
                                             :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300' : ''"
@@ -94,7 +102,12 @@
                                 <button disabled data-tooltip-target="maintenance-tooltip-{{ $channel['key'] }}"
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
-                                    <span class="truncate pr-2">{{ $channel['label'] }}</span>
+                                    <div class="flex items-center gap-2 truncate pr-2">
+                                        @if($channelIcon)
+                                            {!! $channelIcon !!}
+                                        @endif
+                                        <span class="truncate">{{ $channel['label'] }}</span>
+                                    </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <x-heroicon-m-exclamation-triangle class="w-5 h-5 text-yellow-600" />
                                     </div>
@@ -107,7 +120,12 @@
                                 <button disabled data-tooltip-target="coming-soon-tooltip-{{ $channel['key'] }}"
                                         class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5'">
-                                    <span class="truncate pr-2">{{ $channel['label'] }}</span>
+                                    <div class="flex items-center gap-2 truncate pr-2">
+                                        @if($channelIcon)
+                                            {!! $channelIcon !!}
+                                        @endif
+                                        <span class="truncate">{{ $channel['label'] }}</span>
+                                    </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <x-heroicon-m-lock-closed class="w-5 h-5 text-gray-600" />
                                     </div>
@@ -137,9 +155,19 @@
 
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10 ds-mb-6">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                        {{ $this->getChannelLabel($activeChannel) }}
-                    </h2>
+                    @php
+                        $sectionChannelIcon = \App\Support\BrandIcon::forChannel($activeChannel, null, null, 'w-6 h-6 shrink-0 text-gray-900 dark:text-white');
+                    @endphp
+                    <div class="flex items-center gap-2">
+                        @if($sectionChannelIcon)
+                            <div class="flex items-center justify-center shrink-0">
+                                {!! $sectionChannelIcon !!}
+                            </div>
+                        @endif
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                            {{ $this->getChannelLabel($activeChannel) }}
+                        </h2>
+                    </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-x-2">
                         <span>{{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}</span>
                         @php

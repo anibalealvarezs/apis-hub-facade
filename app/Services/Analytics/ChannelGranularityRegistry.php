@@ -17,6 +17,11 @@ class ChannelGranularityRegistry
             'quarterly' => __('Quarterly'),
             'semiannual' => __('Semiannual'),
             'annually' => __('Annually'),
+            'trailing_weekly' => __('Trailing 7 Days (Rolling Week)'),
+            'trailing_monthly' => __('Trailing 30 Days (Rolling Month)'),
+            'trailing_quarterly' => __('Trailing 90 Days (Rolling Quarter)'),
+            'trailing_semiannual' => __('Trailing 180 Days (Rolling Half-Year)'),
+            'trailing_annually' => __('Trailing 365 Days (Anualizado / TTM)'),
             'lifetime' => __('Lifetime'),
         ];
 

@@ -965,9 +965,13 @@
                             $rawRows[] = $rawRow;
                         }
 
-                        if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($rawRows) > 1) {
+                        $timelyGranularities = [
+                            'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+                            'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+                        ];
+                        if (in_array($granularity, $timelyGranularities, true) && count($rawRows) > 1) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService($ratioMetrics);
-                            $rawRows = $aggregator->aggregateRows($rawRows, $granularity, 'date');
+                            $rawRows = $aggregator->aggregateRows($rawRows, $granularity, 'date', $endDate ?? null);
                         }
 
                         $rows = [];
@@ -1136,9 +1140,13 @@
                             $metricKeys = array_values($metricKeys);
                         }
 
-                        if (in_array($granularity, ['weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime']) && count($chartData) > 1) {
+                        $timelyGranularities = [
+                            'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+                            'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+                        ];
+                        if (in_array($granularity, $timelyGranularities, true) && count($chartData) > 1) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService($ratioMetrics);
-                            $chartData = $aggregator->aggregateRows($chartData, $granularity, $dateKey);
+                            $chartData = $aggregator->aggregateRows($chartData, $granularity, $dateKey, $endDate ?? null);
                         }
 
                         $labels = array_map(fn($row) => $row[$dateKey] ?? '', $chartData);
@@ -1262,6 +1270,8 @@
                                     'label'           => $label,
                                     'key'             => $key,
                                     'series_index'    => 0,
+                                    'channel'         => $channel,
+                                    'dependency'      => $dep,
                                     'metric'          => $cleanKey,
                                     'metric_key'      => $key,
                                     'data'            => $values,
@@ -1874,7 +1884,11 @@
             }
             if (!empty($controls['granularity'])) {
                 $fixedGranularity = $uiState['granularity'] ?? null;
-                if (!$fixedGranularity || in_array($fixedGranularity, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'])) {
+                $timelyGranularities = [
+                    'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+                    'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+                ];
+                if (!$fixedGranularity || in_array($fixedGranularity, $timelyGranularities, true)) {
                     $controlsToMerge['granularity'] = $controls['granularity'];
                 }
             }
@@ -2535,7 +2549,10 @@
                 $payload['dependency'] = $dependency;
             }
 
-            $timeGranularities = ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'];
+            $timeGranularities = [
+                'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+                'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+            ];
             if (in_array($widget->widget_type, ['table', 'pie_chart'])) {
                 $action = 'chart';
             } elseif (in_array($widget->widget_type, ['tile', 'gauge'])) {
@@ -3016,6 +3033,8 @@
                                 'label'        => $formattedLabel,
                                 'key'          => 'series_'.$sIdx.'_'.$metric,
                                 'series_index' => $sIdx,
+                                'channel'      => $channel,
+                                'dependency'   => $seriesDependency ?? null,
                                 'metric'       => $cleanMetric,
                                 'raw_metric'   => $metric,
                                 'axis_key'     => $cleanMetric,
@@ -3666,6 +3685,8 @@
                     'label'           => $curve['label'],
                     'key'             => $curve['key'],
                     'series_index'    => $curve['series_index'] ?? null,
+                    'channel'         => $curve['channel'] ?? null,
+                    'dependency'      => $curve['dependency'] ?? null,
                     'metric'          => $curve['metric'] ?? null,
                     'metric_key'      => $curve['raw_metric'] ?? $curve['metric'] ?? null,
                     'data'            => $alignedValues,
@@ -4121,6 +4142,8 @@
                     'label'           => $formattedLabel,
                     'key'             => "series_{$sIdx}_{$metric}_{$dimSlug}",
                     'series_index'    => $sIdx,
+                    'channel'         => $channel,
+                    'dependency'      => $seriesDependency,
                     'metric'          => $cleanMetric,
                     'raw_metric'      => $metric,
                     'breakdown_value' => $dimVal,

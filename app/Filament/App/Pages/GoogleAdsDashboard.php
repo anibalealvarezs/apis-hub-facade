@@ -16,7 +16,7 @@ class GoogleAdsDashboard extends Page
 
     public static function getNavigationIcon(): string | \Illuminate\Contracts\Support\Htmlable | null
     {
-        return \App\Support\BrandIcon::google();
+        return \App\Support\BrandIcon::googleAds();
     }
 
     public static function getNavigationLabel(): string

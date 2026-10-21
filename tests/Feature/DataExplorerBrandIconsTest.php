@@ -26,10 +26,11 @@ class DataExplorerBrandIconsTest extends TestCase
     public static function channelPagesProvider(): array
     {
         return [
-            'facebook marketing' => [FacebookMarketingDashboard::class, BrandIcon::facebook()->toHtml()],
-            'facebook organic' => [FacebookOrganicDashboard::class, BrandIcon::facebook()->toHtml()],
-            'google analytics' => [GoogleAnalyticsDashboard::class, BrandIcon::google()->toHtml()],
-            'google search console' => [GoogleSearchConsoleDashboard::class, BrandIcon::google()->toHtml()],
+            'facebook marketing' => [FacebookMarketingDashboard::class, BrandIcon::meta()->toHtml()],
+            'facebook organic' => [FacebookOrganicDashboard::class, BrandIcon::meta()->toHtml()],
+            'google ads' => [\App\Filament\App\Pages\GoogleAdsDashboard::class, BrandIcon::googleAds()->toHtml()],
+            'google analytics' => [GoogleAnalyticsDashboard::class, BrandIcon::googleAnalytics()->toHtml()],
+            'google search console' => [GoogleSearchConsoleDashboard::class, BrandIcon::googleSearchConsole()->toHtml()],
             'mailchimp' => [MailchimpDashboard::class, BrandIcon::mailchimp()->toHtml()],
         ];
     }
@@ -80,7 +81,7 @@ class DataExplorerBrandIconsTest extends TestCase
         // The six providers hard-coded in DataSources::getProviders().
         return [
             'google' => ['google', 'google'],
-            'facebook' => ['facebook', 'facebook'],
+            'facebook' => ['facebook', 'meta'],
             'tiktok' => ['tiktok', 'tiktok'],
             'klaviyo' => ['klaviyo', 'klaviyo'],
             'shopify' => ['shopify', 'shopify'],
@@ -111,5 +112,54 @@ class DataExplorerBrandIconsTest extends TestCase
     public function test_for_provider_defaults_to_navigation_size(): void
     {
         $this->assertSame(BrandIcon::google()->toHtml(), BrandIcon::forProvider('google')->toHtml());
+    }
+
+    public function test_for_channel_resolves_specific_sub_channel_icons(): void
+    {
+        $ga4 = BrandIcon::forChannel('google_analytics_4');
+        $this->assertNotNull($ga4);
+        $this->assertSame(BrandIcon::googleAnalytics()->toHtml(), $ga4->toHtml());
+
+        $gsc = BrandIcon::forChannel('google_search_console');
+        $this->assertNotNull($gsc);
+        $this->assertSame(BrandIcon::googleSearchConsole()->toHtml(), $gsc->toHtml());
+
+        $gads = BrandIcon::forChannel('google_ads');
+        $this->assertNotNull($gads);
+        $this->assertSame(BrandIcon::googleAds()->toHtml(), $gads->toHtml());
+    }
+
+    public function test_for_channel_handles_facebook_organic_edge_cases(): void
+    {
+        // When asset dependency is an Instagram account
+        $igFromDep = BrandIcon::forChannel('facebook_organic', 'instagram_account');
+        $this->assertNotNull($igFromDep);
+        $this->assertSame(BrandIcon::instagram()->toHtml(), $igFromDep->toHtml());
+
+        // When subType or granularity is ig_post / instagram
+        $igFromSubType = BrandIcon::forChannel('facebook_organic', null, 'ig_post');
+        $this->assertNotNull($igFromSubType);
+        $this->assertSame(BrandIcon::instagram()->toHtml(), $igFromSubType->toHtml());
+
+        // When dependency is a Facebook page, resolve to Meta or Facebook mark
+        $metaOrganic = BrandIcon::forChannel('facebook_organic');
+        $this->assertNotNull($metaOrganic);
+        $this->assertSame(BrandIcon::meta()->toHtml(), $metaOrganic->toHtml());
+
+        // Direct facebook_marketing / meta_ads channel resolves to Meta mark
+        $fbMarketing = BrandIcon::forChannel('facebook_marketing');
+        $this->assertNotNull($fbMarketing);
+        $this->assertSame(BrandIcon::meta()->toHtml(), $fbMarketing->toHtml());
+    }
+
+    public function test_for_channel_falls_back_to_provider(): void
+    {
+        $shopify = BrandIcon::forChannel('shopify');
+        $this->assertNotNull($shopify);
+        $this->assertSame(BrandIcon::shopify()->toHtml(), $shopify->toHtml());
+
+        $mailchimp = BrandIcon::forChannel('mailchimp');
+        $this->assertNotNull($mailchimp);
+        $this->assertSame(BrandIcon::mailchimp()->toHtml(), $mailchimp->toHtml());
     }
 }

@@ -591,6 +591,11 @@
                                                     'quarterly': '{{ __('Quarterly') }}',
                                                     'semiannual': '{{ __('Semiannual') }}',
                                                     'annually': '{{ __('Annually') }}',
+                                                    'trailing_weekly': '{{ __('Trailing 7 Days (Rolling Week)') }}',
+                                                    'trailing_monthly': '{{ __('Trailing 30 Days (Rolling Month)') }}',
+                                                    'trailing_quarterly': '{{ __('Trailing 90 Days (Rolling Quarter)') }}',
+                                                    'trailing_semiannual': '{{ __('Trailing 180 Days (Rolling Half-Year)') }}',
+                                                    'trailing_annually': '{{ __('Trailing 365 Days (Anualizado / TTM)') }}',
                                                     'lifetime': '{{ __('Lifetime') }}',
                                                     'query': '{{ __('Query (SEO)') }}',
                                                     'dimensions.page': '{{ __('Page (SEO)') }}',
@@ -608,7 +613,7 @@
                                         </template>
                                         <template x-if="settingsSourceType !== 'kpi'">
                                             <x-ui.select-input x-model="settingsControls.granularity" class="w-full">
-                                                <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
+                                                <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
                                                     <optgroup label="{{ __('Time Granularities') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                                         <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
                                                         <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
@@ -616,10 +621,15 @@
                                                         <x-ui.select-option value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
                                                         <x-ui.select-option value="semiannual">{{ __('Semiannual') }}</x-ui.select-option>
                                                         <x-ui.select-option value="annually">{{ __('Annually') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="trailing_weekly">{{ __('Trailing 7 Days (Rolling Week)') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="trailing_monthly">{{ __('Trailing 30 Days (Rolling Month)') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="trailing_quarterly">{{ __('Trailing 90 Days (Rolling Quarter)') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="trailing_semiannual">{{ __('Trailing 180 Days (Rolling Half-Year)') }}</x-ui.select-option>
+                                                        <x-ui.select-option value="trailing_annually">{{ __('Trailing 365 Days (Anualizado / TTM)') }}</x-ui.select-option>
                                                         <x-ui.select-option value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
                                                     </optgroup>
                                                 </template>
-                                                <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
+                                                <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
                                                     <optgroup label="{{ __('Dimension') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
                                                         <x-ui.select-option x-bind:value="settingsBuilderControls.granularity" x-text="{
                                                             'query': '{{ __('Query (SEO)') }}',

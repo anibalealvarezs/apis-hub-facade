@@ -503,11 +503,11 @@
                     ],
                 ],
                 'facebook' => [
-                    'label'    => 'Facebook',
+                    'label'    => 'Meta',
                     'channels' => [
-                        ['key' => 'facebook_marketing', 'label' => 'Facebook Marketing'],
-                        ['key' => 'facebook_organic', 'label' => 'Facebook Organic'],
-                        ['key' => 'facebook_leads', 'label' => 'Facebook Leads'],
+                        ['key' => 'facebook_marketing', 'label' => 'Meta Ads'],
+                        ['key' => 'facebook_organic', 'label' => 'Meta Organic'],
+                        ['key' => 'facebook_leads', 'label' => 'Meta Leads'],
                     ],
                 ],
                 'tiktok'   => [

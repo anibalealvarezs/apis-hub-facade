@@ -861,6 +861,16 @@
                                                     <x-ui.select-option
                                                         value="annually">{{ __('Annually') }}</x-ui.select-option>
                                                     <x-ui.select-option
+                                                        value="trailing_weekly">{{ __('Trailing 7 Days (Rolling Week)') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="trailing_monthly">{{ __('Trailing 30 Days (Rolling Month)') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="trailing_quarterly">{{ __('Trailing 90 Days (Rolling Quarter)') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="trailing_semiannual">{{ __('Trailing 180 Days (Rolling Half-Year)') }}</x-ui.select-option>
+                                                    <x-ui.select-option
+                                                        value="trailing_annually">{{ __('Trailing 365 Days (Anualizado / TTM)') }}</x-ui.select-option>
+                                                    <x-ui.select-option
                                                         value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
                                                 </x-ui.select-input>
                                             </div>
@@ -3199,6 +3209,11 @@
                                         <x-ui.select-option value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
                                         <x-ui.select-option value="semiannual">{{ __('Semiannual') }}</x-ui.select-option>
                                         <x-ui.select-option value="annually">{{ __('Annually') }}</x-ui.select-option>
+                                        <x-ui.select-option value="trailing_weekly">{{ __('Trailing 7 Days (Rolling Week)') }}</x-ui.select-option>
+                                        <x-ui.select-option value="trailing_monthly">{{ __('Trailing 30 Days (Rolling Month)') }}</x-ui.select-option>
+                                        <x-ui.select-option value="trailing_quarterly">{{ __('Trailing 90 Days (Rolling Quarter)') }}</x-ui.select-option>
+                                        <x-ui.select-option value="trailing_semiannual">{{ __('Trailing 180 Days (Rolling Half-Year)') }}</x-ui.select-option>
+                                        <x-ui.select-option value="trailing_annually">{{ __('Trailing 365 Days (Anualizado / TTM)') }}</x-ui.select-option>
                                         <x-ui.select-option value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
                                         <template x-if="getSandboxKpiNonTimelyGranularity()">
                                             <option :value="getSandboxKpiNonTimelyGranularity()" x-text="inheritedControlLabel('granularity', getSandboxKpiNonTimelyGranularity())" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>

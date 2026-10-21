@@ -1460,6 +1460,11 @@ export function widgetHeader() {
                 "quarterly",
                 "semiannual",
                 "annually",
+                "trailing_weekly",
+                "trailing_monthly",
+                "trailing_quarterly",
+                "trailing_semiannual",
+                "trailing_annually",
                 "lifetime",
             ].includes(this.builderControls.granularity);
 

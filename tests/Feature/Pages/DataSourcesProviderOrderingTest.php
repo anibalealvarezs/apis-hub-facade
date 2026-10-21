@@ -55,10 +55,10 @@ function channelKeys(DataSources $page, string $providerKey): array
 test('providers exposing a compatible channel sort before those that do not', function () {
     $page = pageWithChannels(['google_search_console', 'facebook_marketing', 'mailchimp']);
 
-    // Compatible providers (Facebook, Google, Mailchimp) lead; the fully incompatible ones
+    // Compatible providers (Google, Mailchimp, Meta) lead; the fully incompatible ones
     // (Klaviyo, Shopify, TikTok) follow. Nothing is enabled, so both groups fall back to
-    // alphabetical order.
-    expect(providerKeys($page))->toBe(['facebook', 'google', 'mailchimp', 'klaviyo', 'shopify', 'tiktok']);
+    // alphabetical order by label (Google, Mailchimp, Meta).
+    expect(providerKeys($page))->toBe(['google', 'mailchimp', 'facebook', 'klaviyo', 'shopify', 'tiktok']);
 });
 
 test('compatible providers with an enabled channel sort first', function () {
@@ -67,8 +67,8 @@ test('compatible providers with an enabled channel sort first', function () {
         ['mailchimp' => ['enabled' => true]],
     );
 
-    // Mailchimp has an enabled compatible channel; Google and Facebook do not.
-    expect(providerKeys($page))->toBe(['mailchimp', 'facebook', 'google', 'klaviyo', 'shopify', 'tiktok']);
+    // Mailchimp has an enabled compatible channel; Google and Meta do not.
+    expect(providerKeys($page))->toBe(['mailchimp', 'google', 'facebook', 'klaviyo', 'shopify', 'tiktok']);
 });
 
 test('providers with an enabled channel sort alphabetically among themselves', function () {
@@ -80,8 +80,8 @@ test('providers with an enabled channel sort alphabetically among themselves', f
         ],
     );
 
-    // Facebook and Mailchimp both have an enabled compatible channel → alphabetical.
-    expect(providerKeys($page))->toBe(['facebook', 'mailchimp', 'google', 'klaviyo', 'shopify', 'tiktok']);
+    // Mailchimp and Meta both have an enabled compatible channel → alphabetical (Mailchimp, Meta).
+    expect(providerKeys($page))->toBe(['mailchimp', 'facebook', 'google', 'klaviyo', 'shopify', 'tiktok']);
 });
 
 test('an enabled but incompatible channel does not promote a provider', function () {
@@ -91,7 +91,8 @@ test('an enabled but incompatible channel does not promote a provider', function
     );
 
     // TikTok is entirely incompatible, so its enabled channel does not count.
-    expect(providerKeys($page))->toBe(['google', 'mailchimp', 'facebook', 'klaviyo', 'shopify', 'tiktok']);
+    // Incompatible providers sort alphabetically: Klaviyo, Meta, Shopify, TikTok.
+    expect(providerKeys($page))->toBe(['google', 'mailchimp', 'klaviyo', 'facebook', 'shopify', 'tiktok']);
 });
 
 test('compatible channels sort before incompatible channels within a provider', function () {
@@ -141,7 +142,7 @@ test('the flat enabled mirror is honoured when the nested flag is absent', funct
     );
 
     expect($page->isChannelEnabled('google_search_console'))->toBeTrue();
-    expect(providerKeys($page))->toBe(['google', 'mailchimp', 'facebook', 'klaviyo', 'shopify', 'tiktok']);
+    expect(providerKeys($page))->toBe(['google', 'mailchimp', 'klaviyo', 'facebook', 'shopify', 'tiktok']);
 });
 
 test('the nested enabled flag wins over the flat mirror', function () {
