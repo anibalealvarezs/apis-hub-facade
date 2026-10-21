@@ -992,6 +992,7 @@
   - `app/Filament/App/Pages/FacebookMarketingDashboard.php`: Navigation label updated to `'Meta Ads'`, icon updated to `BrandIcon::meta()`.
   - `app/Filament/App/Pages/FacebookOrganicDashboard.php`: Navigation label updated to `'Meta Organic'`, icon updated to `BrandIcon::meta()`.
   - Tests updated and verified passing: `tests/Feature/Pages/DataSourcesProviderOrderingTest.php` (13/13 passing) and `tests/Feature/DataExplorerBrandIconsTest.php` (35/35 passing).
+  - `resources/views/filament/app/pages/data-sources.blade.php`: Added the channel logo (`BrandIcon::forChannel($activeChannel)`) directly to the left of the section title heading (`<h2>`) in the main configuration card header.
 
 ### Official Brand Logos & Chart Tooltip Rendering Refinement (2026-10-20)
 - **Official Logos:**

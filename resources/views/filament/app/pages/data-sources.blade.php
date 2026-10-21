@@ -155,9 +155,19 @@
 
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-white/10 ds-mb-6">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                        {{ $this->getChannelLabel($activeChannel) }}
-                    </h2>
+                    @php
+                        $sectionChannelIcon = \App\Support\BrandIcon::forChannel($activeChannel, null, null, 'w-6 h-6 shrink-0 text-gray-900 dark:text-white');
+                    @endphp
+                    <div class="flex items-center gap-2.5">
+                        @if($sectionChannelIcon)
+                            <div class="flex items-center justify-center shrink-0">
+                                {!! $sectionChannelIcon !!}
+                            </div>
+                        @endif
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                            {{ $this->getChannelLabel($activeChannel) }}
+                        </h2>
+                    </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-x-2">
                         <span>{{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}</span>
                         @php
