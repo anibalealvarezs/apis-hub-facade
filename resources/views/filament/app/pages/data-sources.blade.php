@@ -158,7 +158,7 @@
                     @php
                         $sectionChannelIcon = \App\Support\BrandIcon::forChannel($activeChannel, null, null, 'w-6 h-6 shrink-0 text-gray-900 dark:text-white');
                     @endphp
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex items-center gap-2">
                         @if($sectionChannelIcon)
                             <div class="flex items-center justify-center shrink-0">
                                 {!! $sectionChannelIcon !!}
