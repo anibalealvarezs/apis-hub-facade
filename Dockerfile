@@ -29,8 +29,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Get the official PHP extension installer (handles PECL, dependencies, and retries robustly)
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
-# Install PHP extensions including redis & swoole cleanly (pin swoole to official GitHub source to bypass flaky pecl.php.net 500s)
-RUN install-php-extensions pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl opcache redis swoole=swoole/swoole-src@v6.0.0
+# Install PHP extensions including redis & swoole cleanly (using official GitHub tarball to bypass pecl.php.net 500 downtime)
+RUN install-php-extensions pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl opcache redis https://github.com/swoole/swoole-src/archive/refs/tags/v6.0.0.tar.gz
 
 # High-Performance PHP Config
 RUN { \
