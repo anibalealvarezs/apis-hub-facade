@@ -4,6 +4,7 @@ FROM php:8.3-fpm
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    libcurl4-openssl-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
@@ -36,7 +37,7 @@ RUN install-php-extensions pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zi
 RUN git clone --depth 1 --recurse-submodules --shallow-submodules -b v6.0.0 https://github.com/swoole/swoole-src.git /tmp/swoole \
     && cd /tmp/swoole \
     && phpize \
-    && ./configure --enable-openssl --enable-swoole-curl \
+    && ./configure --enable-openssl \
     && make -j$(nproc) \
     && make install \
     && docker-php-ext-enable swoole \
