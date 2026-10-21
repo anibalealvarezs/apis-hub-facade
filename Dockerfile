@@ -33,7 +33,7 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 # Install standard PHP extensions cleanly
 RUN install-php-extensions pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl opcache
 
-# Install Swoole and phpredis from source with full submodules (100% immune to PECL downtime and missing submodule headers)
+# Install Swoole from official Git repository with full submodules (100% immune to PECL downtime)
 RUN git clone --depth 1 --recurse-submodules --shallow-submodules -b v6.0.0 https://github.com/swoole/swoole-src.git /tmp/swoole \
     && cd /tmp/swoole \
     && phpize \
@@ -41,14 +41,18 @@ RUN git clone --depth 1 --recurse-submodules --shallow-submodules -b v6.0.0 http
     && make -j$(nproc) \
     && make install \
     && docker-php-ext-enable swoole \
-    && rm -rf /tmp/swoole \
-    && git clone --depth 1 --recurse-submodules --shallow-submodules -b 6.1.0 https://github.com/phpredis/phpredis.git /tmp/phpredis \
+    && cd / \
+    && rm -rf /tmp/swoole
+
+# Install phpredis from official Git repository with full submodules
+RUN git clone --depth 1 --recurse-submodules --shallow-submodules -b 6.1.0 https://github.com/phpredis/phpredis.git /tmp/phpredis \
     && cd /tmp/phpredis \
     && phpize \
     && ./configure \
     && make -j$(nproc) \
     && make install \
     && docker-php-ext-enable redis \
+    && cd / \
     && rm -rf /tmp/phpredis
 
 
