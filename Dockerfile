@@ -26,12 +26,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
 
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
-    && docker-php-ext-install pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl opcache
+# Get the official PHP extension installer (handles PECL, dependencies, and retries robustly)
+COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
-# Install Redis and Swoole extension
-RUN pecl install redis swoole && docker-php-ext-enable redis swoole
+# Install PHP extensions including redis & swoole cleanly
+RUN install-php-extensions pdo_pgsql pdo_sqlite mbstring exif pcntl bcmath gd zip intl opcache redis swoole
 
 # High-Performance PHP Config
 RUN { \
