@@ -17,13 +17,12 @@ export function choroplethMap(options = {}) {
             this._resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const cr = entry.contentRect;
-                    console.log('[choroplethMap] ResizeObserver event for', this.containerId, 'w:', cr.width, 'h:', cr.height, 'hasMapInstance:', !!this.mapInstance);
                     if (cr && cr.width > 0 && cr.height > 0) {
-                        if (!this.mapInstance && !this._rendering) {
-                            console.log('[choroplethMap] ResizeObserver triggering renderMap for', this.containerId);
+                        const el = document.getElementById(this.containerId);
+                        const hasSvg = el && el.querySelector('svg');
+                        if ((!this.mapInstance || !hasSvg) && !this._rendering) {
                             this.renderMap();
                         } else if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
-                            console.log('[choroplethMap] ResizeObserver calling updateSize for', this.containerId);
                             this.mapInstance.updateSize();
                         }
                     }
@@ -32,11 +31,9 @@ export function choroplethMap(options = {}) {
 
             this.$nextTick(() => {
                 const el = document.getElementById(this.containerId);
-                console.log('[choroplethMap] $nextTick for', this.containerId, 'el exists:', !!el, 'clientWidth:', el?.clientWidth, 'clientHeight:', el?.clientHeight);
                 if (el) {
                     this._resizeObserver.observe(el);
                     if (el.clientWidth > 0 && el.clientHeight > 0 && !this.mapInstance) {
-                        console.log('[choroplethMap] $nextTick triggering renderMap for', this.containerId);
                         this.renderMap();
                     }
                 }
@@ -224,12 +221,15 @@ export function choroplethMap(options = {}) {
                 this.selectedRegions = newSelected;
             }
 
-            if (!this.mapInstance) {
-                console.log('[choroplethMap] updateData -> no mapInstance, triggering renderMap');
+            const el = document.getElementById(this.containerId);
+            const hasSvg = el && el.querySelector('svg');
+
+            if (!this.mapInstance || !hasSvg) {
                 this.renderMap();
             } else if (dataChanged) {
-                console.log('[choroplethMap] updateData -> dataChanged, calling applyColors');
                 this.applyColors();
+            } else if (el && el.clientWidth > 0 && typeof this.mapInstance.updateSize === 'function') {
+                this.mapInstance.updateSize();
             }
 
             if (newSelected !== null && this.mapInstance) {
