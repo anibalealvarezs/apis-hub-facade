@@ -3814,6 +3814,12 @@ window.dashboardRenderer = {
             case "pie_chart":
                 this.renderPieChart(containerEl, data, controls);
                 break;
+            case "choropleth_map":
+                this.renderChoroplethMap(containerEl, data, controls);
+                break;
+            case "pinnable_map":
+                this.renderPinnableMap(containerEl, data, controls);
+                break;
             default:
                 containerEl.innerHTML =
                     '<div class="text-sm text-gray-400 p-4 text-center">Unknown widget type: ' +
@@ -4177,5 +4183,161 @@ window.dashboardRenderer = {
             pinned.caretY,
         );
         tooltipEl.style.opacity = "1";
+    },
+
+    // ─── Choropleth Map Widget ───
+
+    renderChoroplethMap(containerEl, data, controls) {
+        const mapData = data?.map_data || {};
+        const metricLabel = data?.metric_label || controls?.metrics?.[0] || 'Value';
+        const uniqueId = 'map-widget-' + Math.random().toString(36).substring(2, 9);
+
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.width = "100%";
+        containerEl.style.height = "100%";
+        containerEl.style.position = "relative";
+        containerEl.innerHTML = `
+            <div class="w-full h-full p-2 flex flex-col">
+                <div class="flex items-center justify-between pb-1.5 text-xs text-gray-500 border-b border-gray-100 dark:border-white/5">
+                    <span class="font-semibold uppercase tracking-wider">${this.escapeHtml(metricLabel)} Distribution</span>
+                    <span class="text-3xs text-primary-500 font-mono">${Object.keys(mapData).length} Regions</span>
+                </div>
+                <div id="${uniqueId}" class="w-full flex-1 min-h-[180px] relative mt-1"></div>
+            </div>
+        `;
+
+        const mapEl = containerEl.querySelector('#' + uniqueId);
+        if (!mapEl) return;
+
+        if (window.jsVectorMap) {
+            const isDark = document.documentElement.classList.contains("dark");
+            const values = Object.values(mapData).filter(v => typeof v === 'number' && !isNaN(v));
+            const maxVal = values.length ? Math.max(...values) : 100;
+            const minVal = values.length ? Math.min(...values) : 0;
+
+            const mapInst = new window.jsVectorMap({
+                selector: '#' + uniqueId,
+                map: 'world',
+                backgroundColor: 'transparent',
+                draggable: true,
+                zoomButtons: true,
+                zoomOnScroll: false,
+                regionStyle: {
+                    initial: {
+                        fill: isDark ? '#334155' : '#E2E8F0',
+                        stroke: isDark ? '#1e293b' : '#cbd5e1',
+                        strokeWidth: 0.5,
+                        fillOpacity: 1
+                    },
+                    hover: {
+                        fill: isDark ? '#60a5fa' : '#3b82f6',
+                        cursor: 'pointer'
+                    }
+                },
+                series: {
+                    regions: [{
+                        attribute: 'fill',
+                        values: mapData,
+                        scale: isDark ? ['#1e3a8a', '#3b82f6', '#60a5fa', '#93c5fd'] : ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8'],
+                        normalizeFunction: 'polynomial',
+                        min: minVal,
+                        max: maxVal
+                    }]
+                },
+                onRegionTooltipShow(event, tooltip, code) {
+                    const val = mapData[code.toUpperCase()];
+                    const formatted = val !== undefined ? Number(val).toLocaleString('en-US') : '0';
+                    tooltip.text(
+                        `<div class="p-1 font-sans">
+                            <div class="font-bold text-xs">${tooltip.text()}</div>
+                            <div class="text-3xs text-primary-400 mt-0.5">${metricLabel}: <span class="font-mono font-bold">${formatted}</span></div>
+                        </div>`,
+                        true
+                    );
+                }
+            });
+
+            this._chartInstances.set(containerEl, mapInst);
+        } else {
+            mapEl.innerHTML = `<div class="flex items-center justify-center h-full text-xs text-gray-400">Map library initializing...</div>`;
+        }
+    },
+
+    // ─── Pinnable Map Widget ───
+
+    renderPinnableMap(containerEl, data, controls) {
+        const pins = data?.pins || [];
+        const uniqueId = 'pin-map-widget-' + Math.random().toString(36).substring(2, 9);
+
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.width = "100%";
+        containerEl.style.height = "100%";
+        containerEl.style.position = "relative";
+        containerEl.innerHTML = `
+            <div class="w-full h-full p-2 flex flex-col">
+                <div class="flex items-center justify-between pb-1.5 text-xs text-gray-500 border-b border-gray-100 dark:border-white/5">
+                    <span class="font-semibold uppercase tracking-wider">Touchpoint Pins</span>
+                    <span class="text-3xs text-primary-500 font-mono">${pins.length} Location(s)</span>
+                </div>
+                <div id="${uniqueId}" class="w-full flex-1 min-h-[180px] rounded-lg overflow-hidden mt-1 relative z-0"></div>
+            </div>
+        `;
+
+        const mapEl = containerEl.querySelector('#' + uniqueId);
+        if (!mapEl) return;
+
+        if (window.L) {
+            const isDark = document.documentElement.classList.contains("dark");
+            const defaultCenter = pins.length > 0 ? [pins[0].lat, pins[0].lng] : [20, 0];
+            const defaultZoom = pins.length > 0 ? 4 : 2;
+
+            const map = window.L.map(uniqueId, {
+                center: defaultCenter,
+                zoom: defaultZoom,
+                scrollWheelZoom: false,
+            });
+
+            const tileUrl = isDark
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+            window.L.tileLayer(tileUrl, {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            const bounds = [];
+            pins.forEach(pin => {
+                if (pin.lat && pin.lng) {
+                    const marker = window.L.circleMarker([pin.lat, pin.lng], {
+                        radius: 6,
+                        fillColor: '#3b82f6',
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div class="p-1 font-sans text-xs">
+                            <div class="font-bold">${pin.title || 'Touchpoint'}</div>
+                            ${pin.city ? `<div class="text-gray-500 text-3xs">${pin.city}${pin.country ? ', ' + pin.country : ''}</div>` : ''}
+                            ${pin.value ? `<div class="text-primary-600 font-semibold mt-1">${pin.value}</div>` : ''}
+                        </div>
+                    `);
+                    bounds.push([pin.lat, pin.lng]);
+                }
+            });
+
+            if (bounds.length > 1) {
+                map.fitBounds(bounds, { padding: [20, 20] });
+            }
+
+            this._chartInstances.set(containerEl, map);
+        } else {
+            mapEl.innerHTML = `<div class="flex items-center justify-center h-full text-xs text-gray-400">Leaflet library initializing...</div>`;
+        }
     },
 };

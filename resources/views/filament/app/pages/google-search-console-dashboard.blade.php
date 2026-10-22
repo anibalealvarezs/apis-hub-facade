@@ -202,7 +202,66 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:header>
 
-            <table class="gsc-table">
+            <x-slot:actions>
+                <div x-show="activeTab === 'countries'" class="inline-flex rounded-lg p-0.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                    <button type="button" @click="countryViewMode = 'map'"
+                            :class="countryViewMode === 'map' ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewMode = 'table'"
+                            :class="countryViewMode === 'table' ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="p-4 border-b border-gray-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/40">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <div class="lg:col-span-8 bg-white dark:bg-slate-800/80 rounded-xl p-4 border border-gray-200 dark:border-white/5 shadow-xs relative"
+                         x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks' })"
+                         x-effect="updateData(countryMapData)"
+                         @country-selected.window="toggleFilter('countries', $event.detail.code)">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Global Traffic Distribution') }}</span>
+                            <span class="text-xs text-primary-500 font-medium">{{ __('Interactive Choropleth') }}</span>
+                        </div>
+                        <div id="gsc-world-map" class="w-full h-80 sm:h-96"></div>
+                    </div>
+                    <div class="lg:col-span-4 bg-white dark:bg-slate-800/80 rounded-xl p-4 border border-gray-200 dark:border-white/5 shadow-xs h-full flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
+                                <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                <span>{{ __('Top Countries Leaderboard') }}</span>
+                            </h4>
+                            <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                                <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
+                                    <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs hover:border-primary-500/30 transition cursor-pointer"
+                                         @click="toggleFilter('countries', row.id)"
+                                         :class="isFilterActive('countries', row.id) ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : ''">
+                                        <div class="flex items-center gap-2 truncate pr-2">
+                                            <span class="text-gray-400 font-mono w-4" x-text="(idx + 1) + '.'"></span>
+                                            <span class="font-medium text-gray-800 dark:text-gray-200 truncate" x-text="row.id"></span>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="font-bold text-primary-600 dark:text-primary-400" x-text="formatNumber(row.clicks)"></span>
+                                            <span class="text-gray-400 text-3xs uppercase">{{ __('clicks') }}</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-gray-100 dark:border-white/5 mt-3 text-3xs text-gray-500">
+                            {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="gsc-table" x-show="activeTab !== 'countries' || countryViewMode === 'table'">
                 <thead>
                 <tr>
                     <x-data-table.column sortable="false">

@@ -299,7 +299,62 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:header>
 
-            <table class="ga4-table">
+            <x-slot:actions>
+                <div x-show="ss.traffic === 'traffic_countries'" class="inline-flex rounded-lg p-0.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                    <button type="button" @click="countryViewMode = 'map'"
+                            :class="countryViewMode === 'map' ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewMode = 'table'"
+                            :class="countryViewMode === 'table' ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <div x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="p-4 border-b border-gray-200 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/40">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <div class="lg:col-span-8 bg-white dark:bg-slate-800/80 rounded-xl p-4 border border-gray-200 dark:border-white/5 shadow-xs relative"
+                         x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions' })"
+                         x-effect="updateData(countryMapData)">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ __('Global Traffic Distribution') }}</span>
+                            <span class="text-xs text-primary-500 font-medium" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
+                        </div>
+                        <div id="ga4-world-map" class="w-full h-80 sm:h-96"></div>
+                    </div>
+                    <div class="lg:col-span-4 bg-white dark:bg-slate-800/80 rounded-xl p-4 border border-gray-200 dark:border-white/5 shadow-xs h-full flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-1.5">
+                                <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                <span>{{ __('Top Countries Leaderboard') }}</span>
+                            </h4>
+                            <div class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                                <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 8)" :key="(row.id || row.name || idx) + '_lb'">
+                                    <div class="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 text-xs">
+                                        <div class="flex items-center gap-2 truncate pr-2">
+                                            <span class="text-gray-400 font-mono w-4" x-text="(idx + 1) + '.'"></span>
+                                            <span class="font-medium text-gray-800 dark:text-gray-200 truncate" x-text="row.name || row.id"></span>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="font-bold text-primary-600 dark:text-primary-400" x-text="formatMetricValue(sections.traffic.sortCol || 'sessions', row[sections.traffic.sortCol || 'sessions'])"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="pt-3 border-t border-gray-100 dark:border-white/5 mt-3 text-3xs text-gray-500">
+                            {{ __('Switch to Table mode or click table columns to re-sort leaderboard and map intensities.') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <table class="ga4-table" x-show="ss.traffic !== 'traffic_countries' || countryViewMode === 'table'">
                 <thead>
                 <tr>
                     <th><span x-text="(tabConfig[ss.traffic] && tabConfig[ss.traffic].label) || 'Name'"></span></th>

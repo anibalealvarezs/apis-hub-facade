@@ -1,5 +1,64 @@
 import { dataTable } from './data-table';
 
+const COUNTRY_NAME_TO_CODE = {
+    'Aruba':'ABW','Afghanistan':'AFG','Angola':'AGO','Anguilla':'AIA','Åland Islands':'ALA','Albania':'ALB',
+    'Andorra':'AND','United Arab Emirates':'ARE','Argentina':'ARG','Armenia':'ARM','American Samoa':'ASM',
+    'Antarctica':'ATA','French Southern Territories':'ATF','Antigua and Barbuda':'ATG','Australia':'AUS',
+    'Austria':'AUT','Azerbaijan':'AZE','Burundi':'BDI','Belgium':'BEL','Benin':'BEN',
+    'Bonaire, Sint Eustatius and Saba':'BES','Burkina Faso':'BFA','Bangladesh':'BGD','Bulgaria':'BGR',
+    'Bahrain':'BHR','Bahamas':'BHS','Bosnia and Herzegovina':'BIH','Saint Barthélemy':'BLM','Belarus':'BLR',
+    'Belize':'BLZ','Bermuda':'BMU','Bolivia':'BOL','Brazil':'BRA','Barbados':'BRB',
+    'Brunei Darussalam':'BRN','Bhutan':'BTN','Bouvet Island':'BVT','Botswana':'BWA',
+    'Central African Republic':'CAF','Canada':'CAN','Cocos (Keeling) Islands':'CCK','Switzerland':'CHE',
+    'Chile':'CHL','China':'CHN',"Côte d'Ivoire":'CIV','Cameroon':'CMR',
+    'Congo, Democratic Republic of the':'COD','Congo':'COG','Cook Islands':'COK','Colombia':'COL',
+    'Comoros':'COM','Cabo Verde':'CPV','Costa Rica':'CRI','Cuba':'CUB','Curaçao':'CUW',
+    'Christmas Island':'CXR','Cayman Islands':'CYM','Cyprus':'CYP','Czechia':'CZE','Germany':'DEU',
+    'Djibouti':'DJI','Dominica':'DMA','Denmark':'DNK','Dominican Republic':'DOM','Algeria':'DZA',
+    'Ecuador':'ECU','Egypt':'EGY','Eritrea':'ERI','Western Sahara':'ESH','Spain':'ESP','Estonia':'EST',
+    'Ethiopia':'ETH','Finland':'FIN','Fiji':'FJI','Falkland Islands (Malvinas)':'FLK','France':'FRA',
+    'Faroe Islands':'FRO','Micronesia':'FSM','Gabon':'GAB','United Kingdom':'GBR','Georgia':'GEO',
+    'Guernsey':'GGY','Ghana':'GHA','Gibraltar':'GIB','Guinea':'GIN','Guadeloupe':'GLP','Gambia':'GMB',
+    'Guinea-Bissau':'GNB','Equatorial Guinea':'GNQ','Greece':'GRC','Grenada':'GRD','Greenland':'GRL',
+    'Guatemala':'GTM','French Guiana':'GUF','Guam':'GUM','Guyana':'GUY','Hong Kong':'HKG',
+    'Heard Island and McDonald Islands':'HMD','Honduras':'HND','Croatia':'HRV','Haiti':'HTI',
+    'Hungary':'HUN','Indonesia':'IDN','Isle of Man':'IMN','India':'IND',
+    'British Indian Ocean Territory':'IOT','Ireland':'IRL','Iran':'IRN','Iraq':'IRQ','Iceland':'ISL',
+    'Israel':'ISR','Italy':'ITA','Jamaica':'JAM','Jersey':'JEY','Jordan':'JOR','Japan':'JPN',
+    'Kazakhstan':'KAZ','Kenya':'KEN','Kyrgyzstan':'KGZ','Cambodia':'KHM','Kiribati':'KIR',
+    'Saint Kitts and Nevis':'KNA','Korea, Republic of':'KOR','Kuwait':'KWT',
+    "Lao People's Democratic Republic":'LAO','Lebanon':'LBN','Liberia':'LBR','Libya':'LBY',
+    'Saint Lucia':'LCA','Liechtenstein':'LIE','Sri Lanka':'LKA','Lesotho':'LSO','Lithuania':'LTU',
+    'Luxembourg':'LUX','Latvia':'LVA','Macao':'MAC','Saint Martin (French part)':'MAF','Morocco':'MAR',
+    'Monaco':'MCO','Moldova':'MDA','Madagascar':'MDG','Maldives':'MDV','Mexico':'MEX',
+    'Marshall Islands':'MHL','North Macedonia':'MKD','Mali':'MLI','Malta':'MLT','Myanmar':'MMR',
+    'Montenegro':'MNE','Mongolia':'MNG','Northern Mariana Islands':'MNP','Mozambique':'MOZ',
+    'Mauritania':'MRT','Montserrat':'MSR','Martinique':'MTQ','Mauritius':'MUS','Malawi':'MWI',
+    'Malaysia':'MYS','Mayotte':'MYT','Namibia':'NAM','New Caledonia':'NCL','Niger':'NER',
+    'Norfolk Island':'NFK','Nigeria':'NGA','Nicaragua':'NIC','Niue':'NIU','Netherlands':'NLD',
+    'Norway':'NOR','Nepal':'NPL','Nauru':'NRU','New Zealand':'NZL','Oman':'OMN','Pakistan':'PAK',
+    'Panama':'PAN','Pitcairn':'PCN','Peru':'PER','Philippines':'PHL','Palau':'PLW',
+    'Papua New Guinea':'PNG','Poland':'POL','Puerto Rico':'PRI',
+    "Korea, Democratic People's Republic of":'PRK','Portugal':'PRT','Paraguay':'PRY',
+    'Palestine, State of':'PSE','French Polynesia':'PYF','Qatar':'QAT','Réunion':'REU',
+    'Romania':'ROU','Russian Federation':'RUS','Rwanda':'RWA','Saudi Arabia':'SAU','Sudan':'SDN',
+    'Senegal':'SEN','Singapore':'SGP','South Georgia and the South Sandwich Islands':'SGS',
+    'Saint Helena, Ascension and Tristan da Cunha':'SHN','Svalbard and Jan Mayen':'SJM',
+    'Solomon Islands':'SLB','Sierra Leone':'SLE','El Salvador':'SLV','San Marino':'SMR','Somalia':'SOM',
+    'Saint Pierre and Miquelon':'SPM','Serbia':'SRB','South Sudan':'SSD',
+    'Sao Tome and Principe':'STP','Suriname':'SUR','Slovakia':'SVK','Slovenia':'SVN','Sweden':'SWE',
+    'Eswatini':'SWZ','Sint Maarten (Dutch part)':'SXM','Seychelles':'SYC',
+    'Syrian Arab Republic':'SYR','Turks and Caicos Islands':'TCA','Chad':'TCD','Togo':'TGO',
+    'Thailand':'THA','Tajikistan':'TJK','Tokelau':'TKL','Turkmenistan':'TKM','Timor-Leste':'TLS',
+    'Tonga':'TON','Trinidad and Tobago':'TTO','Tunisia':'TUN','Türkiye':'TUR','Tuvalu':'TUV',
+    'Taiwan':'TWN','Tanzania':'TZA','Uganda':'UGA','Ukraine':'UKR',
+    'United States Minor Outlying Islands':'UMI','Uruguay':'URY','United States of America':'USA',
+    'Uzbekistan':'UZB','Holy See':'VAT','Saint Vincent and the Grenadines':'VCT','Venezuela':'VEN',
+    'Virgin Islands (British)':'VGB','Virgin Islands (U.S.)':'VIR','Viet Nam':'VNM','Vanuatu':'VUT',
+    'Wallis and Futuna':'WLF','Samoa':'WSM','Yemen':'YEM','South Africa':'ZAF','Zambia':'ZMB',
+    'Zimbabwe':'ZWE','Others':'OTH','Unknown':'UNK',
+};
+
 export function ga4Dashboard(config = {}) {
     return {
         tenantId: config.tenantId || '',
@@ -13,6 +72,8 @@ export function ga4Dashboard(config = {}) {
 
         isSummaryLoading: false,
         isChartLoading: false,
+
+        countryViewMode: 'map', // 'map' or 'table'
 
         summary: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
         previous: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
@@ -46,6 +107,41 @@ export function ga4Dashboard(config = {}) {
             campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
             acquisition: 'acquisition_channels', events: 'events',
             adtouchpoints: 'adtouchpoints_adgroups',
+        },
+
+        get countryMapData() {
+            if (this.ss.traffic !== 'traffic_countries') return {};
+            const mapData = {};
+            const metric = this.sections.traffic.sortCol || 'sessions';
+
+            (this.sections.traffic.rows || []).forEach(row => {
+                const name = row.name || row.id;
+                if (!name) return;
+                const isoCode = COUNTRY_NAME_TO_CODE[name] || name;
+                if (isoCode && isoCode.length === 3) {
+                    const alpha2 = this.convertIso3ToIso2(isoCode);
+                    if (alpha2) {
+                        mapData[alpha2] = Number(row[metric]) || 0;
+                    }
+                } else if (isoCode && isoCode.length === 2) {
+                    mapData[isoCode.toUpperCase()] = Number(row[metric]) || 0;
+                }
+            });
+            return mapData;
+        },
+
+        convertIso3ToIso2(iso3) {
+            const map3to2 = {
+                'USA':'US','GBR':'GB','CAN':'CA','DEU':'DE','FRA':'FR','ITA':'IT','ESP':'ES',
+                'AUS':'AU','BRA':'BR','IND':'IN','CHN':'CN','JPN':'JP','MEX':'MX','NLD':'NL',
+                'SWE':'SE','CHE':'CH','NOR':'NO','DNK':'DK','POL':'PL','AUT':'AT','BEL':'BE',
+                'FIN':'FI','IRL':'IE','PRT':'PT','NZL':'NZ','ZAF':'ZA','ARG':'AR','CHL':'CL',
+                'COL':'CO','PER':'PE','KOR':'KR','SGP':'SG','HKG':'HK','TWN':'TW','MYS':'MY',
+                'IDN':'ID','PHL':'PH','THA':'TH','VNM':'VN','TUR':'TR','SAU':'SA','ARE':'AE',
+                'ISR':'IL','EGY':'EG','NGA':'NG','KEN':'KE','ROU':'RO','CZE':'CZ','GRC':'GR',
+                'HUN':'HU','UKR':'UA','RUS':'RU'
+            };
+            return map3to2[iso3.toUpperCase()] || null;
         },
 
         sectionConfig: {

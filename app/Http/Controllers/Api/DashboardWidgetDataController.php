@@ -1635,6 +1635,16 @@
                     $data = $this->transformPieChartData($data, $widget, $resolvedControls);
                 }
 
+                // If choropleth_map, transform data into ISO-keyed geographic distribution format
+                if ($effectiveWidgetType === 'choropleth_map') {
+                    $data = $this->transformChoroplethMapData($data, $widget, $resolvedControls);
+                }
+
+                // If pinnable_map, transform coordinates / locations data into marker pins format
+                if ($effectiveWidgetType === 'pinnable_map') {
+                    $data = $this->transformPinnableMapData($data, $widget, $resolvedControls);
+                }
+
                 \Illuminate\Support\Facades\Log::info('[STEP show] Response data', [
                     'widget_id'        => $widget->id,
                     'widget_type'      => $effectiveWidgetType,
@@ -5403,6 +5413,128 @@
             }
 
             return (float)($point['value'] ?? $point['y'] ?? 0);
+        }
+
+        /**
+         * Transform widget data into an ISO-keyed geographic distribution format for choropleth rendering.
+         *
+         * @param array $data
+         * @param DashboardWidget $widget
+         * @param array $controls
+         * @return array
+         */
+        protected function transformChoroplethMapData(array $data, DashboardWidget $widget, array $controls): array
+        {
+            $geoScope = $controls['geo_scope'] ?? 'world';
+            $metric = $controls['metrics'][0] ?? 'clicks';
+            $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+            $metricLabel = $metricLabels[$metric] ?? ucfirst(str_replace('_', ' ', $metric));
+
+            $iso3to2 = [
+                'USA'=>'US','GBR'=>'GB','CAN'=>'CA','DEU'=>'DE','FRA'=>'FR','ITA'=>'IT','ESP'=>'ES',
+                'AUS'=>'AU','BRA'=>'BR','IND'=>'IN','CHN'=>'CN','JPN'=>'JP','MEX'=>'MX','NLD'=>'NL',
+                'SWE'=>'SE','CHE'=>'CH','NOR'=>'NO','DNK'=>'DK','POL'=>'PL','AUT'=>'AT','BEL'=>'BE',
+                'FIN'=>'FI','IRL'=>'IE','PRT'=>'PT','NZL'=>'NZ','ZAF'=>'ZA','ARG'=>'AR','CHL'=>'CL',
+                'COL'=>'CO','PER'=>'PE','KOR'=>'KR','SGP'=>'SG','HKG'=>'HK','TWN'=>'TW','MYS'=>'MY',
+                'IDN'=>'ID','PHL'=>'PH','THA'=>'TH','VNM'=>'VN','TUR'=>'TR','SAU'=>'SA','ARE'=>'AE',
+                'ISR'=>'IL','EGY'=>'EG','NGA'=>'NG','KEN'=>'KE','ROU'=>'RO','CZE'=>'CZ','GRC'=>'GR',
+                'HUN'=>'HU','UKR'=>'UA','RUS'=>'RU'
+            ];
+
+            $mapData = [];
+            $leaderboard = [];
+
+            // Case 1: Data has 'table' rows (GSC or GA4 country table response)
+            $rows = $data['table'] ?? $data['rows'] ?? [];
+            if (!empty($rows) && is_array($rows)) {
+                foreach ($rows as $row) {
+                    $key = $row['country'] ?? $row['name'] ?? $row['id'] ?? null;
+                    if (!$key) continue;
+                    $val = (float)($row[$metric] ?? $row['clicks'] ?? $row['sessions'] ?? $row['value'] ?? 0);
+
+                    $iso2 = strtoupper(trim((string)$key));
+                    if (strlen($iso2) === 3 && isset($iso3to2[$iso2])) {
+                        $iso2 = $iso3to2[$iso2];
+                    }
+                    if (strlen($iso2) === 2) {
+                        $mapData[$iso2] = ($mapData[$iso2] ?? 0) + $val;
+                    }
+
+                    $leaderboard[] = [
+                        'name' => (string)$key,
+                        'code' => $iso2,
+                        'value' => $val,
+                    ];
+                }
+            } elseif (isset($data['datasets']) && is_array($data['datasets'])) {
+                // Case 2: Multi-dataset labels
+                $labels = $data['labels'] ?? [];
+                $firstDs = $data['datasets'][0]['data'] ?? [];
+                foreach ($labels as $i => $lbl) {
+                    $val = (float)($firstDs[$i] ?? 0);
+                    $iso2 = strtoupper(trim((string)$lbl));
+                    if (strlen($iso2) === 3 && isset($iso3to2[$iso2])) {
+                        $iso2 = $iso3to2[$iso2];
+                    }
+                    if (strlen($iso2) === 2) {
+                        $mapData[$iso2] = ($mapData[$iso2] ?? 0) + $val;
+                    }
+                    $leaderboard[] = [
+                        'name' => (string)$lbl,
+                        'code' => $iso2,
+                        'value' => $val,
+                    ];
+                }
+            }
+
+            usort($leaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+
+            return [
+                'type' => 'choropleth_map',
+                'geo_scope' => $geoScope,
+                'metric' => $metric,
+                'metric_label' => $metricLabel,
+                'map_data' => $mapData,
+                'leaderboard' => array_slice($leaderboard, 0, 10),
+            ];
+        }
+
+        /**
+         * Transform widget data into localized coordinate marker pins for pinnable map rendering.
+         *
+         * @param array $data
+         * @param DashboardWidget $widget
+         * @param array $controls
+         * @return array
+         */
+        protected function transformPinnableMapData(array $data, DashboardWidget $widget, array $controls): array
+        {
+            $pins = [];
+            $rawRows = $data['pins'] ?? $data['table'] ?? $data['rows'] ?? [];
+
+            if (is_array($rawRows)) {
+                foreach ($rawRows as $item) {
+                    $lat = $item['lat'] ?? $item['latitude'] ?? null;
+                    $lng = $item['lng'] ?? $item['longitude'] ?? $item['lon'] ?? null;
+
+                    if ($lat !== null && $lng !== null && is_numeric($lat) && is_numeric($lng)) {
+                        $pins[] = [
+                            'lat' => (float)$lat,
+                            'lng' => (float)$lng,
+                            'title' => $item['title'] ?? $item['name'] ?? $item['customer_name'] ?? 'Touchpoint',
+                            'value' => $item['value'] ?? $item['amount'] ?? $item['orders'] ?? null,
+                            'city' => $item['city'] ?? $item['location'] ?? null,
+                            'country' => $item['country'] ?? null,
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'type' => 'pinnable_map',
+                'pins' => $pins,
+                'total_points' => count($pins),
+            ];
         }
 
         /**

@@ -82,6 +82,44 @@ export function gscDashboard(config = {}) {
         showTrends: false,
 
         activeMetrics: { clicks: true, impressions: true, ctr: false, position: false },
+        countryViewMode: 'map', // 'map' or 'table'
+
+        get countryMapData() {
+            if (this.activeTab !== 'countries') return {};
+            const mapData = {};
+            const activeMetric = this.activeMetrics.clicks ? 'clicks' : 
+                                (this.activeMetrics.impressions ? 'impressions' : 
+                                (this.activeMetrics.ctr ? 'ctr' : 'position'));
+
+            (this.tableState.rows || []).forEach(row => {
+                const countryName = row.id;
+                const isoCode = COUNTRY_NAME_TO_CODE[countryName] || countryName;
+                if (isoCode && isoCode.length === 3) {
+                    // Convert 3-letter ISO to 2-letter for standard jsVectorMap world map
+                    const alpha2 = this.convertIso3ToIso2(isoCode);
+                    if (alpha2) {
+                        mapData[alpha2] = Number(row[activeMetric]) || 0;
+                    }
+                } else if (isoCode && isoCode.length === 2) {
+                    mapData[isoCode.toUpperCase()] = Number(row[activeMetric]) || 0;
+                }
+            });
+            return mapData;
+        },
+
+        convertIso3ToIso2(iso3) {
+            const map3to2 = {
+                'USA':'US','GBR':'GB','CAN':'CA','DEU':'DE','FRA':'FR','ITA':'IT','ESP':'ES',
+                'AUS':'AU','BRA':'BR','IND':'IN','CHN':'CN','JPN':'JP','MEX':'MX','NLD':'NL',
+                'SWE':'SE','CHE':'CH','NOR':'NO','DNK':'DK','POL':'PL','AUT':'AT','BEL':'BE',
+                'FIN':'FI','IRL':'IE','PRT':'PT','NZL':'NZ','ZAF':'ZA','ARG':'AR','CHL':'CL',
+                'COL':'CO','PER':'PE','KOR':'KR','SGP':'SG','HKG':'HK','TWN':'TW','MYS':'MY',
+                'IDN':'ID','PHL':'PH','THA':'TH','VNM':'VN','TUR':'TR','SAU':'SA','ARE':'AE',
+                'ISR':'IL','EGY':'EG','NGA':'NG','KEN':'KE','ROU':'RO','CZE':'CZ','GRC':'GR',
+                'HUN':'HU','UKR':'UA','RUS':'RU'
+            };
+            return map3to2[iso3.toUpperCase()] || null;
+        },
 
         activeFilters: { queries: [], pages: [], countries: [], devices: [], intents: [] },
 
