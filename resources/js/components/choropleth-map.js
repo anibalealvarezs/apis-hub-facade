@@ -16,9 +16,9 @@ export function choroplethMap(options = {}) {
                 for (const entry of entries) {
                     const cr = entry.contentRect;
                     if (cr && cr.width > 0 && cr.height > 0) {
-                        if (!this.mapInstance) {
+                        if (!this.mapInstance && !this._rendering) {
                             this.renderMap();
-                        } else if (typeof this.mapInstance.updateSize === 'function') {
+                        } else if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
                             this.mapInstance.updateSize();
                         }
                     }
@@ -29,7 +29,7 @@ export function choroplethMap(options = {}) {
                 const el = document.getElementById(this.containerId);
                 if (el) {
                     this._resizeObserver.observe(el);
-                    if (el.clientWidth > 0 && el.clientHeight > 0) {
+                    if (el.clientWidth > 0 && el.clientHeight > 0 && !this.mapInstance) {
                         this.renderMap();
                     }
                 }
@@ -40,8 +40,11 @@ export function choroplethMap(options = {}) {
                 const dark = document.documentElement.classList.contains('dark');
                 if (dark !== this.isDarkMode) {
                     this.isDarkMode = dark;
-                    this.destroyMap();
-                    this.renderMap();
+                    if (this.mapInstance) {
+                        this.applyColors();
+                    } else {
+                        this.renderMap();
+                    }
                 }
             });
             observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -58,29 +61,18 @@ export function choroplethMap(options = {}) {
             window.addEventListener('resize', this._resizeHandler);
         },
 
-        renderMap() {
-            const el = document.getElementById(this.containerId);
-            if (!el) return;
-
-            // Prevent initializing jsVectorMap when container is hidden (e.g., display: none / zero size)
-            // which causes baseScale = 0 / 0 => NaN and transform="scale(NaN) translate(NaN, NaN)"
-            if (el.clientWidth === 0 || el.clientHeight === 0) {
-                return;
-            }
-
-            const values = Object.values(this.data).map(v => Number(v) || 0).filter(v => v > 0);
+        computeColorScale() {
+            const values = Object.values(this.data || {}).map(v => Number(v) || 0).filter(v => v > 0);
             const maxVal = values.length ? Math.max(...values) : 1;
             const minVal = values.length ? Math.min(...values) : 0;
 
-            // Generate hex color scale mapping for regions so every country gets proper continuous or quantile gradient
             const colorScaleData = {};
             const startColor = this.isDarkMode ? [15, 62, 109] : [186, 230, 253]; // #0f3e6d or #bae6fd
             const endColor = this.isDarkMode ? [0, 167, 249] : [2, 132, 199];     // #00a7f9 or #0284c7
 
-            for (const [code, val] of Object.entries(this.data)) {
+            for (const [code, val] of Object.entries(this.data || {})) {
                 const num = Number(val) || 0;
                 if (num > 0) {
-                    // Use logarithmic scaling so smaller countries still visibly show color gradation relative to huge outliers
                     const diff = maxVal - minVal;
                     const ratio = diff > 0
                         ? Math.log(num - minVal + 1) / Math.log(diff + 1)
@@ -91,8 +83,42 @@ export function choroplethMap(options = {}) {
                     colorScaleData[code] = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
                 }
             }
+            return colorScaleData;
+        },
+
+        applyColors() {
+            if (!this.mapInstance || !this.mapInstance.regions) return;
+            const colorScaleData = this.computeColorScale();
+            const defaultFill = this.isDarkMode ? '#243042' : '#e2e8f0';
+            const defaultStroke = this.isDarkMode ? '#334155' : '#cbd5e1';
+
+            for (const [code, regionObj] of Object.entries(this.mapInstance.regions)) {
+                if (regionObj && regionObj.element) {
+                    const color = colorScaleData[code] || defaultFill;
+                    regionObj.element.style.initial.fill = color;
+                    regionObj.element.style.initial.stroke = defaultStroke;
+                    regionObj.element.setStyle('fill', color);
+                }
+            }
+        },
+
+        renderMap() {
+            if (this._rendering) return;
+            const el = document.getElementById(this.containerId);
+            if (!el) return;
+
+            // Prevent initializing jsVectorMap when container is hidden (e.g., display: none / zero size)
+            if (el.clientWidth === 0 || el.clientHeight === 0) {
+                return;
+            }
+
+            this._rendering = true;
+
+            // Clear previous DOM contents cleanly if needed
+            el.innerHTML = '';
 
             const self = this;
+            const colorScaleData = this.computeColorScale();
 
             try {
                 this.mapInstance = new jsVectorMap({
@@ -150,6 +176,8 @@ export function choroplethMap(options = {}) {
                 }
             } catch (err) {
                 console.error("Error initializing choropleth map:", err);
+            } finally {
+                this._rendering = false;
             }
         },
 
@@ -164,10 +192,13 @@ export function choroplethMap(options = {}) {
                 this.selectedRegions = newSelected;
             }
 
-            if (dataChanged || labelChanged || !this.mapInstance) {
-                this.destroyMap();
+            if (!this.mapInstance) {
                 this.renderMap();
-            } else if (newSelected !== null) {
+            } else if (dataChanged) {
+                this.applyColors();
+            }
+
+            if (newSelected !== null && this.mapInstance) {
                 this.updateSelected(newSelected);
             }
         },
@@ -186,7 +217,11 @@ export function choroplethMap(options = {}) {
 
         destroyMap() {
             if (this.mapInstance && typeof this.mapInstance.destroy === 'function') {
-                this.mapInstance.destroy();
+                try {
+                    this.mapInstance.destroy();
+                } catch (e) {
+                    console.warn("Map destroy error:", e);
+                }
                 this.mapInstance = null;
             }
             const el = document.getElementById(this.containerId);
