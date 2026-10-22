@@ -451,3 +451,187 @@ html.dark .driver-overlay,
     fill: #020617 !important;
     opacity: 0.75 !important;
 }
+
+/* ==========================================================================
+   Dashboard Map & Leaderboard Layout (Landscape 2-Column + Dark Mode)
+   ========================================================================== */
+.dash-map-section {
+    padding: 1.25rem !important;
+    background: rgba(248, 250, 252, 0.6) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+.dark .dash-map-section,
+html.dark .dash-map-section {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.dash-map-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 1.5rem !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.dash-map-card {
+    flex: 1 1 66% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.875rem !important;
+    padding: 1.25rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+}
+.dark .dash-map-card,
+html.dark .dash-map-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f1f5f9 !important;
+}
+
+.dash-leaderboard-card {
+    flex: 0 0 34% !important;
+    min-width: 300px !important;
+    max-width: 440px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.875rem !important;
+    padding: 1.25rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+}
+.dark .dash-leaderboard-card,
+html.dark .dash-leaderboard-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f1f5f9 !important;
+}
+
+@media (max-width: 960px) {
+    .dash-map-grid {
+        flex-direction: column !important;
+    }
+    .dash-map-card,
+    .dash-leaderboard-card {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+}
+
+.dash-map-canvas {
+    width: 100% !important;
+    height: 380px !important;
+    position: relative !important;
+}
+
+.dash-leaderboard-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    max-height: 320px !important;
+    overflow-y: auto !important;
+    padding-right: 0.25rem !important;
+}
+
+.dash-leaderboard-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.625rem 0.875rem !important;
+    border-radius: 0.5rem !important;
+    background: #f8fafc !important;
+    border: 1px solid #edf2f7 !important;
+    font-size: 0.75rem !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    color: #334155 !important;
+}
+.dark .dash-leaderboard-item,
+html.dark .dash-leaderboard-item {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+}
+
+.dash-leaderboard-item:hover {
+    border-color: rgba(2, 132, 199, 0.4) !important;
+    background: #f1f5f9 !important;
+}
+.dark .dash-leaderboard-item:hover,
+html.dark .dash-leaderboard-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+.dash-leaderboard-item.is-active {
+    border-color: #0284c7 !important;
+    background: rgba(2, 132, 199, 0.1) !important;
+    color: #0284c7 !important;
+}
+.dark .dash-leaderboard-item.is-active,
+html.dark .dash-leaderboard-item.is-active {
+    border-color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+}
+
+.dash-leaderboard-rank {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+}
+
+.dash-leaderboard-name {
+    font-weight: 500 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.dash-leaderboard-metric {
+    font-weight: 700 !important;
+    color: #0284c7 !important;
+}
+.dark .dash-leaderboard-metric,
+html.dark .dash-leaderboard-metric {
+    color: #38bdf8 !important;
+}
+
+.dash-leaderboard-unit {
+    color: #94a3b8 !important;
+    font-size: 0.625rem !important;
+    text-transform: uppercase !important;
+    margin-left: 0.25rem !important;
+}
+
+.dash-map-footnote {
+    padding-top: 0.75rem !important;
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 0.75rem !important;
+    font-size: 0.6875rem !important;
+    color: #94a3b8 !important;
+}
+.dark .dash-map-footnote,
+html.dark .dash-map-footnote {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+    color: #64748b !important;
+}
+
+.dark .jvm-zoom-btn,
+html.dark .jvm-zoom-btn {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
