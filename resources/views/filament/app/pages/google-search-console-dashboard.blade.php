@@ -220,42 +220,47 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:actions>
 
             <x-slot:top>
-                <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
-                    <div class="dash-map-grid">
-                        <div class="dash-map-card"
+                <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="p-4 sm:p-6 border-b border-gray-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/40">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch w-full">
+                        {{-- Left Column: Map (spans 2 columns) --}}
+                        <div class="lg:col-span-2 min-w-0 bg-white dark:bg-slate-800/90 rounded-xl border border-gray-200 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between"
                              x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks' })"
                              x-effect="updateData(countryMapData)"
                              @country-selected.window="toggleFilter('countries', $event.detail.code)">
-                            <div class="dash-map-header">
-                                <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
-                                <span class="dash-map-badge">{{ __('Interactive Choropleth') }}</span>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ __('Global Traffic Distribution') }}</span>
+                                <span class="text-xs font-semibold text-sky-600 dark:text-sky-400">{{ __('Interactive Choropleth') }}</span>
                             </div>
-                            <div id="gsc-world-map" class="dash-map-canvas"></div>
+                            <div id="gsc-world-map" class="w-full h-[380px] relative"></div>
                         </div>
-                        <div class="dash-leaderboard-card">
+
+                        {{-- Right Column: Leaderboard (spans 1 column) --}}
+                        <div class="min-w-0 bg-white dark:bg-slate-800/90 rounded-xl border border-gray-200 dark:border-white/10 p-5 shadow-xs flex flex-col justify-between">
                             <div>
-                                <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1.5">
                                     <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
                                     <span>{{ __('Top Countries Leaderboard') }}</span>
                                 </h4>
-                                <div class="dash-leaderboard-list">
+                                <div class="flex flex-col gap-2 max-h-[320px] overflow-y-auto pr-1">
                                     <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
-                                        <div class="dash-leaderboard-item"
+                                        <div class="flex items-center justify-between p-2.5 rounded-lg border transition cursor-pointer text-xs"
                                              @click="toggleFilter('countries', row.id)"
-                                             :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
+                                             :class="isFilterActive('countries', row.id)
+                                                ? 'bg-sky-50 dark:bg-sky-950/40 border-sky-500 text-sky-700 dark:text-sky-300'
+                                                : 'bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200'">
                                             <div class="flex items-center gap-2 truncate pr-2">
-                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
-                                                <span class="dash-leaderboard-name" x-text="row.id"></span>
+                                                <span class="font-mono text-slate-400 dark:text-slate-500 text-xs" x-text="(idx + 1) + '.'"></span>
+                                                <span class="font-medium truncate" x-text="row.id"></span>
                                             </div>
                                             <div class="flex items-center shrink-0">
-                                                <span class="dash-leaderboard-metric" x-text="formatNumber(row.clicks)"></span>
-                                                <span class="dash-leaderboard-unit">{{ __('clicks') }}</span>
+                                                <span class="font-bold text-sky-600 dark:text-sky-400" x-text="formatNumber(row.clicks)"></span>
+                                                <span class="text-slate-400 text-[10px] uppercase ml-1">{{ __('clicks') }}</span>
                                             </div>
                                         </div>
                                     </template>
                                 </div>
                             </div>
-                            <div class="dash-map-footnote">
+                            <div class="pt-3 mt-3 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-400 dark:text-slate-500">
                                 {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
                             </div>
                         </div>
