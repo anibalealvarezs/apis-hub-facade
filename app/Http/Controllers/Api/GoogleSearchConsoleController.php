@@ -236,7 +236,7 @@ class GoogleSearchConsoleController extends Controller
             ];
 
             if ($tab === 'queries') {
-                $tabPayload['groupBy'] = ['query'];
+                $tabPayload['groupBy'] = ['query', 'dimensions.intent'];
             } elseif ($tab === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];
             elseif ($tab === 'countries') $tabPayload['groupBy'] = ['country'];
             elseif ($tab === 'devices') $tabPayload['groupBy'] = ['device'];
