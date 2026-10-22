@@ -45,9 +45,28 @@ export function choroplethMap(options = {}) {
             const el = document.getElementById(this.containerId);
             if (!el) return;
 
-            const values = Object.values(this.data).map(v => Number(v) || 0);
-            const maxVal = values.length ? Math.max(...values, 1) : 1;
-            const minVal = values.length ? Math.min(...values, 0) : 0;
+            const values = Object.values(this.data).map(v => Number(v) || 0).filter(v => v > 0);
+            const maxVal = values.length ? Math.max(...values) : 1;
+            const minVal = values.length ? Math.min(...values) : 0;
+
+            // Generate hex color scale mapping for regions so every country gets proper continuous or quantile gradient
+            const colorScaleData = {};
+            const startColor = this.isDarkMode ? [15, 62, 109] : [186, 230, 253]; // #0f3e6d or #bae6fd
+            const endColor = this.isDarkMode ? [0, 167, 249] : [2, 132, 199];     // #00a7f9 or #0284c7
+
+            for (const [code, val] of Object.entries(this.data)) {
+                const num = Number(val) || 0;
+                if (num > 0) {
+                    // Use logarithmic scaling so smaller countries still visibly show color gradation relative to huge outliers
+                    const ratio = maxVal > minVal 
+                        ? Math.log(num - minVal + 1) / Math.log(maxVal - minVal + 1)
+                        : 0.8;
+                    const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * ratio);
+                    const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * ratio);
+                    const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * ratio);
+                    colorScaleData[code] = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+                }
+            }
 
             const self = this;
 
@@ -60,8 +79,8 @@ export function choroplethMap(options = {}) {
                     backgroundColor: 'transparent',
                     regionStyle: {
                         initial: {
-                            fill: this.isDarkMode ? '#334155' : '#e2e8f0',
-                            stroke: this.isDarkMode ? '#475569' : '#cbd5e1',
+                            fill: this.isDarkMode ? '#243042' : '#e2e8f0',
+                            stroke: this.isDarkMode ? '#334155' : '#cbd5e1',
                             strokeWidth: 0.5,
                             fillOpacity: 1
                         },
@@ -80,12 +99,11 @@ export function choroplethMap(options = {}) {
                         regions: [{
                             attribute: 'fill',
                             legend: false,
-                            scale: this.isDarkMode 
-                                ? ['#0f3e6d', '#00a7f9'] 
-                                : ['#bae6fd', '#0284c7'],
-                            values: this.data,
-                            min: minVal,
-                            max: maxVal
+                            scale: colorScaleData,
+                            values: Object.keys(colorScaleData).reduce((acc, code) => {
+                                acc[code] = code;
+                                return acc;
+                            }, {})
                         }]
                     },
                     onRegionTooltipShow(event, tooltip, code) {

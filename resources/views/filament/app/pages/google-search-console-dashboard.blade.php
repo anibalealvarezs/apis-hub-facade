@@ -203,16 +203,16 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:header>
 
             <x-slot:actions>
-                <div x-show="activeTab === 'countries'" class="inline-flex rounded-lg p-0.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                <div x-show="activeTab === 'countries'" class="dash-view-toggle">
                     <button type="button" @click="countryViewMode = 'map'"
-                            :class="countryViewMode === 'map' ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer">
+                            class="dash-view-btn"
+                            :class="countryViewMode === 'map' ? 'is-active' : ''">
                         <x-heroicon-m-globe-alt class="w-4 h-4"/>
                         <span>{{ __('Map') }}</span>
                     </button>
                     <button type="button" @click="countryViewMode = 'table'"
-                            :class="countryViewMode === 'table' ? 'bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'"
-                            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer">
+                            class="dash-view-btn"
+                            :class="countryViewMode === 'table' ? 'is-active' : ''">
                         <x-heroicon-m-table-cells class="w-4 h-4"/>
                         <span>{{ __('Table') }}</span>
                     </button>
