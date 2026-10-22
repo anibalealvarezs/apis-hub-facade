@@ -563,7 +563,7 @@ export function gscDashboard(config = {}) {
 
         async fetchTable() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('table', false);
+            const cacheKey = this.getCacheKey('table', true);
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -573,7 +573,7 @@ export function gscDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/gsc/table', this.getFetchOptions(false));
+                const response = await fetch('/api/gsc/table', this.getFetchOptions(true));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));

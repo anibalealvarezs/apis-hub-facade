@@ -235,6 +235,8 @@ class GoogleSearchConsoleController extends Controller
                 'limit' => 5000 // reasonable limit for frontend rendering
             ];
 
+            $this->applyDynamicFilters($tabPayload['filters'], $validated['activeFilters'] ?? null);
+
             if ($tab === 'queries') {
                 $tabPayload['groupBy'] = ['query', 'dimensions.intent'];
             } elseif ($tab === 'pages') $tabPayload['groupBy'] = ['dimensions.page'];

@@ -348,7 +348,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     <span>{{ __('Top Countries Leaderboard') }}</span>
                                 </h4>
                                 <div class="dash-leaderboard-list">
-                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 8)" :key="(row.id || row.name || idx) + '_lb'">
+                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb'">
                                         <div class="dash-leaderboard-item"
                                              @click="toggleCountryFilter(row.name || row.id)"
                                              :class="isCountrySelected(row.name || row.id) ? 'is-active' : ''">

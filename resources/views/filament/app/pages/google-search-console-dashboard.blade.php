@@ -251,7 +251,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     <span>{{ __('Top Countries Leaderboard') }}</span>
                                 </h4>
                                 <div class="dash-leaderboard-list">
-                                    <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
+                                    <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 20)" :key="row.id">
                                         <div class="dash-leaderboard-item"
                                                 @click="toggleFilter('countries', row.id)"
                                                 :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
