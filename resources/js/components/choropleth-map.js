@@ -107,9 +107,14 @@ export function choroplethMap(options = {}) {
             for (const [code, regionObj] of Object.entries(this.mapInstance.regions)) {
                 if (regionObj && regionObj.element) {
                     const color = colorScaleData[code] || defaultFill;
-                    regionObj.element.style.initial.fill = color;
-                    regionObj.element.style.initial.stroke = defaultStroke;
-                    regionObj.element.setStyle('fill', color);
+                    const shape = regionObj.element.shape;
+                    if (shape && shape.style && shape.style.initial) {
+                        shape.style.initial.fill = color;
+                        shape.style.initial.stroke = defaultStroke;
+                    }
+                    if (typeof regionObj.element.setStyle === 'function') {
+                        regionObj.element.setStyle('fill', color);
+                    }
                 }
             }
         },
