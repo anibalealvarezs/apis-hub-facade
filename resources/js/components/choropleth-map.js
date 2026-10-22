@@ -185,9 +185,12 @@ export function choroplethMap(options = {}) {
                     onRegionTooltipShow(event, tooltip, code) {
                         const val = self.data[code] || 0;
                         const formatted = new Intl.NumberFormat('en-US').format(val);
+                        const countryName = tooltip.text();
                         tooltip.text(
-                            `<div class="px-2 py-1 text-xs font-sans rounded bg-slate-900 text-white shadow-lg border border-slate-700">
-                                <span class="font-bold">${tooltip.text()}</span>: ${formatted} ${self.metricLabel}
+                            `<div class="dash-map-tooltip">
+                                <span class="dash-map-tooltip-name">${countryName}</span>
+                                <span class="dash-map-tooltip-divider">•</span>
+                                <span class="dash-map-tooltip-val">${formatted}<span class="dash-map-tooltip-metric">${self.metricLabel}</span></span>
                             </div>`,
                             true
                         );

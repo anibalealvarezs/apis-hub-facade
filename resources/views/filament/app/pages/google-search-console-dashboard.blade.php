@@ -246,7 +246,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         {{-- Right Column: Leaderboard --}}
                         <div class="dash-leaderboard-card">
                             <div>
-                                <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
+                                <h4 class="dash-map-title mb-4 flex items-center gap-1.5">
                                     <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
                                     <span>{{ __('Top Countries Leaderboard') }}</span>
                                 </h4>
