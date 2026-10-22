@@ -149,6 +149,8 @@ export function choroplethMap(options = {}) {
                     map: 'world',
                     zoomOnScroll: false,
                     zoomButtons: true,
+                    regionsSelectable: true,
+                    regionsSelectableOne: false,
                     backgroundColor: 'transparent',
                     regionStyle: {
                         initial: {
@@ -189,8 +191,13 @@ export function choroplethMap(options = {}) {
                             true
                         );
                     },
-                    onRegionSelected(event, code, isSelected, selectedRegions) {
+                    onRegionSelected(code, isSelected, selectedRegions) {
+                        console.log('[choroplethMap] onRegionSelected triggered:', code, isSelected);
                         self.$dispatch('country-selected', { code, isSelected });
+                    },
+                    onRegionClick(event, code) {
+                        console.log('[choroplethMap] onRegionClick triggered:', code);
+                        self.$dispatch('country-clicked', { code });
                     }
                 });
 

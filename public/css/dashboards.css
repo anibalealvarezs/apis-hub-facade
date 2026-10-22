@@ -1390,13 +1390,60 @@
     color: #64748b;
 }
 
-/* jsVectorMap Zoom Controls in Dark Mode */
-.dark .jvm-zoom-btn {
-    background-color: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+/* jsVectorMap Zoom Controls */
+.jvm-zoom-btn {
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 26px !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    top: 14px !important;
+    bottom: auto !important;
+    transition: all 0.15s ease !important;
+    z-index: 50 !important;
 }
-.dark .jvm-zoom-btn:hover {
-    background-color: #334155;
-    color: #ffffff;
+
+.jvm-zoom-btn.jvm-zoomin {
+    left: 14px !important;
+    top: 14px !important;
+    bottom: auto !important;
 }
+
+.jvm-zoom-btn.jvm-zoomout {
+    left: 48px !important;
+    top: 14px !important;
+    bottom: auto !important;
+}
+
+.jvm-zoom-btn:hover {
+    background-color: #f1f5f9 !important;
+    color: #0284c7 !important;
+    border-color: #0284c7 !important;
+}
+
+.dark .jvm-zoom-btn,
+html.dark .jvm-zoom-btn {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .jvm-zoom-btn:hover,
+html.dark .jvm-zoom-btn:hover {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+}
+

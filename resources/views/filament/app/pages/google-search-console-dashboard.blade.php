@@ -226,7 +226,8 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <div class="dash-map-card"
                              x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks', selectedRegions: selectedCountryCodes })"
                              x-effect="updateData(countryMapData, 'Clicks', selectedCountryCodes)"
-                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
+                             @country-selected.window="handleMapCountrySelected($event.detail.code)"
+                             @country-clicked.window="handleMapCountrySelected($event.detail.code)">
                             <div class="dash-map-header" style="justify-content: flex-end;">
                                 <div class="flex items-center gap-2">
                                     <button type="button"
