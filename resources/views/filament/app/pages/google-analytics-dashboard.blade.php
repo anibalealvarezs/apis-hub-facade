@@ -316,43 +316,45 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:actions>
 
-            <div x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="dash-map-section">
-                <div class="dash-map-grid">
-                    <div class="dash-map-card"
-                         x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions' })"
-                         x-effect="updateData(countryMapData)">
-                        <div class="dash-map-header">
-                            <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
-                            <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
-                        </div>
-                        <div id="ga4-world-map" class="dash-map-canvas"></div>
-                    </div>
-                    <div class="dash-leaderboard-card">
-                        <div>
-                            <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
-                                <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
-                                <span>{{ __('Top Countries Leaderboard') }}</span>
-                            </h4>
-                            <div class="dash-leaderboard-list">
-                                <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 8)" :key="(row.id || row.name || idx) + '_lb'">
-                                    <div class="dash-leaderboard-item">
-                                        <div class="flex items-center gap-2 truncate pr-2">
-                                            <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
-                                            <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
-                                        </div>
-                                        <div class="flex items-center shrink-0">
-                                            <span class="dash-leaderboard-metric" x-text="formatMetricValue(sections.traffic.sortCol || 'sessions', row[sections.traffic.sortCol || 'sessions'])"></span>
-                                        </div>
-                                    </div>
-                                </template>
+            <x-slot:top>
+                <div x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions' })"
+                             x-effect="updateData(countryMapData)">
+                            <div class="dash-map-header">
+                                <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
+                                <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
                             </div>
+                            <div id="ga4-world-map" class="dash-map-canvas"></div>
                         </div>
-                        <div class="dash-map-footnote">
-                            {{ __('Switch to Table mode or click table columns to re-sort leaderboard and map intensities.') }}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 8)" :key="(row.id || row.name || idx) + '_lb'">
+                                        <div class="dash-leaderboard-item">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatMetricValue(sections.traffic.sortCol || 'sessions', row[sections.traffic.sortCol || 'sessions'])"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Switch to Table mode or click table columns to re-sort leaderboard and map intensities.') }}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-slot:top>
 
             <table class="ga4-table" x-show="ss.traffic !== 'traffic_countries' || countryViewMode === 'table'">
                 <thead>

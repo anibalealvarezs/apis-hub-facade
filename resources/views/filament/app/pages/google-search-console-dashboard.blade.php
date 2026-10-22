@@ -219,47 +219,49 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:actions>
 
-            <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
-                <div class="dash-map-grid">
-                    <div class="dash-map-card"
-                         x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks' })"
-                         x-effect="updateData(countryMapData)"
-                         @country-selected.window="toggleFilter('countries', $event.detail.code)">
-                        <div class="dash-map-header">
-                            <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
-                            <span class="dash-map-badge">{{ __('Interactive Choropleth') }}</span>
-                        </div>
-                        <div id="gsc-world-map" class="dash-map-canvas"></div>
-                    </div>
-                    <div class="dash-leaderboard-card">
-                        <div>
-                            <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
-                                <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
-                                <span>{{ __('Top Countries Leaderboard') }}</span>
-                            </h4>
-                            <div class="dash-leaderboard-list">
-                                <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
-                                    <div class="dash-leaderboard-item"
-                                         @click="toggleFilter('countries', row.id)"
-                                         :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
-                                        <div class="flex items-center gap-2 truncate pr-2">
-                                            <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
-                                            <span class="dash-leaderboard-name" x-text="row.id"></span>
-                                        </div>
-                                        <div class="flex items-center shrink-0">
-                                            <span class="dash-leaderboard-metric" x-text="formatNumber(row.clicks)"></span>
-                                            <span class="dash-leaderboard-unit">{{ __('clicks') }}</span>
-                                        </div>
-                                    </div>
-                                </template>
+            <x-slot:top>
+                <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks' })"
+                             x-effect="updateData(countryMapData)"
+                             @country-selected.window="toggleFilter('countries', $event.detail.code)">
+                            <div class="dash-map-header">
+                                <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
+                                <span class="dash-map-badge">{{ __('Interactive Choropleth') }}</span>
                             </div>
+                            <div id="gsc-world-map" class="dash-map-canvas"></div>
                         </div>
-                        <div class="dash-map-footnote">
-                            {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
+                                        <div class="dash-leaderboard-item"
+                                             @click="toggleFilter('countries', row.id)"
+                                             :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatNumber(row.clicks)"></span>
+                                                <span class="dash-leaderboard-unit">{{ __('clicks') }}</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </x-slot:top>
 
             <table class="gsc-table" x-show="activeTab !== 'countries' || countryViewMode === 'table'">
                 <thead>

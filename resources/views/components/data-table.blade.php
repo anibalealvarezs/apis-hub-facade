@@ -93,6 +93,10 @@
         </div>
     @endif
 
+    @if (! empty($top))
+        {{ $top }}
+    @endif
+
     <div class="overflow-x-auto">
         {{ $slot }}
     </div>
