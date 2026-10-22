@@ -323,8 +323,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <div class="dash-map-card"
                              x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions' })"
                              x-effect="updateData(countryMapData)">
-                            <div class="dash-map-header">
-                                <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
+                            <div class="dash-map-header" style="justify-content: flex-end;">
                                 <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
                             </div>
                             <div id="ga4-world-map" class="dash-map-canvas"></div>

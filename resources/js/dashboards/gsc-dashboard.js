@@ -139,6 +139,42 @@ export function gscDashboard(config = {}) {
             'unclassified': 'Unclassified'
         },
 
+        get selectedCountryCodes() {
+            if (!this.activeFilters.countries || !this.activeFilters.countries.length) return [];
+            return this.activeFilters.countries.map(name => {
+                const iso3 = COUNTRY_NAME_TO_CODE[name] || name;
+                return (iso3 && iso3.length === 3) ? (this.convertIso3ToIso2(iso3) || iso3) : (iso3 ? iso3.toUpperCase() : null);
+            }).filter(Boolean);
+        },
+
+        countryCodeToName(alpha2) {
+            if (!alpha2) return null;
+            const code2 = alpha2.toUpperCase();
+            for (const [name, iso3] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+                if (this.convertIso3ToIso2(iso3) === code2) {
+                    return name;
+                }
+            }
+            return alpha2;
+        },
+
+        handleMapCountrySelected(code) {
+            const countryName = this.countryCodeToName(code);
+            if (countryName) {
+                this.toggleFilter('countries', countryName);
+            }
+        },
+
+        resetCountryFilters() {
+            if (this.activeFilters.countries && this.activeFilters.countries.length > 0) {
+                this.activeFilters.countries = [];
+                this.saveFilters();
+                this.fetchSummary();
+                this.fetchChart();
+                this.fetchTable();
+            }
+        },
+
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
         },

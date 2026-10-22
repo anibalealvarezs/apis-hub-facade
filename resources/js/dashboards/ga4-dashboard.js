@@ -152,6 +152,17 @@ export function ga4Dashboard(config = {}) {
             return map3to2[iso3.toUpperCase()] || null;
         },
 
+        countryCodeToName(alpha2) {
+            if (!alpha2) return null;
+            const code2 = alpha2.toUpperCase();
+            for (const [name, iso3] of Object.entries(COUNTRY_NAME_TO_CODE)) {
+                if (this.convertIso3ToIso2(iso3) === code2) {
+                    return name;
+                }
+            }
+            return alpha2;
+        },
+
         sectionConfig: {
             campaigns: { label: 'Campaigns', tabs: ['campaigns', 'adgroups'] },
             channels: { label: 'Channels', tabs: ['channels', 'sources'] },

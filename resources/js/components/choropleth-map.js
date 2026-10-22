@@ -8,7 +8,7 @@ export function choroplethMap(options = {}) {
         containerId: options.containerId || 'choropleth-map-container',
         metricLabel: options.metricLabel || 'Value',
         data: options.data || {}, // { 'US': 1500, 'GB': 800, 'ES': 450 }
-        selectedCode: options.selectedCode || null,
+        selectedRegions: options.selectedRegions || [],
         isDarkMode: document.documentElement.classList.contains('dark'),
 
         init() {
@@ -121,28 +121,30 @@ export function choroplethMap(options = {}) {
                     }
                 });
 
-                if (this.selectedCode && this.mapInstance) {
-                    this.mapInstance.setSelectedRegions([this.selectedCode]);
+                if (this.selectedRegions && this.selectedRegions.length && this.mapInstance) {
+                    this.mapInstance.setSelectedRegions(this.selectedRegions);
                 }
             } catch (err) {
                 console.error("Error initializing choropleth map:", err);
             }
         },
 
-        updateData(newData, newMetricLabel = null) {
+        updateData(newData, newMetricLabel = null, newSelected = null) {
             this.data = newData || {};
             if (newMetricLabel) this.metricLabel = newMetricLabel;
+            if (newSelected !== null) this.selectedRegions = newSelected;
             this.destroyMap();
             this.renderMap();
         },
 
-        setSelected(code) {
-            this.selectedCode = code;
-            if (this.mapInstance) {
-                if (code) {
-                    this.mapInstance.setSelectedRegions([code]);
-                } else {
+        updateSelected(regions = []) {
+            this.selectedRegions = regions || [];
+            if (this.mapInstance && typeof this.mapInstance.setSelectedRegions === 'function') {
+                if (this.mapInstance.clearSelectedRegions) {
                     this.mapInstance.clearSelectedRegions();
+                }
+                if (this.selectedRegions.length) {
+                    this.mapInstance.setSelectedRegions(this.selectedRegions);
                 }
             }
         },

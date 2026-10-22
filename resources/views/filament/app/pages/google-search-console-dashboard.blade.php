@@ -224,12 +224,21 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"
-                             x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks' })"
-                             x-effect="updateData(countryMapData)"
-                             @country-selected.window="toggleFilter('countries', $event.detail.code)">
-                            <div class="dash-map-header">
-                                <span class="dash-map-title">{{ __('Global Traffic Distribution') }}</span>
-                                <span class="dash-map-badge">{{ __('Interactive Choropleth') }}</span>
+                             x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks', selectedRegions: selectedCountryCodes })"
+                             x-effect="updateData(countryMapData, 'Clicks', selectedCountryCodes)"
+                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
+                            <div class="dash-map-header" style="justify-content: flex-end;">
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            x-show="activeFilters.countries && activeFilters.countries.length > 0"
+                                            @click="resetCountryFilters()"
+                                            class="dash-map-reset-btn"
+                                            title="{{ __('Clear country filters') }}">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                        <span>{{ __('Reset Selection') }}</span>
+                                    </button>
+                                    <span class="dash-map-badge">{{ __('Interactive Choropleth') }}</span>
+                                </div>
                             </div>
                             <div id="gsc-world-map" class="dash-map-canvas"></div>
                         </div>
