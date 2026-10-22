@@ -273,7 +273,6 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                             </div>
                         </div>
                     </div>
-                </div>
             </x-slot:top>
 
             <table class="gsc-table" x-show="activeTab !== 'countries' || countryViewMode === 'table'">
