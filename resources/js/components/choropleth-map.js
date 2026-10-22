@@ -41,7 +41,7 @@ export function choroplethMap(options = {}) {
             });
 
             // Watch theme changes
-            const observer = new MutationObserver(() => {
+            this._themeObserver = new MutationObserver(() => {
                 const dark = document.documentElement.classList.contains('dark');
                 if (dark !== this.isDarkMode) {
                     console.log('[choroplethMap] Dark mode toggled:', dark);
@@ -53,7 +53,7 @@ export function choroplethMap(options = {}) {
                     }
                 }
             });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            this._themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
             // Handle window resize
             this._resizeHandler = () => {
@@ -253,6 +253,22 @@ export function choroplethMap(options = {}) {
         },
 
         destroyMap() {
+            if (this._resizeObserver) {
+                this._resizeObserver.disconnect();
+                this._resizeObserver = null;
+            }
+            if (this._themeObserver) {
+                this._themeObserver.disconnect();
+                this._themeObserver = null;
+            }
+            if (this._resizeHandler) {
+                window.removeEventListener('resize', this._resizeHandler);
+                this._resizeHandler = null;
+            }
+            if (this._cleanup && this.$el) {
+                this.$el.removeEventListener('alpine:destroyed', this._cleanup);
+            }
+
             if (this.mapInstance && typeof this.mapInstance.destroy === 'function') {
                 try {
                     this.mapInstance.destroy();

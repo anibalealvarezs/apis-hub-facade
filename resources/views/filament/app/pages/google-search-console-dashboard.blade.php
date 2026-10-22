@@ -221,13 +221,12 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
 
             <x-slot:top>
                 <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
-                    <template x-if="activeTab === 'countries' && countryViewMode === 'map'">
-                        <div class="dash-map-grid">
-                            {{-- Left Column: Map --}}
-                            <div class="dash-map-card"
-                                 x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks', selectedRegions: selectedCountryCodes })"
-                                 x-effect="updateData(countryMapData, 'Clicks', selectedCountryCodes)"
-                                 @country-selected.window="handleMapCountrySelected($event.detail.code)">
+                    <div class="dash-map-grid">
+                        {{-- Left Column: Map --}}
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks', selectedRegions: selectedCountryCodes })"
+                             x-effect="updateData(countryMapData, 'Clicks', selectedCountryCodes)"
+                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
                                 <div class="dash-map-header" style="justify-content: flex-end;">
                                     <div class="flex items-center gap-2">
                                         <button type="button"
@@ -273,7 +272,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                 </div>
                             </div>
                         </div>
-                    </template>
+                    </div>
                 </div>
             </x-slot:top>
 
