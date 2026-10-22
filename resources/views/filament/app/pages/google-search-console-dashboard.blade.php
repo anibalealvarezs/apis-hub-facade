@@ -220,7 +220,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:actions>
 
             <x-slot:top>
-                <div x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
+                <div wire:ignore x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"
@@ -241,38 +241,38 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     </div>
                                 </div>
                                 <div id="gsc-world-map" class="dash-map-canvas"></div>
-                            </div>
+                        </div>
 
-                            {{-- Right Column: Leaderboard --}}
-                            <div class="dash-leaderboard-card">
-                                <div>
-                                    <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
-                                        <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
-                                        <span>{{ __('Top Countries Leaderboard') }}</span>
-                                    </h4>
-                                    <div class="dash-leaderboard-list">
-                                        <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
-                                            <div class="dash-leaderboard-item"
-                                                 @click="toggleFilter('countries', row.id)"
-                                                 :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
-                                                <div class="flex items-center gap-2 truncate pr-2">
-                                                    <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
-                                                    <span class="dash-leaderboard-name" x-text="row.id"></span>
-                                                </div>
-                                                <div class="flex items-center shrink-0">
-                                                    <span class="dash-leaderboard-metric" x-text="formatNumber(row.clicks)"></span>
-                                                    <span class="dash-leaderboard-unit">{{ __('clicks') }}</span>
-                                                </div>
+                        {{-- Right Column: Leaderboard --}}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-3 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 8)" :key="row.id">
+                                        <div class="dash-leaderboard-item"
+                                                @click="toggleFilter('countries', row.id)"
+                                                :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.id"></span>
                                             </div>
-                                        </template>
-                                    </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatNumber(row.clicks)"></span>
+                                                <span class="dash-leaderboard-unit">{{ __('clicks') }}</span>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
-                                <div class="dash-map-footnote">
-                                    {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
-                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
                             </div>
                         </div>
                     </div>
+                </div>
             </x-slot:top>
 
             <table class="gsc-table" x-show="activeTab !== 'countries' || countryViewMode === 'table'">

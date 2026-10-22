@@ -317,7 +317,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:actions>
 
             <x-slot:top>
-                <div x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="dash-map-section">
+                <div wire:ignore x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="dash-map-section">
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"

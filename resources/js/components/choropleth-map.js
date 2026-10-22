@@ -234,11 +234,11 @@ export function choroplethMap(options = {}) {
             }
 
             if (newSelected !== null && this.mapInstance) {
-                this.updateSelected(newSelected);
+                this.updateSelected(newSelected, !dataChanged);
             }
         },
 
-        updateSelected(regions = []) {
+        updateSelected(regions = [], refreshColors = true) {
             console.log('[choroplethMap] updateSelected called:', regions);
             this.selectedRegions = regions || [];
             if (this.mapInstance && typeof this.mapInstance.setSelectedRegions === 'function') {
@@ -249,7 +249,9 @@ export function choroplethMap(options = {}) {
                     this.mapInstance.setSelectedRegions(this.selectedRegions);
                 }
             }
-            this.applyColors();
+            if (refreshColors) {
+                this.applyColors();
+            }
         },
 
         destroyMap() {
