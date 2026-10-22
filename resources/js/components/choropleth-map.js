@@ -12,7 +12,8 @@ export function choroplethMap(options = {}) {
         isDarkMode: document.documentElement.classList.contains('dark'),
 
         init() {
-            console.log('[choroplethMap] init called for container:', this.containerId, 'initial data keys:', Object.keys(this.data || {}).length);
+            this._cleanup = () => this.destroyMap();
+            this.$el?.addEventListener('alpine:destroyed', this._cleanup);
 
             this._resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
@@ -252,15 +253,16 @@ export function choroplethMap(options = {}) {
         },
 
         destroyMap() {
-            console.warn('[choroplethMap] destroyMap called for', this.containerId);
             if (this.mapInstance && typeof this.mapInstance.destroy === 'function') {
                 try {
                     this.mapInstance.destroy();
                 } catch (e) {
-                    console.warn("[choroplethMap] Map destroy error:", e);
+                    // ignore
                 }
                 this.mapInstance = null;
             }
+            // Remove any orphan jvm-tooltips left in body by jsVectorMap
+            document.querySelectorAll('.jvm-tooltip').forEach(el => el.remove());
             const el = document.getElementById(this.containerId);
             if (el) el.innerHTML = '';
         }

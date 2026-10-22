@@ -1390,6 +1390,18 @@
     color: #64748b;
 }
 
+/* jsVectorMap Tooltips */
+.jvm-tooltip {
+    display: none !important;
+    position: absolute !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+}
+.jvm-tooltip.active {
+    display: block !important;
+}
+
 /* jsVectorMap Zoom Controls */
 .jvm-zoom-btn {
     width: 28px !important;

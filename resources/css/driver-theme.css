@@ -628,6 +628,18 @@ html.dark .dash-map-footnote {
     color: #64748b !important;
 }
 
+/* jsVectorMap Tooltips */
+.jvm-tooltip {
+    display: none !important;
+    position: absolute !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+}
+.jvm-tooltip.active {
+    display: block !important;
+}
+
 /* jsVectorMap Zoom Controls (properly aligned side-by-side square buttons at top-left) */
 .jvm-zoom-btn {
     width: 28px !important;
