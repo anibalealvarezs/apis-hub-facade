@@ -1199,19 +1199,20 @@
 }
 
 .dash-map-grid {
-    display: grid;
+    display: grid !important;
     grid-template-columns: 1fr;
-    gap: 20px;
-    align-items: stretch;
+    gap: 20px !important;
+    align-items: stretch !important;
+    width: 100% !important;
 }
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
     .dash-map-grid {
-        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr) !important;
     }
 }
-@media (min-width: 1280px) {
+@media (min-width: 1200px) {
     .dash-map-grid {
-        grid-template-columns: minmax(0, 13fr) minmax(0, 7fr);
+        grid-template-columns: minmax(0, 1.7fr) minmax(340px, 0.8fr) !important;
     }
 }
 

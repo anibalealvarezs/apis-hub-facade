@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time() }}">
 
     <div x-data="ga4Dashboard({
         tenantId: @js(Filament\Facades\Filament::getTenant()->id ?? Filament\Facades\Filament::getTenant()->slug),
