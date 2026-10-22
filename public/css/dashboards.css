@@ -1402,7 +1402,9 @@
     display: block !important;
 }
 
-/* jsVectorMap Zoom Controls */
+/* jsVectorMap Zoom Controls (clean side-by-side buttons in bottom-left corner) */
+.dash-map-card .jvm-zoom-btn,
+.dash-map-canvas .jvm-zoom-btn,
 .jvm-zoom-btn {
     width: 28px !important;
     height: 28px !important;
@@ -1420,22 +1422,26 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    top: 14px !important;
-    bottom: auto !important;
+    top: auto !important;
+    bottom: 16px !important;
     transition: all 0.15s ease !important;
     z-index: 50 !important;
 }
 
+.dash-map-card .jvm-zoom-btn.jvm-zoomin,
+.dash-map-canvas .jvm-zoom-btn.jvm-zoomin,
 .jvm-zoom-btn.jvm-zoomin {
-    left: 14px !important;
-    top: 14px !important;
-    bottom: auto !important;
+    left: 16px !important;
+    top: auto !important;
+    bottom: 16px !important;
 }
 
+.dash-map-card .jvm-zoom-btn.jvm-zoomout,
+.dash-map-canvas .jvm-zoom-btn.jvm-zoomout,
 .jvm-zoom-btn.jvm-zoomout {
-    left: 48px !important;
-    top: 14px !important;
-    bottom: auto !important;
+    left: 52px !important;
+    top: auto !important;
+    bottom: 16px !important;
 }
 
 .jvm-zoom-btn:hover {

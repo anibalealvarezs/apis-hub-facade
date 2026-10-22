@@ -321,10 +321,21 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"
-                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions' })"
-                             x-effect="updateData(countryMapData)">
+                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: selectedCountryCodes })"
+                             x-effect="updateData(countryMapData, metricLabels[sections.traffic.sortCol] || 'Sessions', selectedCountryCodes)"
+                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
                             <div class="dash-map-header" style="justify-content: flex-end;">
-                                <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            x-show="(sections.traffic.searchQuery || '').trim().length > 0"
+                                            @click="resetCountryFilters()"
+                                            class="dash-map-reset-btn"
+                                            title="{{ __('Clear country filter') }}">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                        <span>{{ __('Reset Selection') }}</span>
+                                    </button>
+                                    <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
+                                </div>
                             </div>
                             <div id="ga4-world-map" class="dash-map-canvas"></div>
                         </div>
@@ -338,7 +349,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                 </h4>
                                 <div class="dash-leaderboard-list">
                                     <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 8)" :key="(row.id || row.name || idx) + '_lb'">
-                                        <div class="dash-leaderboard-item">
+                                        <div class="dash-leaderboard-item"
+                                             @click="toggleCountryFilter(row.name || row.id)"
+                                             :class="isCountrySelected(row.name || row.id) ? 'is-active' : ''">
                                             <div class="flex items-center gap-2 truncate pr-2">
                                                 <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
                                                 <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
@@ -351,7 +364,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                 </div>
                             </div>
                             <div class="dash-map-footnote">
-                                {{ __('Switch to Table mode or click table columns to re-sort leaderboard and map intensities.') }}
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
                             </div>
                         </div>
                     </div>

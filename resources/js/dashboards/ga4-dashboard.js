@@ -163,6 +163,54 @@ export function ga4Dashboard(config = {}) {
             return alpha2;
         },
 
+        get selectedCountryCodes() {
+            const query = (this.sections.traffic.searchQuery || '').trim();
+            if (!query || this.ss.traffic !== 'traffic_countries') return [];
+            const iso3 = COUNTRY_NAME_TO_CODE[query] || query;
+            const code2 = (iso3 && iso3.length === 3) ? (this.convertIso3ToIso2(iso3) || iso3) : (iso3 ? iso3.toUpperCase() : null);
+            return code2 ? [code2] : [];
+        },
+
+        handleMapCountrySelected(code) {
+            if (!code) return;
+            const code2 = code.toUpperCase();
+            const rows = this.sections.traffic.rows || [];
+            let matchingRow = rows.find(r => {
+                const name = ((r.name || r.id) || '').trim();
+                if (!name) return false;
+                if (name.toUpperCase() === code2) return true;
+                const iso3 = COUNTRY_NAME_TO_CODE[name] || name;
+                if (iso3 && (iso3.toUpperCase() === code2 || this.convertIso3ToIso2(iso3) === code2)) return true;
+                return false;
+            });
+
+            const filterVal = matchingRow ? (matchingRow.name || matchingRow.id) : (this.countryCodeToName(code2) || code2);
+            this.toggleCountryFilter(filterVal);
+        },
+
+        toggleCountryFilter(countryName) {
+            if (!countryName) return;
+            const current = (this.sections.traffic.searchQuery || '').trim().toLowerCase();
+            const target = countryName.trim().toLowerCase();
+            if (current === target) {
+                this.sections.traffic.searchQuery = '';
+            } else {
+                this.sections.traffic.searchQuery = countryName.trim();
+            }
+            this.sections.traffic.currentPage = 1;
+        },
+
+        isCountrySelected(countryName) {
+            if (!countryName) return false;
+            const current = (this.sections.traffic.searchQuery || '').trim().toLowerCase();
+            return current === countryName.trim().toLowerCase();
+        },
+
+        resetCountryFilters() {
+            this.sections.traffic.searchQuery = '';
+            this.sections.traffic.currentPage = 1;
+        },
+
         sectionConfig: {
             campaigns: { label: 'Campaigns', tabs: ['campaigns', 'adgroups'] },
             channels: { label: 'Channels', tabs: ['channels', 'sources'] },
