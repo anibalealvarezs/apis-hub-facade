@@ -12,13 +12,18 @@ export function choroplethMap(options = {}) {
         isDarkMode: document.documentElement.classList.contains('dark'),
 
         init() {
+            console.log('[choroplethMap] init called for container:', this.containerId, 'initial data keys:', Object.keys(this.data || {}).length);
+
             this._resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const cr = entry.contentRect;
+                    console.log('[choroplethMap] ResizeObserver event for', this.containerId, 'w:', cr.width, 'h:', cr.height, 'hasMapInstance:', !!this.mapInstance);
                     if (cr && cr.width > 0 && cr.height > 0) {
                         if (!this.mapInstance && !this._rendering) {
+                            console.log('[choroplethMap] ResizeObserver triggering renderMap for', this.containerId);
                             this.renderMap();
                         } else if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
+                            console.log('[choroplethMap] ResizeObserver calling updateSize for', this.containerId);
                             this.mapInstance.updateSize();
                         }
                     }
@@ -27,9 +32,11 @@ export function choroplethMap(options = {}) {
 
             this.$nextTick(() => {
                 const el = document.getElementById(this.containerId);
+                console.log('[choroplethMap] $nextTick for', this.containerId, 'el exists:', !!el, 'clientWidth:', el?.clientWidth, 'clientHeight:', el?.clientHeight);
                 if (el) {
                     this._resizeObserver.observe(el);
                     if (el.clientWidth > 0 && el.clientHeight > 0 && !this.mapInstance) {
+                        console.log('[choroplethMap] $nextTick triggering renderMap for', this.containerId);
                         this.renderMap();
                     }
                 }
@@ -39,6 +46,7 @@ export function choroplethMap(options = {}) {
             const observer = new MutationObserver(() => {
                 const dark = document.documentElement.classList.contains('dark');
                 if (dark !== this.isDarkMode) {
+                    console.log('[choroplethMap] Dark mode toggled:', dark);
                     this.isDarkMode = dark;
                     if (this.mapInstance) {
                         this.applyColors();
@@ -87,8 +95,12 @@ export function choroplethMap(options = {}) {
         },
 
         applyColors() {
-            if (!this.mapInstance || !this.mapInstance.regions) return;
+            if (!this.mapInstance || !this.mapInstance.regions) {
+                console.log('[choroplethMap] applyColors skipped: no mapInstance or regions');
+                return;
+            }
             const colorScaleData = this.computeColorScale();
+            console.log('[choroplethMap] applyColors applying to', Object.keys(colorScaleData).length, 'countries');
             const defaultFill = this.isDarkMode ? '#243042' : '#e2e8f0';
             const defaultStroke = this.isDarkMode ? '#334155' : '#cbd5e1';
 
@@ -103,12 +115,17 @@ export function choroplethMap(options = {}) {
         },
 
         renderMap() {
+            console.log('[choroplethMap] renderMap invoked for', this.containerId, 'isRendering:', this._rendering);
             if (this._rendering) return;
             const el = document.getElementById(this.containerId);
-            if (!el) return;
+            if (!el) {
+                console.warn('[choroplethMap] renderMap container not found:', this.containerId);
+                return;
+            }
 
-            // Prevent initializing jsVectorMap when container is hidden (e.g., display: none / zero size)
+            console.log('[choroplethMap] renderMap element client dimensions:', el.clientWidth, 'x', el.clientHeight);
             if (el.clientWidth === 0 || el.clientHeight === 0) {
+                console.log('[choroplethMap] renderMap skipped because width or height is 0');
                 return;
             }
 
@@ -119,6 +136,7 @@ export function choroplethMap(options = {}) {
 
             const self = this;
             const colorScaleData = this.computeColorScale();
+            console.log('[choroplethMap] renderMap creating new jsVectorMap instance with colorScaleData entries:', Object.keys(colorScaleData).length);
 
             try {
                 this.mapInstance = new jsVectorMap({
@@ -171,17 +189,20 @@ export function choroplethMap(options = {}) {
                     }
                 });
 
+                console.log('[choroplethMap] jsVectorMap created successfully, regions count:', Object.keys(this.mapInstance.regions || {}).length);
+
                 if (this.selectedRegions && this.selectedRegions.length && this.mapInstance) {
                     this.mapInstance.setSelectedRegions(this.selectedRegions);
                 }
             } catch (err) {
-                console.error("Error initializing choropleth map:", err);
+                console.error("[choroplethMap] Error initializing choropleth map:", err);
             } finally {
                 this._rendering = false;
             }
         },
 
         updateData(newData, newMetricLabel = null, newSelected = null) {
+            console.log('[choroplethMap] updateData called for', this.containerId, 'newData entries:', Object.keys(newData || {}).length, 'hasMapInstance:', !!this.mapInstance);
             const dataChanged = JSON.stringify(this.data) !== JSON.stringify(newData || {});
             const labelChanged = newMetricLabel && this.metricLabel !== newMetricLabel;
             
@@ -193,8 +214,10 @@ export function choroplethMap(options = {}) {
             }
 
             if (!this.mapInstance) {
+                console.log('[choroplethMap] updateData -> no mapInstance, triggering renderMap');
                 this.renderMap();
             } else if (dataChanged) {
+                console.log('[choroplethMap] updateData -> dataChanged, calling applyColors');
                 this.applyColors();
             }
 
@@ -204,6 +227,7 @@ export function choroplethMap(options = {}) {
         },
 
         updateSelected(regions = []) {
+            console.log('[choroplethMap] updateSelected called:', regions);
             this.selectedRegions = regions || [];
             if (this.mapInstance && typeof this.mapInstance.setSelectedRegions === 'function') {
                 if (this.mapInstance.clearSelectedRegions) {
@@ -216,11 +240,12 @@ export function choroplethMap(options = {}) {
         },
 
         destroyMap() {
+            console.warn('[choroplethMap] destroyMap called for', this.containerId);
             if (this.mapInstance && typeof this.mapInstance.destroy === 'function') {
                 try {
                     this.mapInstance.destroy();
                 } catch (e) {
-                    console.warn("Map destroy error:", e);
+                    console.warn("[choroplethMap] Map destroy error:", e);
                 }
                 this.mapInstance = null;
             }
