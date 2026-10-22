@@ -1184,3 +1184,192 @@
     color: #f9fafb !important;
     padding: 6px 12px;
 }
+
+/* ==========================================================================
+   Interactive Choropleth Map & Country Leaderboard (Landscape 2-Column Layout)
+   ========================================================================== */
+.dash-map-section {
+    padding: 20px;
+    border-bottom: 1px solid var(--gsc-border, rgba(255, 255, 255, 0.08));
+    background: rgba(248, 250, 252, 0.6);
+}
+.dark .dash-map-section {
+    background: rgba(15, 23, 42, 0.45);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.dash-map-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    align-items: stretch;
+}
+@media (min-width: 1024px) {
+    .dash-map-grid {
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    }
+}
+@media (min-width: 1280px) {
+    .dash-map-grid {
+        grid-template-columns: minmax(0, 13fr) minmax(0, 7fr);
+    }
+}
+
+.dash-map-card,
+.dash-leaderboard-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.dark .dash-map-card,
+.dark .dash-leaderboard-card {
+    background: rgba(30, 41, 59, 0.75);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(8px);
+}
+
+.dash-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.dash-map-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+}
+.dark .dash-map-title {
+    color: #94a3b8;
+}
+
+.dash-map-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0284c7;
+}
+.dark .dash-map-badge {
+    color: #38bdf8;
+}
+
+.dash-map-canvas {
+    width: 100%;
+    min-height: 320px;
+    height: 380px;
+    position: relative;
+}
+
+.dash-leaderboard-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.dash-leaderboard-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    font-size: 0.8rem;
+    transition: all 0.15s ease;
+    cursor: pointer;
+}
+.dark .dash-leaderboard-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.dash-leaderboard-item:hover {
+    border-color: rgba(2, 132, 199, 0.4);
+    background: #f1f5f9;
+}
+.dark .dash-leaderboard-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+.dash-leaderboard-item.is-active {
+    border-color: #0284c7;
+    background: rgba(2, 132, 199, 0.08);
+}
+.dark .dash-leaderboard-item.is-active {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+}
+
+.dash-leaderboard-rank {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: #94a3b8;
+    width: 20px;
+    flex-shrink: 0;
+}
+.dark .dash-leaderboard-rank {
+    color: #64748b;
+}
+
+.dash-leaderboard-name {
+    font-weight: 600;
+    color: #1e293b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dark .dash-leaderboard-name {
+    color: #f1f5f9;
+}
+
+.dash-leaderboard-metric {
+    font-weight: 700;
+    color: #0284c7;
+}
+.dark .dash-leaderboard-metric {
+    color: #38bdf8;
+}
+
+.dash-leaderboard-unit {
+    color: #94a3b8;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    margin-left: 4px;
+}
+
+.dash-map-footnote {
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    margin-top: 12px;
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+.dark .dash-map-footnote {
+    border-top-color: rgba(255, 255, 255, 0.06);
+    color: #64748b;
+}
+
+/* jsVectorMap Zoom Controls in Dark Mode */
+.dark .jvm-zoom-btn {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.dark .jvm-zoom-btn:hover {
+    background-color: #334155;
+    color: #ffffff;
+}

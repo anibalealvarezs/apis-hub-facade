@@ -47,8 +47,8 @@ export function choroplethMap(options = {}) {
                     backgroundColor: 'transparent',
                     regionStyle: {
                         initial: {
-                            fill: this.isDarkMode ? '#1e293b' : '#f1f5f9',
-                            stroke: this.isDarkMode ? '#334155' : '#cbd5e1',
+                            fill: this.isDarkMode ? '#334155' : '#e2e8f0',
+                            stroke: this.isDarkMode ? '#475569' : '#cbd5e1',
                             strokeWidth: 0.5,
                             fillOpacity: 1
                         },
