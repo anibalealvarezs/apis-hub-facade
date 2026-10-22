@@ -106,14 +106,17 @@ export function choroplethMap(options = {}) {
 
             for (const [code, regionObj] of Object.entries(this.mapInstance.regions)) {
                 if (regionObj && regionObj.element) {
-                    const color = colorScaleData[code] || defaultFill;
+                    const isSelected = this.selectedRegions && this.selectedRegions.includes(code);
+                    const color = isSelected ? '#10b981' : (colorScaleData[code] || defaultFill);
+                    const strokeColor = isSelected ? '#34d399' : defaultStroke;
                     const shape = regionObj.element.shape;
                     if (shape && shape.style && shape.style.initial) {
                         shape.style.initial.fill = color;
-                        shape.style.initial.stroke = defaultStroke;
+                        shape.style.initial.stroke = strokeColor;
                     }
                     if (typeof regionObj.element.setStyle === 'function') {
                         regionObj.element.setStyle('fill', color);
+                        regionObj.element.setStyle('stroke', strokeColor);
                     }
                 }
             }
@@ -165,9 +168,9 @@ export function choroplethMap(options = {}) {
                             cursor: 'pointer'
                         },
                         selected: {
-                            fill: '#0284c7',
-                            stroke: '#38bdf8',
-                            strokeWidth: 1.5
+                            fill: '#10b981',
+                            stroke: '#34d399',
+                            strokeWidth: 2
                         }
                     },
                     series: {
@@ -245,6 +248,7 @@ export function choroplethMap(options = {}) {
                     this.mapInstance.setSelectedRegions(this.selectedRegions);
                 }
             }
+            this.applyColors();
         },
 
         destroyMap() {
