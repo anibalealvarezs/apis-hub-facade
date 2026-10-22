@@ -159,10 +159,22 @@ export function gscDashboard(config = {}) {
         },
 
         handleMapCountrySelected(code) {
-            const countryName = this.countryCodeToName(code);
-            if (countryName) {
-                this.toggleFilter('countries', countryName);
-            }
+            if (!code) return;
+            const code2 = code.toUpperCase();
+
+            // Match clicked region code against current table rows or mapping
+            const rows = this.tableState.rows || [];
+            let matchingRow = rows.find(r => {
+                const rowId = (r.id || '').trim();
+                if (!rowId) return false;
+                if (rowId.toUpperCase() === code2) return true;
+                const iso3 = COUNTRY_NAME_TO_CODE[rowId] || rowId;
+                if (iso3 && (iso3.toUpperCase() === code2 || this.convertIso3ToIso2(iso3) === code2)) return true;
+                return false;
+            });
+
+            const filterVal = matchingRow ? matchingRow.id : (this.countryCodeToName(code2) || code2);
+            this.toggleFilter('countries', filterVal);
         },
 
         resetCountryFilters() {
@@ -171,7 +183,6 @@ export function gscDashboard(config = {}) {
                 this.saveFilters();
                 this.fetchSummary();
                 this.fetchChart();
-                this.fetchTable();
             }
         },
 

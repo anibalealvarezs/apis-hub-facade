@@ -194,10 +194,6 @@ export function choroplethMap(options = {}) {
                     onRegionSelected(code, isSelected, selectedRegions) {
                         console.log('[choroplethMap] onRegionSelected triggered:', code, isSelected);
                         self.$dispatch('country-selected', { code, isSelected });
-                    },
-                    onRegionClick(event, code) {
-                        console.log('[choroplethMap] onRegionClick triggered:', code);
-                        self.$dispatch('country-clicked', { code });
                     }
                 });
 
