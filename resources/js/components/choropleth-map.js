@@ -14,6 +14,11 @@ export function choroplethMap(options = {}) {
         init() {
             this.$nextTick(() => {
                 this.renderMap();
+                setTimeout(() => {
+                    if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
+                        this.mapInstance.updateSize();
+                    }
+                }, 100);
             });
 
             // Watch theme changes
@@ -26,6 +31,14 @@ export function choroplethMap(options = {}) {
                 }
             });
             observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+            // Handle window resize
+            this._resizeHandler = () => {
+                if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
+                    this.mapInstance.updateSize();
+                }
+            };
+            window.addEventListener('resize', this._resizeHandler);
         },
 
         renderMap() {
@@ -117,6 +130,9 @@ export function choroplethMap(options = {}) {
         },
 
         destroyMap() {
+            if (this._resizeHandler) {
+                window.removeEventListener('resize', this._resizeHandler);
+            }
             if (this.mapInstance && typeof this.mapInstance.destroy === 'function') {
                 this.mapInstance.destroy();
                 this.mapInstance = null;
