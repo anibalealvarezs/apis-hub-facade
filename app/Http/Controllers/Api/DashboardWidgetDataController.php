@@ -2661,19 +2661,21 @@
 
                     $seriesBreakdown = $series['breakdown'] ?? $controls['series_breakdown'][$sIdx] ?? null;
                     $breakdownDim = is_array($seriesBreakdown) ? ($seriesBreakdown['dimension'] ?? null) : $seriesBreakdown;
+                    $isChoroplethOrScatter = in_array($widget->widget_type, ['scatter_plot', 'choropleth_map'], true);
                     $defaultBreakdownLimit = ($widget->widget_type === 'pie_chart' && isset($controls['pie_slice_limit']))
                         ? (int)$controls['pie_slice_limit']
-                        : (($widget->widget_type === 'scatter_plot') ? 250 : 5);
-                    $maxBreakdownLimit = ($widget->widget_type === 'scatter_plot') ? 250 : 30;
-                    $breakdownLimit = ($widget->widget_type === 'scatter_plot')
-                        ? 250
+                        : ($isChoroplethOrScatter ? 250 : 5);
+                    $maxBreakdownLimit = $isChoroplethOrScatter ? 250 : 30;
+                    $breakdownLimit = $isChoroplethOrScatter
+                        ? (is_array($seriesBreakdown) && isset($seriesBreakdown['limit']) ? (int)$seriesBreakdown['limit'] : 250)
                         : (is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit);
                     $breakdownLimit = max(1, min($maxBreakdownLimit, $breakdownLimit));
-                    $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
                     $breakdownRankBy = is_array($seriesBreakdown) ? (string)($seriesBreakdown['rank_by'] ?? '') : '';
                     if (!in_array($breakdownRankBy, $metrics, true)) {
                         $breakdownRankBy = $metrics[0] ?? 'value';
                     }
+                    $isPosRank = str_contains(strtolower($breakdownRankBy), 'position') || str_contains(strtolower($breakdownRankBy), 'rank');
+                    $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? ($isPosRank ? 'value_asc' : 'value_desc')) : ($isPosRank ? 'value_asc' : 'value_desc');
 
                     if (!empty($breakdownDim)) {
                         $payload['breakdown'] = $breakdownDim;
@@ -4103,13 +4105,20 @@
                 unset($datesMap);
             }
 
-            // Sort breakdown keys according to order
+            // Sort breakdown keys according to order.
+            // For position or rank metrics, best performance is numerically lower, so 'value_desc' (the default "top" semantic)
+            // maps to lowest numeric values first.
+            $isPositionOrRank = str_contains(strtolower($cleanMetric), 'position') || str_contains(strtolower($cleanMetric), 'rank');
             $dimValues = array_keys($groupedData);
-            usort($dimValues, function ($a, $b) use ($totals, $order) {
+            usort($dimValues, function ($a, $b) use ($totals, $order, $isPositionOrRank) {
                 if ($order === 'value_desc') {
-                    return ($totals[$b] ?? 0) <=> ($totals[$a] ?? 0);
+                    return $isPositionOrRank
+                        ? (($totals[$a] ?? 0) <=> ($totals[$b] ?? 0))
+                        : (($totals[$b] ?? 0) <=> ($totals[$a] ?? 0));
                 } elseif ($order === 'value_asc') {
-                    return ($totals[$a] ?? 0) <=> ($totals[$b] ?? 0);
+                    return $isPositionOrRank
+                        ? (($totals[$b] ?? 0) <=> ($totals[$a] ?? 0))
+                        : (($totals[$a] ?? 0) <=> ($totals[$b] ?? 0));
                 } elseif ($order === 'alpha_desc') {
                     return strcasecmp($b, $a);
                 } else { // alpha_asc
@@ -5701,7 +5710,12 @@
                             ];
                         }
 
-                        usort($dsLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                        $isPosMetric = str_contains(strtolower($dsMetric), 'position') || str_contains(strtolower($dsMetric), 'rank');
+                        if ($isPosMetric) {
+                            usort($dsLeaderboard, fn($a, $b) => $a['value'] <=> $b['value']);
+                        } else {
+                            usort($dsLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                        }
 
                         $seriesMetricsData[] = [
                             'metric' => $dsMetric,
@@ -5722,7 +5736,12 @@
             }
 
             if (empty($seriesMetricsData)) {
-                usort($leaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                $isPosMetric = str_contains(strtolower($metric), 'position') || str_contains(strtolower($metric), 'rank');
+                if ($isPosMetric) {
+                    usort($leaderboard, fn($a, $b) => $a['value'] <=> $b['value']);
+                } else {
+                    usort($leaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                }
             }
 
             return [
