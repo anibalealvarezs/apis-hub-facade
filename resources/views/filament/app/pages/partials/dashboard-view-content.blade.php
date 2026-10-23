@@ -612,41 +612,45 @@
                                             </div>
                                         </template>
                                         <template x-if="settingsSourceType !== 'kpi'">
-                                            <x-ui.select-input x-model="settingsControls.granularity" class="w-full">
+                                            <div>
                                                 <template x-if="['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
-                                                    <optgroup label="{{ __('Time Granularities') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                                        <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="semiannual">{{ __('Semiannual') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="annually">{{ __('Annually') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="trailing_weekly">{{ __('Trailing 7 Days (Rolling Week)') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="trailing_monthly">{{ __('Trailing 30 Days (Rolling Month)') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="trailing_quarterly">{{ __('Trailing 90 Days (Rolling Quarter)') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="trailing_semiannual">{{ __('Trailing 180 Days (Rolling Half-Year)') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="trailing_annually">{{ __('Trailing 365 Days (Anualizado / TTM)') }}</x-ui.select-option>
-                                                        <x-ui.select-option value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
-                                                    </optgroup>
+                                                    <x-ui.select-input x-model="settingsControls.granularity" class="w-full">
+                                                        <optgroup label="{{ __('Time Granularities') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                                            <x-ui.select-option value="daily">{{ __('Daily') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="weekly">{{ __('Weekly') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="monthly">{{ __('Monthly') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="quarterly">{{ __('Quarterly') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="semiannual">{{ __('Semiannual') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="annually">{{ __('Annually') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="trailing_weekly">{{ __('Trailing 7 Days (Rolling Week)') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="trailing_monthly">{{ __('Trailing 30 Days (Rolling Month)') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="trailing_quarterly">{{ __('Trailing 90 Days (Rolling Quarter)') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="trailing_semiannual">{{ __('Trailing 180 Days (Rolling Half-Year)') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="trailing_annually">{{ __('Trailing 365 Days (Anualizado / TTM)') }}</x-ui.select-option>
+                                                            <x-ui.select-option value="lifetime">{{ __('Lifetime') }}</x-ui.select-option>
+                                                        </optgroup>
+                                                    </x-ui.select-input>
                                                 </template>
                                                 <template x-if="!['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually', 'lifetime'].includes(settingsBuilderControls.granularity)">
-                                                    <optgroup label="{{ __('Dimension') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                                                        <x-ui.select-option x-bind:value="settingsBuilderControls.granularity" x-text="{
-                                                            'query': '{{ __('Query (SEO)') }}',
-                                                            'dimensions.page': '{{ __('Page (SEO)') }}',
-                                                            'country': '{{ __('Country') }}',
-                                                            'device': '{{ __('Device') }}',
-                                                            'post': '{{ __('Post / Media') }}',
-                                                            'channeledCampaign': '{{ __('Campaign') }}',
-                                                            'campaign': '{{ __('Campaign') }}',
-                                                            'campaignType': '{{ __('Campaign Type') }}',
-                                                            'adset': '{{ __('Ad Set / Ad Group') }}',
-                                                            'ad': '{{ __('Ad / Creative') }}',
-                                                            'channeledAccount': '{{ __('Account') }}'
-                                                        }[settingsBuilderControls.granularity] || (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1))"></x-ui.select-option>
-                                                    </optgroup>
+                                                    <x-ui.select-input x-model="settingsControls.granularity" class="w-full">
+                                                        <optgroup label="{{ __('Dimension') }}" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                                                            <x-ui.select-option x-bind:value="settingsBuilderControls.granularity" x-text="{
+                                                                'query': '{{ __('Query (SEO)') }}',
+                                                                'dimensions.page': '{{ __('Page (SEO)') }}',
+                                                                'country': '{{ __('Country') }}',
+                                                                'device': '{{ __('Device') }}',
+                                                                'post': '{{ __('Post / Media') }}',
+                                                                'channeledCampaign': '{{ __('Campaign') }}',
+                                                                'campaign': '{{ __('Campaign') }}',
+                                                                'campaignType': '{{ __('Campaign Type') }}',
+                                                                'adset': '{{ __('Ad Set / Ad Group') }}',
+                                                                'ad': '{{ __('Ad / Creative') }}',
+                                                                'channeledAccount': '{{ __('Account') }}'
+                                                            }[settingsBuilderControls.granularity] || (String(settingsBuilderControls.granularity).charAt(0).toUpperCase() + String(settingsBuilderControls.granularity).slice(1))"></x-ui.select-option>
+                                                        </optgroup>
+                                                    </x-ui.select-input>
                                                 </template>
-                                            </x-ui.select-input>
+                                            </div>
                                         </template>
                                     </div>
                                 </div>

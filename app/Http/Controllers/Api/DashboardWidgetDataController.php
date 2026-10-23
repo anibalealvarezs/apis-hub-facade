@@ -5441,6 +5441,52 @@
                 'HUN'=>'HU','UKR'=>'UA','RUS'=>'RU'
             ];
 
+            $countryNameToIso2 = [
+                'united states' => 'US', 'united states of america' => 'US', 'usa' => 'US',
+                'colombia' => 'CO', 'mexico' => 'MX', 'peru' => 'PE', 'spain' => 'ES',
+                'canada' => 'CA', 'ecuador' => 'EC', 'argentina' => 'AR',
+                'dominican republic' => 'DO', 'chile' => 'CL', 'venezuela' => 'VE',
+                'honduras' => 'HN', 'india' => 'IN', 'united kingdom' => 'GB', 'great britain' => 'GB',
+                'cuba' => 'CU', 'puerto rico' => 'PR', 'nicaragua' => 'NI',
+                'united arab emirates' => 'AE', 'france' => 'FR', 'el salvador' => 'SV',
+                'germany' => 'DE', 'italy' => 'IT', 'brazil' => 'BR', 'australia' => 'AU',
+                'guatemala' => 'GT', 'costa rica' => 'CR', 'panama' => 'PA', 'bolivia' => 'BO',
+                'uruguay' => 'UY', 'paraguay' => 'PY', 'netherlands' => 'NL', 'switzerland' => 'CH',
+                'sweden' => 'SE', 'norway' => 'NO', 'denmark' => 'DK', 'poland' => 'PL',
+                'austria' => 'AT', 'belgium' => 'BE', 'finland' => 'FI', 'ireland' => 'IE',
+                'portugal' => 'PT', 'new zealand' => 'NZ', 'south africa' => 'ZA', 'south korea' => 'KR',
+                'korea, republic of' => 'KR', 'japan' => 'JP', 'china' => 'CN', 'singapore' => 'SG',
+                'hong kong' => 'HK', 'taiwan' => 'TW', 'malaysia' => 'MY', 'indonesia' => 'ID',
+                'philippines' => 'PH', 'thailand' => 'TH', 'vietnam' => 'VN', 'viet nam' => 'VN',
+                'turkey' => 'TR', 'türkiye' => 'TR', 'saudi arabia' => 'SA', 'israel' => 'IL',
+                'egypt' => 'EG', 'nigeria' => 'NG', 'kenya' => 'KE', 'romania' => 'RO',
+                'czech republic' => 'CZ', 'czechia' => 'CZ', 'greece' => 'GR', 'hungary' => 'HU',
+                'ukraine' => 'UA', 'russia' => 'RU', 'russian federation' => 'RU', 'morocco' => 'MA'
+            ];
+
+            $resolveIso2AndName = function ($rawName) use ($iso3to2, $countryNameToIso2): array {
+                if (empty($rawName)) return [null, 'Unknown'];
+                $clean = trim((string)$rawName);
+                $lower = strtolower($clean);
+
+                // Direct ISO2
+                if (strlen($clean) === 2 && ctype_alpha($clean)) {
+                    return [strtoupper($clean), $clean];
+                }
+                // ISO3 code
+                if (strlen($clean) === 3 && ctype_alpha($clean)) {
+                    $u3 = strtoupper($clean);
+                    if (isset($iso3to2[$u3])) {
+                        return [$iso3to2[$u3], $clean];
+                    }
+                }
+                // Country name match
+                if (isset($countryNameToIso2[$lower])) {
+                    return [$countryNameToIso2[$lower], $clean];
+                }
+                return [null, $clean];
+            };
+
             $mapData = [];
             $leaderboard = [];
             $seriesMetricsData = [];
@@ -5453,62 +5499,133 @@
                     if (!$key) continue;
                     $val = (float)($row[$metric] ?? $row['clicks'] ?? $row['sessions'] ?? $row['value'] ?? 0);
 
-                    $iso2 = strtoupper(trim((string)$key));
-                    if (strlen($iso2) === 3 && isset($iso3to2[$iso2])) {
-                        $iso2 = $iso3to2[$iso2];
-                    }
-                    if (strlen($iso2) === 2) {
+                    [$iso2, $cName] = $resolveIso2AndName($key);
+                    if ($iso2) {
                         $mapData[$iso2] = ($mapData[$iso2] ?? 0) + $val;
                     }
 
                     $leaderboard[] = [
-                        'name' => (string)$key,
-                        'code' => $iso2,
+                        'name' => $cName,
+                        'code' => $iso2 ?: 'UNK',
                         'value' => $val,
                     ];
                 }
             } elseif (isset($data['datasets']) && is_array($data['datasets'])) {
-                // Case 2: Datasets (e.g., standard breakdown output from Analytics Engine)
+                // Case 2: Datasets from fanOutBreakdownSeries or multi-series
                 $labels = $data['labels'] ?? [];
-                foreach ($data['datasets'] as $dIdx => $ds) {
-                    $dsMetric = $ds['metric'] ?? $ds['label'] ?? ('Series ' . ($dIdx + 1));
-                    $dsLabel = $ds['label'] ?? ($metricLabels[$dsMetric] ?? ucfirst($dsMetric));
-                    $dsColor = $ds['borderColor'] ?? $ds['backgroundColor'] ?? null;
-                    $dsMapData = [];
-                    $dsLeaderboard = [];
-                    $dsValues = $ds['data'] ?? [];
+                $isLifetime = count($labels) === 1 && in_array(strtolower((string)$labels[0]), ['lifetime', 'total', 'all']);
 
-                    foreach ($labels as $i => $lbl) {
-                        $val = (float)($dsValues[$i] ?? 0);
-                        $iso2 = strtoupper(trim((string)$lbl));
-                        if (strlen($iso2) === 3 && isset($iso3to2[$iso2])) {
-                            $iso2 = $iso3to2[$iso2];
+                // Group datasets by metric when each country item is its own dataset
+                $datasetsByMetric = [];
+                $hasDatasetCountries = false;
+
+                foreach ($data['datasets'] as $ds) {
+                    $mKey = $ds['metric'] ?? $ds['metric_key'] ?? $metric;
+                    $datasetsByMetric[$mKey][] = $ds;
+
+                    $cCandidate = $ds['breakdown_value'] ?? null;
+                    if (!$cCandidate && !empty($ds['label']) && str_contains($ds['label'], ' - ')) {
+                        $parts = explode(' - ', $ds['label']);
+                        $cCandidate = trim(end($parts));
+                    }
+                    if ($cCandidate) {
+                        [$checkIso] = $resolveIso2AndName($cCandidate);
+                        if ($checkIso) {
+                            $hasDatasetCountries = true;
                         }
-                        if (strlen($iso2) === 2) {
-                            $dsMapData[$iso2] = ($dsMapData[$iso2] ?? 0) + $val;
+                    }
+                }
+
+                if ($hasDatasetCountries) {
+                    // Each dataset in $data['datasets'] represents a breakdown country
+                    foreach ($datasetsByMetric as $mKey => $datasetsForMetric) {
+                        $cleanMKey = preg_replace('/^trend_(?:total|average)_/', '', $mKey);
+                        $mLabel = $metricLabels[$cleanMKey] ?? ucfirst(str_replace('_', ' ', $cleanMKey));
+                        $mColor = $datasetsForMetric[0]['borderColor'] ?? $datasetsForMetric[0]['backgroundColor'] ?? null;
+                        $mMapData = [];
+                        $mLeaderboard = [];
+
+                        foreach ($datasetsForMetric as $ds) {
+                            $cCandidate = $ds['breakdown_value'] ?? null;
+                            if (!$cCandidate && !empty($ds['label']) && str_contains($ds['label'], ' - ')) {
+                                $parts = explode(' - ', $ds['label']);
+                                $cCandidate = trim(end($parts));
+                            }
+                            if (!$cCandidate) {
+                                $cCandidate = $ds['label'] ?? 'Unknown';
+                            }
+
+                            [$iso2, $cName] = $resolveIso2AndName($cCandidate);
+                            $dsValues = $ds['data'] ?? [];
+                            $val = is_array($dsValues) ? (float)($dsValues[0] ?? array_sum($dsValues)) : (float)$dsValues;
+
+                            if ($iso2) {
+                                $mMapData[$iso2] = ($mMapData[$iso2] ?? 0) + $val;
+                            }
+
+                            $mLeaderboard[] = [
+                                'name' => $cName,
+                                'code' => $iso2 ?: 'UNK',
+                                'value' => $val,
+                            ];
                         }
-                        $dsLeaderboard[] = [
-                            'name' => (string)$lbl,
-                            'code' => $iso2,
-                            'value' => $val,
+
+                        usort($mLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+
+                        $seriesMetricsData[] = [
+                            'metric' => $cleanMKey,
+                            'metric_label' => $mLabel,
+                            'color' => $mColor,
+                            'map_data' => $mMapData,
+                            'leaderboard' => array_slice($mLeaderboard, 0, 20),
                         ];
                     }
 
-                    usort($dsLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                    if (!empty($seriesMetricsData)) {
+                        $mapData = $seriesMetricsData[0]['map_data'];
+                        $leaderboard = $seriesMetricsData[0]['leaderboard'];
+                        $metric = $seriesMetricsData[0]['metric'];
+                        $metricLabel = $seriesMetricsData[0]['metric_label'];
+                    }
+                } else {
+                    // Standard labels-as-countries approach
+                    foreach ($data['datasets'] as $dIdx => $ds) {
+                        $dsMetric = $ds['metric'] ?? $ds['label'] ?? ('Series ' . ($dIdx + 1));
+                        $dsLabel = $ds['label'] ?? ($metricLabels[$dsMetric] ?? ucfirst($dsMetric));
+                        $dsColor = $ds['borderColor'] ?? $ds['backgroundColor'] ?? null;
+                        $dsMapData = [];
+                        $dsLeaderboard = [];
+                        $dsValues = $ds['data'] ?? [];
 
-                    $seriesMetricsData[] = [
-                        'metric' => $dsMetric,
-                        'metric_label' => $dsLabel,
-                        'color' => $dsColor,
-                        'map_data' => $dsMapData,
-                        'leaderboard' => array_slice($dsLeaderboard, 0, 20),
-                    ];
+                        foreach ($labels as $i => $lbl) {
+                            $val = (float)($dsValues[$i] ?? 0);
+                            [$iso2, $cName] = $resolveIso2AndName($lbl);
+                            if ($iso2) {
+                                $dsMapData[$iso2] = ($dsMapData[$iso2] ?? 0) + $val;
+                            }
+                            $dsLeaderboard[] = [
+                                'name' => $cName,
+                                'code' => $iso2 ?: 'UNK',
+                                'value' => $val,
+                            ];
+                        }
 
-                    if ($dIdx === 0) {
-                        $mapData = $dsMapData;
-                        $leaderboard = $dsLeaderboard;
-                        $metricLabel = $dsLabel;
-                        $metric = $dsMetric;
+                        usort($dsLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+
+                        $seriesMetricsData[] = [
+                            'metric' => $dsMetric,
+                            'metric_label' => $dsLabel,
+                            'color' => $dsColor,
+                            'map_data' => $dsMapData,
+                            'leaderboard' => array_slice($dsLeaderboard, 0, 20),
+                        ];
+
+                        if ($dIdx === 0) {
+                            $mapData = $dsMapData;
+                            $leaderboard = $dsLeaderboard;
+                            $metricLabel = $dsLabel;
+                            $metric = $dsMetric;
+                        }
                     }
                 }
             }
