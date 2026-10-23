@@ -4193,16 +4193,32 @@ window.dashboardRenderer = {
         let activeIdx = 0;
 
         const getActiveData = (idx) => {
+            let activeItem = null;
             if (seriesMetrics && seriesMetrics[idx]) {
-                return seriesMetrics[idx];
+                activeItem = { ...seriesMetrics[idx] };
+            } else {
+                activeItem = {
+                    metric: data?.metric || controls?.metrics?.[0] || 'clicks',
+                    metric_label: data?.metric_label || controls?.metrics?.[0] || 'Value',
+                    color: data?.color || null,
+                    map_data: data?.map_data || {},
+                    leaderboard: data?.leaderboard || []
+                };
             }
-            return {
-                metric: data?.metric || controls?.metrics?.[0] || 'clicks',
-                metric_label: data?.metric_label || controls?.metrics?.[0] || 'Value',
-                color: controls?.series?.[0]?.color || controls?.color || '#0284c7',
-                map_data: data?.map_data || {},
-                leaderboard: data?.leaderboard || []
-            };
+
+            const activeMKey = activeItem.metric ? String(activeItem.metric).toLowerCase() : '';
+            const userMetricColor = controls?.series_metric_colors?.[0]?.[activeMKey]
+                ?? controls?.series_metric_colors?.['0']?.[activeMKey]
+                ?? controls?.raw_series?.[0]?.metric_colors?.[activeMKey]
+                ?? controls?.series?.[0]?.color
+                ?? controls?.color
+                ?? '#00a7f9';
+
+            if (!activeItem.color || activeItem.color.startsWith('rgb')) {
+                activeItem.color = userMetricColor;
+            }
+
+            return activeItem;
         };
 
         const initialActive = getActiveData(activeIdx);

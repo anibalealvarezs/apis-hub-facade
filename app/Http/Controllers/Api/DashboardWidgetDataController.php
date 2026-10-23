@@ -5431,37 +5431,81 @@
             $metricLabel = $metricLabels[$metric] ?? ucfirst(str_replace('_', ' ', $metric));
 
             $iso3to2 = [
-                'USA'=>'US','GBR'=>'GB','CAN'=>'CA','DEU'=>'DE','FRA'=>'FR','ITA'=>'IT','ESP'=>'ES',
-                'AUS'=>'AU','BRA'=>'BR','IND'=>'IN','CHN'=>'CN','JPN'=>'JP','MEX'=>'MX','NLD'=>'NL',
-                'SWE'=>'SE','CHE'=>'CH','NOR'=>'NO','DNK'=>'DK','POL'=>'PL','AUT'=>'AT','BEL'=>'BE',
-                'FIN'=>'FI','IRL'=>'IE','PRT'=>'PT','NZL'=>'NZ','ZAF'=>'ZA','ARG'=>'AR','CHL'=>'CL',
-                'COL'=>'CO','PER'=>'PE','KOR'=>'KR','SGP'=>'SG','HKG'=>'HK','TWN'=>'TW','MYS'=>'MY',
-                'IDN'=>'ID','PHL'=>'PH','THA'=>'TH','VNM'=>'VN','TUR'=>'TR','SAU'=>'SA','ARE'=>'AE',
-                'ISR'=>'IL','EGY'=>'EG','NGA'=>'NG','KEN'=>'KE','ROU'=>'RO','CZE'=>'CZ','GRC'=>'GR',
-                'HUN'=>'HU','UKR'=>'UA','RUS'=>'RU'
+                'AFG'=>'AF','ALA'=>'AX','ALB'=>'AL','DZA'=>'DZ','ASM'=>'AS','AND'=>'AD','AGO'=>'AO','AIA'=>'AI','ATA'=>'AQ','ATG'=>'AG','ARG'=>'AR','ARM'=>'AM','ABW'=>'AW','AUS'=>'AU','AUT'=>'AT','AZE'=>'AZ',
+                'BHS'=>'BS','BHR'=>'BH','BGD'=>'BD','BRB'=>'BB','BLR'=>'BY','BEL'=>'BE','BLZ'=>'BZ','BEN'=>'BJ','BMU'=>'BM','BTN'=>'BT','BOL'=>'BO','BES'=>'BQ','BIH'=>'BA','BWA'=>'BW','BVT'=>'BV','BRA'=>'BR',
+                'IOT'=>'IO','BRN'=>'BN','BGR'=>'BG','BFA'=>'BF','BDI'=>'BI','CPV'=>'CV','KHM'=>'KH','CMR'=>'CM','CAN'=>'CA','CYM'=>'KY','CAF'=>'CF','TCD'=>'TD','CHL'=>'CL','CHN'=>'CN','CXR'=>'CX','CCK'=>'CC',
+                'COL'=>'CO','COM'=>'KM','COG'=>'CG','COD'=>'CD','COK'=>'CK','CRI'=>'CR','CIV'=>'CI','HRV'=>'HR','CUB'=>'CU','CUW'=>'CW','CYP'=>'CY','CZE'=>'CZ','DNK'=>'DK','DJI'=>'DJ','DMA'=>'DM','DOM'=>'DO',
+                'ECU'=>'EC','EGY'=>'EG','SLV'=>'SV','GNQ'=>'GQ','ERI'=>'ER','EST'=>'EE','SWZ'=>'SZ','ETH'=>'ET','FLK'=>'FK','FRO'=>'FO','FJI'=>'FJ','FIN'=>'FI','FRA'=>'FR','GUF'=>'GF','PYF'=>'PF','ATF'=>'TF',
+                'GAB'=>'GA','GMB'=>'GM','GEO'=>'GE','DEU'=>'DE','GHA'=>'GH','GIB'=>'GI','GRC'=>'GR','GRL'=>'GL','GRD'=>'GD','GLP'=>'GP','GUM'=>'GU','GTM'=>'GT','GGY'=>'GG','GIN'=>'GN','GNB'=>'GW','GUY'=>'GY',
+                'HTI'=>'HT','HMD'=>'HM','VAT'=>'VA','HND'=>'HN','HKG'=>'HK','HUN'=>'HU','ISL'=>'IS','IND'=>'IN','IDN'=>'ID','IRN'=>'IR','IRQ'=>'IQ','IRL'=>'IE','IMN'=>'IM','ISR'=>'IL','ITA'=>'IT','JAM'=>'JM',
+                'JPN'=>'JP','JEY'=>'JE','JOR'=>'JO','KAZ'=>'KZ','KEN'=>'KE','KIR'=>'KI','PRK'=>'KP','KOR'=>'KR','KWT'=>'KW','KGZ'=>'KG','LAO'=>'LA','LVA'=>'LV','LBN'=>'LB','LSO'=>'LS','LBR'=>'LR','LBY'=>'LY',
+                'LIE'=>'LI','LTU'=>'LT','LUX'=>'LU','MAC'=>'MO','MDG'=>'MG','MWI'=>'MW','MYS'=>'MY','MDV'=>'MV','MLI'=>'ML','MLT'=>'MT','MHL'=>'MH','MTQ'=>'MQ','MRT'=>'MR','MUS'=>'MU','MYT'=>'YT','MEX'=>'MX',
+                'FSM'=>'FM','MDA'=>'MD','MCO'=>'MC','MNG'=>'MN','MNE'=>'ME','MSR'=>'MS','MAR'=>'MA','MOZ'=>'MZ','MMR'=>'MM','NAM'=>'NAM' ? 'NA' : 'NA','NRU'=>'NR','NPL'=>'NP','NLD'=>'NL','NCL'=>'NC','NZL'=>'NZ','NIC'=>'NI',
+                'NER'=>'NE','NGA'=>'NG','NIU'=>'NU','NFK'=>'NF','MKD'=>'MK','MNP'=>'MP','NOR'=>'NO','OMN'=>'OM','PAK'=>'PK','PLW'=>'PW','PSE'=>'PS','PAN'=>'PA','PNG'=>'PG','PRY'=>'PY','PER'=>'PE','PHL'=>'PH',
+                'PCN'=>'PN','POL'=>'PL','PRT'=>'PT','PRI'=>'PR','QAT'=>'QA','REU'=>'RE','ROU'=>'RO','RUS'=>'RU','RWA'=>'RW','BLM'=>'BL','SHN'=>'SH','KNA'=>'KN','LCA'=>'LC','MAF'=>'MF','SPM'=>'PM','VCT'=>'VC',
+                'WSM'=>'WS','SMR'=>'SM','STP'=>'ST','SAU'=>'SA','SEN'=>'SN','SRB'=>'RS','SYC'=>'SC','SLE'=>'SL','SGP'=>'SG','SXM'=>'SX','SVK'=>'SK','SVN'=>'SI','SLB'=>'SB','SOM'=>'SO','ZAF'=>'ZA','SGS'=>'GS',
+                'SSD'=>'SS','ESP'=>'ES','LKA'=>'LK','SDN'=>'SD','SUR'=>'SR','SJM'=>'SJ','SWE'=>'SE','CHE'=>'CH','SYR'=>'SY','TWN'=>'TW','TJK'=>'TJ','TZA'=>'TZ','THA'=>'TH','TLS'=>'TL','TGO'=>'TG','TKL'=>'TK',
+                'TON'=>'TO','TTO'=>'TT','TUN'=>'TUN' ? 'TN' : 'TN','TUR'=>'TR','TKM'=>'TM','TCA'=>'TC','TUV'=>'TV','UGA'=>'UG','UKR'=>'UA','ARE'=>'AE','GBR'=>'GB','USA'=>'US','UMI'=>'UM','URY'=>'UY','UZB'=>'UZ','VUT'=>'VU',
+                'VEN'=>'VE','VNM'=>'VN','VGB'=>'VG','VIR'=>'VI','WLF'=>'WF','ESH'=>'EH','YEM'=>'YE','ZMB'=>'ZM','ZWE'=>'ZW'
             ];
 
             $countryNameToIso2 = [
-                'united states' => 'US', 'united states of america' => 'US', 'usa' => 'US',
-                'colombia' => 'CO', 'mexico' => 'MX', 'peru' => 'PE', 'spain' => 'ES',
-                'canada' => 'CA', 'ecuador' => 'EC', 'argentina' => 'AR',
-                'dominican republic' => 'DO', 'chile' => 'CL', 'venezuela' => 'VE',
-                'honduras' => 'HN', 'india' => 'IN', 'united kingdom' => 'GB', 'great britain' => 'GB',
-                'cuba' => 'CU', 'puerto rico' => 'PR', 'nicaragua' => 'NI',
-                'united arab emirates' => 'AE', 'france' => 'FR', 'el salvador' => 'SV',
-                'germany' => 'DE', 'italy' => 'IT', 'brazil' => 'BR', 'australia' => 'AU',
-                'guatemala' => 'GT', 'costa rica' => 'CR', 'panama' => 'PA', 'bolivia' => 'BO',
-                'uruguay' => 'UY', 'paraguay' => 'PY', 'netherlands' => 'NL', 'switzerland' => 'CH',
-                'sweden' => 'SE', 'norway' => 'NO', 'denmark' => 'DK', 'poland' => 'PL',
-                'austria' => 'AT', 'belgium' => 'BE', 'finland' => 'FI', 'ireland' => 'IE',
-                'portugal' => 'PT', 'new zealand' => 'NZ', 'south africa' => 'ZA', 'south korea' => 'KR',
-                'korea, republic of' => 'KR', 'japan' => 'JP', 'china' => 'CN', 'singapore' => 'SG',
-                'hong kong' => 'HK', 'taiwan' => 'TW', 'malaysia' => 'MY', 'indonesia' => 'ID',
-                'philippines' => 'PH', 'thailand' => 'TH', 'vietnam' => 'VN', 'viet nam' => 'VN',
-                'turkey' => 'TR', 'türkiye' => 'TR', 'saudi arabia' => 'SA', 'israel' => 'IL',
-                'egypt' => 'EG', 'nigeria' => 'NG', 'kenya' => 'KE', 'romania' => 'RO',
-                'czech republic' => 'CZ', 'czechia' => 'CZ', 'greece' => 'GR', 'hungary' => 'HU',
-                'ukraine' => 'UA', 'russia' => 'RU', 'russian federation' => 'RU', 'morocco' => 'MA'
+                'aruba' => 'AW', 'afghanistan' => 'AF', 'angola' => 'AO', 'anguilla' => 'AI', 'åland islands' => 'AX', 'aland islands' => 'AX',
+                'albania' => 'AL', 'andorra' => 'AD', 'united arab emirates' => 'AE', 'argentina' => 'AR', 'armenia' => 'AM',
+                'american samoa' => 'AS', 'antarctica' => 'AQ', 'french southern territories' => 'TF', 'antigua and barbuda' => 'AG',
+                'australia' => 'AU', 'austria' => 'AT', 'azerbaijan' => 'AZ', 'burundi' => 'BI', 'belgium' => 'BE', 'benin' => 'BJ',
+                'bonaire, sint eustatius and saba' => 'BQ', 'burkina faso' => 'BF', 'bangladesh' => 'BD', 'bulgaria' => 'BG',
+                'bahrain' => 'BH', 'bahamas' => 'BS', 'bosnia and herzegovina' => 'BA', 'saint barthélemy' => 'BL', 'saint barthelemy' => 'BL',
+                'belarus' => 'BY', 'belize' => 'BZ', 'bermuda' => 'BM', 'bolivia' => 'BO', 'brazil' => 'BR', 'barbados' => 'BB',
+                'brunei darussalam' => 'BN', 'brunei' => 'BN', 'bhutan' => 'BT', 'bouvet island' => 'BV', 'botswana' => 'BW',
+                'central african republic' => 'CF', 'canada' => 'CA', 'cocos (keeling) islands' => 'CC', 'switzerland' => 'CH',
+                'chile' => 'CL', 'china' => 'CN', "côte d'ivoire" => 'CI', "cote d'ivoire" => 'CI', 'ivory coast' => 'CI', 'cameroon' => 'CM',
+                'congo, democratic republic of the' => 'CD', 'dr congo' => 'CD', 'congo' => 'CG', 'cook islands' => 'CK', 'colombia' => 'CO',
+                'comoros' => 'KM', 'cabo verde' => 'CV', 'cape verde' => 'CV', 'costa rica' => 'CR', 'cuba' => 'CU', 'curaçao' => 'CW', 'curacao' => 'CW',
+                'christmas island' => 'CX', 'cayman islands' => 'KY', 'cyprus' => 'CY', 'czechia' => 'CZ', 'czech republic' => 'CZ', 'germany' => 'DE',
+                'djibouti' => 'DJ', 'dominica' => 'DM', 'denmark' => 'DK', 'dominican republic' => 'DO', 'algeria' => 'DZ',
+                'ecuador' => 'EC', 'egypt' => 'EG', 'eritrea' => 'ER', 'western sahara' => 'EH', 'spain' => 'ES', 'estonia' => 'EE',
+                'ethiopia' => 'ET', 'finland' => 'FI', 'fiji' => 'FJ', 'falkland islands (malvinas)' => 'FK', 'falkland islands' => 'FK', 'france' => 'FR',
+                'faroe islands' => 'FO', 'micronesia' => 'FM', 'gabon' => 'GA', 'united kingdom' => 'GB', 'great britain' => 'GB', 'georgia' => 'GE',
+                'guernsey' => 'GG', 'ghana' => 'GH', 'gibraltar' => 'GI', 'guinea' => 'GN', 'guadeloupe' => 'GP', 'gambia' => 'GM',
+                'guinea-bissau' => 'GW', 'equatorial guinea' => 'GQ', 'greece' => 'GR', 'grenada' => 'GD', 'greenland' => 'GL',
+                'guatemala' => 'GT', 'french guiana' => 'GF', 'guam' => 'GU', 'guyana' => 'GY', 'hong kong' => 'HK',
+                'heard island and mcdonald islands' => 'HM', 'honduras' => 'HN', 'croatia' => 'HR', 'haiti' => 'HT',
+                'hungary' => 'HU', 'indonesia' => 'ID', 'isle of man' => 'IM', 'india' => 'IN',
+                'british indian ocean territory' => 'IO', 'ireland' => 'IE', 'iran' => 'IR', 'iraq' => 'IQ', 'iceland' => 'IS',
+                'israel' => 'IL', 'italy' => 'IT', 'jamaica' => 'JM', 'jersey' => 'JE', 'jordan' => 'JO', 'japan' => 'JP',
+                'kazakhstan' => 'KZ', 'kenya' => 'KE', 'kyrgyzstan' => 'KG', 'cambodia' => 'KH', 'kiribati' => 'KI',
+                'saint kitts and nevis' => 'KN', 'korea, republic of' => 'KR', 'south korea' => 'KR', 'kuwait' => 'KW',
+                "lao people's democratic republic" => 'LA', 'laos' => 'LA', 'lebanon' => 'LB', 'liberia' => 'LR', 'libya' => 'LY',
+                'saint lucia' => 'LC', 'liechtenstein' => 'LI', 'sri lanka' => 'LK', 'lesotho' => 'LS', 'lithuania' => 'LT',
+                'luxembourg' => 'LU', 'latvia' => 'LV', 'macao' => 'MO', 'macau' => 'MO', 'saint martin (french part)' => 'MF', 'saint martin' => 'MF', 'morocco' => 'MA',
+                'monaco' => 'MC', 'moldova' => 'MD', 'madagascar' => 'MG', 'maldives' => 'MV', 'mexico' => 'MX',
+                'marshall islands' => 'MH', 'north macedonia' => 'MK', 'mali' => 'ML', 'malta' => 'MT', 'myanmar' => 'MM',
+                'montenegro' => 'ME', 'mongolia' => 'MN', 'northern mariana islands' => 'MP', 'mozambique' => 'MZ',
+                'mauritania' => 'MR', 'montserrat' => 'MS', 'martinique' => 'MQ', 'mauritius' => 'MU', 'malawi' => 'MW',
+                'malaysia' => 'MY', 'mayotte' => 'YT', 'namibia' => 'NA', 'new caledonia' => 'NC', 'niger' => 'NE',
+                'norfolk island' => 'NF', 'nigeria' => 'NG', 'nicaragua' => 'NI', 'niue' => 'NU', 'netherlands' => 'NL',
+                'norway' => 'NO', 'nepal' => 'NP', 'nauru' => 'NR', 'new zealand' => 'NZ', 'oman' => 'OM', 'pakistan' => 'PK',
+                'panama' => 'PA', 'pitcairn' => 'PN', 'peru' => 'PE', 'philippines' => 'PH', 'palau' => 'PW',
+                'papua new guinea' => 'PG', 'poland' => 'PL', 'puerto rico' => 'PR',
+                "korea, democratic people's republic of" => 'KP', 'north korea' => 'KP', 'portugal' => 'PT', 'paraguay' => 'PY',
+                'palestine, state of' => 'PS', 'palestine' => 'PS', 'french polynesia' => 'PF', 'qatar' => 'QA', 'réunion' => 'RE', 'reunion' => 'RE',
+                'romania' => 'RO', 'russian federation' => 'RU', 'russia' => 'RU', 'rwanda' => 'RW', 'saudi arabia' => 'SA', 'sudan' => 'SD',
+                'senegal' => 'SN', 'singapore' => 'SG', 'south georgia and the south sandwich islands' => 'GS',
+                'saint helena, ascension and tristan da cunha' => 'SH', 'saint helena' => 'SH', 'svalbard and jan mayen' => 'SJ',
+                'solomon islands' => 'SB', 'sierra leone' => 'SL', 'el salvador' => 'SV', 'san marino' => 'SM', 'somalia' => 'SO',
+                'saint pierre and miquelon' => 'PM', 'serbia' => 'RS', 'south sudan' => 'SS',
+                'sao tome and principe' => 'ST', 'suriname' => 'SR', 'slovakia' => 'SK', 'slovenia' => 'SI', 'sweden' => 'SE',
+                'eswatini' => 'SZ', 'swaziland' => 'SZ', 'sint maarten (dutch part)' => 'SX', 'sint maarten' => 'SX', 'seychelles' => 'SC',
+                'syrian arab republic' => 'SY', 'syria' => 'SY', 'turks and caicos islands' => 'TC', 'chad' => 'TD', 'togo' => 'TG',
+                'thailand' => 'TH', 'tajikistan' => 'TJ', 'tokelau' => 'TK', 'turkmenistan' => 'TM', 'timor-leste' => 'TL',
+                'tonga' => 'TO', 'trinidad and tobago' => 'TT', 'tunisia' => 'TN', 'türkiye' => 'TR', 'turkey' => 'TR', 'tuvalu' => 'TV',
+                'taiwan' => 'TW', 'tanzania' => 'TZ', 'uganda' => 'UG', 'ukraine' => 'UA',
+                'united states minor outlying islands' => 'UM', 'uruguay' => 'UY', 'united states of america' => 'US', 'united states' => 'US', 'usa' => 'US',
+                'uzbekistan' => 'UZ', 'holy see' => 'VA', 'vatican' => 'VA', 'saint vincent and the grenadines' => 'VC', 'venezuela' => 'VE',
+                'virgin islands (british)' => 'VG', 'british virgin islands' => 'VG', 'virgin islands (u.s.)' => 'VI', 'u.s. virgin islands' => 'VI', 'viet nam' => 'VN', 'vietnam' => 'VN', 'vanuatu' => 'VU',
+                'wallis and futuna' => 'WF', 'samoa' => 'WS', 'yemen' => 'YE', 'south africa' => 'ZA', 'zambia' => 'ZM',
+                'zimbabwe' => 'ZW'
             ];
 
             $resolveIso2AndName = function ($rawName) use ($iso3to2, $countryNameToIso2): array {
@@ -5484,6 +5528,12 @@
                 if (isset($countryNameToIso2[$lower])) {
                     return [$countryNameToIso2[$lower], $clean];
                 }
+                // Substring or sanitized match
+                $stripped = preg_replace('/[^\p{L}\p{N}\s]/u', '', $lower);
+                if (isset($countryNameToIso2[$stripped])) {
+                    return [$countryNameToIso2[$stripped], $clean];
+                }
+
                 return [null, $clean];
             };
 
@@ -5536,12 +5586,48 @@
                     }
                 }
 
+                // If only 1 dataset is present or breakdown_value is directly on datasets, treat as breakdown datasets
+                if (!$hasDatasetCountries && !empty($data['datasets'])) {
+                    foreach ($data['datasets'] as $ds) {
+                        if (!empty($ds['breakdown_value'])) {
+                            [$checkIso] = $resolveIso2AndName($ds['breakdown_value']);
+                            if ($checkIso) {
+                                $hasDatasetCountries = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // If each dataset represents a single country curve (fanOutBreakdownSeries)
+                // or datasets count is > 1 with 'Lifetime' label
+                if (!$hasDatasetCountries && count($data['datasets']) > 1 && $isLifetime) {
+                    $hasDatasetCountries = true;
+                }
+
                 if ($hasDatasetCountries) {
-                    // Each dataset in $data['datasets'] represents a breakdown country
+                    // Extract user-defined metric colors from controls if present
+                    $userMetricColors = $controls['series_metric_colors'][0]
+                        ?? $controls['series_metric_colors']['0']
+                        ?? $controls['raw_series'][0]['metric_colors']
+                        ?? [];
+
+                    // Group datasets into series_metrics (each metric requested becomes one map series)
                     foreach ($datasetsByMetric as $mKey => $datasetsForMetric) {
                         $cleanMKey = preg_replace('/^trend_(?:total|average)_/', '', $mKey);
                         $mLabel = $metricLabels[$cleanMKey] ?? ucfirst(str_replace('_', ' ', $cleanMKey));
-                        $mColor = $datasetsForMetric[0]['borderColor'] ?? $datasetsForMetric[0]['backgroundColor'] ?? null;
+
+                        // Priority for base series color:
+                        // 1. User configured metric color (e.g. controls.series_metric_colors[0][metric])
+                        // 2. First dataset borderColor/backgroundColor
+                        // 3. Fallback to controls.color
+                        $mColor = $userMetricColors[$cleanMKey]
+                            ?? $userMetricColors[$mKey]
+                            ?? $datasetsForMetric[0]['borderColor']
+                            ?? $datasetsForMetric[0]['backgroundColor']
+                            ?? $controls['color']
+                            ?? null;
+
                         $mMapData = [];
                         $mLeaderboard = [];
 
@@ -5570,7 +5656,12 @@
                             ];
                         }
 
-                        usort($mLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                        // For average metrics like position, lower is better when ranking
+                        if (str_contains($cleanMKey, 'position')) {
+                            usort($mLeaderboard, fn($a, $b) => $a['value'] <=> $b['value']);
+                        } else {
+                            usort($mLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                        }
 
                         $seriesMetricsData[] = [
                             'metric' => $cleanMKey,
@@ -5630,7 +5721,9 @@
                 }
             }
 
-            usort($leaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+            if (empty($seriesMetricsData)) {
+                usort($leaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+            }
 
             return [
                 'type' => 'choropleth_map',
