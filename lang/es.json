@@ -2330,5 +2330,17 @@
     "Opens": "Aperturas",
     "Open Rate": "Tasa de Apertura",
     "Click Rate": "Tasa de Clics",
-    "Normalization": "Normalización"
+    "Normalization": "Normalización",
+    "All Search Intents": "Todas las Intenciones de Búsqueda",
+    "Transactional": "Transaccional",
+    "Commercial": "Comercial",
+    "Informational": "Informativo",
+    "Navigational": "Navegacional",
+    "Unclassified": "Sin clasificar",
+    "Interactive Choropleth": "Coropleta Interactiva",
+    "Top Countries Leaderboard": "Clasificación de Países Principales",
+    "Clear country filters": "Limpiar filtros de país",
+    "Clear country filter": "Limpiar filtro de país",
+    "Reset Selection": "Restablecer Selección",
+    "Click any country on the map or leaderboard to filter dashboard.": "Haz clic en cualquier país en el mapa o en la tabla para filtrar el panel."
 }
