@@ -1863,6 +1863,8 @@ export function dashboardBuilder(config = {}) {
             list.push({
                 type: 'metric',
                 channel: this.dashboardControls.channel || '',
+                metric_selection_mode: 'multiple',
+                allowed_metrics: [],
                 metrics: [],
                 assets: [],
                 metric_colors: {},
@@ -2921,6 +2923,7 @@ export function dashboardBuilder(config = {}) {
                             label: s.label || '',
                             channel: s.channel || '',
                             dependency: rawDep,
+                            metric_selection_mode: s.metric_selection_mode || (wc.series_metric_selection_modes && wc.series_metric_selection_modes[sIdx]) || 'multiple',
                             allowed_metrics: rawAllowed,
                             metrics: rawSelected.length > 0 ? rawSelected : [...rawAllowed],
                             allowed_assets: rawAllowedAssets,
@@ -2960,6 +2963,7 @@ export function dashboardBuilder(config = {}) {
                         groupedSeries.push({
                             channel,
                             dependency: rawDep,
+                            metric_selection_mode: (wc.series_metric_selection_modes && (wc.series_metric_selection_modes[key] || wc.series_metric_selection_modes[sIdx])) || 'multiple',
                             allowed_metrics: allowed,
                             metrics,
                             assets,
@@ -2975,6 +2979,7 @@ export function dashboardBuilder(config = {}) {
                     this.widgetControlsForm.raw_series = [{
                         channel: wc.channel || '',
                         dependency: (wc.series_dependencies && (wc.series_dependencies[0] || wc.series_dependencies['0'])) || wc.dependency || '',
+                        metric_selection_mode: (wc.series_metric_selection_modes && (wc.series_metric_selection_modes[0] || wc.series_metric_selection_modes['0'])) || 'multiple',
                         allowed_metrics: [...wc.metrics],
                         metrics: [...wc.metrics],
                         assets: wc.assets ? [...wc.assets] : [],
@@ -2987,7 +2992,7 @@ export function dashboardBuilder(config = {}) {
                 }
 
                 if (this.widgetControlsForm.raw_series.length === 0) {
-                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', allowed_metrics: [], metrics: [], assets: wc.assets || [], metric_colors: {}, naming: null, metric_namings: {}, breakdown: null, filters: [] });
+                    this.widgetControlsForm.raw_series.push({ channel: wc.channel || '', dependency: '', metric_selection_mode: 'multiple', allowed_metrics: [], metrics: [], assets: wc.assets || [], metric_colors: {}, naming: null, metric_namings: {}, breakdown: null, filters: [] });
                 }
 
                 this.seriesMetricsLoading = {};
@@ -3506,6 +3511,22 @@ export function dashboardBuilder(config = {}) {
             }
         },
 
+        setRawMetricSelectionMode(index, mode) {
+            this.markWidgetControlsDirty();
+            const series = this.widgetControlsForm.raw_series[index];
+            if (!series) return;
+            series.metric_selection_mode = mode;
+            if (mode === 'single') {
+                if (Array.isArray(series.allowed_metrics) && series.allowed_metrics.length > 1) {
+                    series.allowed_metrics = [series.allowed_metrics[0]];
+                }
+                if (Array.isArray(series.metrics) && series.metrics.length > 1) {
+                    series.metrics = [series.metrics[0]];
+                }
+            }
+            this.ensureBreakdownRankByMetric(series);
+        },
+
         toggleRawMetricIncluded(index, metricKey) {
             this.markWidgetControlsDirty();
             const series = this.widgetControlsForm.raw_series[index];
@@ -3513,15 +3534,21 @@ export function dashboardBuilder(config = {}) {
             if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
             if (!Array.isArray(series.metrics)) series.metrics = [];
 
-            if (series.allowed_metrics.includes(metricKey)) {
-                // Remove from allowed and active
-                series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
-                series.metrics = series.metrics.filter(m => m !== metricKey);
+            if (series.metric_selection_mode === 'single') {
+                // Radio behavior: always select clicked metric as the only one
+                series.allowed_metrics = [metricKey];
+                series.metrics = [metricKey];
             } else {
-                // Add to allowed and by default mark as active
-                series.allowed_metrics = [...series.allowed_metrics, metricKey];
-                if (!series.metrics.includes(metricKey)) {
-                    series.metrics = [...series.metrics, metricKey];
+                if (series.allowed_metrics.includes(metricKey)) {
+                    // Remove from allowed and active
+                    series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
+                    series.metrics = series.metrics.filter(m => m !== metricKey);
+                } else {
+                    // Add to allowed and by default mark as active
+                    series.allowed_metrics = [...series.allowed_metrics, metricKey];
+                    if (!series.metrics.includes(metricKey)) {
+                        series.metrics = [...series.metrics, metricKey];
+                    }
                 }
             }
             this.ensureBreakdownRankByMetric(series);
@@ -4034,6 +4061,7 @@ export function dashboardBuilder(config = {}) {
                 payload.series_channels = {};
                 payload.series_dependencies = {};
                 payload.series_allowed_metrics = {};
+                payload.series_metric_selection_modes = {};
                 payload.series_metric_colors = {};
                 payload.series_metric_namings = {};
 
@@ -4059,6 +4087,7 @@ export function dashboardBuilder(config = {}) {
                     payload.series_channels[sIdx] = s.channel || '';
                     payload.series_dependencies[sIdx] = s.dependency || '';
                     payload.series_allowed_metrics[sIdx] = Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [];
+                    payload.series_metric_selection_modes[sIdx] = s.metric_selection_mode || 'multiple';
                     payload.series_metric_colors[sIdx] = (s.metric_colors && typeof s.metric_colors === 'object') ? { ...s.metric_colors } : {};
                     payload.series_metric_namings[sIdx] = (s.metric_namings && typeof s.metric_namings === 'object') ? { ...s.metric_namings } : {};
                 });
@@ -4070,6 +4099,7 @@ export function dashboardBuilder(config = {}) {
                     label: s.label || '',
                     channel: s.channel || '',
                     dependency: s.dependency || '',
+                    metric_selection_mode: s.metric_selection_mode || 'multiple',
                     allowed_metrics: Array.isArray(s.allowed_metrics) ? [...s.allowed_metrics] : [],
                     metrics: Array.isArray(s.metrics) ? [...s.metrics] : [],
                     allowed_assets: Array.isArray(s.allowed_assets) ? [...s.allowed_assets] : (Array.isArray(s.assets) ? [...s.assets] : []),

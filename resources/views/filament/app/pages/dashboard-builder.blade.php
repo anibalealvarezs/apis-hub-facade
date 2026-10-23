@@ -1262,17 +1262,41 @@
                                                              </div>
 
                                                              <div class="my-1 flex flex-col shrink-0">
-                                                                 <div class="flex items-center justify-between mb-2">
-                                                                     <label
-                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Leave empty for All Metrics)') }}</label>
-                                                                     <template x-if="series.channel && !isSeriesMetricsLoading(index)">
-                                                                         <div class="flex gap-3">
-                                                                             <button @click="selectAllRawMetrics(index)"
-                                                                                     class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                             <button @click="clearAllRawMetrics(index)"
-                                                                                     class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                 {{-- Metric Selection Mode & Controls Header --}}
+                                                                 <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                                                                     <div>
+                                                                         <label
+                                                                             class="block text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                                             x-text="series.metric_selection_mode === 'single' ? '{{ __('Metric (Single Selection)') }}' : '{{ __('Metrics (Leave empty for All Metrics)') }}'"></label>
+                                                                     </div>
+                                                                     <div class="flex items-center gap-2">
+                                                                         {{-- Selector Mode: Multiple (Checkboxes) vs Single (Radio) --}}
+                                                                         <div class="inline-flex items-center p-0.5 rounded-md bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-3xs font-semibold">
+                                                                             <button type="button"
+                                                                                     @click="setRawMetricSelectionMode(index, 'multiple')"
+                                                                                     :title="'{{ __('Allow user to select multiple metrics (checkboxes)') }}'"
+                                                                                     class="px-1.5 py-0.5 rounded transition-all"
+                                                                                     :class="(series.metric_selection_mode || 'multiple') === 'multiple' ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-2xs font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">
+                                                                                 {{ __('Multiple') }}
+                                                                             </button>
+                                                                             <button type="button"
+                                                                                     @click="setRawMetricSelectionMode(index, 'single')"
+                                                                                     :title="'{{ __('Allow user to select only one metric at a time (radio)') }}'"
+                                                                                     class="px-1.5 py-0.5 rounded transition-all"
+                                                                                     :class="series.metric_selection_mode === 'single' ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-2xs font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">
+                                                                                 {{ __('Single') }}
+                                                                             </button>
                                                                          </div>
-                                                                     </template>
+
+                                                                         <template x-if="series.channel && !isSeriesMetricsLoading(index) && series.metric_selection_mode !== 'single'">
+                                                                             <div class="flex gap-2">
+                                                                                 <button @click="selectAllRawMetrics(index)"
+                                                                                         class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                                 <button @click="clearAllRawMetrics(index)"
+                                                                                         class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                             </div>
+                                                                         </template>
+                                                                     </div>
                                                                  </div>
                                                                  <div
                                                                      class="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shrink-0"
@@ -1298,14 +1322,21 @@
                                                                                      :key="key">
                                                                                      <div
                                                                                          class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
-                                                                                         :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : true) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
+                                                                                         :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : (series.metric_selection_mode === 'single' ? false : true)) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                                          <div @click="toggleRawMetricIncluded(index, key)"
                                                                                               class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                                             {{-- Checkbox / Radio Icon --}}
                                                                                              <div
-                                                                                                 class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                                 :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : false) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                                 class="w-4 h-4 shrink-0 flex items-center justify-center transition-colors"
+                                                                                                 :class="[
+                                                                                                     series.metric_selection_mode === 'single' ? 'rounded-full border' : 'rounded border',
+                                                                                                     (series.allowed_metrics && series.allowed_metrics.includes(key))
+                                                                                                         ? 'bg-primary-600 border-primary-600'
+                                                                                                         : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                                                                                 ]">
+                                                                                                 {{-- Checkmark icon for multiple --}}
                                                                                                  <svg
-                                                                                                     x-show="series.allowed_metrics && series.allowed_metrics.includes(key)"
+                                                                                                     x-show="series.metric_selection_mode !== 'single' && series.allowed_metrics && series.allowed_metrics.includes(key)"
                                                                                                      class="w-3 h-3 text-white" fill="none"
                                                                                                      viewBox="0 0 24 24" stroke-width="3"
                                                                                                      stroke="currentColor">
@@ -1313,6 +1344,10 @@
                                                                                                            stroke-linejoin="round"
                                                                                                            d="m4.5 12.75 6 6 9-13.5"/>
                                                                                                  </svg>
+                                                                                                 {{-- Radio dot icon for single --}}
+                                                                                                 <div
+                                                                                                     x-show="series.metric_selection_mode === 'single' && series.allowed_metrics && series.allowed_metrics.includes(key)"
+                                                                                                     class="w-1.5 h-1.5 rounded-full bg-white"></div>
                                                                                              </div>
                                                                                              <span class="truncate font-medium text-gray-700 dark:text-gray-200"
                                                                                                    :class="(series.allowed_metrics && series.allowed_metrics.includes(key)) ? 'text-primary-900 dark:text-primary-100 font-semibold' : ''"

@@ -770,6 +770,7 @@ trait LoadsDashboardViewData
                             }
 
                             $sLabel = !empty($s['label']) ? $s['label'] : (count($resolved['raw_series']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null);
+                            $selectionMode = $s['metric_selection_mode'] ?? $resolved['series_metric_selection_modes'][$sIdx] ?? 'multiple';
                             $variables[(string)$sIdx] = [
                                 'index' => $sIdx,
                                 'channel' => $sChannel,
@@ -777,6 +778,7 @@ trait LoadsDashboardViewData
                                 'dependency' => $dependency,
                                 'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($sChannel),
                                 'metrics' => $metrics,
+                                'metric_selection_mode' => $selectionMode,
                                 'type' => $s['type'] ?? 'metric',
                                 'dm_name' => $s['dm_name'] ?? null,
                                 'selected_metric' => $isDmType && !empty($s['metrics']) ? (is_array($s['metrics']) ? reset($s['metrics']) : $s['metrics']) : null,
@@ -799,6 +801,7 @@ trait LoadsDashboardViewData
                             }
 
                             $sLabel = count($resolved['series_channels']) > 1 ? ('Series ' . ($sIdx + 1) . ' (' . Str::headline($sChannel) . ')') : null;
+                            $selectionMode = $resolved['series_metric_selection_modes'][$sIdx] ?? 'multiple';
                             $variables[(string)$sIdx] = [
                                 'index' => (int)$sIdx,
                                 'channel' => $sChannel,
@@ -806,6 +809,7 @@ trait LoadsDashboardViewData
                                 'dependency' => $dependency,
                                 'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($sChannel),
                                 'metrics' => $metrics,
+                                'metric_selection_mode' => $selectionMode,
                             ];
                         }
                     }
@@ -821,6 +825,7 @@ trait LoadsDashboardViewData
                         $granularity = $resolved['granularity'] ?? null;
                         $dependency  = $resolved['dependency'] ?? null;
                         $metrics     = KpiFormBuilder::getMetricOptionsForChannel($primaryChannel, $granularity, $dependency);
+                        $selectionMode = $resolved['series_metric_selection_modes'][0] ?? $resolved['series_metric_selection_modes']['0'] ?? 'multiple';
                         $variables['0'] = [
                             'index' => 0,
                             'channel' => $primaryChannel,
@@ -828,6 +833,7 @@ trait LoadsDashboardViewData
                             'dependency' => $dependency,
                             'dependencies' => \App\Services\Analytics\ChannelGranularityRegistry::getDependenciesForChannel($primaryChannel),
                             'metrics' => $metrics,
+                            'metric_selection_mode' => $selectionMode,
                         ];
                     }
                 }
