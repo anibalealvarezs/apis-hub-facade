@@ -71,6 +71,7 @@ export function choroplethMap(options = {}) {
             const values = Object.values(this.data || {}).map(v => Number(v) || 0).filter(v => v > 0);
             const maxVal = values.length ? Math.max(...values) : 1;
             const minVal = values.length ? Math.min(...values) : 0;
+            const isLowerBetter = String(this.metricLabel || '').toLowerCase().includes('position') || String(this.metricLabel || '').toLowerCase().includes('rank');
 
             const colorScaleData = {};
             const startColor = this.isDarkMode ? [15, 62, 109] : [186, 230, 253]; // #0f3e6d or #bae6fd
@@ -80,9 +81,16 @@ export function choroplethMap(options = {}) {
                 const num = Number(val) || 0;
                 if (num > 0) {
                     const diff = maxVal - minVal;
-                    const ratio = diff > 0
-                        ? Math.log(num - minVal + 1) / Math.log(diff + 1)
-                        : 0.8;
+                    let ratio = 0.8;
+                    if (diff > 0) {
+                        if (isLowerBetter) {
+                            const linearRatio = (maxVal - num) / diff;
+                            ratio = Math.max(0, Math.min(1, Math.pow(linearRatio, 0.85)));
+                        } else {
+                            ratio = Math.log(num - minVal + 1) / Math.log(diff + 1);
+                        }
+                    }
+                    ratio = Math.max(0, Math.min(1, ratio));
                     const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * ratio);
                     const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * ratio);
                     const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * ratio);

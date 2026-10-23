@@ -4292,34 +4292,76 @@ window.dashboardRenderer = {
             return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
         };
 
-        const computeDynamicScale = (baseHex, isDark) => {
+        // Helper to compute graded fill colors for each region according to the value range
+        const computeRegionColorGrading = (mapDataObj, baseHex, isDark, isLowerBetter) => {
+            const numEntries = Object.entries(mapDataObj || {}).map(([code, val]) => [code, Number(val)]).filter(([_, val]) => !isNaN(val) && val > 0);
+            if (!numEntries.length) return {};
+
+            const vals = numEntries.map(([_, val]) => val);
+            const minVal = Math.min(...vals);
+            const maxVal = Math.max(...vals);
+            const diff = maxVal - minVal;
+
             const [r, g, b] = hexToRgb(baseHex);
+            // Lightest tint (low intensity) -> Full vibrant baseHex (high intensity)
+            let startRgb, endRgb;
             if (isDark) {
-                // Dark mode scale: deep tint to vibrant base
-                const startHex = '#' + [
-                    Math.round(15 + r * 0.15),
-                    Math.round(23 + g * 0.15),
-                    Math.round(42 + b * 0.25)
-                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
-                const midHex = '#' + [
-                    Math.round(r * 0.65),
-                    Math.round(g * 0.65),
-                    Math.round(b * 0.65)
-                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
-                return [startHex, midHex, baseHex];
+                // In dark mode: start with dark muted tint of base color, end with vibrant base
+                startRgb = [
+                    Math.round(20 + r * 0.18),
+                    Math.round(26 + g * 0.18),
+                    Math.round(44 + b * 0.22)
+                ];
+                endRgb = [r, g, b];
             } else {
-                // Light mode scale: very soft pastel tint to intense base
-                const startHex = '#' + [
-                    Math.round(255 - (255 - r) * 0.2),
-                    Math.round(255 - (255 - g) * 0.2),
-                    Math.round(255 - (255 - b) * 0.2)
-                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
-                const midHex = '#' + [
-                    Math.round(255 - (255 - r) * 0.55),
-                    Math.round(255 - (255 - g) * 0.55),
-                    Math.round(255 - (255 - b) * 0.55)
-                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
-                return [startHex, midHex, baseHex];
+                // In light mode: start with very soft pastel tint, end with vibrant base
+                startRgb = [
+                    Math.round(255 - (255 - r) * 0.18),
+                    Math.round(255 - (255 - g) * 0.18),
+                    Math.round(255 - (255 - b) * 0.18)
+                ];
+                endRgb = [r, g, b];
+            }
+
+            const gradedColors = {};
+            for (const [code, val] of numEntries) {
+                let ratio = 0.8;
+                if (diff > 0) {
+                    if (isLowerBetter) {
+                        // For AVG position: lower value is better/favored (e.g., position 1 gets vibrant base, position 70 gets light tint)
+                        const linearRatio = (maxVal - val) / diff;
+                        // Use pow/linear for position so top rankings (1-5) stand out richly
+                        ratio = Math.max(0, Math.min(1, Math.pow(linearRatio, 0.85)));
+                    } else {
+                        // Standard volume metrics (clicks, impressions): logarithmic scale so outliers don't crush smaller countries
+                        ratio = Math.log(val - minVal + 1) / Math.log(diff + 1);
+                    }
+                }
+                ratio = Math.max(0, Math.min(1, ratio));
+
+                const curR = Math.round(startRgb[0] + (endRgb[0] - startRgb[0]) * ratio);
+                const curG = Math.round(startRgb[1] + (endRgb[1] - startRgb[1]) * ratio);
+                const curB = Math.round(startRgb[2] + (endRgb[2] - startRgb[2]) * ratio);
+                gradedColors[code.toUpperCase()] = `#${((1 << 24) + (curR << 16) + (curG << 8) + curB).toString(16).slice(1)}`;
+            }
+            return gradedColors;
+        };
+
+        const applyRegionColors = (inst, gradedColors, defaultFill, defaultStroke) => {
+            if (!inst || !inst.regions) return;
+            for (const [code, regionObj] of Object.entries(inst.regions)) {
+                if (regionObj && regionObj.element) {
+                    const color = gradedColors[code.toUpperCase()] || defaultFill;
+                    const shape = regionObj.element.shape;
+                    if (shape && shape.style && shape.style.initial) {
+                        shape.style.initial.fill = color;
+                        shape.style.initial.stroke = defaultStroke;
+                    }
+                    if (typeof regionObj.element.setStyle === 'function') {
+                        regionObj.element.setStyle('fill', color);
+                        regionObj.element.setStyle('stroke', defaultStroke);
+                    }
+                }
             }
         };
 
@@ -4328,11 +4370,16 @@ window.dashboardRenderer = {
             let currentMetricData = initialActive;
             let currentMapData = currentMetricData.map_data || {};
             let currentBaseColor = currentMetricData.color || controls?.series?.[0]?.color || controls?.color || '#00a7f9';
+            const isPosMetric = (m) => {
+                const s = String(m || '').toLowerCase();
+                return s.includes('position') || s.includes('rank');
+            };
+            let isLowerBetter = isPosMetric(currentMetricData.metric);
 
-            const getValues = (md) => Object.values(md).filter(v => typeof v === 'number' && !isNaN(v));
-            let vals = getValues(currentMapData);
-            let maxVal = vals.length ? Math.max(...vals) : 100;
-            let minVal = vals.length ? Math.min(...vals) : 0;
+            const defaultFill = isDark ? '#243042' : '#E2E8F0';
+            const defaultStroke = isDark ? '#334155' : '#cbd5e1';
+
+            let gradedColors = computeRegionColorGrading(currentMapData, currentBaseColor, isDark, isLowerBetter);
 
             const mapInst = new window.jsVectorMap({
                 selector: '#' + uniqueId,
@@ -4343,26 +4390,16 @@ window.dashboardRenderer = {
                 zoomOnScroll: false,
                 regionStyle: {
                     initial: {
-                        fill: isDark ? '#243042' : '#E2E8F0',
-                        stroke: isDark ? '#334155' : '#cbd5e1',
+                        fill: defaultFill,
+                        stroke: defaultStroke,
                         strokeWidth: 0.5,
                         fillOpacity: 1
                     },
                     hover: {
                         fill: currentBaseColor,
-                        fillOpacity: 0.85,
+                        fillOpacity: 0.9,
                         cursor: 'pointer'
                     }
-                },
-                series: {
-                    regions: [{
-                        attribute: 'fill',
-                        values: currentMapData,
-                        scale: computeDynamicScale(currentBaseColor, isDark),
-                        normalizeFunction: 'polynomial',
-                        min: minVal,
-                        max: maxVal
-                    }]
                 },
                 onRegionTooltipShow(event, tooltip, code) {
                     const val = currentMapData[code.toUpperCase()];
@@ -4378,6 +4415,9 @@ window.dashboardRenderer = {
                     );
                 }
             });
+
+            // Immediately apply graded region fills so countries have their graded metric color statically
+            applyRegionColors(mapInst, gradedColors, defaultFill, defaultStroke);
 
             this._chartInstances.set(containerEl, mapInst);
 
@@ -4402,22 +4442,19 @@ window.dashboardRenderer = {
                         currentMetricData = getActiveData(activeIdx);
                         currentMapData = currentMetricData.map_data || {};
                         currentBaseColor = currentMetricData.color || controls?.series?.[activeIdx]?.color || controls?.color || '#00a7f9';
+                        isLowerBetter = isPosMetric(currentMetricData.metric);
 
                         const countEl = containerEl.querySelector('#' + uniqueId + '-regions-count');
                         if (countEl) countEl.textContent = `${Object.keys(currentMapData).length} Regions`;
 
-                        const updatedVals = getValues(currentMapData);
-                        const newMax = updatedVals.length ? Math.max(...updatedVals) : 100;
-                        const newMin = updatedVals.length ? Math.min(...updatedVals) : 0;
-
-                        if (mapInst.series && mapInst.series.regions && mapInst.series.regions[0]) {
-                            const regSeries = mapInst.series.regions[0];
-                            regSeries.scale.clear();
-                            regSeries.scale.setScale(computeDynamicScale(currentBaseColor, isDark));
-                            regSeries.scale.setMin(newMin);
-                            regSeries.scale.setMax(newMax);
-                            regSeries.setValues(currentMapData);
+                        // Update hover fill to matching base color
+                        if (mapInst.params && mapInst.params.regionStyle && mapInst.params.regionStyle.hover) {
+                            mapInst.params.regionStyle.hover.fill = currentBaseColor;
                         }
+
+                        // Recompute graded colors for the newly selected metric and apply
+                        const updatedGradedColors = computeRegionColorGrading(currentMapData, currentBaseColor, isDark, isLowerBetter);
+                        applyRegionColors(mapInst, updatedGradedColors, defaultFill, defaultStroke);
                     });
                 });
             }
