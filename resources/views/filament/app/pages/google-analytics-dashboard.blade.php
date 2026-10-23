@@ -300,7 +300,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:header>
 
             <x-slot:actions>
-                <div x-show="ss.traffic === 'traffic_countries'" class="dash-view-toggle">
+                <div x-cloak x-show="ss.traffic === 'traffic_countries'" class="dash-view-toggle">
                     <button type="button" @click="countryViewMode = 'map'"
                             class="dash-view-btn"
                             :class="countryViewMode === 'map' ? 'is-active' : ''">

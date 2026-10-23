@@ -831,7 +831,7 @@ html.dark .jvm-zoom-btn:hover {
 
 /* Map / Table Toggle Buttons (Universal Light & Dark Mode) */
 .dash-view-toggle {
-    display: inline-flex !important;
+    display: inline-flex;
     align-items: center !important;
     border-radius: 0.5rem !important;
     padding: 2px !important;
