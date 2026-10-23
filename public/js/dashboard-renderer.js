@@ -4270,17 +4270,42 @@ window.dashboardRenderer = {
             `;
         }
 
+        // View Switcher (Map vs List) matching Data Explorer design
+        const viewSwitcherHtml = `
+            <div class="flex items-center p-0.5 rounded-md bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 flex-shrink-0" id="${uniqueId}-view-toggle">
+                <button type="button" data-view="map" class="dash-map-view-btn is-active" title="Map View">
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+                        <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.549l.062.028.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Map</span>
+                </button>
+                <button type="button" data-view="list" class="dash-map-view-btn" title="List View">
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+                        <path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>List</span>
+                </button>
+            </div>
+        `;
+
         containerEl.innerHTML = `
             <div class="w-full h-full p-2 flex flex-col">
                 <div class="flex items-center justify-between pb-1.5 border-b border-gray-100 dark:border-white/5 flex-shrink-0 gap-2">
                     <div class="flex-1 min-w-0">${pillHeaderHtml}</div>
-                    <span id="${uniqueId}-regions-count" class="text-3xs text-primary-500 font-mono flex-shrink-0">${regionsCount} Regions</span>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span id="${uniqueId}-regions-count" class="text-3xs text-primary-500 font-mono hidden sm:inline-block">${regionsCount} Regions</span>
+                        ${viewSwitcherHtml}
+                    </div>
                 </div>
-                <div id="${uniqueId}" class="w-full flex-1 min-h-[180px] relative mt-1"></div>
+                <div id="${uniqueId}-content" class="w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden">
+                    <div id="${uniqueId}" class="w-full h-full relative"></div>
+                    <div id="${uniqueId}-list-container" class="dash-widget-list-view" style="display: none;"></div>
+                </div>
             </div>
         `;
 
         const mapEl = containerEl.querySelector('#' + uniqueId);
+        const listContainerEl = containerEl.querySelector('#' + uniqueId + '-list-container');
         if (!mapEl) return;
 
         // Color computation helper: converts hex to RGB and builds light/dark tints
@@ -4366,17 +4391,184 @@ window.dashboardRenderer = {
             }
         };
 
+        // Render List View content
+        const renderListView = (metricItem, searchFilter = '') => {
+            if (!listContainerEl) return;
+            const items = metricItem.leaderboard || [];
+            const query = (searchFilter || '').trim().toLowerCase();
+            const filteredItems = query
+                ? items.filter(it => (it.name && it.name.toLowerCase().includes(query)) || (it.code && it.code.toLowerCase().includes(query)))
+                : items;
+
+            const isRatio = String(metricItem.metric || '').toLowerCase() === 'ctr' || String(metricItem.metric || '').includes('rate');
+            const isPos = isPosMetric(metricItem.metric);
+
+            let listRowsHtml = '';
+            if (!filteredItems.length) {
+                listRowsHtml = `<div class="p-6 text-center text-xs text-gray-400 dark:text-gray-500">No countries match "${this.escapeHtml(query)}"</div>`;
+            } else {
+                listRowsHtml = filteredItems.map((row, idx) => {
+                    const numVal = Number(row.value) || 0;
+                    let displayVal = numVal.toLocaleString('en-US');
+                    if (isRatio) {
+                        displayVal = numVal.toFixed(2) + '%';
+                    } else if (isPos) {
+                        displayVal = numVal.toFixed(1);
+                    }
+                    return `
+                        <div class="dash-leaderboard-item" data-country-code="${this.escapeHtml(row.code || '')}">
+                            <div class="flex items-center gap-2 truncate pr-2 min-w-0">
+                                <span class="dash-leaderboard-rank text-xs">${idx + 1}.</span>
+                                <span class="dash-leaderboard-name font-medium truncate">${this.escapeHtml(row.name || row.code || 'Unknown')}</span>
+                                ${row.code && row.code !== 'UNK' ? `<span class="text-3xs uppercase tracking-wider px-1 py-0.2 rounded bg-gray-200/60 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 font-mono">${this.escapeHtml(row.code)}</span>` : ''}
+                            </div>
+                            <div class="flex items-center shrink-0">
+                                <span class="dash-leaderboard-metric font-semibold font-mono" style="color: ${metricItem.color || 'inherit'}">${displayVal}</span>
+                                <span class="dash-leaderboard-unit text-3xs text-gray-400 ml-1.5 uppercase">${this.escapeHtml(metricItem.metric_label || metricItem.metric)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            listContainerEl.innerHTML = `
+                <div class="flex items-center justify-between gap-2 p-1 border-b border-gray-100 dark:border-white/5 mb-1 flex-shrink-0">
+                    <div class="relative flex-1 min-w-0">
+                        <input type="text" value="${this.escapeHtml(searchFilter)}" placeholder="Filter countries..." class="dash-widget-list-search w-full px-2 py-1 pl-6 text-2xs rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 absolute left-1.5 top-1.5 text-gray-400">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <span class="text-3xs text-gray-400 font-mono flex-shrink-0">${filteredItems.length} Countries</span>
+                </div>
+                <div class="dash-widget-list-scroll">
+                    ${listRowsHtml}
+                </div>
+            `;
+
+            // Wire up search input
+            const searchInput = listContainerEl.querySelector('.dash-widget-list-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderListView(currentMetricData, e.target.value);
+                    const updatedInput = listContainerEl.querySelector('.dash-widget-list-search');
+                    if (updatedInput) {
+                        updatedInput.focus();
+                        updatedInput.setSelectionRange(updatedInput.value.length, updatedInput.value.length);
+                    }
+                });
+            }
+        };
+
+        const isPosMetric = (m) => {
+            const s = String(m || '').toLowerCase();
+            return s.includes('position') || s.includes('rank');
+        };
+
+        let currentMetricData = initialActive;
+        let currentMapData = (initialActive.map_data && typeof initialActive.map_data === 'object' && !Array.isArray(initialActive.map_data)) ? initialActive.map_data : {};
+        let currentBaseColor = currentMetricData.color || controls?.series?.[0]?.color || controls?.color || '#00a7f9';
+        let isLowerBetter = isPosMetric(currentMetricData.metric);
+        let activeView = 'map'; // 'map' or 'list' (used when in portrait/compact mode)
+        let isLandscapeMode = false;
+
+        const mainContentEl = containerEl.querySelector('#' + uniqueId + '-content');
+        const viewToggleContainer = containerEl.querySelector('#' + uniqueId + '-view-toggle');
+
+        // Apply Layout Mode (Two-column in Landscape, Flip/Toggle in Portrait/Square)
+        const applyAdaptiveLayout = (width, height) => {
+            if (!mainContentEl || !mapEl || !listContainerEl) return;
+            const isWide = width >= 640 && (width / Math.max(1, height)) >= 1.35;
+            isLandscapeMode = isWide;
+
+            if (isWide) {
+                // Landscape: Side-by-side 2 columns
+                if (viewToggleContainer) viewToggleContainer.style.display = 'none';
+                mainContentEl.className = 'w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden flex flex-row gap-3 items-stretch';
+                mapEl.style.display = 'block';
+                mapEl.className = 'flex-1 min-w-0 h-full relative border border-gray-100 dark:border-white/5 rounded-lg overflow-hidden';
+                listContainerEl.style.display = 'flex';
+                listContainerEl.className = 'w-72 xl:w-80 flex-shrink-0 h-full bg-gray-50/50 dark:bg-gray-900/30 rounded-lg border border-gray-100 dark:border-white/5 p-1 dash-widget-list-view';
+                renderListView(currentMetricData, '');
+                if (window._currentMapInst) {
+                    window._currentMapInst.updateSize();
+                }
+            } else {
+                // Portrait or Square: Toggle/Flip between Map and List
+                if (viewToggleContainer) viewToggleContainer.style.display = 'flex';
+                mainContentEl.className = 'w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden';
+                mapEl.className = 'w-full h-full relative';
+                listContainerEl.className = 'dash-widget-list-view';
+
+                if (activeView === 'list') {
+                    mapEl.style.display = 'none';
+                    listContainerEl.style.display = 'flex';
+                    renderListView(currentMetricData, '');
+                } else {
+                    listContainerEl.style.display = 'none';
+                    mapEl.style.display = 'block';
+                    if (window._currentMapInst) {
+                        window._currentMapInst.updateSize();
+                    }
+                }
+            }
+        };
+
+        // Render initial List view in background
+        renderListView(currentMetricData, '');
+
+        // Wire View Switcher (Map vs List) for toggle mode
+        if (viewToggleContainer) {
+            const toggleBtns = viewToggleContainer.querySelectorAll('.dash-map-view-btn');
+            toggleBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const v = btn.getAttribute('data-view');
+                    if (!v || v === activeView) return;
+                    activeView = v;
+
+                    toggleBtns.forEach(b => {
+                        if (b.getAttribute('data-view') === activeView) {
+                            b.classList.add('is-active');
+                        } else {
+                            b.classList.remove('is-active');
+                        }
+                    });
+
+                    if (!isLandscapeMode) {
+                        if (activeView === 'list') {
+                            mapEl.style.display = 'none';
+                            listContainerEl.style.display = 'flex';
+                            renderListView(currentMetricData, '');
+                        } else {
+                            listContainerEl.style.display = 'none';
+                            mapEl.style.display = 'block';
+                            if (window._currentMapInst) {
+                                window._currentMapInst.updateSize();
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // Setup ResizeObserver to automatically switch between 2-column landscape and toggle mode
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const cr = entry.contentRect;
+                    if (cr && cr.width > 0 && cr.height > 0) {
+                        applyAdaptiveLayout(cr.width, cr.height);
+                    }
+                }
+            });
+            ro.observe(containerEl);
+        } else {
+            applyAdaptiveLayout(containerEl.clientWidth || 500, containerEl.clientHeight || 300);
+        }
+
         if (window.jsVectorMap) {
             const isDark = document.documentElement.classList.contains("dark");
-            let currentMetricData = initialActive;
-            let currentMapData = currentMetricData.map_data || {};
-            let currentBaseColor = currentMetricData.color || controls?.series?.[0]?.color || controls?.color || '#00a7f9';
-            const isPosMetric = (m) => {
-                const s = String(m || '').toLowerCase();
-                return s.includes('position') || s.includes('rank');
-            };
-            let isLowerBetter = isPosMetric(currentMetricData.metric);
-
             const defaultFill = isDark ? '#243042' : '#E2E8F0';
             const defaultStroke = isDark ? '#334155' : '#cbd5e1';
 
@@ -4421,6 +4613,7 @@ window.dashboardRenderer = {
             applyRegionColors(mapInst, gradedColors, defaultFill, defaultStroke);
 
             this._chartInstances.set(containerEl, mapInst);
+            window._currentMapInst = mapInst;
 
             // Handle Multi-Metric Header Pill Switches
             if (seriesMetrics && seriesMetrics.length > 1) {
@@ -4441,12 +4634,16 @@ window.dashboardRenderer = {
                         });
 
                         currentMetricData = getActiveData(activeIdx);
-                        currentMapData = currentMetricData.map_data || {};
+                        const rawCurrentMap = currentMetricData.map_data;
+                        currentMapData = (rawCurrentMap && typeof rawCurrentMap === 'object' && !Array.isArray(rawCurrentMap)) ? rawCurrentMap : {};
                         currentBaseColor = currentMetricData.color || controls?.series?.[activeIdx]?.color || controls?.color || '#00a7f9';
                         isLowerBetter = isPosMetric(currentMetricData.metric);
 
                         const countEl = containerEl.querySelector('#' + uniqueId + '-regions-count');
                         if (countEl) countEl.textContent = `${Object.keys(currentMapData).length} Regions`;
+
+                        // Refresh list view with current metric data
+                        renderListView(currentMetricData, '');
 
                         // Update hover fill to matching base color
                         if (mapInst.params && mapInst.params.regionStyle && mapInst.params.regionStyle.hover) {

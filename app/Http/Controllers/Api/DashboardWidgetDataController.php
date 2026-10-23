@@ -5679,7 +5679,7 @@
                             'metric_label' => $mLabel,
                             'color' => $mColor,
                             'map_data' => !empty($mMapData) ? $mMapData : (object)[],
-                            'leaderboard' => array_slice($mLeaderboard, 0, 20),
+                            'leaderboard' => $mLeaderboard,
                         ];
                     }
 
@@ -5724,7 +5724,7 @@
                             'metric_label' => $dsLabel,
                             'color' => $dsColor,
                             'map_data' => !empty($dsMapData) ? $dsMapData : (object)[],
-                            'leaderboard' => array_slice($dsLeaderboard, 0, 20),
+                            'leaderboard' => $dsLeaderboard,
                         ];
 
                         if ($dIdx === 0) {
@@ -5752,7 +5752,7 @@
                 'metric' => $metric,
                 'metric_label' => $metricLabel,
                 'map_data' => !empty($mapData) ? $mapData : (object)[],
-                'leaderboard' => array_slice($leaderboard, 0, 20),
+                'leaderboard' => $leaderboard,
                 'series_metrics' => $seriesMetricsData,
             ];
         }
