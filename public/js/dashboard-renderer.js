@@ -4272,14 +4272,14 @@ window.dashboardRenderer = {
 
         // View Switcher (Map vs List) matching Data Explorer design
         const viewSwitcherHtml = `
-            <div class="flex items-center p-0.5 rounded-md bg-gray-100 dark:bg-gray-800/80 border border-gray-200/60 dark:border-gray-700/60 flex-shrink-0" id="${uniqueId}-view-toggle">
-                <button type="button" data-view="map" class="dash-map-view-btn is-active" title="Map View">
+            <div class="dash-view-toggle flex-shrink-0" id="${uniqueId}-view-toggle" style="padding: 2px !important;">
+                <button type="button" data-view="map" class="dash-view-btn is-active" title="Map View" style="padding: 0.2rem 0.5rem !important; font-size: 0.6875rem !important;">
                     <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
                         <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.549l.062.028.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd"/>
                     </svg>
                     <span>Map</span>
                 </button>
-                <button type="button" data-view="list" class="dash-map-view-btn" title="List View">
+                <button type="button" data-view="list" class="dash-view-btn" title="List View" style="padding: 0.2rem 0.5rem !important; font-size: 0.6875rem !important;">
                     <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
                         <path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z" clip-rule="evenodd"/>
                     </svg>
@@ -4519,7 +4519,7 @@ window.dashboardRenderer = {
 
         // Wire View Switcher (Map vs List) for toggle mode
         if (viewToggleContainer) {
-            const toggleBtns = viewToggleContainer.querySelectorAll('.dash-map-view-btn');
+            const toggleBtns = viewToggleContainer.querySelectorAll('.dash-view-btn');
             toggleBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
