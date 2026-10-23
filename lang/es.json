@@ -2341,6 +2341,15 @@
     "Top Countries Leaderboard": "Clasificación de Países Principales",
     "Clear country filters": "Limpiar filtros de país",
     "Clear country filter": "Limpiar filtro de país",
-    "Reset Selection": "Restablecer Selección",
-    "Click any country on the map or leaderboard to filter dashboard.": "Haz clic en cualquier país en el mapa o en la tabla para filtrar el panel."
+    "Click any country on the map or leaderboard to filter dashboard.": "Haz clic en cualquier país en el mapa o en la tabla para filtrar el panel.",
+    "Choropleth Map": "Mapa Coroplético",
+    "Shade countries by metric volume": "Sombrea países según el volumen de métricas",
+    "Country Breakdown Recommended": "Desglose por País Recomendado",
+    "Choropleth maps require data broken down by country to shade geographic regions. Please configure a Country breakdown on your series in Step 2.": "Los mapas coropléticos requieren datos desglosados por país para colorear las regiones geográficas. Configura un desglose por País en tu serie en el Paso 2.",
+    "Country Breakdown Required": "Se requiere Desglose por País",
+    "This widget requires data broken down by country. Edit widget controls to select the Country dimension and lifetime granularity.": "Este widget requiere datos desglosados por país. Edita los controles del widget para seleccionar la dimensión País y granularidad total.",
+    "Configure Breakdown": "Configurar Desglose",
+    "Distribution": "Distribución",
+    "Regions": "Regiones",
+    "No geographic breakdown available": "No hay desglose geográfico disponible"
 }

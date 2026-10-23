@@ -1254,7 +1254,8 @@ export function dashboardBuilder(config = {}) {
                 table: 'Table',
                 gauge: 'Gauge',
                 sparkline: 'Sparkline',
-                anomaly_chart: 'Anomaly Chart'
+                anomaly_chart: 'Anomaly Chart',
+                choropleth_map: 'Choropleth Map'
             };
 
             const allTypes = (this.widgetLabels && Object.keys(this.widgetLabels).length > 0)
@@ -1264,13 +1265,13 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
             } else if (sourceType === 'kpi') {
                 if (!kpiId) {
-                    const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'];
+                    const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                     for (const t of allowed) {
                         filtered[t] = allTypes[t] || defaultLabels[t] || t;
                     }
@@ -1291,7 +1292,7 @@ export function dashboardBuilder(config = {}) {
             } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
-                    : ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table'];
+                    : ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1323,7 +1324,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge'];
+                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1339,7 +1340,7 @@ export function dashboardBuilder(config = {}) {
                     typeMap = allTypes;
                 }
             } else if (target.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table'];
+                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1355,11 +1356,43 @@ export function dashboardBuilder(config = {}) {
                     pie_chart: 'Pie / Donut Chart',
                     sparkline: 'Sparkline',
                     table: 'Table',
-                    gauge: 'Gauge'
+                    gauge: 'Gauge',
+                    choropleth_map: 'Choropleth Map'
                 };
             }
 
             return Object.entries(typeMap).map(([type, label]) => ({ type, label }));
+        },
+
+        selectWidgetTypeForControls(type) {
+            this.widgetControlsForm.widget_type = type;
+            this.markWidgetControlsDirty();
+
+            if (type === 'choropleth_map') {
+                // Auto-set lifetime granularity if not KPI-locked
+                if (this.widgetControlsTarget?.source_type !== 'kpi') {
+                    this.widgetControlsForm.granularity = 'lifetime';
+                }
+
+                // Auto-select country breakdown if available on raw series
+                const seriesList = this.widgetControlsForm.raw_series;
+                if (Array.isArray(seriesList) && seriesList.length > 0) {
+                    const firstSeries = seriesList[0];
+                    if (!firstSeries.breakdown || !firstSeries.breakdown.dimension) {
+                        const bds = this.getBreakdownsForSeries(firstSeries.channel, firstSeries.dependency);
+                        const countryKey = Object.keys(bds || {}).find(k => k === 'country' || k === 'geo_country' || k.toLowerCase().includes('country'));
+                        if (countryKey) {
+                            firstSeries.breakdown = {
+                                dimension: countryKey,
+                                limit: 250,
+                                order: 'value_desc',
+                                rank_by: (firstSeries.metrics && firstSeries.metrics[0]) || null
+                            };
+                            this.onSeriesBreakdownDimensionChange(firstSeries);
+                        }
+                    }
+                }
+            }
         },
 
         // ─── UI Helpers ───
@@ -1374,7 +1407,8 @@ export function dashboardBuilder(config = {}) {
                 table: 'Detailed row-by-row data view',
                 gauge: 'Percentage or progress to a target',
                 sparkline: 'Minimalist trendline without axes',
-                anomaly_chart: 'Highlights statistical outliers in red'
+                anomaly_chart: 'Highlights statistical outliers in red',
+                choropleth_map: 'Shade countries by metric volume'
             };
             return (this.widgetDescriptions && this.widgetDescriptions[type]) || defaultDescriptions[type] || 'Standard widget';
         },
@@ -1435,7 +1469,8 @@ export function dashboardBuilder(config = {}) {
                 table: '<svg viewBox="0 0 40 24" class="w-full h-full"><rect x="4" y="3" width="32" height="18" rx="2" class="stroke-primary-500 fill-none" stroke-width="1.5"/><path d="M 4 8 L 36 8" class="stroke-primary-500" stroke-width="1.5"/><path d="M 4 14 L 36 14" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1" stroke-dasharray="1 1"/><path d="M 16 8 L 16 21" class="stroke-gray-400 dark:stroke-gray-500" stroke-width="1"/></svg>',
                 gauge: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 7 19 A 13 13 0 0 1 33 19" class="stroke-gray-300 dark:stroke-gray-600 fill-none" stroke-width="4" stroke-linecap="round"/><path d="M 7 19 A 13 13 0 0 1 27 8" class="stroke-primary-500 fill-none" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="19" r="2" class="fill-gray-800 dark:fill-gray-100"/><line x1="20" y1="19" x2="25" y2="9" class="stroke-gray-800 dark:stroke-gray-100" stroke-width="1.8" stroke-linecap="round"/></svg>',
                 sparkline: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 C 10 17, 12 6, 18 10 C 24 14, 28 4, 36 8" class="stroke-primary-500 fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                anomaly_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 L 12 15 L 20 7 L 28 14 L 36 12" class="stroke-gray-400 dark:stroke-gray-500 fill-none" stroke-width="1.5" stroke-dasharray="2 2"/><circle cx="20" cy="7" r="3.5" class="fill-red-500/20 stroke-red-500" stroke-width="1.2"/><circle cx="20" cy="7" r="1.5" class="fill-red-600"/></svg>'
+                anomaly_chart: '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 L 12 15 L 20 7 L 28 14 L 36 12" class="stroke-gray-400 dark:stroke-gray-500 fill-none" stroke-width="1.5" stroke-dasharray="2 2"/><circle cx="20" cy="7" r="3.5" class="fill-red-500/20 stroke-red-500" stroke-width="1.2"/><circle cx="20" cy="7" r="1.5" class="fill-red-600"/></svg>',
+                choropleth_map: '<svg viewBox="0 0 40 24" class="w-full h-full"><circle cx="20" cy="12" r="9" class="stroke-primary-500 fill-none" stroke-width="1.2"/><ellipse cx="20" cy="12" rx="4.5" ry="9" class="stroke-primary-400 fill-none" stroke-width="0.9" stroke-dasharray="1 1"/><line x1="11" y1="12" x2="29" y2="12" class="stroke-primary-400" stroke-width="0.9"/><path d="M 13 8 Q 20 10 27 8 M 13 16 Q 20 14 27 16" class="stroke-primary-300 fill-none" stroke-width="0.75"/><circle cx="16" cy="10" r="1.2" class="fill-primary-600"/><circle cx="24" cy="14" r="1.2" class="fill-primary-600"/></svg>'
             };
             return (this.widgetSvgs && this.widgetSvgs[type]) || defaultSvgs[type] || defaultSvgs['tile'];
         },

@@ -5,9 +5,9 @@ namespace App\Services;
 class WidgetTypeRegistry
 {
     protected static array $compatibility = [
-        'kpi' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table'],
-        'metric' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table'],
-        'derived_metric' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table'],
+        'kpi' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
+        'metric' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
+        'derived_metric' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
     ];
 
     protected static array $sourceLabels = [
@@ -27,6 +27,7 @@ class WidgetTypeRegistry
         'gauge' => 'Gauge',
         'sparkline' => 'Sparkline',
         'anomaly_chart' => 'Anomaly Chart',
+        'choropleth_map' => 'Choropleth Map',
     ];
 
     protected static array $widgetDescriptions = [
@@ -40,6 +41,7 @@ class WidgetTypeRegistry
         'gauge' => 'Percentage or progress to a target',
         'sparkline' => 'Minimalist trendline without axes',
         'anomaly_chart' => 'Highlights statistical outliers in red',
+        'choropleth_map' => 'Shade countries by metric volume',
     ];
 
     protected static array $widgetSvgs = [
@@ -53,6 +55,7 @@ class WidgetTypeRegistry
         'gauge' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 7 19 A 13 13 0 0 1 33 19" class="stroke-gray-300 dark:stroke-gray-600 fill-none" stroke-width="4" stroke-linecap="round"/><path d="M 7 19 A 13 13 0 0 1 27 8" class="stroke-primary-500 fill-none" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="19" r="2" class="fill-gray-800 dark:fill-gray-100"/><line x1="20" y1="19" x2="25" y2="9" class="stroke-gray-800 dark:stroke-gray-100" stroke-width="1.8" stroke-linecap="round"/></svg>',
         'sparkline' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 C 10 17, 12 6, 18 10 C 24 14, 28 4, 36 8" class="stroke-primary-500 fill-none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         'anomaly_chart' => '<svg viewBox="0 0 40 24" class="w-full h-full"><path d="M 4 17 L 12 15 L 20 7 L 28 14 L 36 12" class="stroke-gray-400 dark:stroke-gray-500 fill-none" stroke-width="1.5" stroke-dasharray="2 2"/><circle cx="20" cy="7" r="3.5" class="fill-red-500/20 stroke-red-500" stroke-width="1.2"/><circle cx="20" cy="7" r="1.5" class="fill-red-600"/></svg>',
+        'choropleth_map' => '<svg viewBox="0 0 40 24" class="w-full h-full"><circle cx="20" cy="12" r="9" class="stroke-primary-500 fill-none" stroke-width="1.2"/><ellipse cx="20" cy="12" rx="4.5" ry="9" class="stroke-primary-400 fill-none" stroke-width="0.9" stroke-dasharray="1 1"/><line x1="11" y1="12" x2="29" y2="12" class="stroke-primary-400" stroke-width="0.9"/><path d="M 13 8 Q 20 10 27 8 M 13 16 Q 20 14 27 16" class="stroke-primary-300 fill-none" stroke-width="0.75"/><circle cx="16" cy="10" r="1.2" class="fill-primary-600"/><circle cx="24" cy="14" r="1.2" class="fill-primary-600"/></svg>',
     ];
 
     public static function getWidgetTypesForSource(string $sourceType): array

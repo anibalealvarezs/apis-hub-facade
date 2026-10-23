@@ -687,7 +687,7 @@
                                 <div class="p-6">
                                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                         <template x-for="option in availableChartTypesForControls" :key="option.type">
-                                            <button @click="widgetControlsForm.widget_type = option.type"
+                                            <button @click="selectWidgetTypeForControls(option.type)"
                                                     class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all text-center"
                                                     :class="widgetControlsForm.widget_type === option.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
@@ -699,6 +699,17 @@
                                             </button>
                                         </template>
                                     </div>
+                                    <template x-if="widgetControlsForm.widget_type === 'choropleth_map' && !(widgetControlsForm.raw_series || []).some(s => s.breakdown && s.breakdown.dimension && (s.breakdown.dimension === 'country' || s.breakdown.dimension === 'geo_country' || s.breakdown.dimension.toLowerCase().includes('country')))">
+                                        <div class="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                                                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                            </svg>
+                                            <div class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                                                <span class="font-semibold">{{ __('Country Breakdown Recommended') }}:</span>
+                                                {{ __('Choropleth maps require data broken down by country to shade geographic regions. Please configure a Country breakdown on your series in Step 2.') }}
+                                            </div>
+                                        </div>
+                                    </template>
                                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">{{ __('Changing the chart type affects how data is displayed. Some types may not show all data dimensions.') }}</p>
                                 </div>
                             </div>

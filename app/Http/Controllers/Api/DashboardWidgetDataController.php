@@ -5443,6 +5443,7 @@
 
             $mapData = [];
             $leaderboard = [];
+            $seriesMetricsData = [];
 
             // Case 1: Data has 'table' rows (GSC or GA4 country table response)
             $rows = $data['table'] ?? $data['rows'] ?? [];
@@ -5467,23 +5468,48 @@
                     ];
                 }
             } elseif (isset($data['datasets']) && is_array($data['datasets'])) {
-                // Case 2: Multi-dataset labels
+                // Case 2: Datasets (e.g., standard breakdown output from Analytics Engine)
                 $labels = $data['labels'] ?? [];
-                $firstDs = $data['datasets'][0]['data'] ?? [];
-                foreach ($labels as $i => $lbl) {
-                    $val = (float)($firstDs[$i] ?? 0);
-                    $iso2 = strtoupper(trim((string)$lbl));
-                    if (strlen($iso2) === 3 && isset($iso3to2[$iso2])) {
-                        $iso2 = $iso3to2[$iso2];
+                foreach ($data['datasets'] as $dIdx => $ds) {
+                    $dsMetric = $ds['metric'] ?? $ds['label'] ?? ('Series ' . ($dIdx + 1));
+                    $dsLabel = $ds['label'] ?? ($metricLabels[$dsMetric] ?? ucfirst($dsMetric));
+                    $dsColor = $ds['borderColor'] ?? $ds['backgroundColor'] ?? null;
+                    $dsMapData = [];
+                    $dsLeaderboard = [];
+                    $dsValues = $ds['data'] ?? [];
+
+                    foreach ($labels as $i => $lbl) {
+                        $val = (float)($dsValues[$i] ?? 0);
+                        $iso2 = strtoupper(trim((string)$lbl));
+                        if (strlen($iso2) === 3 && isset($iso3to2[$iso2])) {
+                            $iso2 = $iso3to2[$iso2];
+                        }
+                        if (strlen($iso2) === 2) {
+                            $dsMapData[$iso2] = ($dsMapData[$iso2] ?? 0) + $val;
+                        }
+                        $dsLeaderboard[] = [
+                            'name' => (string)$lbl,
+                            'code' => $iso2,
+                            'value' => $val,
+                        ];
                     }
-                    if (strlen($iso2) === 2) {
-                        $mapData[$iso2] = ($mapData[$iso2] ?? 0) + $val;
-                    }
-                    $leaderboard[] = [
-                        'name' => (string)$lbl,
-                        'code' => $iso2,
-                        'value' => $val,
+
+                    usort($dsLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+
+                    $seriesMetricsData[] = [
+                        'metric' => $dsMetric,
+                        'metric_label' => $dsLabel,
+                        'color' => $dsColor,
+                        'map_data' => $dsMapData,
+                        'leaderboard' => array_slice($dsLeaderboard, 0, 20),
                     ];
+
+                    if ($dIdx === 0) {
+                        $mapData = $dsMapData;
+                        $leaderboard = $dsLeaderboard;
+                        $metricLabel = $dsLabel;
+                        $metric = $dsMetric;
+                    }
                 }
             }
 
@@ -5495,7 +5521,8 @@
                 'metric' => $metric,
                 'metric_label' => $metricLabel,
                 'map_data' => $mapData,
-                'leaderboard' => array_slice($leaderboard, 0, 10),
+                'leaderboard' => array_slice($leaderboard, 0, 20),
+                'series_metrics' => $seriesMetricsData,
             ];
         }
 

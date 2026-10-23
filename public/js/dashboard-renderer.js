@@ -4188,20 +4188,76 @@ window.dashboardRenderer = {
     // ─── Choropleth Map Widget ───
 
     renderChoroplethMap(containerEl, data, controls) {
-        const mapData = data?.map_data || {};
-        const metricLabel = data?.metric_label || controls?.metrics?.[0] || 'Value';
         const uniqueId = 'map-widget-' + Math.random().toString(36).substring(2, 9);
+        const seriesMetrics = Array.isArray(data?.series_metrics) && data.series_metrics.length > 0 ? data.series_metrics : null;
+        let activeIdx = 0;
+
+        const getActiveData = (idx) => {
+            if (seriesMetrics && seriesMetrics[idx]) {
+                return seriesMetrics[idx];
+            }
+            return {
+                metric: data?.metric || controls?.metrics?.[0] || 'clicks',
+                metric_label: data?.metric_label || controls?.metrics?.[0] || 'Value',
+                color: controls?.series?.[0]?.color || controls?.color || '#0284c7',
+                map_data: data?.map_data || {},
+                leaderboard: data?.leaderboard || []
+            };
+        };
+
+        const initialActive = getActiveData(activeIdx);
+        const mapData = initialActive.map_data || {};
+        const regionsCount = Object.keys(mapData).length;
 
         containerEl.style.display = "flex";
         containerEl.style.flexDirection = "column";
         containerEl.style.width = "100%";
         containerEl.style.height = "100%";
         containerEl.style.position = "relative";
+
+        // Safeguard / Empty State when no country breakdown is available
+        if (regionsCount === 0) {
+            containerEl.innerHTML = `
+                <div class="w-full h-full p-4 flex flex-col items-center justify-center text-center bg-gray-50/50 dark:bg-gray-900/20 rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
+                    <div class="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3 ring-8 ring-amber-50/50 dark:ring-amber-950/20">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="1.75">
+                            <circle cx="12" cy="12" r="9"/>
+                            <ellipse cx="12" cy="12" rx="4.5" ry="9" stroke-dasharray="1 1"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">Country Breakdown Required</span>
+                    <p class="text-2xs text-gray-400 dark:text-gray-500 max-w-[280px] leading-relaxed">
+                        This widget requires data broken down by country to colorize geographic regions. Edit widget controls to select the <strong>Country</strong> dimension and <strong>Lifetime</strong> granularity.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        // Multi-metric Pill Switcher Header
+        let pillHeaderHtml = '';
+        if (seriesMetrics && seriesMetrics.length > 1) {
+            pillHeaderHtml = `
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                    ${seriesMetrics.map((sm, i) => `
+                        <button type="button" data-metric-idx="${i}" class="dash-map-pill px-2 py-0.5 rounded-md text-2xs font-semibold transition-all ${i === 0 ? 'bg-primary-500 text-white shadow-2xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800'}">
+                            ${this.escapeHtml(sm.metric_label || sm.metric)}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            pillHeaderHtml = `
+                <span class="font-semibold uppercase tracking-wider text-2xs text-gray-600 dark:text-gray-400" id="${uniqueId}-metric-title">${this.escapeHtml(initialActive.metric_label || 'Value')} Distribution</span>
+            `;
+        }
+
         containerEl.innerHTML = `
             <div class="w-full h-full p-2 flex flex-col">
-                <div class="flex items-center justify-between pb-1.5 text-xs text-gray-500 border-b border-gray-100 dark:border-white/5">
-                    <span class="font-semibold uppercase tracking-wider">${this.escapeHtml(metricLabel)} Distribution</span>
-                    <span class="text-3xs text-primary-500 font-mono">${Object.keys(mapData).length} Regions</span>
+                <div class="flex items-center justify-between pb-1.5 border-b border-gray-100 dark:border-white/5 flex-shrink-0 gap-2">
+                    <div class="flex-1 min-w-0">${pillHeaderHtml}</div>
+                    <span id="${uniqueId}-regions-count" class="text-3xs text-primary-500 font-mono flex-shrink-0">${regionsCount} Regions</span>
                 </div>
                 <div id="${uniqueId}" class="w-full flex-1 min-h-[180px] relative mt-1"></div>
             </div>
@@ -4210,11 +4266,57 @@ window.dashboardRenderer = {
         const mapEl = containerEl.querySelector('#' + uniqueId);
         if (!mapEl) return;
 
+        // Color computation helper: converts hex to RGB and builds light/dark tints
+        const hexToRgb = (hex) => {
+            if (!hex || typeof hex !== 'string') return [2, 132, 199];
+            let c = hex.replace('#', '').trim();
+            if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+            if (c.length !== 6) return [2, 132, 199];
+            const num = parseInt(c, 16);
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+        };
+
+        const computeDynamicScale = (baseHex, isDark) => {
+            const [r, g, b] = hexToRgb(baseHex);
+            if (isDark) {
+                // Dark mode scale: deep tint to vibrant base
+                const startHex = '#' + [
+                    Math.round(15 + r * 0.15),
+                    Math.round(23 + g * 0.15),
+                    Math.round(42 + b * 0.25)
+                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
+                const midHex = '#' + [
+                    Math.round(r * 0.65),
+                    Math.round(g * 0.65),
+                    Math.round(b * 0.65)
+                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
+                return [startHex, midHex, baseHex];
+            } else {
+                // Light mode scale: very soft pastel tint to intense base
+                const startHex = '#' + [
+                    Math.round(255 - (255 - r) * 0.2),
+                    Math.round(255 - (255 - g) * 0.2),
+                    Math.round(255 - (255 - b) * 0.2)
+                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
+                const midHex = '#' + [
+                    Math.round(255 - (255 - r) * 0.55),
+                    Math.round(255 - (255 - g) * 0.55),
+                    Math.round(255 - (255 - b) * 0.55)
+                ].map(v => Math.min(255, Math.max(0, v)).toString(16).padStart(2, '0')).join('');
+                return [startHex, midHex, baseHex];
+            }
+        };
+
         if (window.jsVectorMap) {
             const isDark = document.documentElement.classList.contains("dark");
-            const values = Object.values(mapData).filter(v => typeof v === 'number' && !isNaN(v));
-            const maxVal = values.length ? Math.max(...values) : 100;
-            const minVal = values.length ? Math.min(...values) : 0;
+            let currentMetricData = initialActive;
+            let currentMapData = currentMetricData.map_data || {};
+            let currentBaseColor = currentMetricData.color || controls?.series?.[0]?.color || controls?.color || '#00a7f9';
+
+            const getValues = (md) => Object.values(md).filter(v => typeof v === 'number' && !isNaN(v));
+            let vals = getValues(currentMapData);
+            let maxVal = vals.length ? Math.max(...vals) : 100;
+            let minVal = vals.length ? Math.min(...vals) : 0;
 
             const mapInst = new window.jsVectorMap({
                 selector: '#' + uniqueId,
@@ -4225,33 +4327,36 @@ window.dashboardRenderer = {
                 zoomOnScroll: false,
                 regionStyle: {
                     initial: {
-                        fill: isDark ? '#334155' : '#E2E8F0',
-                        stroke: isDark ? '#1e293b' : '#cbd5e1',
+                        fill: isDark ? '#243042' : '#E2E8F0',
+                        stroke: isDark ? '#334155' : '#cbd5e1',
                         strokeWidth: 0.5,
                         fillOpacity: 1
                     },
                     hover: {
-                        fill: isDark ? '#60a5fa' : '#3b82f6',
+                        fill: currentBaseColor,
+                        fillOpacity: 0.85,
                         cursor: 'pointer'
                     }
                 },
                 series: {
                     regions: [{
                         attribute: 'fill',
-                        values: mapData,
-                        scale: isDark ? ['#1e3a8a', '#3b82f6', '#60a5fa', '#93c5fd'] : ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8'],
+                        values: currentMapData,
+                        scale: computeDynamicScale(currentBaseColor, isDark),
                         normalizeFunction: 'polynomial',
                         min: minVal,
                         max: maxVal
                     }]
                 },
                 onRegionTooltipShow(event, tooltip, code) {
-                    const val = mapData[code.toUpperCase()];
+                    const val = currentMapData[code.toUpperCase()];
                     const formatted = val !== undefined ? Number(val).toLocaleString('en-US') : '0';
+                    const countryName = tooltip.text();
                     tooltip.text(
-                        `<div class="p-1 font-sans">
-                            <div class="font-bold text-xs">${tooltip.text()}</div>
-                            <div class="text-3xs text-primary-400 mt-0.5">${metricLabel}: <span class="font-mono font-bold">${formatted}</span></div>
+                        `<div class="dash-map-tooltip">
+                            <span class="dash-map-tooltip-name">${countryName}</span>
+                            <span class="dash-map-tooltip-divider">•</span>
+                            <span class="dash-map-tooltip-val">${formatted}<span class="dash-map-tooltip-metric" style="margin-left:4px; font-weight:normal; opacity:0.8;">${currentMetricData.metric_label || 'Value'}</span></span>
                         </div>`,
                         true
                     );
@@ -4259,6 +4364,47 @@ window.dashboardRenderer = {
             });
 
             this._chartInstances.set(containerEl, mapInst);
+
+            // Handle Multi-Metric Header Pill Switches
+            if (seriesMetrics && seriesMetrics.length > 1) {
+                const pills = containerEl.querySelectorAll('.dash-map-pill');
+                pills.forEach(pill => {
+                    pill.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const idx = parseInt(pill.getAttribute('data-metric-idx'), 10);
+                        if (isNaN(idx) || idx === activeIdx) return;
+                        activeIdx = idx;
+
+                        pills.forEach((p, pi) => {
+                            if (pi === activeIdx) {
+                                p.className = 'dash-map-pill px-2 py-0.5 rounded-md text-2xs font-semibold transition-all bg-primary-500 text-white shadow-2xs';
+                            } else {
+                                p.className = 'dash-map-pill px-2 py-0.5 rounded-md text-2xs font-semibold transition-all text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800';
+                            }
+                        });
+
+                        currentMetricData = getActiveData(activeIdx);
+                        currentMapData = currentMetricData.map_data || {};
+                        currentBaseColor = currentMetricData.color || controls?.series?.[activeIdx]?.color || controls?.color || '#00a7f9';
+
+                        const countEl = containerEl.querySelector('#' + uniqueId + '-regions-count');
+                        if (countEl) countEl.textContent = `${Object.keys(currentMapData).length} Regions`;
+
+                        const updatedVals = getValues(currentMapData);
+                        const newMax = updatedVals.length ? Math.max(...updatedVals) : 100;
+                        const newMin = updatedVals.length ? Math.min(...updatedVals) : 0;
+
+                        if (mapInst.series && mapInst.series.regions && mapInst.series.regions[0]) {
+                            const regSeries = mapInst.series.regions[0];
+                            regSeries.scale.clear();
+                            regSeries.scale.setScale(computeDynamicScale(currentBaseColor, isDark));
+                            regSeries.scale.setMin(newMin);
+                            regSeries.scale.setMax(newMax);
+                            regSeries.setValues(currentMapData);
+                        }
+                    });
+                });
+            }
         } else {
             mapEl.innerHTML = `<div class="flex items-center justify-center h-full text-xs text-gray-400">Map library initializing...</div>`;
         }
