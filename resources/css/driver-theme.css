@@ -632,9 +632,7 @@ html.dark .dash-map-footnote {
 
 /* Choropleth List / Table Container */
 .dash-widget-list-view {
-    display: flex !important;
     flex-direction: column !important;
-    width: 100% !important;
     height: 100% !important;
     min-height: 200px !important;
     overflow: hidden !important;

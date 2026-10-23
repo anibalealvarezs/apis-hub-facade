@@ -4475,49 +4475,52 @@ window.dashboardRenderer = {
         const mainContentEl = containerEl.querySelector('#' + uniqueId + '-content');
         const viewToggleContainer = containerEl.querySelector('#' + uniqueId + '-view-toggle');
 
-        // Apply Layout Mode (Two-column in Landscape, Flip/Toggle in Portrait/Square)
-        const applyAdaptiveLayout = (width, height) => {
+        // Apply Layout Mode & View State (Toggleable Map vs Table/List view across all layouts)
+        const updateViewDisplay = () => {
             if (!mainContentEl || !mapEl || !listContainerEl) return;
-            const isWide = width >= 640 && (width / Math.max(1, height)) >= 1.35;
-            isLandscapeMode = isWide;
 
-            if (isWide) {
-                // Landscape: Side-by-side 2 columns
-                if (viewToggleContainer) viewToggleContainer.style.display = 'none';
-                mainContentEl.className = 'w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden flex flex-row gap-3 items-stretch';
-                mapEl.style.display = 'block';
-                mapEl.className = 'flex-1 min-w-0 h-full relative border border-gray-100 dark:border-white/5 rounded-lg overflow-hidden';
+            // Ensure toggle container is ALWAYS visible
+            if (viewToggleContainer) {
+                viewToggleContainer.style.display = 'inline-flex';
+            }
+
+            // Sync toggle button active states
+            if (viewToggleContainer) {
+                const toggleBtns = viewToggleContainer.querySelectorAll('.dash-view-btn');
+                toggleBtns.forEach(b => {
+                    if (b.getAttribute('data-view') === activeView) {
+                        b.classList.add('is-active');
+                    } else {
+                        b.classList.remove('is-active');
+                    }
+                });
+            }
+
+            mainContentEl.className = 'w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden';
+
+            if (activeView === 'list') {
+                mapEl.style.display = 'none';
                 listContainerEl.style.display = 'flex';
-                listContainerEl.className = 'w-72 xl:w-80 flex-shrink-0 h-full bg-gray-50/50 dark:bg-gray-900/30 rounded-lg border border-gray-100 dark:border-white/5 p-1 dash-widget-list-view';
+                listContainerEl.className = 'dash-widget-list-view w-full h-full';
                 renderListView(currentMetricData, '');
+            } else {
+                listContainerEl.style.display = 'none';
+                mapEl.style.display = 'block';
+                mapEl.className = 'w-full h-full relative';
                 if (window._currentMapInst) {
                     window._currentMapInst.updateSize();
                 }
-            } else {
-                // Portrait or Square: Toggle/Flip between Map and List
-                if (viewToggleContainer) viewToggleContainer.style.display = 'flex';
-                mainContentEl.className = 'w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden';
-                mapEl.className = 'w-full h-full relative';
-                listContainerEl.className = 'dash-widget-list-view';
-
-                if (activeView === 'list') {
-                    mapEl.style.display = 'none';
-                    listContainerEl.style.display = 'flex';
-                    renderListView(currentMetricData, '');
-                } else {
-                    listContainerEl.style.display = 'none';
-                    mapEl.style.display = 'block';
-                    if (window._currentMapInst) {
-                        window._currentMapInst.updateSize();
-                    }
-                }
             }
+        };
+
+        const applyAdaptiveLayout = (width, height) => {
+            updateViewDisplay();
         };
 
         // Render initial List view in background
         renderListView(currentMetricData, '');
 
-        // Wire View Switcher (Map vs List) for toggle mode
+        // Wire View Switcher (Map vs Table/List)
         if (viewToggleContainer) {
             const toggleBtns = viewToggleContainer.querySelectorAll('.dash-view-btn');
             toggleBtns.forEach(btn => {
@@ -4526,28 +4529,7 @@ window.dashboardRenderer = {
                     const v = btn.getAttribute('data-view');
                     if (!v || v === activeView) return;
                     activeView = v;
-
-                    toggleBtns.forEach(b => {
-                        if (b.getAttribute('data-view') === activeView) {
-                            b.classList.add('is-active');
-                        } else {
-                            b.classList.remove('is-active');
-                        }
-                    });
-
-                    if (!isLandscapeMode) {
-                        if (activeView === 'list') {
-                            mapEl.style.display = 'none';
-                            listContainerEl.style.display = 'flex';
-                            renderListView(currentMetricData, '');
-                        } else {
-                            listContainerEl.style.display = 'none';
-                            mapEl.style.display = 'block';
-                            if (window._currentMapInst) {
-                                window._currentMapInst.updateSize();
-                            }
-                        }
-                    }
+                    updateViewDisplay();
                 });
             });
         }
