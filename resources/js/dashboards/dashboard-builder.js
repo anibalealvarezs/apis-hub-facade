@@ -3516,6 +3516,13 @@ export function dashboardBuilder(config = {}) {
             const series = this.widgetControlsForm.raw_series[index];
             if (!series) return;
             series.metric_selection_mode = mode;
+            if (mode === 'single') {
+                if (Array.isArray(series.metrics) && series.metrics.length > 1) {
+                    series.metrics = [series.metrics[0]];
+                } else if ((!Array.isArray(series.metrics) || series.metrics.length === 0) && Array.isArray(series.allowed_metrics) && series.allowed_metrics.length > 0) {
+                    series.metrics = [series.allowed_metrics[0]];
+                }
+            }
             this.ensureBreakdownRankByMetric(series);
         },
 
@@ -3530,11 +3537,23 @@ export function dashboardBuilder(config = {}) {
                 // Remove from allowed and active
                 series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
                 series.metrics = series.metrics.filter(m => m !== metricKey);
+                // If single mode and active metric was just removed, fallback to first allowed metric if any
+                if (series.metric_selection_mode === 'single' && series.metrics.length === 0 && series.allowed_metrics.length > 0) {
+                    series.metrics = [series.allowed_metrics[0]];
+                }
             } else {
-                // Add to allowed and by default mark as active
+                // Add to allowed
                 series.allowed_metrics = [...series.allowed_metrics, metricKey];
-                if (!series.metrics.includes(metricKey)) {
-                    series.metrics = [...series.metrics, metricKey];
+                if (series.metric_selection_mode === 'single') {
+                    // In single mode, if no metric was active yet, make this one active
+                    if (series.metrics.length === 0) {
+                        series.metrics = [metricKey];
+                    }
+                } else {
+                    // In multiple mode, by default mark as active
+                    if (!series.metrics.includes(metricKey)) {
+                        series.metrics = [...series.metrics, metricKey];
+                    }
                 }
             }
             this.ensureBreakdownRankByMetric(series);
@@ -3550,15 +3569,24 @@ export function dashboardBuilder(config = {}) {
             // If not included yet, include it first
             if (!series.allowed_metrics.includes(metricKey)) {
                 series.allowed_metrics = [...series.allowed_metrics, metricKey];
-                series.metrics = [...series.metrics, metricKey];
+                if (series.metric_selection_mode === 'single') {
+                    series.metrics = [metricKey];
+                } else {
+                    series.metrics = [...series.metrics, metricKey];
+                }
                 return;
             }
 
             // Toggle active state
-            if (series.metrics.includes(metricKey)) {
-                series.metrics = series.metrics.filter(m => m !== metricKey);
+            if (series.metric_selection_mode === 'single') {
+                // In single mode, clicking an available metric makes it the single active metric
+                series.metrics = [metricKey];
             } else {
-                series.metrics = [...series.metrics, metricKey];
+                if (series.metrics.includes(metricKey)) {
+                    series.metrics = series.metrics.filter(m => m !== metricKey);
+                } else {
+                    series.metrics = [...series.metrics, metricKey];
+                }
             }
             this.ensureBreakdownRankByMetric(series);
         },
@@ -3569,7 +3597,13 @@ export function dashboardBuilder(config = {}) {
             if (!series || !series.channel) return;
             const availableKeys = Object.keys(this.allChannelMetrics[series.channel] || {});
             series.allowed_metrics = [...availableKeys];
-            series.metrics = [...availableKeys];
+            if (series.metric_selection_mode === 'single') {
+                // In single mode, all are allowed (available), but only the first (or current) is active
+                const currentActive = (series.metrics || []).find(m => availableKeys.includes(m));
+                series.metrics = currentActive ? [currentActive] : (availableKeys.length > 0 ? [availableKeys[0]] : []);
+            } else {
+                series.metrics = [...availableKeys];
+            }
         },
 
         toggleRawMetricComboType(index, metricKey) {
