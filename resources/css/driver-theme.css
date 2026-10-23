@@ -722,6 +722,7 @@ html.dark .dash-map-tooltip-metric {
 .dash-map-canvas .jvm-zoom-btn,
 .jvm-container .jvm-zoom-btn,
 .jvm-zoom-btn {
+    position: absolute !important;
     width: 28px !important;
     height: 28px !important;
     line-height: 26px !important;
@@ -748,6 +749,7 @@ html.dark .dash-map-tooltip-metric {
 .dash-map-canvas .jvm-zoom-btn.jvm-zoomin,
 .jvm-container .jvm-zoom-btn.jvm-zoomin,
 .jvm-zoom-btn.jvm-zoomin {
+    position: absolute !important;
     left: 14px !important;
     top: 14px !important;
     bottom: auto !important;
@@ -757,6 +759,7 @@ html.dark .dash-map-tooltip-metric {
 .dash-map-canvas .jvm-zoom-btn.jvm-zoomout,
 .jvm-container .jvm-zoom-btn.jvm-zoomout,
 .jvm-zoom-btn.jvm-zoomout {
+    position: absolute !important;
     left: 48px !important;
     top: 14px !important;
     bottom: auto !important;

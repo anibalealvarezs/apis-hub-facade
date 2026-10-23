@@ -10,7 +10,14 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
-        csrfToken: @js(csrf_token())
+        csrfToken: @js(csrf_token()),
+        intentOptions: {
+            'transactional': @js(__('Transactional')),
+            'commercial': @js(__('Commercial')),
+            'informational': @js(__('Informational')),
+            'navigational': @js(__('Navigational')),
+            'unclassified': @js(__('Unclassified'))
+        }
     })" x-init="initDashboard()">
         <div class="gsc-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="gsc-header-controls flex-wrap">

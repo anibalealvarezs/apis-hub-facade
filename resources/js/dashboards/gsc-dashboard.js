@@ -131,7 +131,7 @@ export function gscDashboard(config = {}) {
 
         activeFilters: { queries: [], pages: [], countries: [], devices: [], intents: [] },
 
-        intentOptions: {
+        intentOptions: config.intentOptions || {
             'transactional': 'Transactional',
             'commercial': 'Commercial',
             'informational': 'Informational',
