@@ -5520,30 +5520,32 @@
             $resolveIso2AndName = function ($rawName) use ($iso3to2, $countryNameToIso2): array {
                 if (empty($rawName)) return [null, 'Unknown'];
                 $clean = trim((string)$rawName);
-                $lower = strtolower($clean);
+                // Strip trailing ' (%)' or ' %' if appended by ratio formatting
+                $cleanWithoutRatio = preg_replace('/\s*\(?%\)?$/', '', $clean);
+                $lower = strtolower(trim($cleanWithoutRatio));
 
                 // Direct ISO2
-                if (strlen($clean) === 2 && ctype_alpha($clean)) {
-                    return [strtoupper($clean), $clean];
+                if (strlen($lower) === 2 && ctype_alpha($lower)) {
+                    return [strtoupper($lower), $cleanWithoutRatio];
                 }
                 // ISO3 code
-                if (strlen($clean) === 3 && ctype_alpha($clean)) {
-                    $u3 = strtoupper($clean);
+                if (strlen($lower) === 3 && ctype_alpha($lower)) {
+                    $u3 = strtoupper($lower);
                     if (isset($iso3to2[$u3])) {
-                        return [$iso3to2[$u3], $clean];
+                        return [$iso3to2[$u3], $cleanWithoutRatio];
                     }
                 }
                 // Country name match
                 if (isset($countryNameToIso2[$lower])) {
-                    return [$countryNameToIso2[$lower], $clean];
+                    return [$countryNameToIso2[$lower], $cleanWithoutRatio];
                 }
                 // Substring or sanitized match
                 $stripped = preg_replace('/[^\p{L}\p{N}\s]/u', '', $lower);
                 if (isset($countryNameToIso2[$stripped])) {
-                    return [$countryNameToIso2[$stripped], $clean];
+                    return [$countryNameToIso2[$stripped], $cleanWithoutRatio];
                 }
 
-                return [null, $clean];
+                return [null, $cleanWithoutRatio];
             };
 
             $mapData = [];
@@ -5676,7 +5678,7 @@
                             'metric' => $cleanMKey,
                             'metric_label' => $mLabel,
                             'color' => $mColor,
-                            'map_data' => $mMapData,
+                            'map_data' => !empty($mMapData) ? $mMapData : (object)[],
                             'leaderboard' => array_slice($mLeaderboard, 0, 20),
                         ];
                     }
@@ -5721,12 +5723,12 @@
                             'metric' => $dsMetric,
                             'metric_label' => $dsLabel,
                             'color' => $dsColor,
-                            'map_data' => $dsMapData,
+                            'map_data' => !empty($dsMapData) ? $dsMapData : (object)[],
                             'leaderboard' => array_slice($dsLeaderboard, 0, 20),
                         ];
 
                         if ($dIdx === 0) {
-                            $mapData = $dsMapData;
+                            $mapData = !empty($dsMapData) ? $dsMapData : (object)[];
                             $leaderboard = $dsLeaderboard;
                             $metricLabel = $dsLabel;
                             $metric = $dsMetric;
@@ -5749,7 +5751,7 @@
                 'geo_scope' => $geoScope,
                 'metric' => $metric,
                 'metric_label' => $metricLabel,
-                'map_data' => $mapData,
+                'map_data' => !empty($mapData) ? $mapData : (object)[],
                 'leaderboard' => array_slice($leaderboard, 0, 20),
                 'series_metrics' => $seriesMetricsData,
             ];

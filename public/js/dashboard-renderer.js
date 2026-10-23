@@ -4222,7 +4222,8 @@ window.dashboardRenderer = {
         };
 
         const initialActive = getActiveData(activeIdx);
-        const mapData = initialActive.map_data || {};
+        const rawMapData = initialActive.map_data;
+        const mapData = (rawMapData && typeof rawMapData === 'object' && !Array.isArray(rawMapData)) ? rawMapData : {};
         const regionsCount = Object.keys(mapData).length;
 
         containerEl.style.display = "flex";
