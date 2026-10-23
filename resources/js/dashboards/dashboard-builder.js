@@ -3516,14 +3516,6 @@ export function dashboardBuilder(config = {}) {
             const series = this.widgetControlsForm.raw_series[index];
             if (!series) return;
             series.metric_selection_mode = mode;
-            if (mode === 'single') {
-                if (Array.isArray(series.allowed_metrics) && series.allowed_metrics.length > 1) {
-                    series.allowed_metrics = [series.allowed_metrics[0]];
-                }
-                if (Array.isArray(series.metrics) && series.metrics.length > 1) {
-                    series.metrics = [series.metrics[0]];
-                }
-            }
             this.ensureBreakdownRankByMetric(series);
         },
 
@@ -3534,21 +3526,15 @@ export function dashboardBuilder(config = {}) {
             if (!Array.isArray(series.allowed_metrics)) series.allowed_metrics = [];
             if (!Array.isArray(series.metrics)) series.metrics = [];
 
-            if (series.metric_selection_mode === 'single') {
-                // Radio behavior: always select clicked metric as the only one
-                series.allowed_metrics = [metricKey];
-                series.metrics = [metricKey];
+            if (series.allowed_metrics.includes(metricKey)) {
+                // Remove from allowed and active
+                series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
+                series.metrics = series.metrics.filter(m => m !== metricKey);
             } else {
-                if (series.allowed_metrics.includes(metricKey)) {
-                    // Remove from allowed and active
-                    series.allowed_metrics = series.allowed_metrics.filter(m => m !== metricKey);
-                    series.metrics = series.metrics.filter(m => m !== metricKey);
-                } else {
-                    // Add to allowed and by default mark as active
-                    series.allowed_metrics = [...series.allowed_metrics, metricKey];
-                    if (!series.metrics.includes(metricKey)) {
-                        series.metrics = [...series.metrics, metricKey];
-                    }
+                // Add to allowed and by default mark as active
+                series.allowed_metrics = [...series.allowed_metrics, metricKey];
+                if (!series.metrics.includes(metricKey)) {
+                    series.metrics = [...series.metrics, metricKey];
                 }
             }
             this.ensureBreakdownRankByMetric(series);
