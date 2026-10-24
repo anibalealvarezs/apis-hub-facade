@@ -4858,7 +4858,7 @@
             }
 
             // Normalization: If the controller does not expect an array account (like Mailchimp), unwrap array if passed
-            if (!in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
+            if (!in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads'])) {
                 if (is_array($payload['account'] ?? null)) {
                     $payload['account'] = !empty($payload['account']) ? (string)reset($payload['account']) : '';
                 } elseif (isset($payload['account'])) {
@@ -4873,7 +4873,7 @@
                 }
             }
 
-            if (in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
+            if (in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads'])) {
                 if (isset($payload['account']) && !is_array($payload['account'])) {
                     $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
                 }
