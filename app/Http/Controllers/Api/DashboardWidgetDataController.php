@@ -4884,7 +4884,7 @@
             }
 
             // Normalization: If the controller does not expect an array account (like Mailchimp), unwrap array if passed
-            if (!in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads'])) {
+            if (!in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics'])) {
                 if (is_array($payload['account'] ?? null)) {
                     $payload['account'] = !empty($payload['account']) ? (string)reset($payload['account']) : '';
                 } elseif (isset($payload['account'])) {
@@ -4899,7 +4899,7 @@
                 }
             }
 
-            if (in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads'])) {
+            if (in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics'])) {
                 if (isset($payload['account']) && !is_array($payload['account'])) {
                     $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
                 }
@@ -4913,6 +4913,27 @@
                             }
                         });
                         $payload['account'] = array_values(array_unique($flat));
+                    }
+                }
+
+                if ($channel === 'google_analytics' && !empty($payload['account'])) {
+                    $project = Project::find($payload['tenant']);
+                    if ($project) {
+                        $service = app(\App\Services\RemoteEngineService::class);
+                        $response = $service->listChanneled($project, 'google_analytics', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                        $pidToId = [];
+                        if (isset($response['data']) && is_array($response['data'])) {
+                            foreach ($response['data'] as $prop) {
+                                $pid = (string)($prop['platformId'] ?? $prop['platform_id'] ?? '');
+                                if ($pid) {
+                                    $pidToId[$pid] = (string)$prop['id'];
+                                }
+                            }
+                        }
+                        $payload['account'] = array_values(array_unique(array_map(
+                            fn($a) => $pidToId[(string)$a] ?? (string)$a,
+                            $payload['account']
+                        )));
                     }
                 }
 

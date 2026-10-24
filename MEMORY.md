@@ -11,6 +11,22 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Google Ads Dashboard & Custom Widget Aggregation Resolution (2026-10-24)
+- **Problem & Context:**
+  - Widgets requesting `google_ads` and `google_analytics` cross-channel data (e.g. tile widget for Spend and Derived Metric "Cost per Conversion") experienced two main failure modes:
+    1. `"The account field must be an array."` - `DashboardWidgetDataController::forwardToChannelEndpoint()` collapsed array accounts to a single string for all channels except `facebook_marketing` and `facebook_organic`. `GoogleAdsController::validateRequest()` strictly expects `'account' => 'required|array'`. Conversely, `GoogleAnalyticsController` strictly expected `'account' => 'required|string'`, causing multi-property GA4 selections (e.g. 6 properties) to drop all properties except the first one (`46`).
+    2. `SQLSTATE[22003]: Numeric value out of range: 7 ERROR: value "8266857248" is out of range for type integer` - External platform IDs (e.g. Google Ads customer ID `8266857248` or GA4 property platform IDs) were forwarded directly as the `channeledAccount` filter to the tenant orchestrator. In `apis-hub`, `channeled_account_id` in PostgreSQL is an integer FK pointing to `channeled_accounts.id`.
+- **Implementation:**
+  - `ChannelGranularityRegistry.php`:
+    - Updated `allowsMultipleAssets()` to return `true` for `google_ads` and `google_analytics` alongside `facebook_marketing`.
+  - `GoogleAnalyticsController.php`:
+    - Updated `validateRequest()` to accept array or string for `account`.
+    - Updated `summary()`, `chart()`, and `table()` to support array accounts via `['operator' => 'in', 'value' => ...]` when multiple accounts/properties are selected.
+  - `DashboardWidgetDataController.php`:
+    - Added `google_ads` and `google_analytics` to the array-preserving whitelist in `forwardToChannelEndpoint()`.
+    - Added platformId-to-internal-ID resolution in `resolveChanneledAccountId()` and `forwardToChannelEndpoint()` for both Google Ads customer IDs and Google Analytics property IDs.
+  - Documented both requirements in the master driver implementation playbook (`D:\laragon\www\_shared\skills\hub-driver-implementation.md`).
+
 ### Mailchimp Data Explorer KPI & Sub-Metric Breakdown Redesign (2026-10-06)
 - **Context & Design:**
   - Redesigned the Mailchimp KPI cards and campaign table cells to clearly explain the newly supported granular metric variations (`opens_standard`, `opens_proxy`, `clicks_unique`, `bounces_hard`, `bounces_soft`).
