@@ -25,6 +25,14 @@
   - `DashboardWidgetDataController.php`:
     - Added `google_ads`, `google_analytics`, and `google_search_console` to the array-preserving whitelist in `forwardToChannelEndpoint()`.
     - Added platformId/hash/site-to-internal-ID resolution with static in-memory caching in `resolveChanneledAccountId()` and `forwardToChannelEndpoint()` for Google Ads, Google Analytics, and Google Search Console.
+    - Added companion metric retrieval in `DashboardWidgetDataController::handleMetricSource()` to ensure required companion metrics (`spend` and `conversions` for `cost_per_conversion`; `spend` and `results` for `cost_per_result`; `spend` and `impressions` for `cpm`; `spend` and `clicks` for `cpc`) are fetched automatically when calculating ratio metrics.
+  - `GranularityAggregationService.php`:
+    - Added tracking for `conversions_sum` and added weighted ratio aggregation for `cost_per_conversion` (`$comp['spend_sum'] / $comp['conversions_sum']`), fixing the defect where daily ratio values were being incorrectly summed up over the entire period instead of weighted by volume.
+  - `KpiFormBuilder.php`:
+    - Registered `'cost_per_conversion' => __('Cost per Conversion')` in `conversion_tracked` and `paid_media` metric groups.
+  - `dashboard-renderer.js`:
+    - Registered `cost_per_conversion` in `METRIC_FORMATS` (`format: 'currency'`, `prefix: '$'`, `lower_is_better: true`) and mapped `spend/conversions` to `label: 'Cost per Conversion'` in ratio heuristics.
+    - Fixed double currency prefix rendering bug in `renderTile()` (`displayPrefix = format === 'currency' ? '' : prefix`) preventing duplicate `$$` when both `resultFormat.prefix` and `formatCurrency()` prepend dollar signs.
   - Documented requirements in the master driver implementation playbook (`D:\laragon\www\_shared\skills\hub-driver-implementation.md`).
 
 ### Mailchimp Data Explorer KPI & Sub-Metric Breakdown Redesign (2026-10-06)
