@@ -2336,6 +2336,17 @@
 
                         $response = $service->updateCredentials($tenant, $payload);
 
+                        // If channel provides credentials (such as Google Ads Developer Token), push to node environment (.env)
+                        if (!empty($payload['developer_token'])) {
+                            try {
+                                $service->execute($tenant, fn($client) => $client->updateCredentials([
+                                    'GOOGLE_ADS_DEVELOPER_TOKEN' => $payload['developer_token'],
+                                ]));
+                            } catch (\Throwable $e) {
+                                Log::warning("Could not push GOOGLE_ADS_DEVELOPER_TOKEN to remote .env: " . $e->getMessage());
+                            }
+                        }
+
                         \Illuminate\Support\Facades\Log::info('[DataSources::save] Remote updateCredentials response', [
                             'channel' => $channel,
                             'remote_response_channel' => $response['config'][$channel] ?? null,

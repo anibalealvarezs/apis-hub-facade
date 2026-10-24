@@ -130,7 +130,10 @@ class DeployerService
         $fbAppSecret = config('services.facebook.client_secret');
         $googleClientId = config('services.google.client_id');
         $googleClientSecret = config('services.google.client_secret');
-        $googleDeveloperToken = config('services.google.developer_token') ?? env('GOOGLE_ADS_DEVELOPER_TOKEN') ?? '';
+        $googleDeveloperToken = config('services.google.developer_token')
+            ?? env('GOOGLE_ADS_DEVELOPER_TOKEN')
+            ?? $project->sync_config['google_ads']['developer_token']
+            ?? '';
         $facadeUrl = config('app.url') . '/api/heartbeat';
         $alertFacadeUrl = config('app.url') . '/api/alerts/triggered';
 
