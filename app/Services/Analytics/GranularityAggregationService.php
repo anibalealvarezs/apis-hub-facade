@@ -71,6 +71,9 @@ class GranularityAggregationService
                 if ($ck === 'results') {
                     $groups[$gKey]['companion']['results_sum'] = ($groups[$gKey]['companion']['results_sum'] ?? 0) + (float) $v;
                 }
+                if ($ck === 'conversions') {
+                    $groups[$gKey]['companion']['conversions_sum'] = ($groups[$gKey]['companion']['conversions_sum'] ?? 0) + (float) $v;
+                }
                 if (str_contains($ck, 'position') && $rowImpressions !== null) {
                     if (!isset($groups[$gKey]['companion']['weighted_position_sum'])) {
                         $groups[$gKey]['companion']['weighted_position_sum'] = [];
@@ -97,6 +100,8 @@ class GranularityAggregationService
                     $row[$k] = $comp['spend_sum'] / $comp['clicks_sum'];
                 } elseif ($ck === 'cost_per_result' && isset($comp['spend_sum']) && ($comp['results_sum'] ?? 0) > 0) {
                     $row[$k] = $comp['spend_sum'] / $comp['results_sum'];
+                } elseif ($ck === 'cost_per_conversion' && isset($comp['spend_sum']) && ($comp['conversions_sum'] ?? 0) > 0) {
+                    $row[$k] = $comp['spend_sum'] / $comp['conversions_sum'];
                 } elseif (str_contains($ck, 'position') && ($comp['impressions_sum'] ?? 0) > 0) {
                     $weightedSum = $comp['weighted_position_sum'][$k] ?? 0;
                     $row[$k] = $weightedSum / $comp['impressions_sum'];

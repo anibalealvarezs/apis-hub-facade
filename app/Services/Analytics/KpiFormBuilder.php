@@ -1282,7 +1282,7 @@ class KpiFormBuilder
             'clickable' => ['clicks' => __('Clicks')],
             'impressionable' => ['impressions' => __('Impressions')],
             'revenue_tracked' => ['revenue' => __('Revenue'), 'purchase_roas' => __('ROAS')],
-            'conversion_tracked' => ['conversions' => __('Conversions'), 'results' => __('Results'), 'cost_per_result' => __('Cost per Result')],
+            'conversion_tracked' => ['conversions' => __('Conversions'), 'results' => __('Results'), 'cost_per_result' => __('Cost per Result'), 'cost_per_conversion' => __('Cost per Conversion')],
             'traffic_tracked' => ['sessions' => __('Sessions'), 'pageviews' => __('Pageviews'), 'new_users' => __('New Users')],
             'behavior_tracked' => ['bounce_rate' => __('Bounce Rate'), 'average_session_duration' => __('Avg Session Duration')],
             'organic_social' => [
@@ -1311,7 +1311,7 @@ class KpiFormBuilder
             'retention_driven' => ['unsubscribes' => __('Unsubscribes'), 'bounces' => __('Bounces')],
             'ecommerce' => ['orders' => __('Orders'), 'aov' => __('AOV'), 'revenue' => __('Revenue')],
             'seo' => ['clicks' => __('Search Clicks'), 'impressions' => __('Search Impressions'), 'position' => __('Average Position'), 'ctr' => __('CTR')],
-            'paid_media' => ['spend' => __('Spend'), 'clicks' => __('Clicks'), 'impressions' => __('Impressions'), 'cpm' => __('CPM'), 'conversions' => __('Conversions'), 'cpc' => __('CPC'), 'purchase_roas' => __('ROAS'), 'cost_per_result' => __('Cost per Result'), 'results' => __('Results'), 'link_clicks' => __('Link Clicks')],
+            'paid_media' => ['spend' => __('Spend'), 'clicks' => __('Clicks'), 'impressions' => __('Impressions'), 'cpm' => __('CPM'), 'conversions' => __('Conversions'), 'cpc' => __('CPC'), 'purchase_roas' => __('ROAS'), 'cost_per_result' => __('Cost per Result'), 'cost_per_conversion' => __('Cost per Conversion'), 'results' => __('Results'), 'link_clicks' => __('Link Clicks')],
             'analytics' => ['sessions' => __('Sessions'), 'pageviews' => __('Pageviews'), 'bounce_rate' => __('Bounce Rate'), 'new_users' => __('New Users'), 'average_session_duration' => __('Avg Session Duration')],
         ];
     }

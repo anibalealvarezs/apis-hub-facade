@@ -2506,19 +2506,28 @@
             $channel = $controls['channel'] ?? $config['channel'] ?? '';
             $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
 
-            // Ensure we fetch impressions and clicks for weighted average calculations (e.g. CTR, Position)
+            // Ensure we fetch companion metrics for weighted calculations (e.g. CTR, Position, CPC, CPM, Cost per Conversion)
             // The display filtering is handled upstream by checking the original controls['metrics'] array.
             $needsImpressions = false;
             foreach ($metrics as $m) {
-                if (str_contains($m, 'position') || $m === 'ctr') {
+                if (str_contains($m, 'position') || $m === 'ctr' || $m === 'cpm') {
                     $needsImpressions = true;
                 }
             }
             if ($needsImpressions && !in_array('impressions', $metrics)) {
                 $metrics[] = 'impressions';
             }
-            if (in_array('ctr', $metrics) && !in_array('clicks', $metrics)) {
+            if ((in_array('ctr', $metrics) || in_array('cpc', $metrics)) && !in_array('clicks', $metrics)) {
                 $metrics[] = 'clicks';
+            }
+            if ((in_array('cpc', $metrics) || in_array('cpm', $metrics) || in_array('cost_per_result', $metrics) || in_array('cost_per_conversion', $metrics)) && !in_array('spend', $metrics)) {
+                $metrics[] = 'spend';
+            }
+            if (in_array('cost_per_result', $metrics) && !in_array('results', $metrics)) {
+                $metrics[] = 'results';
+            }
+            if (in_array('cost_per_conversion', $metrics) && !in_array('conversions', $metrics)) {
+                $metrics[] = 'conversions';
             }
 
             if (!$channel) {

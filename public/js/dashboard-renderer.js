@@ -31,6 +31,12 @@ window.dashboardRenderer = {
             prefix: "$",
             lower_is_better: true,
         },
+        cost_per_conversion: {
+            label: "Cost per Conversion",
+            format: "currency",
+            prefix: "$",
+            lower_is_better: true,
+        },
         frequency: {
             label: "Frequency",
             format: "number",
@@ -921,11 +927,13 @@ window.dashboardRenderer = {
                   ? value.toFixed(1) + "%"
                   : this.formatNumber(value);
 
+        const displayPrefix = format === "currency" ? "" : prefix;
+
         containerEl.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full p-4">
                 ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">${this.escapeHtml(label)}</p>` : ""}
                 <div class="flex items-baseline">
-                    <span class="text-3xl font-bold text-gray-900 dark:text-white">${prefix}${formattedValue}${suffix}</span>
+                    <span class="text-3xl font-bold text-gray-900 dark:text-white">${displayPrefix}${formattedValue}${suffix}</span>
                     ${trendHtml}
                 </div>
                 ${changePercent !== null ? `<p class="text-xs text-gray-400 mt-1">vs previous period</p>` : ""}
