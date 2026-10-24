@@ -4735,6 +4735,32 @@
                 return $fbmMappings[$project->id][$strAsset] ?? $asset;
             }
 
+            if ($channel === 'google_ads') {
+                static $gadsMappings = [];
+                if (!isset($gadsMappings[$project->id])) {
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled Google Ads", ['project_id' => $project->id]);
+                    $gadsListT0 = microtime(true);
+                    $service = app(\App\Services\RemoteEngineService::class);
+                    $response = $service->listChanneled($project, 'google_ads', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled Google Ads", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gadsListT0) * 1000, 1)]);
+                    $gadsMappings[$project->id] = [];
+                    if (isset($response['data']) && is_array($response['data'])) {
+                        foreach ($response['data'] as $acc) {
+                            $pid = (string)($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                            if ($pid) {
+                                $gadsMappings[$project->id][$pid] = (string)$acc['id'];
+                                $cleanPid = str_replace('-', '', $pid);
+                                $gadsMappings[$project->id][$cleanPid] = (string)$acc['id'];
+                            }
+                        }
+                    }
+                }
+                $strAsset = (string)$asset;
+                $cleanStrAsset = str_replace('-', '', $strAsset);
+
+                return $gadsMappings[$project->id][$strAsset] ?? $gadsMappings[$project->id][$cleanStrAsset] ?? $asset;
+            }
+
             if ($channel === 'mailchimp') {
                 static $mcMappings = [];
                 if (!isset($mcMappings[$project->id])) {
@@ -4980,6 +5006,30 @@
                         }
                         $payload['account'] = array_values(array_unique(array_map(
                             fn($a) => $pidToId[(string)$a] ?? (string)$a,
+                            $payload['account']
+                        )));
+                    }
+                }
+
+                if ($channel === 'google_ads' && !empty($payload['account'])) {
+                    $project = Project::find($payload['tenant']);
+                    if ($project) {
+                        $service = app(\App\Services\RemoteEngineService::class);
+                        $response = $service->listChanneled($project, 'google_ads', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                        $pidToId = [];
+                        if (isset($response['data']) && is_array($response['data'])) {
+                            foreach ($response['data'] as $acc) {
+                                $pid = (string)($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                                if ($pid) {
+                                    $intId = (string)$acc['id'];
+                                    $pidToId[$pid] = $intId;
+                                    $clean = str_replace('-', '', $pid);
+                                    $pidToId[$clean] = $intId;
+                                }
+                            }
+                        }
+                        $payload['account'] = array_values(array_unique(array_map(
+                            fn($a) => $pidToId[(string)$a] ?? $pidToId[str_replace('-', '', (string)$a)] ?? (string)$a,
                             $payload['account']
                         )));
                     }
