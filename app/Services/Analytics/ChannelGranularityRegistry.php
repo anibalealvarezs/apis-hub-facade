@@ -214,7 +214,7 @@ class ChannelGranularityRegistry
     public static function allowsMultipleAssets(string $channel): bool
     {
         return match ($channel) {
-            'facebook_marketing', 'google_ads', 'google_analytics' => true,
+            'facebook_marketing', 'google_ads', 'google_analytics', 'google_search_console' => true,
             // 'klaviyo', 'shopify', 'mailchimp' etc... add here if they should allow multiple
             default => false,
         };

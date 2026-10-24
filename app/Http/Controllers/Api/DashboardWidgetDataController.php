@@ -4792,50 +4792,50 @@
                 return $asset;
             }
 
-            $config = $project->sync_config['google_search_console']['assets']['sites']
-                ?? $project->sync_config['google_search_console']['sites']
-                ?? [];
+            static $gscMappings = [];
+            if (!isset($gscMappings[$project->id])) {
+                $gscMappings[$project->id] = [];
+                $config = $project->sync_config['google_search_console']['assets']['sites']
+                    ?? $project->sync_config['google_search_console']['sites']
+                    ?? [];
 
-            $siteUrl = null;
-            foreach ($config as $site) {
-                $candidate = $site['url'] ?? $site['id'] ?? null;
-                if ($candidate === $asset) {
-                    $siteUrl = $candidate;
-
-                    break;
-                }
-            }
-
-            if (!$siteUrl) {
-                return $asset;
-            }
-
-            $hash = md5($siteUrl);
-
-            try {
-                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled GSC", ['project_id' => $project->id]);
-                $gscListT0 = microtime(true);
-                $service = app(\App\Services\RemoteEngineService::class);
-                $response = $service->listChanneled($project, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
-                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled GSC", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gscListT0) * 1000, 1)]);
-
-                if (isset($response['data']) && is_array($response['data'])) {
-                    foreach ($response['data'] as $page) {
-                        $platformId = rtrim((string)($page['platformId'] ?? $page['platform_id'] ?? ''), '/');
-                        if ($platformId === $hash) {
-                            return (string)$page['id'];
-                        }
+                $siteHashes = [];
+                foreach ($config as $site) {
+                    $candidate = $site['url'] ?? $site['id'] ?? null;
+                    if ($candidate) {
+                        $siteHashes[md5($candidate)] = $candidate;
                     }
                 }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('[resolveChanneledAccountId] Failed to resolve', [
-                    'channel' => $channel,
-                    'asset'   => $asset,
-                    'error'   => $e->getMessage(),
-                ]);
+
+                try {
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled GSC", ['project_id' => $project->id]);
+                    $gscListT0 = microtime(true);
+                    $service = app(\App\Services\RemoteEngineService::class);
+                    $response = $service->listChanneled($project, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled GSC", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gscListT0) * 1000, 1)]);
+
+                    if (isset($response['data']) && is_array($response['data'])) {
+                        foreach ($response['data'] as $page) {
+                            $platformId = rtrim((string)($page['platformId'] ?? $page['platform_id'] ?? ''), '/');
+                            $id = (string)$page['id'];
+                            $gscMappings[$project->id][$platformId] = $id;
+                            if (isset($siteHashes[$platformId])) {
+                                $url = $siteHashes[$platformId];
+                                $gscMappings[$project->id][$url] = $id;
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('[resolveChanneledAccountId] Failed to resolve GSC', [
+                        'channel' => $channel,
+                        'asset'   => $asset,
+                        'error'   => $e->getMessage(),
+                    ]);
+                }
             }
 
-            return $asset;
+            $strAsset = (string)$asset;
+            return $gscMappings[$project->id][$strAsset] ?? $gscMappings[$project->id][md5($strAsset)] ?? $asset;
         }
 
         public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
@@ -4884,7 +4884,7 @@
             }
 
             // Normalization: If the controller does not expect an array account (like Mailchimp), unwrap array if passed
-            if (!in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics'])) {
+            if (!in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics', 'google_search_console'])) {
                 if (is_array($payload['account'] ?? null)) {
                     $payload['account'] = !empty($payload['account']) ? (string)reset($payload['account']) : '';
                 } elseif (isset($payload['account'])) {
@@ -4899,7 +4899,7 @@
                 }
             }
 
-            if (in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics'])) {
+            if (in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics', 'google_search_console'])) {
                 if (isset($payload['account']) && !is_array($payload['account'])) {
                     $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
                 }
