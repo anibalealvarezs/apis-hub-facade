@@ -3093,6 +3093,41 @@
                     $ssChannel = $ss['channel'] ?? '';
                     $ssMetric = $ss['metric'] ?? '';
 
+                    // Find matching item in $items by dm_series_index or $ssIdx
+                    $matchingItem = null;
+                    foreach ($items as $item) {
+                        if (isset($item['series']['dm_series_index']) && (int)$item['series']['dm_series_index'] === $ssIdx) {
+                            $matchingItem = $item;
+                            break;
+                        }
+                    }
+                    if (!$matchingItem && isset($items[$ssIdx])) {
+                        $matchingItem = $items[$ssIdx];
+                    }
+
+                    // If source_series metric is null or empty, look up in predefined registry first
+                    if (empty($ssMetric)) {
+                        $predefined = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                        foreach ($predefined as $pdm) {
+                            if (($pdm['name'] ?? '') === $derivedMetric->name && !empty($pdm['source_series'][$ssIdx]['metric'])) {
+                                $ssMetric = $pdm['source_series'][$ssIdx]['metric'];
+                                break;
+                            }
+                        }
+                    }
+
+                    // Fall back to matching item metric or card series_metrics if still empty
+                    if (empty($ssMetric) && $matchingItem) {
+                        $cardIdx = $matchingItem['series_index'] ?? $ssIdx;
+                        $cardMetrics = $controls['series_metrics'][$cardIdx]
+                            ?? $controls['series_metrics'][(string)$cardIdx]
+                            ?? $matchingItem['series']['metrics']
+                            ?? null;
+                        if (!empty($cardMetrics)) {
+                            $ssMetric = is_array($cardMetrics) ? reset($cardMetrics) : (string)$cardMetrics;
+                        }
+                    }
+
                     \Illuminate\Support\Facades\Log::info("[DM_DEBUG] Processing DM {$dmId} source_series index {$ssIdx}", [
                         'ssKey'     => $ssKey,
                         'ssChannel' => $ssChannel,
@@ -3104,18 +3139,6 @@
                         \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] Skipped DM {$dmId} ssIdx {$ssIdx} because channel or metric empty", ['channel' => $ssChannel, 'metric' => $ssMetric]);
                         $fetchedSeries[$ssKey] = [];
                         continue;
-                    }
-
-                    // Find matching item in $items by dm_series_index or $ssIdx
-                    $matchingItem = null;
-                    foreach ($items as $item) {
-                        if (isset($item['series']['dm_series_index']) && (int)$item['series']['dm_series_index'] === $ssIdx) {
-                            $matchingItem = $item;
-                            break;
-                        }
-                    }
-                    if (!$matchingItem && isset($items[$ssIdx])) {
-                        $matchingItem = $items[$ssIdx];
                     }
 
                     $seriesAssetFilter = $ss['asset_filter'] ?? null;
