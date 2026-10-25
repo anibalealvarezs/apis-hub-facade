@@ -3093,7 +3093,15 @@
                     $ssChannel = $ss['channel'] ?? '';
                     $ssMetric = $ss['metric'] ?? '';
 
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] Processing DM {$dmId} source_series index {$ssIdx}", [
+                        'ssKey'     => $ssKey,
+                        'ssChannel' => $ssChannel,
+                        'ssMetric'  => $ssMetric,
+                        'ss'        => $ss,
+                    ]);
+
                     if (!$ssChannel || !$ssMetric) {
+                        \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] Skipped DM {$dmId} ssIdx {$ssIdx} because channel or metric empty", ['channel' => $ssChannel, 'metric' => $ssMetric]);
                         $fetchedSeries[$ssKey] = [];
                         continue;
                     }
