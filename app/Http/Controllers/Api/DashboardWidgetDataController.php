@@ -3141,11 +3141,13 @@
                         // Fallback to all valid assets for this channel
                         $validAssets = $this->getValidAssetsForChannel($project, $ssChannel);
                         if (!empty($validAssets)) {
-                            $allowsMultiple = in_array($ssChannel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                            $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($ssChannel)
+                                || in_array($ssChannel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'google_search_console', 'tiktok', 'pinterest', 'linkedin']);
                             $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
                         }
                     }
                     if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
+                        \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for DM {$dmId} series {$ssKey} channel={$ssChannel}");
                         $fetchedSeries[$ssKey] = [];
                         continue;
                     }
@@ -3219,6 +3221,14 @@
 
                     $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
 
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} series {$ssKey} ({$ssChannel}:{$ssMetric}) forwardToChannelEndpoint response", [
+                        'channel' => $ssChannel,
+                        'account' => $payload['account'] ?? null,
+                        'metrics' => $payload['metrics'] ?? null,
+                        'chart_count' => isset($channelResponse['chart']) && is_array($channelResponse['chart']) ? count($channelResponse['chart']) : null,
+                        'data_count' => isset($channelResponse['data']) && is_array($channelResponse['data']) ? count($channelResponse['data']) : null,
+                    ]);
+
                     if (!empty($ssBreakdownDim)) {
                         $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
                         if (!is_array($rawRows)) {
@@ -3287,6 +3297,10 @@
                     } else {
                         $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
 
+                        \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} series {$ssKey} extracted points count: " . count($seriesData), [
+                            'sample' => array_slice($seriesData, 0, 3, true),
+                        ]);
+
                         if ($effectiveGranularity !== 'daily' && !empty($seriesData)) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                             $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
@@ -3330,7 +3344,18 @@
                         'derived_metrics' => $derivedResults,
                     ];
 
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} computeKpi payload", [
+                        'ast' => $ast,
+                        'flatSeriesData_keys' => array_keys($flatSeriesData),
+                        'flatSeriesData_counts' => array_map('count', $flatSeriesData),
+                    ]);
+
                     $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} computeKpi raw result", [
+                        'result' => $result,
+                    ]);
+
                     $data = $result['data'] ?? $result;
 
                     $dmTimeSeries = [];
@@ -5180,7 +5205,8 @@
                 if ($assetFilter === null || $assetFilter === '___EMPTY_GROUP___') {
                     $validAssets = $this->getValidAssetsForChannel($project, $channel);
                     if (!empty($validAssets)) {
-                        $allowsMultiple = in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                        $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)
+                            || in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'google_search_console', 'tiktok', 'pinterest', 'linkedin']);
                         $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
                     }
                 }
