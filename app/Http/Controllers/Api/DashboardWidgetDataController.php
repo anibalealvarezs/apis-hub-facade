@@ -1084,13 +1084,22 @@
                     $lastValue = !empty($seriesData) ? (float)end($seriesData) : 0.0;
                     $prevValue = count($seriesData) > 1 ? (float)$seriesData[count($seriesData) - 2] : null;
 
+                    $isLowerBetter = (bool)($firstDataset['lower_is_better'] ?? false)
+                        || str_contains(strtolower($cleanKey), 'cost')
+                        || str_contains(strtolower($cleanKey), 'cpc')
+                        || str_contains(strtolower($cleanKey), 'cpa')
+                        || str_contains(strtolower($cleanKey), 'position')
+                        || str_contains(strtolower($firstDataset['label'] ?? ''), 'cost')
+                        || str_contains(strtolower($firstDataset['label'] ?? ''), 'cpa')
+                        || str_contains(strtolower($firstDataset['label'] ?? ''), 'cpc');
+
                     $data = [
                         'value'           => $lastValue,
                         'current'         => $lastValue,
                         'previous'        => $prevValue,
                         'label'           => $firstDataset['label'] ?? ucfirst($cleanKey),
                         'percentage'      => (bool)($firstDataset['percentage'] ?? false),
-                        'lower_is_better' => (bool)($firstDataset['lower_is_better'] ?? false),
+                        'lower_is_better' => $isLowerBetter,
                     ];
 
                     if (!empty($seriesData)) {
@@ -1621,6 +1630,12 @@
                             $data['current'] = $data['value'];
                             $prevVal = $data['previous'][$metric] ?? null;
                             $data['previous'] = ($prevVal !== null && is_numeric($prevVal)) ? (float)$prevVal : $prevVal;
+                            $metricLower = strtolower($metric);
+                            $data['lower_is_better'] = in_array($metricLower, ['cpc', 'cpm', 'cpa', 'cost_per_result', 'cost_per_conversion', 'bounce_rate', 'position'], true)
+                                || str_contains($metricLower, 'cost')
+                                || str_contains($metricLower, 'cpc')
+                                || str_contains($metricLower, 'cpa')
+                                || str_contains($metricLower, 'position');
                         }
                     } elseif (isset($data['series']['values'])) {
                         $primaryValues = $data['series']['values'];
@@ -5190,7 +5205,14 @@
                     'labels_count' => isset($cached->result['labels']) ? count($cached->result['labels']) : 'N/A',
                 ]);
 
-                return $cached->result;
+                $cachedResult = $cached->result;
+                $predefinedList = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                $predefinedConfig = $predefinedList[$derivedMetric->code ?? ''] ?? $predefinedList[$derivedMetric->slug ?? ''] ?? null;
+                if (!empty($predefinedConfig['lower_is_better']) && !empty($cachedResult['datasets'])) {
+                    $cachedResult['datasets'][0]['lower_is_better'] = true;
+                }
+
+                return $cachedResult;
             }
 
             \Illuminate\Support\Facades\Log::info('[DM_GRAN] CACHE MISS — computing fresh result', [

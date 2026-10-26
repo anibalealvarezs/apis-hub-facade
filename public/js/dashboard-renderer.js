@@ -933,32 +933,47 @@ window.dashboardRenderer = {
             controls?.metrics?.[0] || data?.metric || data?.label || label || ""
         ).toLowerCase();
 
+        const widgetCard = containerEl.closest ? containerEl.closest(".grid-stack-item-content") : null;
+        const widgetTitle = (
+            widgetCard?.querySelector("h3")?.innerText ||
+            ""
+        ).toLowerCase();
+
         const isInverseByKeyword =
-            primaryMetric.includes("cost_per") ||
-            primaryMetric.includes("cost per") ||
-            primaryMetric.includes("cost/result") ||
+            primaryMetric.includes("cost") ||
+            primaryMetric.includes("coste") ||
             primaryMetric.includes("cpa") ||
             primaryMetric.includes("cpc") ||
             primaryMetric.includes("cpm") ||
             primaryMetric.includes("bounce") ||
+            primaryMetric.includes("rebote") ||
             primaryMetric.includes("position") ||
-            dmCode.includes("cost_per") ||
+            primaryMetric.includes("posición") ||
+            dmCode.includes("cost") ||
             dmCode.includes("cpc") ||
-            dmCode.includes("cpa");
+            dmCode.includes("cpa") ||
+            widgetTitle.includes("cost") ||
+            widgetTitle.includes("coste") ||
+            widgetTitle.includes("cpa") ||
+            widgetTitle.includes("cpc");
 
-        const lowerIsBetter =
-            data?.lower_is_better ??
-            resultFormat?.lower_is_better ??
-            isInverseByKeyword ??
-            false;
+        const lowerIsBetter = Boolean(
+            data?.lower_is_better ||
+            resultFormat?.lower_is_better ||
+            isInverseByKeyword
+        );
 
         if (previous !== null && previous !== 0) {
             changePercent = ((value - previous) / Math.abs(previous)) * 100;
+            const isIncrease = changePercent > 0;
+            const isDecrease = changePercent < 0;
+            const arrow = isIncrease ? "▲" : (isDecrease ? "▼" : "");
             const improved = lowerIsBetter
                 ? changePercent <= 0
                 : changePercent >= 0;
-            const arrow = improved ? "▲" : "▼";
-            const color = improved ? "text-green-500" : "text-red-500";
+            const color = changePercent === 0
+                ? "text-gray-400"
+                : (improved ? "text-green-500" : "text-red-500");
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
