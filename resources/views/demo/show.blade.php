@@ -166,6 +166,38 @@
             font-size: 0.625rem;
             letter-spacing: 0.05em;
         }
+
+        /* ─── Refined Tile Typography (User Item 2) ─── */
+        #demo-grid-stack .widget-content .text-3xl {
+            font-size: 1.5rem !important; /* 24px instead of 30px text-3xl */
+            line-height: 1.75rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.025em !important;
+            display: inline-flex !important;
+            align-items: baseline !important;
+            flex-wrap: wrap !important;
+            column-gap: 0.25rem !important;
+        }
+        @media (min-width: 640px) {
+            #demo-grid-stack .widget-content .text-3xl {
+                font-size: 1.625rem !important;
+                line-height: 1.875rem !important;
+            }
+        }
+        /* Channel branding badges */
+        .dash-channel-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.2rem 0.45rem;
+            border-radius: 0.375rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            line-height: 1;
+            border-width: 1px;
+            transition: all 0.15s ease;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
@@ -230,7 +262,8 @@
     </header>
 
     {{-- Main Container --}}
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-4">
+    <main class="flex-1 w-full p-4 sm:p-6 space-y-4 transition-all duration-200"
+          :class="isFullWidth ? 'max-w-none px-4 sm:px-8' : 'max-w-7xl mx-auto'">
         {{-- Hero Context & Filter Controls --}}
         <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs space-y-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
@@ -242,7 +275,21 @@
                         {{ $dashboard->description }}
                     </p>
                 </div>
-                <div class="flex items-center gap-2 self-start md:self-auto">
+                <div class="flex items-center gap-2 self-start md:self-auto flex-wrap">
+                    {{-- Toggle Ancho Completo vs Contenido (User Item 3) --}}
+                    <button type="button"
+                            @click="toggleFullWidth()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs cursor-pointer"
+                            :title="isFullWidth ? '{{ __('Modo Contenido') }}' : '{{ __('Ancho Completo') }}'">
+                        <template x-if="!isFullWidth">
+                            <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        </template>
+                        <template x-if="isFullWidth">
+                            <svg class="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9L4 4m0 0h4m-4 0v4m11 5l5 5m0 0v-4m0 4h-4m-7-7l5-5m0 0v4m0-4h-4M9 15l-5 5m0 0v-4m0 4h4"/></svg>
+                        </template>
+                        <span x-text="isFullWidth ? '{{ __('Contenido') }}' : '{{ __('Ancho Completo') }}'"></span>
+                    </button>
+
                     <button @click="refreshAll()"
                             :disabled="isRefreshing"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs cursor-pointer disabled:opacity-60">
@@ -252,10 +299,10 @@
                 </div>
             </div>
 
-            {{-- Asset Group & Date Filters --}}
+            {{-- Asset Group & Date Granular Filters (User Item 4) --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pt-1">
                 {{-- Asset Group Selector (The Hero Control) --}}
-                <div class="flex items-center gap-2.5">
+                <div class="flex items-center gap-2.5 flex-wrap">
                     <label for="demo-asset-group" class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                         <span>{{ __('Grupo de Activos:') }}</span>
@@ -270,19 +317,75 @@
                             </template>
                         </select>
                     </div>
-                    <span class="text-[11px] text-gray-400 dark:text-gray-500 italic hidden sm:inline">
-                        ({{ __('Cambia entre regiones y marcas para ver las métricas normalizadas') }})
-                    </span>
+
+                    {{-- Interactive Date Range Filter (User Item 4) --}}
+                    <div class="flex items-center gap-1.5 bg-gray-100/80 dark:bg-gray-800/80 p-0.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <button type="button"
+                                @click="setDatePreset('7')"
+                                class="px-2 py-1 rounded text-[11px] font-semibold transition-colors"
+                                :class="datePreset === '7' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'">
+                            {{ __('7D') }}
+                        </button>
+                        <button type="button"
+                                @click="setDatePreset('14')"
+                                class="px-2 py-1 rounded text-[11px] font-semibold transition-colors"
+                                :class="datePreset === '14' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'">
+                            {{ __('14D') }}
+                        </button>
+                        <button type="button"
+                                @click="setDatePreset('30')"
+                                class="px-2 py-1 rounded text-[11px] font-semibold transition-colors"
+                                :class="datePreset === '30' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'">
+                            {{ __('30D') }}
+                        </button>
+                        <button type="button"
+                                @click="setDatePreset('90')"
+                                class="px-2 py-1 rounded text-[11px] font-semibold transition-colors"
+                                :class="datePreset === '90' ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-xs' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'">
+                            {{ __('90D') }}
+                        </button>
+                    </div>
+
+                    {{-- Custom Date Inputs --}}
+                    <div class="hidden lg:flex items-center gap-1.5 text-xs text-gray-500">
+                        <input type="date"
+                               x-model="dateStart"
+                               @change="onDateInputChange()"
+                               class="text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1 text-gray-900 dark:text-gray-100 shadow-xs focus:ring-1 focus:ring-primary-500"/>
+                        <span class="text-gray-400">→</span>
+                        <input type="date"
+                               x-model="dateEnd"
+                               @change="onDateInputChange()"
+                               class="text-xs bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1 text-gray-900 dark:text-gray-100 shadow-xs focus:ring-1 focus:ring-primary-500"/>
+                    </div>
                 </div>
 
-                {{-- Badges for the 6 Active Beta Channels --}}
+                {{-- Badges for the 6 Active Beta Channels with Vector Icons --}}
                 <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                    <span class="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 font-medium">Meta Ads</span>
-                    <span class="px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 font-medium">Meta Organic</span>
-                    <span class="px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-medium">Google Ads</span>
-                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 font-medium">GSC</span>
-                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-medium">GA4</span>
-                    <span class="px-2 py-0.5 rounded-md bg-yellow-50 dark:bg-yellow-950/60 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/60 font-medium">Mailchimp</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-blue-600 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        Meta Ads
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-sky-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                        Meta Organic
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 2c-5.522 0-10 4.477-10 10 0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022.003 12c0-5.523-4.478-10-10-10z"/></svg>
+                        Google Ads
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        GSC
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        GA4
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-yellow-50 dark:bg-yellow-950/60 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800/60 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        Mailchimp
+                    </span>
                 </div>
             </div>
         </div>
@@ -299,10 +402,10 @@
                      gs-no-resize="true"
                      gs-no-move="true">
                     <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xs relative flex flex-col overflow-hidden">
-                        {{-- Widget Card Header with Interactive Action Toolbar --}}
+                        {{-- Widget Card Header with Official Channel Branding Icons (User Item 1) --}}
                         <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 flex items-center justify-between flex-shrink-0 gap-2">
                             <div class="flex items-center gap-2 min-w-0 pr-1">
-                                {{-- Channel Avatar Badge --}}
+                                {{-- Official Channel Branding Icon & Badge --}}
                                 @php
                                     $ch = $widget['resolved_controls']['channel'] ?? 'omnichannel';
                                     $chColors = [
@@ -310,15 +413,39 @@
                                         'meta_combined' => 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
                                         'google_ads' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
                                         'google_search_console' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
-                                        'google_analytics' => 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+                                        'google_analytics' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
                                         'mailchimp' => 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
                                         'paid_media' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
                                         'cross_channel' => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
                                     ];
                                     $chClass = $chColors[$ch] ?? 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20';
                                 @endphp
-                                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-bold border {{ $chClass }} flex-shrink-0">
-                                    {{ str_replace('_', ' ', $ch) }}
+                                <span class="dash-channel-badge border {{ $chClass }} flex-shrink-0">
+                                    @if ($ch === 'meta_ads')
+                                        <svg class="w-3 h-3 text-blue-600 dark:text-blue-400 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                        <span>META ADS</span>
+                                    @elseif ($ch === 'meta_combined')
+                                        <svg class="w-3 h-3 text-sky-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                                        <span>META SOCIAL</span>
+                                    @elseif ($ch === 'google_ads')
+                                        <svg class="w-3 h-3 text-amber-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+                                        <span>GOOGLE ADS</span>
+                                    @elseif ($ch === 'google_search_console')
+                                        <svg class="w-3 h-3 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                        <span>GSC</span>
+                                    @elseif ($ch === 'google_analytics')
+                                        <svg class="w-3 h-3 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                        <span>GA4</span>
+                                    @elseif ($ch === 'mailchimp')
+                                        <svg class="w-3 h-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                        <span>MAILCHIMP</span>
+                                    @elseif ($ch === 'paid_media')
+                                        <svg class="w-3 h-3 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span>PAID MEDIA</span>
+                                    @else
+                                        <svg class="w-3 h-3 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        <span>CROSS CHANNEL</span>
+                                    @endif
                                 </span>
                                 <h3 class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate" title="{{ $widget['name'] }}">
                                     {{ $widget['name'] }}
@@ -505,12 +632,23 @@
 
     <script>
         function demoDashboard(config) {
+            const today = new Date();
+            const formatDate = (d) => d.toISOString().split('T')[0];
+            const defaultEnd = formatDate(today);
+            const defaultStartDate = new Date();
+            defaultStartDate.setDate(defaultStartDate.getDate() - 30);
+            const defaultStart = formatDate(defaultStartDate);
+
             return {
                 selectedGroup: config.selectedGroup || '1',
                 currentLang: config.currentLang || 'es',
                 assetGroups: config.assetGroups || {},
                 widgets: config.widgets || [],
                 isRefreshing: false,
+                isFullWidth: localStorage.getItem('demo_full_width') === 'true',
+                datePreset: '30',
+                dateStart: defaultStart,
+                dateEnd: defaultEnd,
                 popOutActive: false,
                 popOutWidget: null,
                 settingsActive: false,
@@ -533,6 +671,41 @@
                     }
 
                     this.loadAllWidgets(false);
+                },
+
+                toggleFullWidth() {
+                    this.isFullWidth = !this.isFullWidth;
+                    localStorage.setItem('demo_full_width', this.isFullWidth ? 'true' : 'false');
+                    // Give GridStack a moment to recalculate widths
+                    this.$nextTick(() => {
+                        window.dispatchEvent(new Event('resize'));
+                    });
+                },
+
+                setDatePreset(daysStr) {
+                    this.datePreset = daysStr;
+                    const days = parseInt(daysStr, 10);
+                    const now = new Date();
+                    const past = new Date();
+                    past.setDate(past.getDate() - days);
+
+                    this.dateEnd = formatDate(now);
+                    this.dateStart = formatDate(past);
+
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    if (renderer && renderer.clearStorageCache) {
+                        renderer.clearStorageCache();
+                    }
+                    this.loadAllWidgets(true);
+                },
+
+                onDateInputChange() {
+                    this.datePreset = 'custom';
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    if (renderer && renderer.clearStorageCache) {
+                        renderer.clearStorageCache();
+                    }
+                    this.loadAllWidgets(true);
                 },
 
                 toggleTheme() {
@@ -576,7 +749,9 @@
 
                     const controls = {
                         asset_group: this.selectedGroup,
-                        lang: this.currentLang
+                        lang: this.currentLang,
+                        date_start: this.dateStart,
+                        date_end: this.dateEnd
                     };
                     renderer.renderWidget(widgetId, el, controls, 'demo-tenant');
                 },
@@ -591,8 +766,6 @@
                     this.selectedMapMetric = metric;
                     const mapEl = document.getElementById('widget-container-113');
                     if (mapEl) {
-                        const pillBtn = mapEl.querySelector(`button[data-metric-idx]`);
-                        // Trigger pill index click if present
                         const pillIndices = { 'clicks': 0, 'impressions': 1, 'ctr': 2, 'position': 3 };
                         const targetPill = mapEl.querySelectorAll('.dash-map-pill')?.[pillIndices[metric]];
                         if (targetPill) {
@@ -624,7 +797,9 @@
                         } else {
                             const controls = {
                                 asset_group: this.selectedGroup,
-                                lang: this.currentLang
+                                lang: this.currentLang,
+                                date_start: this.dateStart,
+                                date_end: this.dateEnd
                             };
                             renderer.renderWidget(widgetId, modalContainer, controls, 'demo-tenant');
                         }
@@ -662,7 +837,9 @@
 
                         const controls = {
                             asset_group: this.selectedGroup,
-                            lang: this.currentLang
+                            lang: this.currentLang,
+                            date_start: this.dateStart,
+                            date_end: this.dateEnd
                         };
 
                         renderer.renderWidget(w.id, el, controls, 'demo-tenant');

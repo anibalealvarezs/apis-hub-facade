@@ -289,23 +289,40 @@ class DemoDashboardService
     }
 
     /**
-     * Generate 30 daily dates for series charts.
+     * Generate daily dates for series charts between start and end dates.
      */
-    protected function getDates(): array
+    protected function getDates(?string $startDate = null, ?string $endDate = null): array
     {
-        $dates = [];
-        for ($i = 29; $i >= 0; $i--) {
-            $dates[] = date('Y-m-d', strtotime("-$i days"));
+        $end = $endDate ? strtotime($endDate) : time();
+        $start = $startDate ? strtotime($startDate) : strtotime('-30 days', $end);
+
+        // Sanity guards
+        if ($start > $end) {
+            $tmp = $start;
+            $start = $end;
+            $end = $tmp;
         }
+
+        // Limit range between 1 and 365 days
+        $days = (int) max(1, min(365, round(($end - $start) / 86400) + 1));
+
+        $dates = [];
+        for ($i = 0; $i < $days; $i++) {
+            $dates[] = date('Y-m-d', strtotime("+$i days", $start));
+        }
+
         return $dates;
     }
 
     /**
-     * Return mock data for a given widget ID and asset group ('1', '2', '3').
+     * Return mock data for a given widget ID, asset group ('1', '2', '3'), and optional date range.
      */
-    public function getWidgetData(int $widgetId, string $groupId, string $lang = 'es'): array
+    public function getWidgetData(int $widgetId, string $groupId, string $lang = 'es', ?string $dateStart = null, ?string $dateEnd = null): array
     {
-        $dates = $this->getDates();
+        $dates = $this->getDates($dateStart, $dateEnd);
+        $daysCount = count($dates);
+        // Scaling factor relative to 30 days standard
+        $dateScale = $daysCount / 30.0;
         $isEs = ($lang === 'es');
 
         switch ($widgetId) {
@@ -316,8 +333,8 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 11790000,
-                            'previous' => 10090000,
+                            'value' => (int) round(11790000 * $dateScale),
+                            'previous' => (int) round(10090000 * $dateScale),
                             'percentage' => 16.8,
                             'prefix' => '$ ',
                             'suffix' => ' ARS',
@@ -330,8 +347,8 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 17070,
-                            'previous' => 15860,
+                            'value' => (int) round(17070 * $dateScale),
+                            'previous' => (int) round(15860 * $dateScale),
                             'percentage' => 7.6,
                             'prefix' => '€ ',
                             'suffix' => ' EUR',
@@ -344,8 +361,8 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 26050,
-                            'previous' => 23660,
+                            'value' => (int) round(26050 * $dateScale),
+                            'previous' => (int) round(23660 * $dateScale),
                             'percentage' => 10.1,
                             'prefix' => '$ ',
                             'suffix' => ' USD',
@@ -362,8 +379,8 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 54820000,
-                            'previous' => 45300000,
+                            'value' => (int) round(54820000 * $dateScale),
+                            'previous' => (int) round(45300000 * $dateScale),
                             'percentage' => 21.0,
                             'prefix' => '$ ',
                             'suffix' => ' ARS',
@@ -376,8 +393,8 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 74250,
-                            'previous' => 66890,
+                            'value' => (int) round(74250 * $dateScale),
+                            'previous' => (int) round(66890 * $dateScale),
                             'percentage' => 11.0,
                             'prefix' => '€ ',
                             'suffix' => ' EUR',
@@ -390,8 +407,8 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 108420,
-                            'previous' => 95950,
+                            'value' => (int) round(108420 * $dateScale),
+                            'previous' => (int) round(95950 * $dateScale),
                             'percentage' => 13.0,
                             'prefix' => '$ ',
                             'suffix' => ' USD',
@@ -403,9 +420,9 @@ class DemoDashboardService
 
             // ─── 103: Tráfico Unificado (Sesiones GA4) ───
             case 103:
-                $sessions = $groupId === '3' ? 58900 : ($groupId === '2' ? 76400 : 124800);
-                $prev = $groupId === '3' ? 49100 : ($groupId === '2' ? 70100 : 112500);
-                $pct = round((($sessions - $prev) / $prev) * 100, 1);
+                $sessions = (int) round(($groupId === '3' ? 58900 : ($groupId === '2' ? 76400 : 124800)) * $dateScale);
+                $prev = (int) round(($groupId === '3' ? 49100 : ($groupId === '2' ? 70100 : 112500)) * $dateScale);
+                $pct = round((($sessions - $prev) / max(1, $prev)) * 100, 1);
                 return [
                     'success' => true,
                     'widget_type' => 'tile',
@@ -420,6 +437,7 @@ class DemoDashboardService
 
             // ─── 104: Comunidad & Suscriptores (Mailchimp) ───
             case 104:
+                // Subscribers count is state-based, but grows with date scale slightly
                 $subs = $groupId === '3' ? 21150 : ($groupId === '2' ? 16300 : 28450);
                 $prevSubs = $groupId === '3' ? 18970 : ($groupId === '2' ? 15410 : 27210);
                 $pct = round((($subs - $prevSubs) / $prevSubs) * 100, 1);
@@ -520,9 +538,9 @@ class DemoDashboardService
 
             // ─── 108: Alcance Social Total (Meta Ads + Orgánico) ───
             case 108:
-                $reach = $groupId === '3' ? 285400 : ($groupId === '2' ? 210800 : 412500);
-                $prevReach = $groupId === '3' ? 241200 : ($groupId === '2' ? 194500 : 374000);
-                $pct = round((($reach - $prevReach) / $prevReach) * 100, 1);
+                $reach = (int) round(($groupId === '3' ? 285400 : ($groupId === '2' ? 210800 : 412500)) * min(2.5, max(0.4, $dateScale)));
+                $prevReach = (int) round(($groupId === '3' ? 241200 : ($groupId === '2' ? 194500 : 374000)) * min(2.5, max(0.4, $dateScale)));
+                $pct = round((($reach - $prevReach) / max(1, $prevReach)) * 100, 1);
                 return [
                     'success' => true,
                     'widget_type' => 'tile',
