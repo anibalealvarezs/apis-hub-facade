@@ -49,10 +49,13 @@
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/css/jsvectormap.min.css"/>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ time() }}"/>
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/js/jsvectormap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/maps/world.js"></script>
     <script>
         window.dashboardWidgetDataUrlPrefix = '/demo/api/widget/';
     </script>
@@ -181,14 +184,56 @@
                      gs-no-resize="true"
                      gs-no-move="true">
                     <div class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xs relative flex flex-col overflow-hidden">
-                        {{-- Widget Card Header --}}
-                        <div class="px-3.5 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex items-center justify-between flex-shrink-0">
-                            <span class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate pr-2">
-                                {{ $widget['name'] }}
-                            </span>
-                            <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-gray-200/60 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300">
-                                {{ str_replace('_', ' ', $widget['resolved_controls']['channel'] ?? 'Omnichannel') }}
-                            </span>
+                        {{-- Widget Card Header with Interactive Action Toolbar --}}
+                        <div class="px-3 py-2 border-b border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-800/40 flex items-center justify-between flex-shrink-0 gap-2">
+                            <div class="flex items-center gap-2 min-w-0 pr-1">
+                                {{-- Channel Avatar Badge --}}
+                                @php
+                                    $ch = $widget['resolved_controls']['channel'] ?? 'omnichannel';
+                                    $chColors = [
+                                        'meta_ads' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+                                        'meta_combined' => 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+                                        'google_ads' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+                                        'google_search_console' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+                                        'google_analytics' => 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20',
+                                        'mailchimp' => 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20',
+                                        'paid_media' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
+                                        'cross_channel' => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+                                    ];
+                                    $chClass = $chColors[$ch] ?? 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20';
+                                @endphp
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono uppercase font-bold border {{ $chClass }} flex-shrink-0">
+                                    {{ str_replace('_', ' ', $ch) }}
+                                </span>
+                                <h3 class="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate" title="{{ $widget['name'] }}">
+                                    {{ $widget['name'] }}
+                                </h3>
+                            </div>
+
+                            {{-- Interactive Action Toolbar (as in production dashboard) --}}
+                            <div class="flex items-center gap-0.5 flex-shrink-0">
+                                {{-- Quick Settings / Metric Selector --}}
+                                <button type="button"
+                                        @click="openSettings({{ $widget['id'] }})"
+                                        class="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        title="{{ __('Configuración / Métrica') }}">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </button>
+                                {{-- Fullscreen Zoom Pop-out --}}
+                                <button type="button"
+                                        @click="openPopOut({{ $widget['id'] }})"
+                                        class="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        title="{{ __('Pantalla Completa') }}">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                </button>
+                                {{-- Reload Widget --}}
+                                <button type="button"
+                                        @click="reloadWidget({{ $widget['id'] }})"
+                                        class="p-1 rounded-md text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        title="{{ __('Recargar') }}">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                </button>
+                            </div>
                         </div>
 
                         {{-- Widget Content Container --}}
@@ -207,6 +252,121 @@
             @endforeach
         </div>
     </main>
+
+    {{-- Interactive Fullscreen Modal --}}
+    <div x-show="popOutActive" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click.self="closePopOut()">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
+            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between flex-shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="popOutWidget?.name || 'Vista Detallada'"></h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" @click="closePopOut()" class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 p-4 relative overflow-hidden" id="demo-modal-container">
+            </div>
+        </div>
+    </div>
+
+    {{-- Interactive Settings / Granularity & Metric Modal --}}
+    <div x-show="settingsActive" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.self="settingsActive = false">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-md p-5 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                <div class="flex items-center gap-2">
+                    <div class="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                    </div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="activeWidget?.name || 'Configuración de Widget'"></h3>
+                </div>
+                <button type="button" @click="settingsActive = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Granularity Selector --}}
+            <div class="space-y-1.5">
+                <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    {{ __('Granularidad Temporal / Dimensión:') }}
+                </label>
+                <select x-model="modalGranularity"
+                        class="w-full text-xs font-medium bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-gray-100">
+                    <option value="daily">{{ __('Diario (Daily)') }}</option>
+                    <option value="weekly">{{ __('Semanal (Weekly)') }}</option>
+                    <option value="monthly">{{ __('Mensual (Monthly)') }}</option>
+                    <option value="trailing_weekly">{{ __('Rolling 7 Días') }}</option>
+                    <option value="trailing_monthly">{{ __('Rolling 30 Días') }}</option>
+                </select>
+                <p class="text-[11px] text-gray-400">
+                    {{ __('Permite recalcular la serie de tiempo al vuelo sin recargar la página.') }}
+                </p>
+            </div>
+
+            {{-- Metric Switcher (Choropleth Map / GSC) --}}
+            <template x-if="activeWidget?.id === 113">
+                <div class="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
+                    <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        {{ __('Métrica Activa para el Mapa Global:') }}
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <button type="button"
+                                @click="switchMapMetric('clicks')"
+                                :class="selectedMapMetric === 'clicks' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+                                class="p-2 rounded-lg border border-transparent transition-all text-center">
+                            Clics Orgánicos
+                        </button>
+                        <button type="button"
+                                @click="switchMapMetric('impressions')"
+                                :class="selectedMapMetric === 'impressions' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+                                class="p-2 rounded-lg border border-transparent transition-all text-center">
+                            Impresiones
+                        </button>
+                        <button type="button"
+                                @click="switchMapMetric('ctr')"
+                                :class="selectedMapMetric === 'ctr' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+                                class="p-2 rounded-lg border border-transparent transition-all text-center">
+                            CTR Promedio (%)
+                        </button>
+                        <button type="button"
+                                @click="switchMapMetric('position')"
+                                :class="selectedMapMetric === 'position' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
+                                class="p-2 rounded-lg border border-transparent transition-all text-center">
+                            Posición Media
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            {{-- Apply Button --}}
+            <div class="pt-3 flex items-center justify-end gap-2">
+                <button type="button" @click="settingsActive = false" class="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800">
+                    {{ __('Cancelar') }}
+                </button>
+                <button type="button" @click="applyModalSettings()" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-500 text-white shadow-xs">
+                    {{ __('Aplicar Cambios') }}
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- Bottom Banner Floating CTA --}}
     <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-6 px-4 mt-8">
@@ -236,6 +396,12 @@
                 assetGroups: config.assetGroups || {},
                 widgets: config.widgets || [],
                 isRefreshing: false,
+                popOutActive: false,
+                popOutWidget: null,
+                settingsActive: false,
+                activeWidget: null,
+                modalGranularity: 'daily',
+                selectedMapMetric: 'clicks',
                 theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
 
                 init() {
@@ -283,6 +449,84 @@
                     setTimeout(() => {
                         this.isRefreshing = false;
                     }, 400);
+                },
+
+                reloadWidget(widgetId) {
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    const el = document.getElementById('widget-container-' + widgetId);
+                    if (!el || !renderer) return;
+
+                    el.innerHTML = renderer.loadingSkeleton();
+                    renderer._widgetData.delete(el);
+
+                    const controls = {
+                        asset_group: this.selectedGroup,
+                        lang: this.currentLang
+                    };
+                    renderer.renderWidget(widgetId, el, controls, 'demo-tenant');
+                },
+
+                openSettings(widgetId) {
+                    this.activeWidget = this.widgets.find(w => w.id === widgetId);
+                    this.modalGranularity = 'daily';
+                    this.settingsActive = true;
+                },
+
+                switchMapMetric(metric) {
+                    this.selectedMapMetric = metric;
+                    const mapEl = document.getElementById('widget-container-113');
+                    if (mapEl) {
+                        const pillBtn = mapEl.querySelector(`button[data-metric-idx]`);
+                        // Trigger pill index click if present
+                        const pillIndices = { 'clicks': 0, 'impressions': 1, 'ctr': 2, 'position': 3 };
+                        const targetPill = mapEl.querySelectorAll('.dash-map-pill')?.[pillIndices[metric]];
+                        if (targetPill) {
+                            targetPill.click();
+                        }
+                    }
+                },
+
+                applyModalSettings() {
+                    this.settingsActive = false;
+                    if (this.activeWidget) {
+                        this.reloadWidget(this.activeWidget.id);
+                    }
+                },
+
+                openPopOut(widgetId) {
+                    this.popOutWidget = this.widgets.find(w => w.id === widgetId);
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    const modalContainer = document.getElementById('demo-modal-container');
+                    const sourceContainer = document.getElementById('widget-container-' + widgetId);
+
+                    if (!modalContainer || !renderer) return;
+
+                    this.popOutActive = true;
+                    this.$nextTick(() => {
+                        modalContainer.innerHTML = '';
+                        if (renderer.popOutWidget && sourceContainer) {
+                            renderer.popOutWidget(sourceContainer, modalContainer);
+                        } else {
+                            const controls = {
+                                asset_group: this.selectedGroup,
+                                lang: this.currentLang
+                            };
+                            renderer.renderWidget(widgetId, modalContainer, controls, 'demo-tenant');
+                        }
+                    });
+                },
+
+                closePopOut() {
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    const modalContainer = document.getElementById('demo-modal-container');
+                    if (this.popOutWidget) {
+                        const sourceContainer = document.getElementById('widget-container-' + this.popOutWidget.id);
+                        if (renderer?.returnPoppedOutWidget && sourceContainer && modalContainer) {
+                            renderer.returnPoppedOutWidget(sourceContainer, modalContainer);
+                        }
+                    }
+                    this.popOutActive = false;
+                    this.popOutWidget = null;
                 },
 
                 loadAllWidgets(force = false) {

@@ -212,40 +212,57 @@ class DemoDashboardService
                     'granularity' => 'daily',
                 ],
             ],
-            // Gráfico 2: Inversión en Ads vs Conversiones / Ventas Reales (GA4)
+            // Gráfico 2: Inversión en Ads vs Conversiones / Ventas Reales (GA4) — COMBO CHART
             [
                 'id' => 110,
                 'name' => 'Eficacia Publicitaria: Inversión Total vs Conversiones (GA4)',
                 'grid_x' => 6, 'grid_y' => 4, 'grid_w' => 6, 'grid_h' => 4,
-                'widget_type' => 'line_chart',
+                'widget_type' => 'combo_chart',
                 'source_type' => 'cross_channel',
                 'calculation_type' => 'series',
                 'resolved_controls' => [
                     'channel' => 'cross_channel',
-                    'metrics' => ['spend_vs_conversions'],
+                    'metrics' => ['spend', 'conversions'],
                     'granularity' => 'daily',
                 ],
             ],
 
-            // ─── BLOQUE 4: ATRIBUCIÓN Y TOP RENDIMIENTO (FILA 4, h: 4) ───
+            // ─── BLOQUE 4: DISTRIBUCIÓN GLOBAL & ATRIBUCIÓN (FILA 4, h: 4) ───
             // Gráfico 3: Mix de Adquisición de Tráfico (Donut)
             [
                 'id' => 111,
                 'name' => 'Mix de Adquisición de Tráfico por Canal',
                 'grid_x' => 0, 'grid_y' => 8, 'grid_w' => 4, 'grid_h' => 4,
-                'widget_type' => 'donut',
+                'widget_type' => 'pie_chart',
                 'source_type' => 'cross_channel',
                 'calculation_type' => 'breakdown',
                 'resolved_controls' => [
                     'channel' => 'cross_channel',
                     'metrics' => ['traffic_share'],
+                    'pie_style' => 'donut',
                 ],
             ],
+            // Gráfico 4: Distribución Geográfica Global GSC (Choropleth Map)
+            [
+                'id' => 113,
+                'name' => 'Distribución Geográfica de Tráfico Orgánico (GSC)',
+                'grid_x' => 4, 'grid_y' => 8, 'grid_w' => 8, 'grid_h' => 4,
+                'widget_type' => 'choropleth_map',
+                'source_type' => 'predefined_kpi',
+                'calculation_type' => 'breakdown',
+                'resolved_controls' => [
+                    'channel' => 'google_search_console',
+                    'metrics' => ['clicks', 'impressions', 'ctr', 'position'],
+                    'granularity' => 'country',
+                ],
+            ],
+
+            // ─── BLOQUE 5: TOP RENDIMIENTO DE CAMPAÑAS (FILA 5, h: 4) ───
             // Tabla 1: Top Campañas & Canales de Captación
             [
                 'id' => 112,
                 'name' => 'Top Campañas & Canales de Adquisición',
-                'grid_x' => 4, 'grid_y' => 8, 'grid_w' => 8, 'grid_h' => 4,
+                'grid_x' => 0, 'grid_y' => 12, 'grid_w' => 12, 'grid_h' => 4,
                 'widget_type' => 'table',
                 'source_type' => 'cross_channel',
                 'calculation_type' => 'table',
@@ -583,7 +600,7 @@ class DemoDashboardService
                     ],
                 ];
 
-            // ─── 110: Inversión en Ads vs Conversiones Web Reales (GA4) ───
+            // ─── 110: Inversión en Ads vs Conversiones Web Reales (GA4) [Combo Chart] ───
             case 110:
                 $spendBase = $groupId === '3' ? 390000 : ($groupId === '2' ? 570 : 860);
                 $convBase = $groupId === '3' ? 46 : ($groupId === '2' ? 24 : 35);
@@ -604,27 +621,32 @@ class DemoDashboardService
 
                 return [
                     'success' => true,
-                    'widget_type' => 'line_chart',
+                    'widget_type' => 'combo_chart',
                     'data' => [
                         'labels' => $dates,
                         'datasets' => [
                             [
-                                'label' => $isEs ? 'Inversión Publicitaria Diaria (USD/EUR/ARS)' : 'Daily Ad Spend',
+                                'label' => $isEs ? 'Inversión Publicitaria Diaria' : 'Daily Ad Spend',
                                 'data' => $spendValues,
-                                'borderColor' => '#ef4444', // Red
-                                'backgroundColor' => 'rgba(239, 68, 68, 0.08)',
-                                'fill' => true,
+                                'type' => 'bar',
+                                'backgroundColor' => 'rgba(239, 68, 68, 0.65)',
+                                'borderColor' => '#ef4444',
+                                'borderWidth' => 1,
+                                'borderRadius' => 4,
                                 'yAxisID' => 'y',
-                                'tension' => 0.3,
+                                'metric' => 'spend',
                             ],
                             [
                                 'label' => $isEs ? 'Conversiones Registradas en GA4' : 'GA4 Conversions',
                                 'data' => $convValues,
-                                'borderColor' => '#10b981', // Green
-                                'backgroundColor' => 'rgba(16, 185, 129, 0.08)',
-                                'fill' => true,
+                                'type' => 'line',
+                                'borderColor' => '#10b981',
+                                'backgroundColor' => 'rgba(16, 185, 129, 0.12)',
+                                'borderWidth' => 2.5,
+                                'tension' => 0.35,
+                                'fill' => false,
                                 'yAxisID' => 'y1',
-                                'tension' => 0.3,
+                                'metric' => 'conversions',
                             ],
                         ],
                     ],
@@ -632,6 +654,10 @@ class DemoDashboardService
                         'channel' => 'cross_channel',
                         'metrics' => ['spend', 'conversions'],
                         'granularity' => 'daily',
+                        'combo_chart_config' => [
+                            'left_axis' => 'spend',
+                            'right_axis' => 'conversions',
+                        ],
                     ],
                 ];
 
@@ -639,8 +665,9 @@ class DemoDashboardService
             case 111:
                 return [
                     'success' => true,
-                    'widget_type' => 'donut',
+                    'widget_type' => 'pie_chart',
                     'data' => [
+                        'pie_style' => 'donut',
                         'labels' => [
                             $isEs ? 'Búsqueda Orgánica (GSC)' : 'Organic Search (GSC)',
                             $isEs ? 'Paid Social (Meta Ads)' : 'Paid Social (Meta Ads)',
@@ -662,6 +689,220 @@ class DemoDashboardService
                                 'borderColor' => '#1f2937',
                             ],
                         ],
+                    ],
+                    'controls' => [
+                        'pie_style' => 'donut',
+                    ],
+                ];
+
+            // ─── 113: Distribución Geográfica Global GSC (Choropleth Map) ───
+            case 113:
+                // Define geographic data tailored to asset group
+                if ($groupId === '3') {
+                    // Argentina focus with Latam distribution
+                    $mapDataClicks = [
+                        'AR' => 28420,
+                        'CL' => 6410,
+                        'UY' => 4820,
+                        'BR' => 3120,
+                        'MX' => 2950,
+                        'CO' => 2180,
+                        'PE' => 1840,
+                        'US' => 1420,
+                        'ES' => 1120,
+                    ];
+                    $mapDataImpressions = [
+                        'AR' => 380400,
+                        'CL' => 92100,
+                        'UY' => 74300,
+                        'BR' => 52100,
+                        'MX' => 48900,
+                        'CO' => 36200,
+                        'PE' => 31400,
+                        'US' => 28400,
+                        'ES' => 22100,
+                    ];
+                    $mapDataCtr = [
+                        'AR' => 7.47,
+                        'CL' => 6.96,
+                        'UY' => 6.49,
+                        'BR' => 5.99,
+                        'MX' => 6.03,
+                        'CO' => 6.02,
+                        'PE' => 5.86,
+                        'US' => 5.00,
+                        'ES' => 5.07,
+                    ];
+                    $mapDataPos = [
+                        'AR' => 3.2,
+                        'CL' => 4.8,
+                        'UY' => 4.5,
+                        'BR' => 7.2,
+                        'MX' => 6.8,
+                        'CO' => 7.1,
+                        'PE' => 7.4,
+                        'US' => 11.2,
+                        'ES' => 10.4,
+                    ];
+                } elseif ($groupId === '2') {
+                    // Europe focus
+                    $mapDataClicks = [
+                        'ES' => 18420,
+                        'FR' => 14210,
+                        'DE' => 11840,
+                        'IT' => 9650,
+                        'GB' => 8420,
+                        'PT' => 6120,
+                        'NL' => 4890,
+                        'BE' => 3950,
+                        'US' => 2410,
+                    ];
+                    $mapDataImpressions = [
+                        'ES' => 264000,
+                        'FR' => 218000,
+                        'DE' => 189000,
+                        'IT' => 152000,
+                        'GB' => 134000,
+                        'PT' => 98000,
+                        'NL' => 79000,
+                        'BE' => 64000,
+                        'US' => 48000,
+                    ];
+                    $mapDataCtr = [
+                        'ES' => 6.98,
+                        'FR' => 6.52,
+                        'DE' => 6.26,
+                        'IT' => 6.35,
+                        'GB' => 6.28,
+                        'PT' => 6.24,
+                        'NL' => 6.19,
+                        'BE' => 6.17,
+                        'US' => 5.02,
+                    ];
+                    $mapDataPos = [
+                        'ES' => 3.8,
+                        'FR' => 4.2,
+                        'DE' => 4.6,
+                        'IT' => 5.1,
+                        'GB' => 5.4,
+                        'PT' => 4.9,
+                        'NL' => 5.8,
+                        'BE' => 5.9,
+                        'US' => 9.8,
+                    ];
+                } else {
+                    // US / Global focus
+                    $mapDataClicks = [
+                        'US' => 34820,
+                        'CA' => 8940,
+                        'GB' => 7120,
+                        'AU' => 5410,
+                        'DE' => 4210,
+                        'MX' => 3890,
+                        'ES' => 3420,
+                        'FR' => 2950,
+                        'BR' => 2610,
+                    ];
+                    $mapDataImpressions = [
+                        'US' => 482000,
+                        'CA' => 124000,
+                        'GB' => 102000,
+                        'AU' => 78000,
+                        'DE' => 61000,
+                        'MX' => 56000,
+                        'ES' => 49000,
+                        'FR' => 42000,
+                        'BR' => 38000,
+                    ];
+                    $mapDataCtr = [
+                        'US' => 7.22,
+                        'CA' => 7.21,
+                        'GB' => 6.98,
+                        'AU' => 6.94,
+                        'DE' => 6.90,
+                        'MX' => 6.95,
+                        'ES' => 6.98,
+                        'FR' => 7.02,
+                        'BR' => 6.87,
+                    ];
+                    $mapDataPos = [
+                        'US' => 3.4,
+                        'CA' => 4.1,
+                        'GB' => 4.5,
+                        'AU' => 4.8,
+                        'DE' => 5.9,
+                        'MX' => 6.2,
+                        'ES' => 6.5,
+                        'FR' => 6.8,
+                        'BR' => 7.2,
+                    ];
+                }
+
+                $countryNames = [
+                    'AR' => 'Argentina', 'CL' => 'Chile', 'UY' => 'Uruguay', 'BR' => 'Brazil',
+                    'MX' => 'Mexico', 'CO' => 'Colombia', 'PE' => 'Peru', 'US' => 'United States',
+                    'ES' => 'Spain', 'FR' => 'France', 'DE' => 'Germany', 'IT' => 'Italy',
+                    'GB' => 'United Kingdom', 'PT' => 'Portugal', 'NL' => 'Netherlands',
+                    'BE' => 'Belgium', 'CA' => 'Canada', 'AU' => 'Australia',
+                ];
+
+                $buildLeaderboard = function ($mapArr) use ($countryNames) {
+                    $lb = [];
+                    foreach ($mapArr as $c => $val) {
+                        $lb[] = [
+                            'code' => $c,
+                            'name' => $countryNames[$c] ?? $c,
+                            'value' => $val,
+                        ];
+                    }
+                    usort($lb, fn($a, $b) => $b['value'] <=> $a['value']);
+                    return $lb;
+                };
+
+                return [
+                    'success' => true,
+                    'widget_type' => 'choropleth_map',
+                    'data' => [
+                        'metric' => 'clicks',
+                        'metric_label' => $isEs ? 'Clics Orgánicos' : 'Organic Clicks',
+                        'color' => '#6366f1',
+                        'map_data' => $mapDataClicks,
+                        'leaderboard' => $buildLeaderboard($mapDataClicks),
+                        'series_metrics' => [
+                            [
+                                'metric' => 'clicks',
+                                'metric_label' => $isEs ? 'Clics Orgánicos' : 'Organic Clicks',
+                                'color' => '#6366f1',
+                                'map_data' => $mapDataClicks,
+                                'leaderboard' => $buildLeaderboard($mapDataClicks),
+                            ],
+                            [
+                                'metric' => 'impressions',
+                                'metric_label' => $isEs ? 'Impresiones' : 'Impressions',
+                                'color' => '#8b5cf6',
+                                'map_data' => $mapDataImpressions,
+                                'leaderboard' => $buildLeaderboard($mapDataImpressions),
+                            ],
+                            [
+                                'metric' => 'ctr',
+                                'metric_label' => $isEs ? 'CTR Promedio' : 'Average CTR',
+                                'color' => '#0ea5e9',
+                                'map_data' => $mapDataCtr,
+                                'leaderboard' => $buildLeaderboard($mapDataCtr),
+                            ],
+                            [
+                                'metric' => 'position',
+                                'metric_label' => $isEs ? 'Posición Promedio' : 'Average Position',
+                                'color' => '#10b981',
+                                'map_data' => $mapDataPos,
+                                'leaderboard' => $buildLeaderboard($mapDataPos),
+                            ],
+                        ],
+                    ],
+                    'controls' => [
+                        'channel' => 'google_search_console',
+                        'metrics' => ['clicks', 'impressions', 'ctr', 'position'],
+                        'granularity' => 'country',
                     ],
                 ];
 

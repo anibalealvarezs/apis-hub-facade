@@ -81,7 +81,7 @@ class DemoDashboardTest extends TestCase
 
     public function test_demo_donut_traffic_share()
     {
-        // Widget 111 is traffic share donut
+        // Widget 111 is traffic share donut (pie_chart with donut style)
         $response = $this->postJson('/demo/api/widget/111/data', [
             'controls' => [
                 'asset_group' => '1',
@@ -91,7 +91,31 @@ class DemoDashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'success' => true,
-            'widget_type' => 'donut',
+            'widget_type' => 'pie_chart',
+        ]);
+    }
+
+    public function test_demo_choropleth_map()
+    {
+        // Widget 113 is GSC Global Choropleth Map
+        $response = $this->postJson('/demo/api/widget/113/data', [
+            'controls' => [
+                'asset_group' => '3', // Argentina
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'widget_type' => 'choropleth_map',
+        ]);
+        $response->assertJsonStructure([
+            'data' => [
+                'metric',
+                'map_data',
+                'leaderboard',
+                'series_metrics',
+            ],
         ]);
     }
 
