@@ -73,7 +73,7 @@ class DemoDashboardTest extends TestCase
             'success',
             'widget_type',
             'data' => [
-                'series' => ['dates', 'values'],
+                'datasets',
                 'labels',
             ],
         ]);

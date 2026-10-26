@@ -126,9 +126,10 @@
                 </div>
                 <div class="flex items-center gap-2 self-start md:self-auto">
                     <button @click="refreshAll()"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs">
-                        <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        <span>{{ __('Actualizar') }}</span>
+                            :disabled="isRefreshing"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs cursor-pointer disabled:opacity-60">
+                        <svg class="w-3.5 h-3.5 text-gray-500 transition-transform" :class="{ 'animate-spin text-primary-500': isRefreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span x-text="isRefreshing ? '{{ __('Actualizando...') }}' : '{{ __('Actualizar') }}'"></span>
                     </button>
                 </div>
             </div>
@@ -234,17 +235,23 @@
                 currentLang: config.currentLang || 'es',
                 assetGroups: config.assetGroups || {},
                 widgets: config.widgets || [],
+                isRefreshing: false,
                 theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
 
                 init() {
                     const grid = GridStack.init({
                         staticGrid: true,
-                        margin: 10,
-                        cellHeight: 70,
+                        margin: 12,
+                        cellHeight: 95,
                         animate: true
                     }, '#demo-grid-stack');
 
-                    this.loadAllWidgets();
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    if (renderer && renderer.clearStorageCache) {
+                        renderer.clearStorageCache();
+                    }
+
+                    this.loadAllWidgets(false);
                 },
 
                 toggleTheme() {
@@ -255,27 +262,44 @@
                     } else {
                         document.documentElement.classList.remove('dark');
                     }
-                    this.loadAllWidgets();
+                    this.loadAllWidgets(true);
                 },
 
                 onGroupChange() {
-                    this.loadAllWidgets();
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    if (renderer && renderer.clearStorageCache) {
+                        renderer.clearStorageCache();
+                    }
+                    this.loadAllWidgets(true);
                 },
 
                 refreshAll() {
-                    this.loadAllWidgets();
+                    this.isRefreshing = true;
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    if (renderer && renderer.clearStorageCache) {
+                        renderer.clearStorageCache();
+                    }
+                    this.loadAllWidgets(true);
+                    setTimeout(() => {
+                        this.isRefreshing = false;
+                    }, 400);
                 },
 
-                loadAllWidgets() {
+                loadAllWidgets(force = false) {
                     const renderer = window.dashboardRenderer || window.DashboardRenderer;
                     if (!renderer) {
-                        setTimeout(() => this.loadAllWidgets(), 100);
+                        setTimeout(() => this.loadAllWidgets(force), 100);
                         return;
                     }
 
                     this.widgets.forEach(w => {
                         const el = document.getElementById('widget-container-' + w.id);
                         if (!el) return;
+
+                        if (force) {
+                            el.innerHTML = renderer.loadingSkeleton();
+                            renderer._widgetData.delete(el);
+                        }
 
                         const controls = {
                             asset_group: this.selectedGroup,

@@ -92,7 +92,7 @@ class DemoDashboardService
             // Row 1: KPI Tiles (Meta Ads, Google Ads, GA4, Mailchimp)
             [
                 'id' => 101,
-                'name' => 'Meta Ads — Inversión & ROAS',
+                'name' => 'Meta Ads • Inversión',
                 'grid_x' => 0, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -105,7 +105,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 102,
-                'name' => 'Google Ads — Gasto Publicitario',
+                'name' => 'Google Ads • Inversión',
                 'grid_x' => 3, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -118,7 +118,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 103,
-                'name' => 'Google Analytics — Usuarios Activos',
+                'name' => 'Google Analytics • Usuarios',
                 'grid_x' => 6, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -131,7 +131,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 104,
-                'name' => 'Mailchimp — Suscriptores Totales',
+                'name' => 'Mailchimp • Suscriptores',
                 'grid_x' => 9, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -146,7 +146,7 @@ class DemoDashboardService
             // Row 2: Secondary Tiles (Meta Organic Reach, GSC Clicks, GSC Avg Position, Mailchimp Open Rate)
             [
                 'id' => 105,
-                'name' => 'Meta Orgánico — Alcance Total',
+                'name' => 'Meta Orgánico • Alcance',
                 'grid_x' => 0, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -159,7 +159,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 106,
-                'name' => 'Google Search Console — Clics Orgánicos',
+                'name' => 'Search Console • Clics',
                 'grid_x' => 3, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -172,7 +172,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 107,
-                'name' => 'GSC — Posición Media de Búsqueda',
+                'name' => 'Search Console • Posición',
                 'grid_x' => 6, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -185,7 +185,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 108,
-                'name' => 'Mailchimp — Tasa de Apertura Media',
+                'name' => 'Mailchimp • Tasa Apertura',
                 'grid_x' => 9, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -478,11 +478,17 @@ class DemoDashboardService
                     'success' => true,
                     'widget_type' => 'line_chart',
                     'data' => [
-                        'series' => [
-                            'dates' => $dates,
-                            'values' => $values,
+                        'labels' => $dates,
+                        'datasets' => [
+                            [
+                                'label' => $isEs ? 'Sesiones Diarias GA4' : 'Daily GA4 Sessions',
+                                'data' => $values,
+                                'borderColor' => '#10b981',
+                                'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
+                                'fill' => true,
+                                'tension' => 0.35,
+                            ],
                         ],
-                        'labels' => [$isEs ? 'Sesiones Diarias GA4' : 'Daily GA4 Sessions'],
                     ],
                     'controls' => [
                         'channel' => 'google_analytics',
@@ -501,11 +507,18 @@ class DemoDashboardService
                     'success' => true,
                     'widget_type' => 'line_chart',
                     'data' => [
-                        'series' => [
-                            'dates' => $dates,
-                            'values' => $metaValues,
+                        'labels' => $dates,
+                        'datasets' => [
+                            [
+                                'label' => $isEs ? 'Inversión Diaria Meta Ads' : 'Daily Meta Ads Spend',
+                                'data' => $metaValues,
+                                'borderColor' => '#3b82f6',
+                                'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                                'fill' => true,
+                                'currency' => true,
+                                'tension' => 0.35,
+                            ],
                         ],
-                        'labels' => [$isEs ? 'Inversión Diaria Meta Ads' : 'Daily Meta Ads Spend'],
                     ],
                     'controls' => [
                         'channel' => 'meta_ads',
@@ -526,11 +539,15 @@ class DemoDashboardService
                     'success' => true,
                     'widget_type' => 'bar_chart',
                     'data' => [
-                        'series' => [
-                            'dates' => $dates,
-                            'values' => $clickValues,
+                        'labels' => $dates,
+                        'datasets' => [
+                            [
+                                'label' => $isEs ? 'Clics Orgánicos Diarios' : 'Daily Organic Clicks',
+                                'data' => $clickValues,
+                                'backgroundColor' => '#6366f1',
+                                'borderRadius' => 4,
+                            ],
                         ],
-                        'labels' => [$isEs ? 'Clics Orgánicos Diarios' : 'Daily Organic Clicks'],
                     ],
                     'controls' => [
                         'channel' => 'google_search_console',
@@ -549,11 +566,18 @@ class DemoDashboardService
                     'success' => true,
                     'widget_type' => 'line_chart',
                     'data' => [
-                        'series' => [
-                            'dates' => $dates,
-                            'values' => $engValues,
+                        'labels' => $dates,
+                        'datasets' => [
+                            [
+                                'label' => 'Engagement Rate (%)',
+                                'data' => $engValues,
+                                'borderColor' => '#0ea5e9',
+                                'backgroundColor' => 'rgba(14, 165, 233, 0.1)',
+                                'fill' => true,
+                                'percentage' => true,
+                                'tension' => 0.35,
+                            ],
                         ],
-                        'labels' => [$isEs ? 'Engagement Rate (%)' : 'Engagement Rate (%)'],
                     ],
                     'controls' => [
                         'channel' => 'meta_organic',
