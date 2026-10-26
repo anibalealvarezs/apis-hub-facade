@@ -670,8 +670,17 @@ class DemoDashboardService
                 $currencySymbol = $groupId === '3' ? '$ ' : ($groupId === '2' ? '€ ' : '$ ');
                 $currencySuffix = $groupId === '3' ? ' ARS' : ($groupId === '2' ? ' EUR' : ' USD');
 
+                $columns = [
+                    ['key' => 'channel', 'label' => $isEs ? 'Canal' : 'Channel'],
+                    ['key' => 'campaign', 'label' => $isEs ? 'Campaña / Fuente' : 'Campaign / Source'],
+                    ['key' => 'clicks', 'label' => $isEs ? 'Clics / Visitas' : 'Clicks / Visits'],
+                    ['key' => 'spend', 'label' => $isEs ? 'Inversión' : 'Spend'],
+                    ['key' => 'cpa', 'label' => $isEs ? 'CPA / Costo' : 'CPA / Cost'],
+                    ['key' => 'conversions', 'label' => $isEs ? 'Conversiones' : 'Conversions'],
+                ];
+
                 if ($groupId === '3') {
-                    $rows = [
+                    $raw = [
                         ['Meta Ads', 'Retargeting Catálogo Dinámico', '14,820', '$ 3,120,000', '$ 6,450', '484'],
                         ['Google Ads', 'Búsqueda PMax — Hogar & Deco', '9,410', '$ 2,840,000', '$ 8,900', '319'],
                         ['Google Search Console', 'Consultas Non-Branded (SEO)', '31,950', '$ 0.00', '$ 0.00 (Org)', '612'],
@@ -680,7 +689,7 @@ class DemoDashboardService
                         ['Meta Orgánico', 'Reels Virales Instagram & FB', '7,210', '$ 0.00', '$ 0.00 (Social)', '145'],
                     ];
                 } elseif ($groupId === '2') {
-                    $rows = [
+                    $raw = [
                         ['Meta Ads', 'EU Apparel Spring Collection', '9,840', '€ 4,820', '€ 18.40', '262'],
                         ['Google Ads', 'Google Shopping — Footwear EU', '6,920', '€ 3,950', '€ 22.10', '179'],
                         ['Google Search Console', 'Top Landing Pages (Organic SEO)', '26,840', '€ 0.00', '€ 0.00 (Org)', '428'],
@@ -689,7 +698,7 @@ class DemoDashboardService
                         ['Meta Orgánico', 'Colecciones & Lookbooks', '4,810', '€ 0.00', '€ 0.00 (Social)', '96'],
                     ];
                 } else {
-                    $rows = [
+                    $raw = [
                         ['Meta Ads', 'US Top Sellers Advantage+', '16,920', '$ 7,850', '$ 24.20', '324'],
                         ['Google Ads', 'PMax Search & Shopping USA', '12,410', '$ 6,240', '$ 28.50', '219'],
                         ['Google Search Console', 'Organic Search Queries (SEO)', '42,310', '$ 0.00', '$ 0.00 (Org)', '715'],
@@ -699,19 +708,26 @@ class DemoDashboardService
                     ];
                 }
 
+                $rows = array_map(function ($r) {
+                    return [
+                        'channel' => $r[0],
+                        'campaign' => $r[1],
+                        'clicks' => $r[2],
+                        'spend' => $r[3],
+                        'cpa' => $r[4],
+                        'conversions' => $r[5],
+                    ];
+                }, $raw);
+
                 return [
                     'success' => true,
                     'widget_type' => 'table',
                     'data' => [
-                        'columns' => [
-                            $isEs ? 'Canal' : 'Channel',
-                            $isEs ? 'Campaña / Fuente' : 'Campaign / Source',
-                            $isEs ? 'Clics / Visitas' : 'Clicks / Visits',
-                            $isEs ? 'Inversión' : 'Spend',
-                            $isEs ? 'CPA / Costo' : 'CPA / Cost',
-                            $isEs ? 'Conversiones' : 'Conversions',
-                        ],
+                        'columns' => $columns,
                         'rows' => $rows,
+                    ],
+                    'controls' => [
+                        'block_first_col' => true,
                     ],
                 ];
 

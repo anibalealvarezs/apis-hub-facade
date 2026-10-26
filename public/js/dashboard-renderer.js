@@ -1444,6 +1444,7 @@ window.dashboardRenderer = {
     // ─── Table ───
 
     renderTable(containerEl, data, controls) {
+        controls = controls || {};
         const columns = data?.columns ?? [];
         const rows = data?.rows ?? [];
 
@@ -1530,7 +1531,7 @@ window.dashboardRenderer = {
         }
 
         const blockFirstCol =
-            controls.block_first_col !== undefined
+            controls?.block_first_col !== undefined
                 ? !!controls.block_first_col
                 : true;
 
