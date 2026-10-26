@@ -16,6 +16,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Average cost paid for each click on your ads. Lower is better — a rising CPC signals increased competition or audience saturation.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cost', 'paid_media', 'performance'],
                 'required_tags' => ['spendable', 'clickable'],
                 'source_series' => [
@@ -54,6 +55,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Average cost to generate one desired result (purchase, lead, signup). The ultimate efficiency metric for conversion-focused campaigns.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cost', 'paid_media', 'results', 'performance'],
                 'required_tags' => ['spendable'],
                 'source_series' => [
@@ -111,6 +113,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Average ad spend required to generate one tracked conversion (purchase, signup, lead). Unlike CPA which uses platform results, this uses your own conversion tracking.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cost', 'paid_media', 'results', 'performance'],
                 'required_tags' => ['spendable', 'conversion_tracked'],
                 'source_series' => [
@@ -356,6 +359,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Combined cost per click across multiple paid channels. Gives a true picture of your aggregate click efficiency — a single number to track overall paid performance.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cross-channel', 'cost', 'paid_media', 'performance'],
                 'required_tags' => ['spendable', 'clickable'],
                 'source_series' => [
@@ -387,6 +391,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Combined cost per acquisition across multiple paid channels. Essential for understanding true aggregate conversion cost when running campaigns on multiple platforms.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cross-channel', 'cost', 'paid_media', 'results'],
                 'required_tags' => ['spendable'],
                 'source_series' => [
@@ -480,6 +485,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Combined ad spend required to generate one tracked conversion across all paid channels. Uses verified conversion events rather than native platform vanity metrics.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cross-channel', 'cost', 'paid_media', 'results'],
                 'required_tags' => ['spendable', 'conversion_tracked'],
                 'source_series' => [

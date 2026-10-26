@@ -884,11 +884,17 @@ window.dashboardRenderer = {
             if (userDir === "normal") return false;
         }
 
-        // 2. Default fallback: Auto by metric convention
+        // 2. Default fallback: Auto by metric convention (lower is better -> inverted axis/trend)
         return (
             mKey.includes("position") ||
             mKey.includes("bounce_rate") ||
-            mKey.includes("bouncerate")
+            mKey.includes("bouncerate") ||
+            mKey.includes("cost_per_") ||
+            mKey.includes("cost_per") ||
+            mKey.includes("costper") ||
+            mKey === "cpc" ||
+            mKey === "cpm" ||
+            mKey === "cpa"
         );
     },
 
@@ -915,8 +921,36 @@ window.dashboardRenderer = {
         let trendHtml = "";
         let changePercent = null;
 
+        const widgetJson = this._widgetData.get(containerEl);
+        const dmCode = (
+            controls?.raw_series?.[0]?.dm_id ||
+            controls?.dm_id ||
+            widgetJson?.derived_metric?.code ||
+            widgetJson?.derived_metric?.slug ||
+            ""
+        ).toLowerCase();
+        const primaryMetric = String(
+            controls?.metrics?.[0] || data?.metric || data?.label || label || ""
+        ).toLowerCase();
+
+        const isInverseByKeyword =
+            primaryMetric.includes("cost_per") ||
+            primaryMetric.includes("cost per") ||
+            primaryMetric.includes("cost/result") ||
+            primaryMetric.includes("cpa") ||
+            primaryMetric.includes("cpc") ||
+            primaryMetric.includes("cpm") ||
+            primaryMetric.includes("bounce") ||
+            primaryMetric.includes("position") ||
+            dmCode.includes("cost_per") ||
+            dmCode.includes("cpc") ||
+            dmCode.includes("cpa");
+
         const lowerIsBetter =
-            data?.lower_is_better ?? resultFormat?.lower_is_better ?? false;
+            data?.lower_is_better ??
+            resultFormat?.lower_is_better ??
+            isInverseByKeyword ??
+            false;
 
         if (previous !== null && previous !== 0) {
             changePercent = ((value - previous) / Math.abs(previous)) * 100;

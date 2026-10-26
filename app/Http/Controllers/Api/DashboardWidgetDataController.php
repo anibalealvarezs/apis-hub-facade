@@ -1085,11 +1085,12 @@
                     $prevValue = count($seriesData) > 1 ? (float)$seriesData[count($seriesData) - 2] : null;
 
                     $data = [
-                        'value'      => $lastValue,
-                        'current'    => $lastValue,
-                        'previous'   => $prevValue,
-                        'label'      => $firstDataset['label'] ?? ucfirst($cleanKey),
-                        'percentage' => (bool)($firstDataset['percentage'] ?? false),
+                        'value'           => $lastValue,
+                        'current'         => $lastValue,
+                        'previous'        => $prevValue,
+                        'label'           => $firstDataset['label'] ?? ucfirst($cleanKey),
+                        'percentage'      => (bool)($firstDataset['percentage'] ?? false),
+                        'lower_is_better' => (bool)($firstDataset['lower_is_better'] ?? false),
                     ];
 
                     if (!empty($seriesData)) {
@@ -1179,12 +1180,14 @@
                                     $allValues = array_map(fn($v) => round($v * 100, 4), $allValues);
                                 }
 
+                                $inverseMetrics = ['cpc', 'cpm', 'cost_per_result', 'cost_per_conversion', 'bounce_rate', 'position'];
                                 $data = [
-                                    'value'      => $value,
-                                    'current'    => $value,
-                                    'previous'   => $prevValue,
-                                    'label'      => $metricLabels[$ck] ?? ucfirst($ck),
-                                    'percentage' => in_array($ck, $ratioMetrics),
+                                    'value'           => $value,
+                                    'current'         => $value,
+                                    'previous'        => $prevValue,
+                                    'label'           => $metricLabels[$ck] ?? ucfirst($ck),
+                                    'percentage'      => in_array($ck, $ratioMetrics),
+                                    'lower_is_better' => in_array($ck, $inverseMetrics, true) || str_contains($ck, 'cost') || str_contains($ck, 'cpc') || str_contains($ck, 'cpa') || str_contains($ck, 'position'),
                                 ];
 
                                 if (!empty($allValues)) {
@@ -5415,6 +5418,11 @@
                     $datasets[0]['percentage'] = true;
                 } elseif ($derivedMetric->format === 'currency') {
                     $datasets[0]['currency'] = true;
+                }
+                $predefinedList = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                $predefinedConfig = $predefinedList[$derivedMetric->code ?? ''] ?? $predefinedList[$derivedMetric->slug ?? ''] ?? null;
+                if (!empty($predefinedConfig['lower_is_better'])) {
+                    $datasets[0]['lower_is_better'] = true;
                 }
             }
 
