@@ -31,6 +31,12 @@ window.dashboardRenderer = {
             prefix: "$",
             lower_is_better: true,
         },
+        cost_per_conversion: {
+            label: "Cost per Conversion",
+            format: "currency",
+            prefix: "$",
+            lower_is_better: true,
+        },
         frequency: {
             label: "Frequency",
             format: "number",
@@ -80,6 +86,14 @@ window.dashboardRenderer = {
     // Ratio KPIs produce a result whose type differs from the raw dependent metric.
     // Determine the display format for the KPI output based on metric[0] (dependent) and metric[1] (independent).
     getKpiResultFormat(controls) {
+        // If this widget contains a derived metric, controls.metrics describes input series, NOT output format
+        const hasDerivedMetric =
+            controls?.raw_series?.some((s) => s?.type === "derived_metric" || s?.dm_id) ||
+            controls?.source_type === "derived_metric";
+        if (hasDerivedMetric) {
+            return null;
+        }
+
         const m0 = controls?.metrics?.[0];
         const m1 = controls?.metrics?.[1];
         if (!m0) return null;
@@ -870,11 +884,17 @@ window.dashboardRenderer = {
             if (userDir === "normal") return false;
         }
 
-        // 2. Default fallback: Auto by metric convention
+        // 2. Default fallback: Auto by metric convention (lower is better -> inverted axis/trend)
         return (
             mKey.includes("position") ||
             mKey.includes("bounce_rate") ||
-            mKey.includes("bouncerate")
+            mKey.includes("bouncerate") ||
+            mKey.includes("cost_per_") ||
+            mKey.includes("cost_per") ||
+            mKey.includes("costper") ||
+            mKey === "cpc" ||
+            mKey === "cpm" ||
+            mKey === "cpa"
         );
     },
 
@@ -901,16 +921,59 @@ window.dashboardRenderer = {
         let trendHtml = "";
         let changePercent = null;
 
-        const lowerIsBetter =
-            data?.lower_is_better ?? resultFormat?.lower_is_better ?? false;
+        const widgetJson = this._widgetData.get(containerEl);
+        const dmCode = (
+            controls?.raw_series?.[0]?.dm_id ||
+            controls?.dm_id ||
+            widgetJson?.derived_metric?.code ||
+            widgetJson?.derived_metric?.slug ||
+            ""
+        ).toLowerCase();
+        const primaryMetric = String(
+            controls?.metrics?.[0] || data?.metric || data?.label || label || ""
+        ).toLowerCase();
+
+        const widgetCard = containerEl.closest ? containerEl.closest(".grid-stack-item-content") : null;
+        const widgetTitle = (
+            widgetCard?.querySelector("h3")?.innerText ||
+            ""
+        ).toLowerCase();
+
+        const isInverseByKeyword =
+            primaryMetric.includes("cost") ||
+            primaryMetric.includes("coste") ||
+            primaryMetric.includes("cpa") ||
+            primaryMetric.includes("cpc") ||
+            primaryMetric.includes("cpm") ||
+            primaryMetric.includes("bounce") ||
+            primaryMetric.includes("rebote") ||
+            primaryMetric.includes("position") ||
+            primaryMetric.includes("posición") ||
+            dmCode.includes("cost") ||
+            dmCode.includes("cpc") ||
+            dmCode.includes("cpa") ||
+            widgetTitle.includes("cost") ||
+            widgetTitle.includes("coste") ||
+            widgetTitle.includes("cpa") ||
+            widgetTitle.includes("cpc");
+
+        const lowerIsBetter = Boolean(
+            data?.lower_is_better ||
+            resultFormat?.lower_is_better ||
+            isInverseByKeyword
+        );
 
         if (previous !== null && previous !== 0) {
             changePercent = ((value - previous) / Math.abs(previous)) * 100;
+            const isIncrease = changePercent > 0;
+            const isDecrease = changePercent < 0;
+            const arrow = isIncrease ? "▲" : (isDecrease ? "▼" : "");
             const improved = lowerIsBetter
                 ? changePercent <= 0
                 : changePercent >= 0;
-            const arrow = improved ? "▲" : "▼";
-            const color = improved ? "text-green-500" : "text-red-500";
+            const color = changePercent === 0
+                ? "text-gray-400"
+                : (improved ? "text-green-500" : "text-red-500");
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
@@ -921,11 +984,13 @@ window.dashboardRenderer = {
                   ? value.toFixed(1) + "%"
                   : this.formatNumber(value);
 
+        const displayPrefix = format === "currency" ? "" : prefix;
+
         containerEl.innerHTML = `
             <div class="flex flex-col items-center justify-center h-full p-4">
                 ${label ? `<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">${this.escapeHtml(label)}</p>` : ""}
                 <div class="flex items-baseline">
-                    <span class="text-3xl font-bold text-gray-900 dark:text-white">${prefix}${formattedValue}${suffix}</span>
+                    <span class="text-3xl font-bold text-gray-900 dark:text-white">${displayPrefix}${formattedValue}${suffix}</span>
                     ${trendHtml}
                 </div>
                 ${changePercent !== null ? `<p class="text-xs text-gray-400 mt-1">vs previous period</p>` : ""}
@@ -995,10 +1060,10 @@ window.dashboardRenderer = {
             const isPos = isDatasetPosition(ds, idx);
             return {
                 ...ds,
-                currency: isPos
+                currency: isPos || ds.percentage
                     ? false
                     : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
-                percentage: isPos
+                percentage: isPos || ds.currency
                     ? false
                     : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
                 pointRadius: 6,
@@ -1184,12 +1249,12 @@ window.dashboardRenderer = {
 
         const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency:
-                ds.currency ??
-                (resultFormat?.format === "currency" ? true : undefined),
-            percentage:
-                ds.percentage ??
-                (resultFormat?.format === "percentage" ? true : undefined),
+            currency: ds.percentage
+                ? false
+                : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
+            percentage: ds.currency
+                ? false
+                : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
         }));
 
         let chartScales = {
@@ -1276,10 +1341,10 @@ window.dashboardRenderer = {
                                 let val = ctx.parsed.y;
                                 if (!ctx.dataset?.percentage && resultFormat?.multiply)
                                     val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency)
-                                    return this.formatCurrency(val);
                                 if (ctx.dataset?.percentage)
                                     return val.toFixed(1) + "%";
+                                if (ctx.dataset?.currency)
+                                    return this.formatCurrency(val);
                                 return this.formatNumber(val);
                             },
                         },
@@ -1311,8 +1376,8 @@ window.dashboardRenderer = {
 
         const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency: ds.currency ?? (resultFormat?.format === "currency" ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined),
+            currency: ds.percentage ? false : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
+            percentage: ds.currency ? false : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
             borderWidth: 2,
             borderColor: document.documentElement.classList.contains("dark") ? "#1f2937" : "#ffffff",
         }));
@@ -2725,18 +2790,18 @@ window.dashboardRenderer = {
             // 1. Determine if this dataset is a rate / ratio or volume metric
             const isRateOrPercentage =
                 ds.percentage ||
-                resultFormat?.format === "percentage" ||
+                (ds.percentage === undefined && resultFormat?.format === "percentage") ||
                 rateMetricKeywords.some(
                     (kw) => labelLower.includes(kw) || keyLower.includes(kw),
                 );
 
             const isCurrency =
-                ds.currency ??
-                (resultFormat?.format === "currency" ||
-                    ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                ds.currency !== undefined
+                    ? !!ds.currency
+                    : ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
                         (kw) =>
                             labelLower.includes(kw) || keyLower.includes(kw),
-                    ));
+                    );
 
             // 2. Determine Chart Type (User override > Dataset default > Heuristic)
             const comboEntry =
@@ -2800,44 +2865,50 @@ window.dashboardRenderer = {
                 }
             }
 
-            // 3. Determine Axis Assignment (User override > Default)
-            let yAxisID = comboEntry?.axis || ds.yAxisID || null;
-            if (!yAxisID) {
-                if (comboConfig[idx]?.axis) {
-                    yAxisID = comboConfig[idx].axis;
-                } else if (comboConfig[ds.label]?.axis) {
-                    yAxisID = comboConfig[ds.label].axis;
-                } else {
-                    const hasCurrencyInAny = data.datasets.some((d) => {
-                        const l = (d.label || "").toLowerCase();
-                        const m = (
-                            d.metric ||
-                            d.metric_key ||
-                            ""
-                        ).toLowerCase();
-                        return (
-                            d.currency ||
-                            ["spend", "cost", "revenue"].some(
-                                (kw) => l.includes(kw) || m.includes(kw),
-                            )
-                        );
-                    });
+            // 3. Determine Axis Assignment (User override > Default heuristic)
+            let yAxisID = null;
+            if (comboEntry?.axis === "y" || comboEntry?.axis === "y1") {
+                yAxisID = comboEntry.axis;
+            } else if (comboConfig[idx]?.axis === "y" || comboConfig[idx]?.axis === "y1") {
+                yAxisID = comboConfig[idx].axis;
+            } else if (comboConfig[ds.label]?.axis === "y" || comboConfig[ds.label]?.axis === "y1") {
+                yAxisID = comboConfig[ds.label].axis;
+            } else if (ds.yAxisID === "y" || ds.yAxisID === "y1") {
+                yAxisID = ds.yAxisID;
+            }
 
-                    if (hasCurrencyInAny) {
-                        // Currency on left ('y'), count/rate lines on right ('y1')
-                        const isThisCurrency =
-                            isCurrency ||
-                            ["spend", "cost", "revenue"].some(
-                                (kw) =>
-                                    labelLower.includes(kw) ||
-                                    keyLower.includes(kw),
-                            );
-                        yAxisID = isThisCurrency ? "y" : "y1";
-                    } else if (chartType === "line" && isRateOrPercentage) {
-                        yAxisID = "y1";
-                    } else {
-                        yAxisID = "y";
-                    }
+            if (!yAxisID) {
+                const hasCurrencyInAny = data.datasets.some((d) => {
+                    const l = (d.label || "").toLowerCase();
+                    const m = (
+                        d.metric ||
+                        d.metric_key ||
+                        ""
+                    ).toLowerCase();
+                    return (
+                        d.currency ||
+                        ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                            (kw) => l.includes(kw) || m.includes(kw),
+                        )
+                    );
+                });
+
+                if (hasCurrencyInAny) {
+                    // Currency on left ('y'), count/rate lines on right ('y1')
+                    const isThisCurrency =
+                        isCurrency ||
+                        ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                            (kw) =>
+                                labelLower.includes(kw) ||
+                                keyLower.includes(kw),
+                        );
+                    yAxisID = isThisCurrency ? "y" : "y1";
+                } else if (chartType === "line" && isRateOrPercentage) {
+                    yAxisID = "y1";
+                } else if (data.datasets.length > 1 && idx > 0) {
+                    yAxisID = "y1";
+                } else {
+                    yAxisID = "y";
                 }
             }
 
@@ -3565,10 +3636,10 @@ window.dashboardRenderer = {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
                     let formattedVal = this.formatNumber(v);
-                    if (ds.currency || resultFormat?.format === "currency") {
-                        formattedVal = this.formatCurrency(v);
-                    } else if (ds.percentage || resultFormat?.format === "percentage") {
+                    if (ds.percentage || (ds.percentage === undefined && !ds.currency && resultFormat?.format === "percentage")) {
                         formattedVal = v.toFixed(1) + "%";
+                    } else if (ds.currency || (ds.currency === undefined && !ds.percentage && resultFormat?.format === "currency")) {
+                        formattedVal = this.formatCurrency(v);
                     }
                     const total = (ds.data || []).reduce((acc, curr) => acc + (typeof curr === 'number' ? curr : 0), 0);
                     const pct = total > 0 ? ((v / total) * 100).toFixed(1) + "%" : "0%";
@@ -3577,14 +3648,19 @@ window.dashboardRenderer = {
                 } else {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
-                    if (!ds.percentage && resultFormat?.multiply) v = v * resultFormat.multiply;
-                    if (ds.currency || resultFormat?.format === "currency") {
-                        val = this.formatCurrency(v);
-                    } else if (
-                        ds.percentage ||
-                        resultFormat?.format === "percentage"
-                    ) {
+                    let isCurrencyVal = false;
+                    let isPercentageVal = false;
+                    if (isMulti) {
+                        isCurrencyVal = !!ds.currency;
+                        isPercentageVal = !!ds.percentage;
+                    } else {
+                        isCurrencyVal = ds.currency || (ds.currency === undefined && !ds.percentage && resultFormat?.format === "currency");
+                        isPercentageVal = ds.percentage || (ds.percentage === undefined && !ds.currency && resultFormat?.format === "percentage");
+                    }
+                    if (isPercentageVal) {
                         val = v.toFixed(1) + "%";
+                    } else if (isCurrencyVal) {
+                        val = this.formatCurrency(v);
                     } else {
                         val = this.formatNumber(v);
                     }
@@ -3813,6 +3889,12 @@ window.dashboardRenderer = {
                 break;
             case "pie_chart":
                 this.renderPieChart(containerEl, data, controls);
+                break;
+            case "choropleth_map":
+                this.renderChoroplethMap(containerEl, data, controls);
+                break;
+            case "pinnable_map":
+                this.renderPinnableMap(containerEl, data, controls);
                 break;
             default:
                 containerEl.innerHTML =
@@ -4075,11 +4157,20 @@ window.dashboardRenderer = {
                         const dsMetric = String(dp.dataset.metric || dp.dataset.metric_key || dp.dataset.key || "").toLowerCase();
                         const isPos = dsMetric.includes("position") || (!isMulti && ctrl?.metrics?.[0] === "position");
 
-                        if (!isPos && !dp.dataset.percentage && rFmt?.multiply) v = v * rFmt.multiply;
-                        if (!isPos && (dp.dataset.currency || rFmt?.format === "currency")) {
-                            val = this.formatCurrency(v);
-                        } else if (!isPos && (dp.dataset.percentage || rFmt?.format === "percentage")) {
+                        let isCurrencyVal = false;
+                        let isPercentageVal = false;
+                        if (isMulti) {
+                            isCurrencyVal = !!dp.dataset.currency;
+                            isPercentageVal = !!dp.dataset.percentage;
+                        } else {
+                            isCurrencyVal = dp.dataset.currency || (dp.dataset.currency === undefined && !dp.dataset.percentage && rFmt?.format === "currency");
+                            isPercentageVal = dp.dataset.percentage || (dp.dataset.percentage === undefined && !dp.dataset.currency && rFmt?.format === "percentage");
+                        }
+
+                        if (!isPos && isPercentageVal) {
                             val = v.toFixed(1) + "%";
+                        } else if (!isPos && isCurrencyVal) {
+                            val = this.formatCurrency(v);
                         } else {
                             val = this.formatNumber(v);
                         }
@@ -4177,5 +4268,540 @@ window.dashboardRenderer = {
             pinned.caretY,
         );
         tooltipEl.style.opacity = "1";
+    },
+
+    // ─── Choropleth Map Widget ───
+
+    renderChoroplethMap(containerEl, data, controls) {
+        const uniqueId = 'map-widget-' + Math.random().toString(36).substring(2, 9);
+        const seriesMetrics = Array.isArray(data?.series_metrics) && data.series_metrics.length > 0 ? data.series_metrics : null;
+        let activeIdx = 0;
+
+        const getActiveData = (idx) => {
+            let activeItem = null;
+            if (seriesMetrics && seriesMetrics[idx]) {
+                activeItem = { ...seriesMetrics[idx] };
+            } else {
+                activeItem = {
+                    metric: data?.metric || controls?.metrics?.[0] || 'clicks',
+                    metric_label: data?.metric_label || controls?.metrics?.[0] || 'Value',
+                    color: data?.color || null,
+                    map_data: data?.map_data || {},
+                    leaderboard: data?.leaderboard || []
+                };
+            }
+
+            const activeMKey = activeItem.metric ? String(activeItem.metric).toLowerCase() : '';
+            const userMetricColor = controls?.series_metric_colors?.[0]?.[activeMKey]
+                ?? controls?.series_metric_colors?.['0']?.[activeMKey]
+                ?? controls?.raw_series?.[0]?.metric_colors?.[activeMKey]
+                ?? controls?.series?.[0]?.color
+                ?? controls?.color
+                ?? '#00a7f9';
+
+            if (!activeItem.color || activeItem.color.startsWith('rgb')) {
+                activeItem.color = userMetricColor;
+            }
+
+            return activeItem;
+        };
+
+        const initialActive = getActiveData(activeIdx);
+        const rawMapData = initialActive.map_data;
+        const mapData = (rawMapData && typeof rawMapData === 'object' && !Array.isArray(rawMapData)) ? rawMapData : {};
+        const regionsCount = Object.keys(mapData).length;
+
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.width = "100%";
+        containerEl.style.height = "100%";
+        containerEl.style.position = "relative";
+
+        // Safeguard / Empty State when no country breakdown is available
+        if (regionsCount === 0) {
+            containerEl.innerHTML = `
+                <div class="w-full h-full p-4 flex flex-col items-center justify-center text-center bg-gray-50/50 dark:bg-gray-900/20 rounded-lg border border-dashed border-gray-200 dark:border-gray-800">
+                    <div class="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3 ring-8 ring-amber-50/50 dark:ring-amber-950/20">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 stroke-current fill-none" stroke-width="1.75">
+                            <circle cx="12" cy="12" r="9"/>
+                            <ellipse cx="12" cy="12" rx="4.5" ry="9" stroke-dasharray="1 1"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-800 dark:text-gray-200 mb-1">Country Breakdown Required</span>
+                    <p class="text-2xs text-gray-400 dark:text-gray-500 max-w-[280px] leading-relaxed">
+                        This widget requires data broken down by country to colorize geographic regions. Edit widget controls to select the <strong>Country</strong> dimension and <strong>Lifetime</strong> granularity.
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        // Multi-metric Pill Switcher Header
+        let pillHeaderHtml = '';
+        if (seriesMetrics && seriesMetrics.length > 1) {
+            pillHeaderHtml = `
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+                    ${seriesMetrics.map((sm, i) => `
+                        <button type="button" data-metric-idx="${i}" class="dash-map-pill px-2 py-0.5 rounded-md text-2xs font-semibold transition-all ${i === 0 ? 'bg-primary-500 text-white shadow-2xs' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800'}">
+                            ${this.escapeHtml(sm.metric_label || sm.metric)}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            pillHeaderHtml = `
+                <span class="font-semibold uppercase tracking-wider text-2xs text-gray-600 dark:text-gray-400" id="${uniqueId}-metric-title">${this.escapeHtml(initialActive.metric_label || 'Value')} Distribution</span>
+            `;
+        }
+
+        // View Switcher (Map vs List) matching Data Explorer design
+        const viewSwitcherHtml = `
+            <div class="dash-view-toggle flex-shrink-0" id="${uniqueId}-view-toggle" style="padding: 2px !important;">
+                <button type="button" data-view="map" class="dash-view-btn is-active" title="Map View" style="padding: 0.2rem 0.5rem !important; font-size: 0.6875rem !important;">
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+                        <path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 002.273 1.765 11.842 11.842 0 00.976.549l.062.028.018.008.006.003zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Map</span>
+                </button>
+                <button type="button" data-view="list" class="dash-view-btn" title="List View" style="padding: 0.2rem 0.5rem !important; font-size: 0.6875rem !important;">
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+                        <path fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>List</span>
+                </button>
+            </div>
+        `;
+
+        containerEl.innerHTML = `
+            <div class="w-full h-full p-2 flex flex-col">
+                <div class="flex items-center justify-between pb-1.5 border-b border-gray-100 dark:border-white/5 flex-shrink-0 gap-2">
+                    <div class="flex-1 min-w-0">${pillHeaderHtml}</div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span id="${uniqueId}-regions-count" class="text-3xs text-primary-500 font-mono hidden sm:inline-block">${regionsCount} Regions</span>
+                        ${viewSwitcherHtml}
+                    </div>
+                </div>
+                <div id="${uniqueId}-content" class="w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden">
+                    <div id="${uniqueId}" class="w-full h-full relative"></div>
+                    <div id="${uniqueId}-list-container" class="dash-widget-list-view" style="display: none;"></div>
+                </div>
+            </div>
+        `;
+
+        const mapEl = containerEl.querySelector('#' + uniqueId);
+        const listContainerEl = containerEl.querySelector('#' + uniqueId + '-list-container');
+        if (!mapEl) return;
+
+        // Color computation helper: converts hex to RGB and builds light/dark tints
+        const hexToRgb = (hex) => {
+            if (!hex || typeof hex !== 'string') return [2, 132, 199];
+            let c = hex.replace('#', '').trim();
+            if (c.length === 3) c = c[0] + c[0] + c[1] + c[1] + c[2] + c[2];
+            if (c.length !== 6) return [2, 132, 199];
+            const num = parseInt(c, 16);
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+        };
+
+        // Helper to compute graded fill colors for each region according to the value range
+        const computeRegionColorGrading = (mapDataObj, baseHex, isDark, isLowerBetter) => {
+            const numEntries = Object.entries(mapDataObj || {}).map(([code, val]) => [code, Number(val)]).filter(([_, val]) => !isNaN(val) && val > 0);
+            if (!numEntries.length) return {};
+
+            const vals = numEntries.map(([_, val]) => val);
+            const minVal = Math.min(...vals);
+            const maxVal = Math.max(...vals);
+            const diff = maxVal - minVal;
+
+            const [r, g, b] = hexToRgb(baseHex);
+            // Lightest tint (low intensity) -> Full vibrant baseHex (high intensity)
+            let startRgb, endRgb;
+            if (isDark) {
+                // In dark mode: start with dark muted tint of base color, end with vibrant base
+                startRgb = [
+                    Math.round(20 + r * 0.18),
+                    Math.round(26 + g * 0.18),
+                    Math.round(44 + b * 0.22)
+                ];
+                endRgb = [r, g, b];
+            } else {
+                // In light mode: start with very soft pastel tint, end with vibrant base
+                startRgb = [
+                    Math.round(255 - (255 - r) * 0.18),
+                    Math.round(255 - (255 - g) * 0.18),
+                    Math.round(255 - (255 - b) * 0.18)
+                ];
+                endRgb = [r, g, b];
+            }
+
+            const gradedColors = {};
+            for (const [code, val] of numEntries) {
+                let ratio = 0.8;
+                if (diff > 0) {
+                    if (isLowerBetter) {
+                        // For AVG position: lower value is better/favored (e.g., position 1 gets vibrant base, position 70 gets light tint)
+                        const linearRatio = (maxVal - val) / diff;
+                        // Use pow/linear for position so top rankings (1-5) stand out richly
+                        ratio = Math.max(0, Math.min(1, Math.pow(linearRatio, 0.85)));
+                    } else {
+                        // Standard volume metrics (clicks, impressions): logarithmic scale so outliers don't crush smaller countries
+                        ratio = Math.log(val - minVal + 1) / Math.log(diff + 1);
+                    }
+                }
+                ratio = Math.max(0, Math.min(1, ratio));
+
+                const curR = Math.round(startRgb[0] + (endRgb[0] - startRgb[0]) * ratio);
+                const curG = Math.round(startRgb[1] + (endRgb[1] - startRgb[1]) * ratio);
+                const curB = Math.round(startRgb[2] + (endRgb[2] - startRgb[2]) * ratio);
+                gradedColors[code.toUpperCase()] = `#${((1 << 24) + (curR << 16) + (curG << 8) + curB).toString(16).slice(1)}`;
+            }
+            return gradedColors;
+        };
+
+        const applyRegionColors = (inst, gradedColors, defaultFill, defaultStroke) => {
+            if (!inst || !inst.regions) return;
+            for (const [code, regionObj] of Object.entries(inst.regions)) {
+                if (regionObj && regionObj.element) {
+                    const color = gradedColors[code.toUpperCase()] || defaultFill;
+                    const shape = regionObj.element.shape;
+                    if (shape && shape.style && shape.style.initial) {
+                        shape.style.initial.fill = color;
+                        shape.style.initial.stroke = defaultStroke;
+                    }
+                    if (typeof regionObj.element.setStyle === 'function') {
+                        regionObj.element.setStyle('fill', color);
+                        regionObj.element.setStyle('stroke', defaultStroke);
+                    }
+                }
+            }
+        };
+
+        // Render List View content
+        const renderListView = (metricItem, searchFilter = '') => {
+            if (!listContainerEl) return;
+            const items = metricItem.leaderboard || [];
+            const query = (searchFilter || '').trim().toLowerCase();
+            const filteredItems = query
+                ? items.filter(it => (it.name && it.name.toLowerCase().includes(query)) || (it.code && it.code.toLowerCase().includes(query)))
+                : items;
+
+            const isRatio = String(metricItem.metric || '').toLowerCase() === 'ctr' || String(metricItem.metric || '').includes('rate');
+            const isPos = isPosMetric(metricItem.metric);
+
+            let listRowsHtml = '';
+            if (!filteredItems.length) {
+                listRowsHtml = `<div class="p-6 text-center text-xs text-gray-400 dark:text-gray-500">No countries match "${this.escapeHtml(query)}"</div>`;
+            } else {
+                listRowsHtml = filteredItems.map((row, idx) => {
+                    const numVal = Number(row.value) || 0;
+                    let displayVal = numVal.toLocaleString('en-US');
+                    if (isRatio) {
+                        displayVal = numVal.toFixed(2) + '%';
+                    } else if (isPos) {
+                        displayVal = numVal.toFixed(1);
+                    }
+                    return `
+                        <div class="dash-leaderboard-item" data-country-code="${this.escapeHtml(row.code || '')}">
+                            <div class="flex items-center gap-2 truncate pr-2 min-w-0">
+                                <span class="dash-leaderboard-rank text-xs">${idx + 1}.</span>
+                                <span class="dash-leaderboard-name font-medium truncate">${this.escapeHtml(row.name || row.code || 'Unknown')}</span>
+                                ${row.code && row.code !== 'UNK' ? `<span class="text-3xs uppercase tracking-wider px-1 py-0.2 rounded bg-gray-200/60 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 font-mono">${this.escapeHtml(row.code)}</span>` : ''}
+                            </div>
+                            <div class="flex items-center shrink-0">
+                                <span class="dash-leaderboard-metric font-semibold font-mono" style="color: ${metricItem.color || 'inherit'}">${displayVal}</span>
+                                <span class="dash-leaderboard-unit text-3xs text-gray-400 ml-1.5 uppercase">${this.escapeHtml(metricItem.metric_label || metricItem.metric)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            listContainerEl.innerHTML = `
+                <div class="flex items-center justify-between gap-2 p-1 border-b border-gray-100 dark:border-white/5 mb-1 flex-shrink-0">
+                    <div class="relative flex-1 min-w-0">
+                        <input type="text" value="${this.escapeHtml(searchFilter)}" placeholder="Filter countries..." class="dash-widget-list-search w-full px-2 py-1 pl-6 text-2xs rounded-md bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-primary-500">
+                        <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 absolute left-1.5 top-1.5 text-gray-400">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <span class="text-3xs text-gray-400 font-mono flex-shrink-0">${filteredItems.length} Countries</span>
+                </div>
+                <div class="dash-widget-list-scroll">
+                    ${listRowsHtml}
+                </div>
+            `;
+
+            // Wire up search input
+            const searchInput = listContainerEl.querySelector('.dash-widget-list-search');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    renderListView(currentMetricData, e.target.value);
+                    const updatedInput = listContainerEl.querySelector('.dash-widget-list-search');
+                    if (updatedInput) {
+                        updatedInput.focus();
+                        updatedInput.setSelectionRange(updatedInput.value.length, updatedInput.value.length);
+                    }
+                });
+            }
+        };
+
+        const isPosMetric = (m) => {
+            const s = String(m || '').toLowerCase();
+            return s.includes('position') || s.includes('rank');
+        };
+
+        let currentMetricData = initialActive;
+        let currentMapData = (initialActive.map_data && typeof initialActive.map_data === 'object' && !Array.isArray(initialActive.map_data)) ? initialActive.map_data : {};
+        let currentBaseColor = currentMetricData.color || controls?.series?.[0]?.color || controls?.color || '#00a7f9';
+        let isLowerBetter = isPosMetric(currentMetricData.metric);
+        let activeView = 'map'; // 'map' or 'list' (used when in portrait/compact mode)
+        let isLandscapeMode = false;
+
+        const mainContentEl = containerEl.querySelector('#' + uniqueId + '-content');
+        const viewToggleContainer = containerEl.querySelector('#' + uniqueId + '-view-toggle');
+
+        // Apply Layout Mode & View State (Toggleable Map vs Table/List view across all layouts)
+        const updateViewDisplay = () => {
+            if (!mainContentEl || !mapEl || !listContainerEl) return;
+
+            // Ensure toggle container is ALWAYS visible
+            if (viewToggleContainer) {
+                viewToggleContainer.style.display = 'inline-flex';
+            }
+
+            // Sync toggle button active states
+            if (viewToggleContainer) {
+                const toggleBtns = viewToggleContainer.querySelectorAll('.dash-view-btn');
+                toggleBtns.forEach(b => {
+                    if (b.getAttribute('data-view') === activeView) {
+                        b.classList.add('is-active');
+                    } else {
+                        b.classList.remove('is-active');
+                    }
+                });
+            }
+
+            mainContentEl.className = 'w-full flex-1 min-h-[180px] relative mt-1 overflow-hidden';
+
+            if (activeView === 'list') {
+                mapEl.style.display = 'none';
+                listContainerEl.style.display = 'flex';
+                listContainerEl.className = 'dash-widget-list-view w-full h-full';
+                renderListView(currentMetricData, '');
+            } else {
+                listContainerEl.style.display = 'none';
+                mapEl.style.display = 'block';
+                mapEl.className = 'w-full h-full relative';
+                if (window._currentMapInst) {
+                    window._currentMapInst.updateSize();
+                }
+            }
+        };
+
+        const applyAdaptiveLayout = (width, height) => {
+            updateViewDisplay();
+        };
+
+        // Render initial List view in background
+        renderListView(currentMetricData, '');
+
+        // Wire View Switcher (Map vs Table/List)
+        if (viewToggleContainer) {
+            const toggleBtns = viewToggleContainer.querySelectorAll('.dash-view-btn');
+            toggleBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const v = btn.getAttribute('data-view');
+                    if (!v || v === activeView) return;
+                    activeView = v;
+                    updateViewDisplay();
+                });
+            });
+        }
+
+        // Setup ResizeObserver to automatically switch between 2-column landscape and toggle mode
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const cr = entry.contentRect;
+                    if (cr && cr.width > 0 && cr.height > 0) {
+                        applyAdaptiveLayout(cr.width, cr.height);
+                    }
+                }
+            });
+            ro.observe(containerEl);
+        } else {
+            applyAdaptiveLayout(containerEl.clientWidth || 500, containerEl.clientHeight || 300);
+        }
+
+        if (window.jsVectorMap) {
+            const isDark = document.documentElement.classList.contains("dark");
+            const defaultFill = isDark ? '#243042' : '#E2E8F0';
+            const defaultStroke = isDark ? '#334155' : '#cbd5e1';
+
+            let gradedColors = computeRegionColorGrading(currentMapData, currentBaseColor, isDark, isLowerBetter);
+
+            const mapInst = new window.jsVectorMap({
+                selector: '#' + uniqueId,
+                map: 'world',
+                backgroundColor: 'transparent',
+                draggable: true,
+                zoomButtons: true,
+                zoomOnScroll: false,
+                regionStyle: {
+                    initial: {
+                        fill: defaultFill,
+                        stroke: defaultStroke,
+                        strokeWidth: 0.5,
+                        fillOpacity: 1
+                    },
+                    hover: {
+                        fill: currentBaseColor,
+                        fillOpacity: 0.9,
+                        cursor: 'pointer'
+                    }
+                },
+                onRegionTooltipShow(event, tooltip, code) {
+                    const val = currentMapData[code.toUpperCase()];
+                    const formatted = val !== undefined ? Number(val).toLocaleString('en-US') : '0';
+                    const countryName = tooltip.text();
+                    tooltip.text(
+                        `<div class="dash-map-tooltip">
+                            <span class="dash-map-tooltip-name">${countryName}</span>
+                            <span class="dash-map-tooltip-divider">•</span>
+                            <span class="dash-map-tooltip-val">${formatted}<span class="dash-map-tooltip-metric" style="margin-left:4px; font-weight:normal; opacity:0.8;">${currentMetricData.metric_label || 'Value'}</span></span>
+                        </div>`,
+                        true
+                    );
+                }
+            });
+
+            // Immediately apply graded region fills so countries have their graded metric color statically
+            applyRegionColors(mapInst, gradedColors, defaultFill, defaultStroke);
+
+            this._chartInstances.set(containerEl, mapInst);
+            window._currentMapInst = mapInst;
+
+            // Handle Multi-Metric Header Pill Switches
+            if (seriesMetrics && seriesMetrics.length > 1) {
+                const pills = containerEl.querySelectorAll('.dash-map-pill');
+                pills.forEach(pill => {
+                    pill.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const idx = parseInt(pill.getAttribute('data-metric-idx'), 10);
+                        if (isNaN(idx) || idx === activeIdx) return;
+                        activeIdx = idx;
+
+                        pills.forEach((p, pi) => {
+                            if (pi === activeIdx) {
+                                p.className = 'dash-map-pill px-2 py-0.5 rounded-md text-2xs font-semibold transition-all bg-primary-500 text-white shadow-2xs';
+                            } else {
+                                p.className = 'dash-map-pill px-2 py-0.5 rounded-md text-2xs font-semibold transition-all text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-800';
+                            }
+                        });
+
+                        currentMetricData = getActiveData(activeIdx);
+                        const rawCurrentMap = currentMetricData.map_data;
+                        currentMapData = (rawCurrentMap && typeof rawCurrentMap === 'object' && !Array.isArray(rawCurrentMap)) ? rawCurrentMap : {};
+                        currentBaseColor = currentMetricData.color || controls?.series?.[activeIdx]?.color || controls?.color || '#00a7f9';
+                        isLowerBetter = isPosMetric(currentMetricData.metric);
+
+                        const countEl = containerEl.querySelector('#' + uniqueId + '-regions-count');
+                        if (countEl) countEl.textContent = `${Object.keys(currentMapData).length} Regions`;
+
+                        // Refresh list view with current metric data
+                        renderListView(currentMetricData, '');
+
+                        // Update hover fill to matching base color
+                        if (mapInst.params && mapInst.params.regionStyle && mapInst.params.regionStyle.hover) {
+                            mapInst.params.regionStyle.hover.fill = currentBaseColor;
+                        }
+
+                        // Recompute graded colors for the newly selected metric and apply
+                        const updatedGradedColors = computeRegionColorGrading(currentMapData, currentBaseColor, isDark, isLowerBetter);
+                        applyRegionColors(mapInst, updatedGradedColors, defaultFill, defaultStroke);
+                    });
+                });
+            }
+        } else {
+            mapEl.innerHTML = `<div class="flex items-center justify-center h-full text-xs text-gray-400">Map library initializing...</div>`;
+        }
+    },
+
+    // ─── Pinnable Map Widget ───
+
+    renderPinnableMap(containerEl, data, controls) {
+        const pins = data?.pins || [];
+        const uniqueId = 'pin-map-widget-' + Math.random().toString(36).substring(2, 9);
+
+        containerEl.style.display = "flex";
+        containerEl.style.flexDirection = "column";
+        containerEl.style.width = "100%";
+        containerEl.style.height = "100%";
+        containerEl.style.position = "relative";
+        containerEl.innerHTML = `
+            <div class="w-full h-full p-2 flex flex-col">
+                <div class="flex items-center justify-between pb-1.5 text-xs text-gray-500 border-b border-gray-100 dark:border-white/5">
+                    <span class="font-semibold uppercase tracking-wider">Touchpoint Pins</span>
+                    <span class="text-3xs text-primary-500 font-mono">${pins.length} Location(s)</span>
+                </div>
+                <div id="${uniqueId}" class="w-full flex-1 min-h-[180px] rounded-lg overflow-hidden mt-1 relative z-0"></div>
+            </div>
+        `;
+
+        const mapEl = containerEl.querySelector('#' + uniqueId);
+        if (!mapEl) return;
+
+        if (window.L) {
+            const isDark = document.documentElement.classList.contains("dark");
+            const defaultCenter = pins.length > 0 ? [pins[0].lat, pins[0].lng] : [20, 0];
+            const defaultZoom = pins.length > 0 ? 4 : 2;
+
+            const map = window.L.map(uniqueId, {
+                center: defaultCenter,
+                zoom: defaultZoom,
+                scrollWheelZoom: false,
+            });
+
+            const tileUrl = isDark
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+            window.L.tileLayer(tileUrl, {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+
+            const bounds = [];
+            pins.forEach(pin => {
+                if (pin.lat && pin.lng) {
+                    const marker = window.L.circleMarker([pin.lat, pin.lng], {
+                        radius: 6,
+                        fillColor: '#3b82f6',
+                        color: '#ffffff',
+                        weight: 1.5,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div class="p-1 font-sans text-xs">
+                            <div class="font-bold">${pin.title || 'Touchpoint'}</div>
+                            ${pin.city ? `<div class="text-gray-500 text-3xs">${pin.city}${pin.country ? ', ' + pin.country : ''}</div>` : ''}
+                            ${pin.value ? `<div class="text-primary-600 font-semibold mt-1">${pin.value}</div>` : ''}
+                        </div>
+                    `);
+                    bounds.push([pin.lat, pin.lng]);
+                }
+            });
+
+            if (bounds.length > 1) {
+                map.fitBounds(bounds, { padding: [20, 20] });
+            }
+
+            this._chartInstances.set(containerEl, map);
+        } else {
+            mapEl.innerHTML = `<div class="flex items-center justify-center h-full text-xs text-gray-400">Leaflet library initializing...</div>`;
+        }
     },
 };

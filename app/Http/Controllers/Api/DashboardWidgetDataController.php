@@ -1084,12 +1084,22 @@
                     $lastValue = !empty($seriesData) ? (float)end($seriesData) : 0.0;
                     $prevValue = count($seriesData) > 1 ? (float)$seriesData[count($seriesData) - 2] : null;
 
+                    $isLowerBetter = (bool)($firstDataset['lower_is_better'] ?? false)
+                        || str_contains(strtolower($cleanKey), 'cost')
+                        || str_contains(strtolower($cleanKey), 'cpc')
+                        || str_contains(strtolower($cleanKey), 'cpa')
+                        || str_contains(strtolower($cleanKey), 'position')
+                        || str_contains(strtolower($firstDataset['label'] ?? ''), 'cost')
+                        || str_contains(strtolower($firstDataset['label'] ?? ''), 'cpa')
+                        || str_contains(strtolower($firstDataset['label'] ?? ''), 'cpc');
+
                     $data = [
-                        'value'      => $lastValue,
-                        'current'    => $lastValue,
-                        'previous'   => $prevValue,
-                        'label'      => $firstDataset['label'] ?? ucfirst($cleanKey),
-                        'percentage' => (bool)($firstDataset['percentage'] ?? false),
+                        'value'           => $lastValue,
+                        'current'         => $lastValue,
+                        'previous'        => $prevValue,
+                        'label'           => $firstDataset['label'] ?? ucfirst($cleanKey),
+                        'percentage'      => (bool)($firstDataset['percentage'] ?? false),
+                        'lower_is_better' => $isLowerBetter,
                     ];
 
                     if (!empty($seriesData)) {
@@ -1179,12 +1189,14 @@
                                     $allValues = array_map(fn($v) => round($v * 100, 4), $allValues);
                                 }
 
+                                $inverseMetrics = ['cpc', 'cpm', 'cost_per_result', 'cost_per_conversion', 'bounce_rate', 'position'];
                                 $data = [
-                                    'value'      => $value,
-                                    'current'    => $value,
-                                    'previous'   => $prevValue,
-                                    'label'      => $metricLabels[$ck] ?? ucfirst($ck),
-                                    'percentage' => in_array($ck, $ratioMetrics),
+                                    'value'           => $value,
+                                    'current'         => $value,
+                                    'previous'        => $prevValue,
+                                    'label'           => $metricLabels[$ck] ?? ucfirst($ck),
+                                    'percentage'      => in_array($ck, $ratioMetrics),
+                                    'lower_is_better' => in_array($ck, $inverseMetrics, true) || str_contains($ck, 'cost') || str_contains($ck, 'cpc') || str_contains($ck, 'cpa') || str_contains($ck, 'position'),
                                 ];
 
                                 if (!empty($allValues)) {
@@ -1618,6 +1630,12 @@
                             $data['current'] = $data['value'];
                             $prevVal = $data['previous'][$metric] ?? null;
                             $data['previous'] = ($prevVal !== null && is_numeric($prevVal)) ? (float)$prevVal : $prevVal;
+                            $metricLower = strtolower($metric);
+                            $data['lower_is_better'] = in_array($metricLower, ['cpc', 'cpm', 'cpa', 'cost_per_result', 'cost_per_conversion', 'bounce_rate', 'position'], true)
+                                || str_contains($metricLower, 'cost')
+                                || str_contains($metricLower, 'cpc')
+                                || str_contains($metricLower, 'cpa')
+                                || str_contains($metricLower, 'position');
                         }
                     } elseif (isset($data['series']['values'])) {
                         $primaryValues = $data['series']['values'];
@@ -1633,6 +1651,16 @@
                 // If pie_chart, transform data into pie/donut dataset format
                 if ($effectiveWidgetType === 'pie_chart') {
                     $data = $this->transformPieChartData($data, $widget, $resolvedControls);
+                }
+
+                // If choropleth_map, transform data into ISO-keyed geographic distribution format
+                if ($effectiveWidgetType === 'choropleth_map') {
+                    $data = $this->transformChoroplethMapData($data, $widget, $resolvedControls);
+                }
+
+                // If pinnable_map, transform coordinates / locations data into marker pins format
+                if ($effectiveWidgetType === 'pinnable_map') {
+                    $data = $this->transformPinnableMapData($data, $widget, $resolvedControls);
                 }
 
                 \Illuminate\Support\Facades\Log::info('[STEP show] Response data', [
@@ -2496,19 +2524,28 @@
             $channel = $controls['channel'] ?? $config['channel'] ?? '';
             $metrics = $controls['metrics'] ?? $config['metrics'] ?? [];
 
-            // Ensure we fetch impressions and clicks for weighted average calculations (e.g. CTR, Position)
+            // Ensure we fetch companion metrics for weighted calculations (e.g. CTR, Position, CPC, CPM, Cost per Conversion)
             // The display filtering is handled upstream by checking the original controls['metrics'] array.
             $needsImpressions = false;
             foreach ($metrics as $m) {
-                if (str_contains($m, 'position') || $m === 'ctr') {
+                if (str_contains($m, 'position') || $m === 'ctr' || $m === 'cpm') {
                     $needsImpressions = true;
                 }
             }
             if ($needsImpressions && !in_array('impressions', $metrics)) {
                 $metrics[] = 'impressions';
             }
-            if (in_array('ctr', $metrics) && !in_array('clicks', $metrics)) {
+            if ((in_array('ctr', $metrics) || in_array('cpc', $metrics)) && !in_array('clicks', $metrics)) {
                 $metrics[] = 'clicks';
+            }
+            if ((in_array('cpc', $metrics) || in_array('cpm', $metrics) || in_array('cost_per_result', $metrics) || in_array('cost_per_conversion', $metrics)) && !in_array('spend', $metrics)) {
+                $metrics[] = 'spend';
+            }
+            if (in_array('cost_per_result', $metrics) && !in_array('results', $metrics)) {
+                $metrics[] = 'results';
+            }
+            if (in_array('cost_per_conversion', $metrics) && !in_array('conversions', $metrics)) {
+                $metrics[] = 'conversions';
             }
 
             if (!$channel) {
@@ -2651,19 +2688,21 @@
 
                     $seriesBreakdown = $series['breakdown'] ?? $controls['series_breakdown'][$sIdx] ?? null;
                     $breakdownDim = is_array($seriesBreakdown) ? ($seriesBreakdown['dimension'] ?? null) : $seriesBreakdown;
+                    $isChoroplethOrScatter = in_array($widget->widget_type, ['scatter_plot', 'choropleth_map'], true);
                     $defaultBreakdownLimit = ($widget->widget_type === 'pie_chart' && isset($controls['pie_slice_limit']))
                         ? (int)$controls['pie_slice_limit']
-                        : (($widget->widget_type === 'scatter_plot') ? 250 : 5);
-                    $maxBreakdownLimit = ($widget->widget_type === 'scatter_plot') ? 250 : 30;
-                    $breakdownLimit = ($widget->widget_type === 'scatter_plot')
-                        ? 250
+                        : ($isChoroplethOrScatter ? 250 : 5);
+                    $maxBreakdownLimit = $isChoroplethOrScatter ? 250 : 30;
+                    $breakdownLimit = $isChoroplethOrScatter
+                        ? (is_array($seriesBreakdown) && isset($seriesBreakdown['limit']) ? (int)$seriesBreakdown['limit'] : 250)
                         : (is_array($seriesBreakdown) ? (int)($seriesBreakdown['limit'] ?? $defaultBreakdownLimit) : $defaultBreakdownLimit);
                     $breakdownLimit = max(1, min($maxBreakdownLimit, $breakdownLimit));
-                    $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? 'value_desc') : 'value_desc';
                     $breakdownRankBy = is_array($seriesBreakdown) ? (string)($seriesBreakdown['rank_by'] ?? '') : '';
                     if (!in_array($breakdownRankBy, $metrics, true)) {
                         $breakdownRankBy = $metrics[0] ?? 'value';
                     }
+                    $isPosRank = str_contains(strtolower($breakdownRankBy), 'position') || str_contains(strtolower($breakdownRankBy), 'rank');
+                    $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? ($isPosRank ? 'value_asc' : 'value_desc')) : ($isPosRank ? 'value_asc' : 'value_desc');
 
                     if (!empty($breakdownDim)) {
                         $payload['breakdown'] = $breakdownDim;
@@ -3072,11 +3111,6 @@
                     $ssChannel = $ss['channel'] ?? '';
                     $ssMetric = $ss['metric'] ?? '';
 
-                    if (!$ssChannel || !$ssMetric) {
-                        $fetchedSeries[$ssKey] = [];
-                        continue;
-                    }
-
                     // Find matching item in $items by dm_series_index or $ssIdx
                     $matchingItem = null;
                     foreach ($items as $item) {
@@ -3087,6 +3121,42 @@
                     }
                     if (!$matchingItem && isset($items[$ssIdx])) {
                         $matchingItem = $items[$ssIdx];
+                    }
+
+                    // If source_series metric is null or empty, look up in predefined registry first
+                    if (empty($ssMetric)) {
+                        $predefined = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                        foreach ($predefined as $pdm) {
+                            if (($pdm['name'] ?? '') === $derivedMetric->name && !empty($pdm['source_series'][$ssIdx]['metric'])) {
+                                $ssMetric = $pdm['source_series'][$ssIdx]['metric'];
+                                break;
+                            }
+                        }
+                    }
+
+                    // Fall back to matching item metric or card series_metrics if still empty
+                    if (empty($ssMetric) && $matchingItem) {
+                        $cardIdx = $matchingItem['series_index'] ?? $ssIdx;
+                        $cardMetrics = $controls['series_metrics'][$cardIdx]
+                            ?? $controls['series_metrics'][(string)$cardIdx]
+                            ?? $matchingItem['series']['metrics']
+                            ?? null;
+                        if (!empty($cardMetrics)) {
+                            $ssMetric = is_array($cardMetrics) ? reset($cardMetrics) : (string)$cardMetrics;
+                        }
+                    }
+
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] Processing DM {$dmId} source_series index {$ssIdx}", [
+                        'ssKey'     => $ssKey,
+                        'ssChannel' => $ssChannel,
+                        'ssMetric'  => $ssMetric,
+                        'ss'        => $ss,
+                    ]);
+
+                    if (!$ssChannel || !$ssMetric) {
+                        \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] Skipped DM {$dmId} ssIdx {$ssIdx} because channel or metric empty", ['channel' => $ssChannel, 'metric' => $ssMetric]);
+                        $fetchedSeries[$ssKey] = [];
+                        continue;
                     }
 
                     $seriesAssetFilter = $ss['asset_filter'] ?? null;
@@ -3120,11 +3190,13 @@
                         // Fallback to all valid assets for this channel
                         $validAssets = $this->getValidAssetsForChannel($project, $ssChannel);
                         if (!empty($validAssets)) {
-                            $allowsMultiple = in_array($ssChannel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                            $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($ssChannel)
+                                || in_array($ssChannel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'google_search_console', 'tiktok', 'pinterest', 'linkedin']);
                             $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
                         }
                     }
                     if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
+                        \Illuminate\Support\Facades\Log::warning("[DM_DEBUG] ___EMPTY_GROUP___ for DM {$dmId} series {$ssKey} channel={$ssChannel}");
                         $fetchedSeries[$ssKey] = [];
                         continue;
                     }
@@ -3198,6 +3270,14 @@
 
                     $channelResponse = $this->forwardToChannelEndpoint($ssChannel, 'chart', $payload);
 
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} series {$ssKey} ({$ssChannel}:{$ssMetric}) forwardToChannelEndpoint response", [
+                        'channel' => $ssChannel,
+                        'account' => $payload['account'] ?? null,
+                        'metrics' => $payload['metrics'] ?? null,
+                        'chart_count' => isset($channelResponse['chart']) && is_array($channelResponse['chart']) ? count($channelResponse['chart']) : null,
+                        'data_count' => isset($channelResponse['data']) && is_array($channelResponse['data']) ? count($channelResponse['data']) : null,
+                    ]);
+
                     if (!empty($ssBreakdownDim)) {
                         $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
                         if (!is_array($rawRows)) {
@@ -3266,6 +3346,10 @@
                     } else {
                         $seriesData = $this->extractTimeSeriesFromResponse($channelResponse, $ssMetric);
 
+                        \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} series {$ssKey} extracted points count: " . count($seriesData), [
+                            'sample' => array_slice($seriesData, 0, 3, true),
+                        ]);
+
                         if ($effectiveGranularity !== 'daily' && !empty($seriesData)) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                             $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
@@ -3309,7 +3393,18 @@
                         'derived_metrics' => $derivedResults,
                     ];
 
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} computeKpi payload", [
+                        'ast' => $ast,
+                        'flatSeriesData_keys' => array_keys($flatSeriesData),
+                        'flatSeriesData_counts' => array_map('count', $flatSeriesData),
+                    ]);
+
                     $result = $this->remoteEngineService->computeKpi($project, $computePayload);
+
+                    \Illuminate\Support\Facades\Log::info("[DM_DEBUG] DM {$dmId} computeKpi raw result", [
+                        'result' => $result,
+                    ]);
+
                     $data = $result['data'] ?? $result;
 
                     $dmTimeSeries = [];
@@ -4093,13 +4188,20 @@
                 unset($datesMap);
             }
 
-            // Sort breakdown keys according to order
+            // Sort breakdown keys according to order.
+            // For position or rank metrics, best performance is numerically lower, so 'value_desc' (the default "top" semantic)
+            // maps to lowest numeric values first.
+            $isPositionOrRank = str_contains(strtolower($cleanMetric), 'position') || str_contains(strtolower($cleanMetric), 'rank');
             $dimValues = array_keys($groupedData);
-            usort($dimValues, function ($a, $b) use ($totals, $order) {
+            usort($dimValues, function ($a, $b) use ($totals, $order, $isPositionOrRank) {
                 if ($order === 'value_desc') {
-                    return ($totals[$b] ?? 0) <=> ($totals[$a] ?? 0);
+                    return $isPositionOrRank
+                        ? (($totals[$a] ?? 0) <=> ($totals[$b] ?? 0))
+                        : (($totals[$b] ?? 0) <=> ($totals[$a] ?? 0));
                 } elseif ($order === 'value_asc') {
-                    return ($totals[$a] ?? 0) <=> ($totals[$b] ?? 0);
+                    return $isPositionOrRank
+                        ? (($totals[$b] ?? 0) <=> ($totals[$a] ?? 0))
+                        : (($totals[$a] ?? 0) <=> ($totals[$b] ?? 0));
                 } elseif ($order === 'alpha_desc') {
                     return strcasecmp($b, $a);
                 } else { // alpha_asc
@@ -4716,6 +4818,32 @@
                 return $fbmMappings[$project->id][$strAsset] ?? $asset;
             }
 
+            if ($channel === 'google_ads') {
+                static $gadsMappings = [];
+                if (!isset($gadsMappings[$project->id])) {
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled Google Ads", ['project_id' => $project->id]);
+                    $gadsListT0 = microtime(true);
+                    $service = app(\App\Services\RemoteEngineService::class);
+                    $response = $service->listChanneled($project, 'google_ads', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled Google Ads", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gadsListT0) * 1000, 1)]);
+                    $gadsMappings[$project->id] = [];
+                    if (isset($response['data']) && is_array($response['data'])) {
+                        foreach ($response['data'] as $acc) {
+                            $pid = (string)($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                            if ($pid) {
+                                $gadsMappings[$project->id][$pid] = (string)$acc['id'];
+                                $cleanPid = str_replace('-', '', $pid);
+                                $gadsMappings[$project->id][$cleanPid] = (string)$acc['id'];
+                            }
+                        }
+                    }
+                }
+                $strAsset = (string)$asset;
+                $cleanStrAsset = str_replace('-', '', $strAsset);
+
+                return $gadsMappings[$project->id][$strAsset] ?? $gadsMappings[$project->id][$cleanStrAsset] ?? $asset;
+            }
+
             if ($channel === 'mailchimp') {
                 static $mcMappings = [];
                 if (!isset($mcMappings[$project->id])) {
@@ -4747,50 +4875,50 @@
                 return $asset;
             }
 
-            $config = $project->sync_config['google_search_console']['assets']['sites']
-                ?? $project->sync_config['google_search_console']['sites']
-                ?? [];
+            static $gscMappings = [];
+            if (!isset($gscMappings[$project->id])) {
+                $gscMappings[$project->id] = [];
+                $config = $project->sync_config['google_search_console']['assets']['sites']
+                    ?? $project->sync_config['google_search_console']['sites']
+                    ?? [];
 
-            $siteUrl = null;
-            foreach ($config as $site) {
-                $candidate = $site['url'] ?? $site['id'] ?? null;
-                if ($candidate === $asset) {
-                    $siteUrl = $candidate;
-
-                    break;
-                }
-            }
-
-            if (!$siteUrl) {
-                return $asset;
-            }
-
-            $hash = md5($siteUrl);
-
-            try {
-                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled GSC", ['project_id' => $project->id]);
-                $gscListT0 = microtime(true);
-                $service = app(\App\Services\RemoteEngineService::class);
-                $response = $service->listChanneled($project, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
-                \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled GSC", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gscListT0) * 1000, 1)]);
-
-                if (isset($response['data']) && is_array($response['data'])) {
-                    foreach ($response['data'] as $page) {
-                        $platformId = rtrim((string)($page['platformId'] ?? $page['platform_id'] ?? ''), '/');
-                        if ($platformId === $hash) {
-                            return (string)$page['id'];
-                        }
+                $siteHashes = [];
+                foreach ($config as $site) {
+                    $candidate = $site['url'] ?? $site['id'] ?? null;
+                    if ($candidate) {
+                        $siteHashes[md5($candidate)] = $candidate;
                     }
                 }
-            } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::warning('[resolveChanneledAccountId] Failed to resolve', [
-                    'channel' => $channel,
-                    'asset'   => $asset,
-                    'error'   => $e->getMessage(),
-                ]);
+
+                try {
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId BEFORE listChanneled GSC", ['project_id' => $project->id]);
+                    $gscListT0 = microtime(true);
+                    $service = app(\App\Services\RemoteEngineService::class);
+                    $response = $service->listChanneled($project, 'google_search_console', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                    \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] resolveChanneledAccountId AFTER listChanneled GSC", ['project_id' => $project->id, 'ms' => round((microtime(true) - $gscListT0) * 1000, 1)]);
+
+                    if (isset($response['data']) && is_array($response['data'])) {
+                        foreach ($response['data'] as $page) {
+                            $platformId = rtrim((string)($page['platformId'] ?? $page['platform_id'] ?? ''), '/');
+                            $id = (string)$page['id'];
+                            $gscMappings[$project->id][$platformId] = $id;
+                            if (isset($siteHashes[$platformId])) {
+                                $url = $siteHashes[$platformId];
+                                $gscMappings[$project->id][$url] = $id;
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('[resolveChanneledAccountId] Failed to resolve GSC', [
+                        'channel' => $channel,
+                        'asset'   => $asset,
+                        'error'   => $e->getMessage(),
+                    ]);
+                }
             }
 
-            return $asset;
+            $strAsset = (string)$asset;
+            return $gscMappings[$project->id][$strAsset] ?? $gscMappings[$project->id][md5($strAsset)] ?? $asset;
         }
 
         public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
@@ -4839,7 +4967,7 @@
             }
 
             // Normalization: If the controller does not expect an array account (like Mailchimp), unwrap array if passed
-            if (!in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
+            if (!in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics', 'google_search_console'])) {
                 if (is_array($payload['account'] ?? null)) {
                     $payload['account'] = !empty($payload['account']) ? (string)reset($payload['account']) : '';
                 } elseif (isset($payload['account'])) {
@@ -4854,7 +4982,7 @@
                 }
             }
 
-            if (in_array($channel, ['facebook_marketing', 'facebook_organic'])) {
+            if (in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_ads', 'google_analytics', 'google_search_console'])) {
                 if (isset($payload['account']) && !is_array($payload['account'])) {
                     $payload['account'] = $payload['account'] !== null ? [$payload['account']] : [];
                 }
@@ -4868,6 +4996,27 @@
                             }
                         });
                         $payload['account'] = array_values(array_unique($flat));
+                    }
+                }
+
+                if ($channel === 'google_analytics' && !empty($payload['account'])) {
+                    $project = Project::find($payload['tenant']);
+                    if ($project) {
+                        $service = app(\App\Services\RemoteEngineService::class);
+                        $response = $service->listChanneled($project, 'google_analytics', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                        $pidToId = [];
+                        if (isset($response['data']) && is_array($response['data'])) {
+                            foreach ($response['data'] as $prop) {
+                                $pid = (string)($prop['platformId'] ?? $prop['platform_id'] ?? '');
+                                if ($pid) {
+                                    $pidToId[$pid] = (string)$prop['id'];
+                                }
+                            }
+                        }
+                        $payload['account'] = array_values(array_unique(array_map(
+                            fn($a) => $pidToId[(string)$a] ?? (string)$a,
+                            $payload['account']
+                        )));
                     }
                 }
 
@@ -4965,6 +5114,30 @@
                         )));
                     }
                 }
+
+                if ($channel === 'google_ads' && !empty($payload['account'])) {
+                    $project = Project::find($payload['tenant']);
+                    if ($project) {
+                        $service = app(\App\Services\RemoteEngineService::class);
+                        $response = $service->listChanneled($project, 'google_ads', 'channeled_account', ['limit' => 1000, 'enabled' => 1]);
+                        $pidToId = [];
+                        if (isset($response['data']) && is_array($response['data'])) {
+                            foreach ($response['data'] as $acc) {
+                                $pid = (string)($acc['platformId'] ?? $acc['platform_id'] ?? '');
+                                if ($pid) {
+                                    $intId = (string)$acc['id'];
+                                    $pidToId[$pid] = $intId;
+                                    $clean = str_replace('-', '', $pid);
+                                    $pidToId[$clean] = $intId;
+                                }
+                            }
+                        }
+                        $payload['account'] = array_values(array_unique(array_map(
+                            fn($a) => $pidToId[(string)$a] ?? $pidToId[str_replace('-', '', (string)$a)] ?? (string)$a,
+                            $payload['account']
+                        )));
+                    }
+                }
             }
 
             $request = new Request($payload);
@@ -5032,7 +5205,14 @@
                     'labels_count' => isset($cached->result['labels']) ? count($cached->result['labels']) : 'N/A',
                 ]);
 
-                return $cached->result;
+                $cachedResult = $cached->result;
+                $predefinedList = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                $predefinedConfig = $predefinedList[$derivedMetric->code ?? ''] ?? $predefinedList[$derivedMetric->slug ?? ''] ?? null;
+                if (!empty($predefinedConfig['lower_is_better']) && !empty($cachedResult['datasets'])) {
+                    $cachedResult['datasets'][0]['lower_is_better'] = true;
+                }
+
+                return $cachedResult;
             }
 
             \Illuminate\Support\Facades\Log::info('[DM_GRAN] CACHE MISS — computing fresh result', [
@@ -5081,7 +5261,8 @@
                 if ($assetFilter === null || $assetFilter === '___EMPTY_GROUP___') {
                     $validAssets = $this->getValidAssetsForChannel($project, $channel);
                     if (!empty($validAssets)) {
-                        $allowsMultiple = in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'tiktok', 'pinterest', 'linkedin']);
+                        $allowsMultiple = \App\Services\Analytics\ChannelGranularityRegistry::allowsMultipleAssets($channel)
+                            || in_array($channel, ['facebook_marketing', 'facebook_organic', 'google_analytics_4', 'shopify', 'google_ads', 'google_search_console', 'tiktok', 'pinterest', 'linkedin']);
                         $assetFilter = $allowsMultiple ? $validAssets : $validAssets[0];
                     }
                 }
@@ -5260,6 +5441,11 @@
                 } elseif ($derivedMetric->format === 'currency') {
                     $datasets[0]['currency'] = true;
                 }
+                $predefinedList = \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined();
+                $predefinedConfig = $predefinedList[$derivedMetric->code ?? ''] ?? $predefinedList[$derivedMetric->slug ?? ''] ?? null;
+                if (!empty($predefinedConfig['lower_is_better'])) {
+                    $datasets[0]['lower_is_better'] = true;
+                }
             }
 
             // Fallback: extract labels from first fetched series
@@ -5403,6 +5589,377 @@
             }
 
             return (float)($point['value'] ?? $point['y'] ?? 0);
+        }
+
+        /**
+         * Transform widget data into an ISO-keyed geographic distribution format for choropleth rendering.
+         *
+         * @param array $data
+         * @param DashboardWidget $widget
+         * @param array $controls
+         * @return array
+         */
+        protected function transformChoroplethMapData(array $data, DashboardWidget $widget, array $controls): array
+        {
+            $geoScope = $controls['geo_scope'] ?? 'world';
+            $metric = $controls['metrics'][0] ?? 'clicks';
+            $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
+            $metricLabel = $metricLabels[$metric] ?? ucfirst(str_replace('_', ' ', $metric));
+
+            $iso3to2 = [
+                'AFG'=>'AF','ALA'=>'AX','ALB'=>'AL','DZA'=>'DZ','ASM'=>'AS','AND'=>'AD','AGO'=>'AO','AIA'=>'AI','ATA'=>'AQ','ATG'=>'AG','ARG'=>'AR','ARM'=>'AM','ABW'=>'AW','AUS'=>'AU','AUT'=>'AT','AZE'=>'AZ',
+                'BHS'=>'BS','BHR'=>'BH','BGD'=>'BD','BRB'=>'BB','BLR'=>'BY','BEL'=>'BE','BLZ'=>'BZ','BEN'=>'BJ','BMU'=>'BM','BTN'=>'BT','BOL'=>'BO','BES'=>'BQ','BIH'=>'BA','BWA'=>'BW','BVT'=>'BV','BRA'=>'BR',
+                'IOT'=>'IO','BRN'=>'BN','BGR'=>'BG','BFA'=>'BF','BDI'=>'BI','CPV'=>'CV','KHM'=>'KH','CMR'=>'CM','CAN'=>'CA','CYM'=>'KY','CAF'=>'CF','TCD'=>'TD','CHL'=>'CL','CHN'=>'CN','CXR'=>'CX','CCK'=>'CC',
+                'COL'=>'CO','COM'=>'KM','COG'=>'CG','COD'=>'CD','COK'=>'CK','CRI'=>'CR','CIV'=>'CI','HRV'=>'HR','CUB'=>'CU','CUW'=>'CW','CYP'=>'CY','CZE'=>'CZ','DNK'=>'DK','DJI'=>'DJ','DMA'=>'DM','DOM'=>'DO',
+                'ECU'=>'EC','EGY'=>'EG','SLV'=>'SV','GNQ'=>'GQ','ERI'=>'ER','EST'=>'EE','SWZ'=>'SZ','ETH'=>'ET','FLK'=>'FK','FRO'=>'FO','FJI'=>'FJ','FIN'=>'FI','FRA'=>'FR','GUF'=>'GF','PYF'=>'PF','ATF'=>'TF',
+                'GAB'=>'GA','GMB'=>'GM','GEO'=>'GE','DEU'=>'DE','GHA'=>'GH','GIB'=>'GI','GRC'=>'GR','GRL'=>'GL','GRD'=>'GD','GLP'=>'GP','GUM'=>'GU','GTM'=>'GT','GGY'=>'GG','GIN'=>'GN','GNB'=>'GW','GUY'=>'GY',
+                'HTI'=>'HT','HMD'=>'HM','VAT'=>'VA','HND'=>'HN','HKG'=>'HK','HUN'=>'HU','ISL'=>'IS','IND'=>'IN','IDN'=>'ID','IRN'=>'IR','IRQ'=>'IQ','IRL'=>'IE','IMN'=>'IM','ISR'=>'IL','ITA'=>'IT','JAM'=>'JM',
+                'JPN'=>'JP','JEY'=>'JE','JOR'=>'JO','KAZ'=>'KZ','KEN'=>'KE','KIR'=>'KI','PRK'=>'KP','KOR'=>'KR','KWT'=>'KW','KGZ'=>'KG','LAO'=>'LA','LVA'=>'LV','LBN'=>'LB','LSO'=>'LS','LBR'=>'LR','LBY'=>'LY',
+                'LIE'=>'LI','LTU'=>'LT','LUX'=>'LU','MAC'=>'MO','MDG'=>'MG','MWI'=>'MW','MYS'=>'MY','MDV'=>'MV','MLI'=>'ML','MLT'=>'MT','MHL'=>'MH','MTQ'=>'MQ','MRT'=>'MR','MUS'=>'MU','MYT'=>'YT','MEX'=>'MX',
+                'FSM'=>'FM','MDA'=>'MD','MCO'=>'MC','MNG'=>'MN','MNE'=>'ME','MSR'=>'MS','MAR'=>'MA','MOZ'=>'MZ','MMR'=>'MM','NAM'=>'NAM' ? 'NA' : 'NA','NRU'=>'NR','NPL'=>'NP','NLD'=>'NL','NCL'=>'NC','NZL'=>'NZ','NIC'=>'NI',
+                'NER'=>'NE','NGA'=>'NG','NIU'=>'NU','NFK'=>'NF','MKD'=>'MK','MNP'=>'MP','NOR'=>'NO','OMN'=>'OM','PAK'=>'PK','PLW'=>'PW','PSE'=>'PS','PAN'=>'PA','PNG'=>'PG','PRY'=>'PY','PER'=>'PE','PHL'=>'PH',
+                'PCN'=>'PN','POL'=>'PL','PRT'=>'PT','PRI'=>'PR','QAT'=>'QA','REU'=>'RE','ROU'=>'RO','RUS'=>'RU','RWA'=>'RW','BLM'=>'BL','SHN'=>'SH','KNA'=>'KN','LCA'=>'LC','MAF'=>'MF','SPM'=>'PM','VCT'=>'VC',
+                'WSM'=>'WS','SMR'=>'SM','STP'=>'ST','SAU'=>'SA','SEN'=>'SN','SRB'=>'RS','SYC'=>'SC','SLE'=>'SL','SGP'=>'SG','SXM'=>'SX','SVK'=>'SK','SVN'=>'SI','SLB'=>'SB','SOM'=>'SO','ZAF'=>'ZA','SGS'=>'GS',
+                'SSD'=>'SS','ESP'=>'ES','LKA'=>'LK','SDN'=>'SD','SUR'=>'SR','SJM'=>'SJ','SWE'=>'SE','CHE'=>'CH','SYR'=>'SY','TWN'=>'TW','TJK'=>'TJ','TZA'=>'TZ','THA'=>'TH','TLS'=>'TL','TGO'=>'TG','TKL'=>'TK',
+                'TON'=>'TO','TTO'=>'TT','TUN'=>'TUN' ? 'TN' : 'TN','TUR'=>'TR','TKM'=>'TM','TCA'=>'TC','TUV'=>'TV','UGA'=>'UG','UKR'=>'UA','ARE'=>'AE','GBR'=>'GB','USA'=>'US','UMI'=>'UM','URY'=>'UY','UZB'=>'UZ','VUT'=>'VU',
+                'VEN'=>'VE','VNM'=>'VN','VGB'=>'VG','VIR'=>'VI','WLF'=>'WF','ESH'=>'EH','YEM'=>'YE','ZMB'=>'ZM','ZWE'=>'ZW'
+            ];
+
+            $countryNameToIso2 = [
+                'aruba' => 'AW', 'afghanistan' => 'AF', 'angola' => 'AO', 'anguilla' => 'AI', 'åland islands' => 'AX', 'aland islands' => 'AX',
+                'albania' => 'AL', 'andorra' => 'AD', 'united arab emirates' => 'AE', 'argentina' => 'AR', 'armenia' => 'AM',
+                'american samoa' => 'AS', 'antarctica' => 'AQ', 'french southern territories' => 'TF', 'antigua and barbuda' => 'AG',
+                'australia' => 'AU', 'austria' => 'AT', 'azerbaijan' => 'AZ', 'burundi' => 'BI', 'belgium' => 'BE', 'benin' => 'BJ',
+                'bonaire, sint eustatius and saba' => 'BQ', 'burkina faso' => 'BF', 'bangladesh' => 'BD', 'bulgaria' => 'BG',
+                'bahrain' => 'BH', 'bahamas' => 'BS', 'bosnia and herzegovina' => 'BA', 'saint barthélemy' => 'BL', 'saint barthelemy' => 'BL',
+                'belarus' => 'BY', 'belize' => 'BZ', 'bermuda' => 'BM', 'bolivia' => 'BO', 'brazil' => 'BR', 'barbados' => 'BB',
+                'brunei darussalam' => 'BN', 'brunei' => 'BN', 'bhutan' => 'BT', 'bouvet island' => 'BV', 'botswana' => 'BW',
+                'central african republic' => 'CF', 'canada' => 'CA', 'cocos (keeling) islands' => 'CC', 'switzerland' => 'CH',
+                'chile' => 'CL', 'china' => 'CN', "côte d'ivoire" => 'CI', "cote d'ivoire" => 'CI', 'ivory coast' => 'CI', 'cameroon' => 'CM',
+                'congo, democratic republic of the' => 'CD', 'dr congo' => 'CD', 'congo' => 'CG', 'cook islands' => 'CK', 'colombia' => 'CO',
+                'comoros' => 'KM', 'cabo verde' => 'CV', 'cape verde' => 'CV', 'costa rica' => 'CR', 'cuba' => 'CU', 'curaçao' => 'CW', 'curacao' => 'CW',
+                'christmas island' => 'CX', 'cayman islands' => 'KY', 'cyprus' => 'CY', 'czechia' => 'CZ', 'czech republic' => 'CZ', 'germany' => 'DE',
+                'djibouti' => 'DJ', 'dominica' => 'DM', 'denmark' => 'DK', 'dominican republic' => 'DO', 'algeria' => 'DZ',
+                'ecuador' => 'EC', 'egypt' => 'EG', 'eritrea' => 'ER', 'western sahara' => 'EH', 'spain' => 'ES', 'estonia' => 'EE',
+                'ethiopia' => 'ET', 'finland' => 'FI', 'fiji' => 'FJ', 'falkland islands (malvinas)' => 'FK', 'falkland islands' => 'FK', 'france' => 'FR',
+                'faroe islands' => 'FO', 'micronesia' => 'FM', 'gabon' => 'GA', 'united kingdom' => 'GB', 'great britain' => 'GB', 'georgia' => 'GE',
+                'guernsey' => 'GG', 'ghana' => 'GH', 'gibraltar' => 'GI', 'guinea' => 'GN', 'guadeloupe' => 'GP', 'gambia' => 'GM',
+                'guinea-bissau' => 'GW', 'equatorial guinea' => 'GQ', 'greece' => 'GR', 'grenada' => 'GD', 'greenland' => 'GL',
+                'guatemala' => 'GT', 'french guiana' => 'GF', 'guam' => 'GU', 'guyana' => 'GY', 'hong kong' => 'HK',
+                'heard island and mcdonald islands' => 'HM', 'honduras' => 'HN', 'croatia' => 'HR', 'haiti' => 'HT',
+                'hungary' => 'HU', 'indonesia' => 'ID', 'isle of man' => 'IM', 'india' => 'IN',
+                'british indian ocean territory' => 'IO', 'ireland' => 'IE', 'iran' => 'IR', 'iraq' => 'IQ', 'iceland' => 'IS',
+                'israel' => 'IL', 'italy' => 'IT', 'jamaica' => 'JM', 'jersey' => 'JE', 'jordan' => 'JO', 'japan' => 'JP',
+                'kazakhstan' => 'KZ', 'kenya' => 'KE', 'kyrgyzstan' => 'KG', 'cambodia' => 'KH', 'kiribati' => 'KI',
+                'saint kitts and nevis' => 'KN', 'korea, republic of' => 'KR', 'south korea' => 'KR', 'kuwait' => 'KW',
+                "lao people's democratic republic" => 'LA', 'laos' => 'LA', 'lebanon' => 'LB', 'liberia' => 'LR', 'libya' => 'LY',
+                'saint lucia' => 'LC', 'liechtenstein' => 'LI', 'sri lanka' => 'LK', 'lesotho' => 'LS', 'lithuania' => 'LT',
+                'luxembourg' => 'LU', 'latvia' => 'LV', 'macao' => 'MO', 'macau' => 'MO', 'saint martin (french part)' => 'MF', 'saint martin' => 'MF', 'morocco' => 'MA',
+                'monaco' => 'MC', 'moldova' => 'MD', 'madagascar' => 'MG', 'maldives' => 'MV', 'mexico' => 'MX',
+                'marshall islands' => 'MH', 'north macedonia' => 'MK', 'mali' => 'ML', 'malta' => 'MT', 'myanmar' => 'MM',
+                'montenegro' => 'ME', 'mongolia' => 'MN', 'northern mariana islands' => 'MP', 'mozambique' => 'MZ',
+                'mauritania' => 'MR', 'montserrat' => 'MS', 'martinique' => 'MQ', 'mauritius' => 'MU', 'malawi' => 'MW',
+                'malaysia' => 'MY', 'mayotte' => 'YT', 'namibia' => 'NA', 'new caledonia' => 'NC', 'niger' => 'NE',
+                'norfolk island' => 'NF', 'nigeria' => 'NG', 'nicaragua' => 'NI', 'niue' => 'NU', 'netherlands' => 'NL',
+                'norway' => 'NO', 'nepal' => 'NP', 'nauru' => 'NR', 'new zealand' => 'NZ', 'oman' => 'OM', 'pakistan' => 'PK',
+                'panama' => 'PA', 'pitcairn' => 'PN', 'peru' => 'PE', 'philippines' => 'PH', 'palau' => 'PW',
+                'papua new guinea' => 'PG', 'poland' => 'PL', 'puerto rico' => 'PR',
+                "korea, democratic people's republic of" => 'KP', 'north korea' => 'KP', 'portugal' => 'PT', 'paraguay' => 'PY',
+                'palestine, state of' => 'PS', 'palestine' => 'PS', 'french polynesia' => 'PF', 'qatar' => 'QA', 'réunion' => 'RE', 'reunion' => 'RE',
+                'romania' => 'RO', 'russian federation' => 'RU', 'russia' => 'RU', 'rwanda' => 'RW', 'saudi arabia' => 'SA', 'sudan' => 'SD',
+                'senegal' => 'SN', 'singapore' => 'SG', 'south georgia and the south sandwich islands' => 'GS',
+                'saint helena, ascension and tristan da cunha' => 'SH', 'saint helena' => 'SH', 'svalbard and jan mayen' => 'SJ',
+                'solomon islands' => 'SB', 'sierra leone' => 'SL', 'el salvador' => 'SV', 'san marino' => 'SM', 'somalia' => 'SO',
+                'saint pierre and miquelon' => 'PM', 'serbia' => 'RS', 'south sudan' => 'SS',
+                'sao tome and principe' => 'ST', 'suriname' => 'SR', 'slovakia' => 'SK', 'slovenia' => 'SI', 'sweden' => 'SE',
+                'eswatini' => 'SZ', 'swaziland' => 'SZ', 'sint maarten (dutch part)' => 'SX', 'sint maarten' => 'SX', 'seychelles' => 'SC',
+                'syrian arab republic' => 'SY', 'syria' => 'SY', 'turks and caicos islands' => 'TC', 'chad' => 'TD', 'togo' => 'TG',
+                'thailand' => 'TH', 'tajikistan' => 'TJ', 'tokelau' => 'TK', 'turkmenistan' => 'TM', 'timor-leste' => 'TL',
+                'tonga' => 'TO', 'trinidad and tobago' => 'TT', 'tunisia' => 'TN', 'türkiye' => 'TR', 'turkey' => 'TR', 'tuvalu' => 'TV',
+                'taiwan' => 'TW', 'tanzania' => 'TZ', 'uganda' => 'UG', 'ukraine' => 'UA',
+                'united states minor outlying islands' => 'UM', 'uruguay' => 'UY', 'united states of america' => 'US', 'united states' => 'US', 'usa' => 'US',
+                'uzbekistan' => 'UZ', 'holy see' => 'VA', 'vatican' => 'VA', 'saint vincent and the grenadines' => 'VC', 'venezuela' => 'VE',
+                'virgin islands (british)' => 'VG', 'british virgin islands' => 'VG', 'virgin islands (u.s.)' => 'VI', 'u.s. virgin islands' => 'VI', 'viet nam' => 'VN', 'vietnam' => 'VN', 'vanuatu' => 'VU',
+                'wallis and futuna' => 'WF', 'samoa' => 'WS', 'yemen' => 'YE', 'south africa' => 'ZA', 'zambia' => 'ZM',
+                'zimbabwe' => 'ZW'
+            ];
+
+            $resolveIso2AndName = function ($rawName) use ($iso3to2, $countryNameToIso2): array {
+                if (empty($rawName)) return [null, 'Unknown'];
+                $clean = trim((string)$rawName);
+                // Strip trailing ' (%)' or ' %' if appended by ratio formatting
+                $cleanWithoutRatio = preg_replace('/\s*\(?%\)?$/', '', $clean);
+                $lower = strtolower(trim($cleanWithoutRatio));
+
+                // Direct ISO2
+                if (strlen($lower) === 2 && ctype_alpha($lower)) {
+                    return [strtoupper($lower), $cleanWithoutRatio];
+                }
+                // ISO3 code
+                if (strlen($lower) === 3 && ctype_alpha($lower)) {
+                    $u3 = strtoupper($lower);
+                    if (isset($iso3to2[$u3])) {
+                        return [$iso3to2[$u3], $cleanWithoutRatio];
+                    }
+                }
+                // Country name match
+                if (isset($countryNameToIso2[$lower])) {
+                    return [$countryNameToIso2[$lower], $cleanWithoutRatio];
+                }
+                // Substring or sanitized match
+                $stripped = preg_replace('/[^\p{L}\p{N}\s]/u', '', $lower);
+                if (isset($countryNameToIso2[$stripped])) {
+                    return [$countryNameToIso2[$stripped], $cleanWithoutRatio];
+                }
+
+                return [null, $cleanWithoutRatio];
+            };
+
+            $mapData = [];
+            $leaderboard = [];
+            $seriesMetricsData = [];
+
+            // Case 1: Data has 'table' rows (GSC or GA4 country table response)
+            $rows = $data['table'] ?? $data['rows'] ?? [];
+            if (!empty($rows) && is_array($rows)) {
+                foreach ($rows as $row) {
+                    $key = $row['country'] ?? $row['name'] ?? $row['id'] ?? null;
+                    if (!$key) continue;
+                    $val = (float)($row[$metric] ?? $row['clicks'] ?? $row['sessions'] ?? $row['value'] ?? 0);
+
+                    [$iso2, $cName] = $resolveIso2AndName($key);
+                    if ($iso2) {
+                        $mapData[$iso2] = ($mapData[$iso2] ?? 0) + $val;
+                    }
+
+                    $leaderboard[] = [
+                        'name' => $cName,
+                        'code' => $iso2 ?: 'UNK',
+                        'value' => $val,
+                    ];
+                }
+            } elseif (isset($data['datasets']) && is_array($data['datasets'])) {
+                // Case 2: Datasets from fanOutBreakdownSeries or multi-series
+                $labels = $data['labels'] ?? [];
+                $isLifetime = count($labels) === 1 && in_array(strtolower((string)$labels[0]), ['lifetime', 'total', 'all']);
+
+                // Group datasets by metric when each country item is its own dataset
+                $datasetsByMetric = [];
+                $hasDatasetCountries = false;
+
+                foreach ($data['datasets'] as $ds) {
+                    $mKey = $ds['metric'] ?? $ds['metric_key'] ?? $metric;
+                    $datasetsByMetric[$mKey][] = $ds;
+
+                    $cCandidate = $ds['breakdown_value'] ?? null;
+                    if (!$cCandidate && !empty($ds['label']) && str_contains($ds['label'], ' - ')) {
+                        $parts = explode(' - ', $ds['label']);
+                        $cCandidate = trim(end($parts));
+                    }
+                    if ($cCandidate) {
+                        [$checkIso] = $resolveIso2AndName($cCandidate);
+                        if ($checkIso) {
+                            $hasDatasetCountries = true;
+                        }
+                    }
+                }
+
+                // If only 1 dataset is present or breakdown_value is directly on datasets, treat as breakdown datasets
+                if (!$hasDatasetCountries && !empty($data['datasets'])) {
+                    foreach ($data['datasets'] as $ds) {
+                        if (!empty($ds['breakdown_value'])) {
+                            [$checkIso] = $resolveIso2AndName($ds['breakdown_value']);
+                            if ($checkIso) {
+                                $hasDatasetCountries = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // If each dataset represents a single country curve (fanOutBreakdownSeries)
+                // or datasets count is > 1 with 'Lifetime' label
+                if (!$hasDatasetCountries && count($data['datasets']) > 1 && $isLifetime) {
+                    $hasDatasetCountries = true;
+                }
+
+                if ($hasDatasetCountries) {
+                    // Extract user-defined metric colors from controls if present
+                    $userMetricColors = $controls['series_metric_colors'][0]
+                        ?? $controls['series_metric_colors']['0']
+                        ?? $controls['raw_series'][0]['metric_colors']
+                        ?? [];
+
+                    // Group datasets into series_metrics (each metric requested becomes one map series)
+                    foreach ($datasetsByMetric as $mKey => $datasetsForMetric) {
+                        $cleanMKey = preg_replace('/^trend_(?:total|average)_/', '', $mKey);
+                        $mLabel = $metricLabels[$cleanMKey] ?? ucfirst(str_replace('_', ' ', $cleanMKey));
+
+                        // Priority for base series color:
+                        // 1. User configured metric color (e.g. controls.series_metric_colors[0][metric])
+                        // 2. First dataset borderColor/backgroundColor
+                        // 3. Fallback to controls.color
+                        $mColor = $userMetricColors[$cleanMKey]
+                            ?? $userMetricColors[$mKey]
+                            ?? $datasetsForMetric[0]['borderColor']
+                            ?? $datasetsForMetric[0]['backgroundColor']
+                            ?? $controls['color']
+                            ?? null;
+
+                        $mMapData = [];
+                        $mLeaderboard = [];
+
+                        foreach ($datasetsForMetric as $ds) {
+                            $cCandidate = $ds['breakdown_value'] ?? null;
+                            if (!$cCandidate && !empty($ds['label']) && str_contains($ds['label'], ' - ')) {
+                                $parts = explode(' - ', $ds['label']);
+                                $cCandidate = trim(end($parts));
+                            }
+                            if (!$cCandidate) {
+                                $cCandidate = $ds['label'] ?? 'Unknown';
+                            }
+
+                            [$iso2, $cName] = $resolveIso2AndName($cCandidate);
+                            $dsValues = $ds['data'] ?? [];
+                            $val = is_array($dsValues) ? (float)($dsValues[0] ?? array_sum($dsValues)) : (float)$dsValues;
+
+                            if ($iso2) {
+                                $mMapData[$iso2] = ($mMapData[$iso2] ?? 0) + $val;
+                            }
+
+                            $mLeaderboard[] = [
+                                'name' => $cName,
+                                'code' => $iso2 ?: 'UNK',
+                                'value' => $val,
+                            ];
+                        }
+
+                        // For average metrics like position, lower is better when ranking
+                        if (str_contains($cleanMKey, 'position')) {
+                            usort($mLeaderboard, fn($a, $b) => $a['value'] <=> $b['value']);
+                        } else {
+                            usort($mLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                        }
+
+                        $seriesMetricsData[] = [
+                            'metric' => $cleanMKey,
+                            'metric_label' => $mLabel,
+                            'color' => $mColor,
+                            'map_data' => !empty($mMapData) ? $mMapData : (object)[],
+                            'leaderboard' => $mLeaderboard,
+                        ];
+                    }
+
+                    if (!empty($seriesMetricsData)) {
+                        $mapData = $seriesMetricsData[0]['map_data'];
+                        $leaderboard = $seriesMetricsData[0]['leaderboard'];
+                        $metric = $seriesMetricsData[0]['metric'];
+                        $metricLabel = $seriesMetricsData[0]['metric_label'];
+                    }
+                } else {
+                    // Standard labels-as-countries approach
+                    foreach ($data['datasets'] as $dIdx => $ds) {
+                        $dsMetric = $ds['metric'] ?? $ds['label'] ?? ('Series ' . ($dIdx + 1));
+                        $dsLabel = $ds['label'] ?? ($metricLabels[$dsMetric] ?? ucfirst($dsMetric));
+                        $dsColor = $ds['borderColor'] ?? $ds['backgroundColor'] ?? null;
+                        $dsMapData = [];
+                        $dsLeaderboard = [];
+                        $dsValues = $ds['data'] ?? [];
+
+                        foreach ($labels as $i => $lbl) {
+                            $val = (float)($dsValues[$i] ?? 0);
+                            [$iso2, $cName] = $resolveIso2AndName($lbl);
+                            if ($iso2) {
+                                $dsMapData[$iso2] = ($dsMapData[$iso2] ?? 0) + $val;
+                            }
+                            $dsLeaderboard[] = [
+                                'name' => $cName,
+                                'code' => $iso2 ?: 'UNK',
+                                'value' => $val,
+                            ];
+                        }
+
+                        $isPosMetric = str_contains(strtolower($dsMetric), 'position') || str_contains(strtolower($dsMetric), 'rank');
+                        if ($isPosMetric) {
+                            usort($dsLeaderboard, fn($a, $b) => $a['value'] <=> $b['value']);
+                        } else {
+                            usort($dsLeaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                        }
+
+                        $seriesMetricsData[] = [
+                            'metric' => $dsMetric,
+                            'metric_label' => $dsLabel,
+                            'color' => $dsColor,
+                            'map_data' => !empty($dsMapData) ? $dsMapData : (object)[],
+                            'leaderboard' => $dsLeaderboard,
+                        ];
+
+                        if ($dIdx === 0) {
+                            $mapData = !empty($dsMapData) ? $dsMapData : (object)[];
+                            $leaderboard = $dsLeaderboard;
+                            $metricLabel = $dsLabel;
+                            $metric = $dsMetric;
+                        }
+                    }
+                }
+            }
+
+            if (empty($seriesMetricsData)) {
+                $isPosMetric = str_contains(strtolower($metric), 'position') || str_contains(strtolower($metric), 'rank');
+                if ($isPosMetric) {
+                    usort($leaderboard, fn($a, $b) => $a['value'] <=> $b['value']);
+                } else {
+                    usort($leaderboard, fn($a, $b) => $b['value'] <=> $a['value']);
+                }
+            }
+
+            return [
+                'type' => 'choropleth_map',
+                'geo_scope' => $geoScope,
+                'metric' => $metric,
+                'metric_label' => $metricLabel,
+                'map_data' => !empty($mapData) ? $mapData : (object)[],
+                'leaderboard' => $leaderboard,
+                'series_metrics' => $seriesMetricsData,
+            ];
+        }
+
+        /**
+         * Transform widget data into localized coordinate marker pins for pinnable map rendering.
+         *
+         * @param array $data
+         * @param DashboardWidget $widget
+         * @param array $controls
+         * @return array
+         */
+        protected function transformPinnableMapData(array $data, DashboardWidget $widget, array $controls): array
+        {
+            $pins = [];
+            $rawRows = $data['pins'] ?? $data['table'] ?? $data['rows'] ?? [];
+
+            if (is_array($rawRows)) {
+                foreach ($rawRows as $item) {
+                    $lat = $item['lat'] ?? $item['latitude'] ?? null;
+                    $lng = $item['lng'] ?? $item['longitude'] ?? $item['lon'] ?? null;
+
+                    if ($lat !== null && $lng !== null && is_numeric($lat) && is_numeric($lng)) {
+                        $pins[] = [
+                            'lat' => (float)$lat,
+                            'lng' => (float)$lng,
+                            'title' => $item['title'] ?? $item['name'] ?? $item['customer_name'] ?? 'Touchpoint',
+                            'value' => $item['value'] ?? $item['amount'] ?? $item['orders'] ?? null,
+                            'city' => $item['city'] ?? $item['location'] ?? null,
+                            'country' => $item['country'] ?? null,
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'type' => 'pinnable_map',
+                'pins' => $pins,
+                'total_points' => count($pins),
+            ];
         }
 
         /**

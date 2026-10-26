@@ -11,6 +11,30 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Google Ads Dashboard & Custom Widget Aggregation Resolution (2026-10-24)
+- **Problem & Context:**
+  - Widgets requesting `google_ads`, `google_analytics`, and `google_search_console` cross-channel data (e.g. tile widget for Spend and Derived Metric "Cost per Conversion", or bar chart for "Paid vs Organic Search Click Share") experienced failure modes:
+    1. `"The account field must be an array."` or single-string collapsing: `DashboardWidgetDataController::forwardToChannelEndpoint()` collapsed array accounts to a single string for channels not in the whitelist. `GoogleAdsController::validateRequest()` strictly expects `'account' => 'required|array'`, while `GoogleAnalyticsController` and `GoogleSearchConsoleController` strictly expected `'account' => 'required|string'`, causing multi-property/multi-site selections to drop all items except the first one.
+    2. `SQLSTATE[22003]: Numeric value out of range: 7 ERROR: value "8266857248" is out of range for type integer` - External platform IDs (e.g. Google Ads customer ID `8266857248`, GA4 property platform IDs, or GSC site URLs) were forwarded directly as the `channeledAccount` filter to the tenant orchestrator. In `apis-hub`, `channeled_account_id` in PostgreSQL is an integer FK pointing to `channeled_accounts.id`.
+- **Implementation:**
+  - `ChannelGranularityRegistry.php`:
+    - Updated `allowsMultipleAssets()` to return `true` for `google_ads`, `google_analytics`, and `google_search_console` alongside `facebook_marketing`.
+  - `GoogleAnalyticsController.php` & `GoogleSearchConsoleController.php`:
+    - Updated `validateRequest()` to accept array or string for `account`.
+    - Updated `summary()`, `chart()`, and `table()` to support array accounts via `['operator' => 'in', 'value' => ...]` when multiple accounts/properties/sites are selected.
+  - `DashboardWidgetDataController.php`:
+    - Added `google_ads`, `google_analytics`, and `google_search_console` to the array-preserving whitelist in `forwardToChannelEndpoint()`.
+    - Added platformId/hash/site-to-internal-ID resolution with static in-memory caching in `resolveChanneledAccountId()` and `forwardToChannelEndpoint()` for Google Ads, Google Analytics, and Google Search Console.
+    - Added companion metric retrieval in `DashboardWidgetDataController::handleMetricSource()` to ensure required companion metrics (`spend` and `conversions` for `cost_per_conversion`; `spend` and `results` for `cost_per_result`; `spend` and `impressions` for `cpm`; `spend` and `clicks` for `cpc`) are fetched automatically when calculating ratio metrics.
+  - `GranularityAggregationService.php`:
+    - Added tracking for `conversions_sum` and added weighted ratio aggregation for `cost_per_conversion` (`$comp['spend_sum'] / $comp['conversions_sum']`), fixing the defect where daily ratio values were being incorrectly summed up over the entire period instead of weighted by volume.
+  - `KpiFormBuilder.php`:
+    - Registered `'cost_per_conversion' => __('Cost per Conversion')` in `conversion_tracked` and `paid_media` metric groups.
+  - `dashboard-renderer.js`:
+    - Registered `cost_per_conversion` in `METRIC_FORMATS` (`format: 'currency'`, `prefix: '$'`, `lower_is_better: true`) and mapped `spend/conversions` to `label: 'Cost per Conversion'` in ratio heuristics.
+    - Fixed double currency prefix rendering bug in `renderTile()` (`displayPrefix = format === 'currency' ? '' : prefix`) preventing duplicate `$$` when both `resultFormat.prefix` and `formatCurrency()` prepend dollar signs.
+  - Documented requirements in the master driver implementation playbook (`D:\laragon\www\_shared\skills\hub-driver-implementation.md`).
+
 ### Mailchimp Data Explorer KPI & Sub-Metric Breakdown Redesign (2026-10-06)
 - **Context & Design:**
   - Redesigned the Mailchimp KPI cards and campaign table cells to clearly explain the newly supported granular metric variations (`opens_standard`, `opens_proxy`, `clicks_unique`, `bounces_hard`, `bounces_soft`).
@@ -998,9 +1022,11 @@
 - **Official Logos:**
   - **Mailchimp:** Replaced with the complete, official Simple Icons vector for Freddie in both `BrandIcon::mailchimp()` and `dashboard-renderer.js`.
   - **Google Ads:** Replaced with the official Simple Icons vector (angled ad loop and dot mark) in both `BrandIcon::googleAds()` and `dashboard-renderer.js`.
-- **Meta Ads & Meta Organic Branding:**
-  - Updated `BrandIcon::CHANNEL_METHODS` and `dashboard-renderer.js` so `facebook_marketing`, `facebook_organic`, `meta_ads`, and `meta_organic` default to the official Meta infinity loop logo (`BrandIcon::meta()`) instead of the Facebook "F" mark. Instagram mark is preserved for specific Instagram assets under Meta Organic.
-- **Chart Datapoint Tooltips:**
-  - Fixed live hover tooltips in `dashboard-renderer.js` (`_externalTooltipHandler`): injected `this.getChannelIconSvg(dp.dataset.channel, dp.dataset.dependency, dp.dataset.label || yMN)` between the color dot swatch and the series text.
-  - Enhanced `getChannelIconSvg()` in `dashboard-renderer.js` to detect channel prefixes without brackets (e.g., `GSC - Clics`, `GA4 - Sessions`, `GAds - Clicks`, `IG - `, `FB - `, `Meta - `) as well as bracketed indicators (`[Google Analytics]`, `[GSC]`, `[Meta Ads]`).
+### Dashboard Duplication & Dynamic Count Column Safeguards (2026-10-26)
+- **Issue:** Duplicating a dashboard from the Filament Dashboard list table triggered `SQLSTATE[42703]: Undefined column: 7 ERROR: column "public_views_count" of relation "dashboards" does not exist`.
+- **Root Cause:** Filament's table applies `->counts('publicViews')` and `->counts('widgets')`. When `$dashboard->replicate()` was invoked, `$dashboard->public_views_count` was copied onto the clone instance. `DashboardService::cloneDashboard()` only had a hardcoded `unset($clone->widgets_count)`, so `public_views_count` was passed to the `insert` query.
+- **Fix:**
+  - `app/Services/DashboardService.php`: Updated `cloneDashboard()` and `cloneDashboardFromVersion()` to strip all dynamic `*_count` attributes from `$clone` and `$widgetClone` before pushing.
+  - `app/Models/Dashboard.php` & `app/Models/DashboardWidget.php`: Added model-level safeguards in the `creating` event to automatically strip any `*_count` attributes from `$dashboard->attributes` and `$widget->attributes` before the SQL insert query is compiled.
+
 

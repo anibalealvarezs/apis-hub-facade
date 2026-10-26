@@ -132,6 +132,42 @@ class JointCorrelationPlaybookRegistry
                     'curveB' => ['channel' => 'google_analytics', 'metric' => 'sessions', 'level' => 'zscore', 'lag' => '0'],
                 ],
             ],
+            [
+                'id' => 'paid_search_cannibalization',
+                'name' => __('Paid Search vs Organic Cannibalization'),
+                'short_desc' => __('GAds Spend vs GSC Clicks'),
+                'theory' => __('Bidding heavily on brand search terms can cannibalize clicks that you would have captured organically for free, raising CAC without adding net-new traffic.'),
+                'expected' => __('Negative correlation with 0-1 day lag signals cannibalization (paid spend goes up, organic clicks go down). Positive correlation signals true incrementality and category demand expansion.'),
+                'requires' => ['google_ads', 'google_search_console'],
+                'config' => [
+                    'curveA' => ['channel' => 'google_ads', 'metric' => 'spend', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'google_search_console', 'metric' => 'clicks', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'paid_search_to_ga_sessions',
+                'name' => __('Paid Search Click-to-Session Reality Check'),
+                'short_desc' => __('GAds Clicks vs GA Sessions'),
+                'theory' => __('Every billed Google Ads click should immediately yield a session in Google Analytics. Large divergence reveals bot traffic, slow landing page load, or tag misconfigurations.'),
+                'expected' => __('Extremely high positive correlation (> 0.85) with 0 lag. A low correlation indicates severe tracking loss or invalid click drop-off before landing.'),
+                'requires' => ['google_ads', 'google_analytics'],
+                'config' => [
+                    'curveA' => ['channel' => 'google_ads', 'metric' => 'clicks', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'google_analytics', 'metric' => 'sessions', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
+            [
+                'id' => 'cross_ppc_cpc_arbitrage',
+                'name' => __('Cross-PPC Cost Arbitrage'),
+                'short_desc' => __('Google CPC vs Meta CPC'),
+                'theory' => __('Comparing cost-per-click fluctuations between Google Ads and Meta Ads allows dynamic budget shifting to the more cost-effective inventory.'),
+                'expected' => __('Moderate correlation during holiday surges (both rise). Divergent trends indicate an opportunity to shift budget toward the cheaper channel.'),
+                'requires' => ['google_ads', 'facebook_marketing'],
+                'config' => [
+                    'curveA' => ['channel' => 'google_ads', 'metric' => 'cpc', 'level' => 'zscore', 'lag' => '0'],
+                    'curveB' => ['channel' => 'facebook_marketing', 'metric' => 'cpc', 'level' => 'zscore', 'lag' => '0'],
+                ],
+            ],
         ];
     }
 

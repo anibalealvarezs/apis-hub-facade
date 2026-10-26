@@ -16,6 +16,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Average cost paid for each click on your ads. Lower is better — a rising CPC signals increased competition or audience saturation.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cost', 'paid_media', 'performance'],
                 'required_tags' => ['spendable', 'clickable'],
                 'source_series' => [
@@ -54,6 +55,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Average cost to generate one desired result (purchase, lead, signup). The ultimate efficiency metric for conversion-focused campaigns.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cost', 'paid_media', 'results', 'performance'],
                 'required_tags' => ['spendable'],
                 'source_series' => [
@@ -111,6 +113,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Average ad spend required to generate one tracked conversion (purchase, signup, lead). Unlike CPA which uses platform results, this uses your own conversion tracking.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cost', 'paid_media', 'results', 'performance'],
                 'required_tags' => ['spendable', 'conversion_tracked'],
                 'source_series' => [
@@ -356,6 +359,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Combined cost per click across multiple paid channels. Gives a true picture of your aggregate click efficiency — a single number to track overall paid performance.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cross-channel', 'cost', 'paid_media', 'performance'],
                 'required_tags' => ['spendable', 'clickable'],
                 'source_series' => [
@@ -387,6 +391,7 @@ class PredefinedDerivedMetricRegistry
                 'description' => 'Combined cost per acquisition across multiple paid channels. Essential for understanding true aggregate conversion cost when running campaigns on multiple platforms.',
                 'format' => 'currency',
                 'output_granularity' => 'daily',
+                'lower_is_better' => true,
                 'categories' => ['cross-channel', 'cost', 'paid_media', 'results'],
                 'required_tags' => ['spendable'],
                 'source_series' => [
@@ -425,6 +430,69 @@ class PredefinedDerivedMetricRegistry
                     ['key' => 'b', 'label' => 'Clicks (Channel 2)', 'channel' => '__CLICKABLE_CHANNEL_2__', 'metric' => 'clicks', 'granularity' => 'daily'],
                     ['key' => 'c', 'label' => 'Impressions (Channel 1)', 'channel' => '__IMPRESSIONABLE_CHANNEL_1__', 'metric' => 'impressions', 'granularity' => 'daily'],
                     ['key' => 'd', 'label' => 'Impressions (Channel 2)', 'channel' => '__IMPRESSIONABLE_CHANNEL_2__', 'metric' => 'impressions', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'a'],
+                        'right' => ['type' => 'metric', 'metric' => 'b'],
+                    ],
+                    'right' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'c'],
+                        'right' => ['type' => 'metric', 'metric' => 'd'],
+                    ],
+                ],
+            ],
+
+            'blended_paid_cvr' => [
+                'name' => 'Blended Paid Conversion Rate (CVR)',
+                'description' => 'Combined conversion rate across all active paid channels (e.g. Google Ads + Facebook Marketing). Evaluates holistic landing page and funnel conversion efficiency across ad networks.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'paid_media', 'performance', 'results'],
+                'required_tags' => ['spendable', 'clickable', 'conversion_tracked'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Conversions (Channel 1)', 'channel' => '__CONVERSION_TRACKED_CHANNEL_1__', 'metric' => 'conversions', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Conversions (Channel 2)', 'channel' => '__CONVERSION_TRACKED_CHANNEL_2__', 'metric' => 'conversions', 'granularity' => 'daily'],
+                    ['key' => 'c', 'label' => 'Clicks (Channel 1)', 'channel' => '__CLICKABLE_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                    ['key' => 'd', 'label' => 'Clicks (Channel 2)', 'channel' => '__CLICKABLE_CHANNEL_2__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'a'],
+                        'right' => ['type' => 'metric', 'metric' => 'b'],
+                    ],
+                    'right' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'c'],
+                        'right' => ['type' => 'metric', 'metric' => 'd'],
+                    ],
+                ],
+            ],
+
+            'blended_cost_per_conversion' => [
+                'name' => 'Blended Cost per Tracked Conversion',
+                'description' => 'Combined ad spend required to generate one tracked conversion across all paid channels. Uses verified conversion events rather than native platform vanity metrics.',
+                'format' => 'currency',
+                'output_granularity' => 'daily',
+                'lower_is_better' => true,
+                'categories' => ['cross-channel', 'cost', 'paid_media', 'results'],
+                'required_tags' => ['spendable', 'conversion_tracked'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Spend (Channel 1)', 'channel' => '__SPENDABLE_CHANNEL_1__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Spend (Channel 2)', 'channel' => '__SPENDABLE_CHANNEL_2__', 'metric' => 'spend', 'granularity' => 'daily'],
+                    ['key' => 'c', 'label' => 'Conversions (Channel 1)', 'channel' => '__CONVERSION_TRACKED_CHANNEL_1__', 'metric' => 'conversions', 'granularity' => 'daily'],
+                    ['key' => 'd', 'label' => 'Conversions (Channel 2)', 'channel' => '__CONVERSION_TRACKED_CHANNEL_2__', 'metric' => 'conversions', 'granularity' => 'daily'],
                 ],
                 'ast' => [
                     'type' => 'operator',
@@ -612,6 +680,49 @@ class PredefinedDerivedMetricRegistry
                 'required_tags' => ['seo', 'clickable', 'spendable'],
                 'source_series' => [
                     ['key' => 'a', 'label' => 'SEO Clicks', 'channel' => '__SEO_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'Paid Clicks', 'channel' => '__CLICKABLE_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => ['type' => 'metric', 'metric' => 'b'],
+                ],
+            ],
+
+            'paid_search_click_share' => [
+                'name' => 'Paid vs Organic Search Click Share',
+                'description' => 'Percentage of total Google search clicks generated from paid ads versus organic search listings. Identifies channel dependency and potential brand cannibalization.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'seo', 'paid_media', 'performance', 'search'],
+                'required_tags' => ['spendable', 'clickable', 'seo'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Paid Clicks', 'channel' => '__CLICKABLE_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                    ['key' => 'b', 'label' => 'SEO Clicks', 'channel' => '__SEO_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
+                ],
+                'ast' => [
+                    'type' => 'operator',
+                    'operator' => '/',
+                    'left' => ['type' => 'metric', 'metric' => 'a'],
+                    'right' => [
+                        'type' => 'operator',
+                        'operator' => '+',
+                        'left' => ['type' => 'metric', 'metric' => 'a'],
+                        'right' => ['type' => 'metric', 'metric' => 'b'],
+                    ],
+                ],
+            ],
+
+            'paid_traffic_landing_efficiency' => [
+                'name' => 'Paid Traffic Landing Efficiency',
+                'description' => 'Ratio of tracked web sessions (GA4) to billed ad clicks. A ratio significantly below 1.0 indicates tracking dropped sessions, high bounce before tag fire, or click fraud.',
+                'format' => 'percentage',
+                'output_granularity' => 'daily',
+                'categories' => ['cross-channel', 'paid_media', 'analytics', 'traffic', 'performance'],
+                'required_tags' => ['spendable', 'clickable', 'traffic_tracked'],
+                'source_series' => [
+                    ['key' => 'a', 'label' => 'Web Sessions', 'channel' => '__TRAFFIC_TRACKED_CHANNEL_1__', 'metric' => 'sessions', 'granularity' => 'daily'],
                     ['key' => 'b', 'label' => 'Paid Clicks', 'channel' => '__CLICKABLE_CHANNEL_1__', 'metric' => 'clicks', 'granularity' => 'daily'],
                 ],
                 'ast' => [

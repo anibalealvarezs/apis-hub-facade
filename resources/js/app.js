@@ -19,6 +19,7 @@ import { dashboardBuilder } from './dashboards/dashboard-builder';
 import { publicViewBar } from './public-view/public-view-bar';
 import { sharedView, widgetHeaderPv } from './public-view/public-dashboard';
 import { initPublicViewEmbed } from './public-view/embed';
+import { choroplethMap } from './components/choropleth-map';
 import { tenantClock } from './components/tenant-clock';
 import { onboardingSettings } from './components/onboarding-settings';
 import { initOnboardingTours } from './tours';
@@ -47,6 +48,7 @@ window.dashboardBuilder = dashboardBuilder;
 window.publicViewBar = publicViewBar;
 window.sharedView = sharedView;
 window.widgetHeaderPv = widgetHeaderPv;
+window.choroplethMap = choroplethMap;
 
 const registerAlpineComponents = (Alpine) => {
     if (!Alpine || Alpine._componentsRegistered) return;
@@ -85,6 +87,7 @@ const registerAlpineComponents = (Alpine) => {
     Alpine.data('sharedView', sharedView);
     Alpine.data('widgetHeaderPv', widgetHeaderPv);
     Alpine.data('onboardingSettings', onboardingSettings);
+    Alpine.data('choroplethMap', choroplethMap);
 };
 
 const registerSubNavStore = (Alpine) => {

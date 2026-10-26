@@ -1111,13 +1111,18 @@ export function dashboardView(config = {}) {
             if (!this.settingsControls.series_metrics) {
                 this.settingsControls.series_metrics = {};
             }
+            const mode = this.settingsVariables[seriesKey]?.metric_selection_mode || "multiple";
             const current =
                 this.settingsControls.series_metrics[seriesKey] || [];
             let next;
-            if (current.includes(metricKey)) {
-                next = current.filter((m) => m !== metricKey);
+            if (mode === "single") {
+                next = [metricKey];
             } else {
-                next = [...current, metricKey];
+                if (current.includes(metricKey)) {
+                    next = current.filter((m) => m !== metricKey);
+                } else {
+                    next = [...current, metricKey];
+                }
             }
             this.settingsControls.series_metrics = {
                 ...this.settingsControls.series_metrics,

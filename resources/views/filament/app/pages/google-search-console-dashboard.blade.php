@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time() }}">
 
 
     <div x-data="gscDashboard({
@@ -10,7 +10,14 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
-        csrfToken: @js(csrf_token())
+        csrfToken: @js(csrf_token()),
+        intentOptions: {
+            'transactional': @js(__('Transactional')),
+            'commercial': @js(__('Commercial')),
+            'informational': @js(__('Informational')),
+            'navigational': @js(__('Navigational')),
+            'unclassified': @js(__('Unclassified'))
+        }
     })" x-init="initDashboard()">
         <div class="gsc-header-row py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
             <div class="gsc-header-controls flex-wrap">
@@ -202,7 +209,80 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:header>
 
-            <table class="gsc-table">
+            <x-slot:actions>
+                <div x-cloak x-show="activeTab === 'countries'" class="dash-view-toggle">
+                    <button type="button" @click="countryViewMode = 'map'"
+                            class="dash-view-btn"
+                            :class="countryViewMode === 'map' ? 'is-active' : ''">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewMode = 'table'"
+                            class="dash-view-btn"
+                            :class="countryViewMode === 'table' ? 'is-active' : ''">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <x-slot:top>
+                <div wire:ignore x-show="activeTab === 'countries' && countryViewMode === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        {{-- Left Column: Map --}}
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'gsc-world-map', data: countryMapData, metricLabel: 'Clicks', selectedRegions: selectedCountryCodes })"
+                             x-effect="updateData(countryMapData, 'Clicks', selectedCountryCodes)"
+                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
+                                <div class="dash-map-header" style="justify-content: flex-end;">
+                                    <div class="flex items-center gap-2">
+                                        <button type="button"
+                                                x-show="activeFilters.countries && activeFilters.countries.length > 0"
+                                                @click="resetCountryFilters()"
+                                                class="dash-map-reset-btn"
+                                                title="{{ __('Clear country filters') }}">
+                                            <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                            <span>{{ __('Reset Selection') }}</span>
+                                        </button>
+                                        <span class="dash-map-badge">{{ __('Interactive Choropleth') }}</span>
+                                    </div>
+                                </div>
+                                <div id="gsc-world-map" class="dash-map-canvas"></div>
+                        </div>
+
+                        {{-- Right Column: Leaderboard --}}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-4 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (tableState.sortedRows || []).slice(0, 20)" :key="row.id">
+                                        <div class="dash-leaderboard-item"
+                                                @click="toggleFilter('countries', row.id)"
+                                                :class="isFilterActive('countries', row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatNumber(row.clicks)"></span>
+                                                <span class="dash-leaderboard-unit">{{ __('clicks') }}</span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </x-slot:top>
+
+            <table class="gsc-table" x-show="activeTab !== 'countries' || countryViewMode === 'table'">
                 <thead>
                 <tr>
                     <x-data-table.column sortable="false">

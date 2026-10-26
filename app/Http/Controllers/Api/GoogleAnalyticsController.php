@@ -14,7 +14,7 @@ class GoogleAnalyticsController extends Controller
     {
         return $request->validate([
             'tenant' => 'required|integer',
-            'account' => 'required|string',
+            'account' => 'required',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
             'activeTab' => 'nullable|string|in:campaigns,adgroups,channels,sources,traffic_pages,traffic_countries,traffic_devices,acquisition_channels,events,adtouchpoints_adgroups,adtouchpoints_terms,adtouchpoints_content',
@@ -310,7 +310,16 @@ class GoogleAnalyticsController extends Controller
             $prevEnd = $start->copy()->subDay();
             $prevStart = $prevEnd->copy()->subDays($diff - 1);
 
-            $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
+            $baseFilters = ['channel' => 'google_analytics'];
+            if (!empty($validated['account'])) {
+                if (is_array($validated['account'])) {
+                    $baseFilters['channeledAccount'] = count($validated['account']) === 1
+                        ? (string) $validated['account'][0]
+                        : ['operator' => 'in', 'value' => array_map('strval', $validated['account'])];
+                } else {
+                    $baseFilters['channeledAccount'] = (string) $validated['account'];
+                }
+            }
 
             $requestedMetrics = $validated['metrics'] ?? [];
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
@@ -435,7 +444,16 @@ class GoogleAnalyticsController extends Controller
             $tenant = Project::findOrFail($validated['tenant']);
             $service = app(RemoteEngineService::class);
 
-            $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
+            $baseFilters = ['channel' => 'google_analytics'];
+            if (!empty($validated['account'])) {
+                if (is_array($validated['account'])) {
+                    $baseFilters['channeledAccount'] = count($validated['account']) === 1
+                        ? (string) $validated['account'][0]
+                        : ['operator' => 'in', 'value' => array_map('strval', $validated['account'])];
+                } else {
+                    $baseFilters['channeledAccount'] = (string) $validated['account'];
+                }
+            }
             if (!empty($validated['filters'])) {
                 foreach ($validated['filters'] as $fk => $fv) {
                     if ($fv !== null && $fv !== '') {
@@ -577,7 +595,16 @@ class GoogleAnalyticsController extends Controller
             $service = app(RemoteEngineService::class);
 
             $tab = $validated['activeTab'] ?? 'campaigns';
-            $baseFilters = ['channeledAccount' => (string) $validated['account'], 'channel' => 'google_analytics'];
+            $baseFilters = ['channel' => 'google_analytics'];
+            if (!empty($validated['account'])) {
+                if (is_array($validated['account'])) {
+                    $baseFilters['channeledAccount'] = count($validated['account']) === 1
+                        ? (string) $validated['account'][0]
+                        : ['operator' => 'in', 'value' => array_map('strval', $validated['account'])];
+                } else {
+                    $baseFilters['channeledAccount'] = (string) $validated['account'];
+                }
+            }
 
             $dependency = $validated['dependency'] ?? null;
             $requestedMetrics = $validated['metrics'] ?? [];

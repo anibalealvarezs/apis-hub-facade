@@ -451,3 +451,455 @@ html.dark .driver-overlay,
     fill: #020617 !important;
     opacity: 0.75 !important;
 }
+
+/* ==========================================================================
+   Dashboard Map & Leaderboard Layout (Landscape 2-Column + Dark Mode)
+   ========================================================================== */
+.dash-map-section {
+    padding: 1.25rem !important;
+    background: rgba(248, 250, 252, 0.6) !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+.dark .dash-map-section,
+html.dark .dash-map-section {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.dash-map-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 1.5rem !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.dash-map-card {
+    flex: 1 1 66% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.875rem !important;
+    padding: 1.25rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+}
+.dark .dash-map-card,
+html.dark .dash-map-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f1f5f9 !important;
+}
+
+.dash-leaderboard-card {
+    flex: 0 0 34% !important;
+    min-width: 300px !important;
+    max-width: 440px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.875rem !important;
+    padding: 1.25rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+}
+.dark .dash-leaderboard-card,
+html.dark .dash-leaderboard-card {
+    background: rgba(30, 41, 59, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f1f5f9 !important;
+}
+
+@media (max-width: 960px) {
+    .dash-map-grid {
+        flex-direction: column !important;
+    }
+    .dash-map-card,
+    .dash-leaderboard-card {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+}
+
+.dash-map-canvas {
+    width: 100% !important;
+    height: 380px !important;
+    position: relative !important;
+}
+
+.dash-leaderboard-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    max-height: 320px !important;
+    overflow-y: auto !important;
+    padding-right: 0.25rem !important;
+}
+
+.dash-leaderboard-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.625rem 0.875rem !important;
+    border-radius: 0.5rem !important;
+    background: #f8fafc !important;
+    border: 1px solid #edf2f7 !important;
+    font-size: 0.75rem !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    color: #334155 !important;
+}
+.dark .dash-leaderboard-item,
+html.dark .dash-leaderboard-item {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+}
+
+.dash-leaderboard-item:hover {
+    border-color: rgba(2, 132, 199, 0.4) !important;
+    background: #f1f5f9 !important;
+}
+.dark .dash-leaderboard-item:hover,
+html.dark .dash-leaderboard-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+.dash-leaderboard-item.is-active {
+    border-color: #0284c7 !important;
+    background: rgba(2, 132, 199, 0.1) !important;
+    color: #0284c7 !important;
+}
+.dark .dash-leaderboard-item.is-active,
+html.dark .dash-leaderboard-item.is-active {
+    border-color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+}
+
+.dash-leaderboard-rank {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+}
+
+.dash-leaderboard-name {
+    font-weight: 500 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.dash-leaderboard-metric {
+    font-weight: 700 !important;
+    color: #0284c7 !important;
+}
+.dark .dash-leaderboard-metric,
+html.dark .dash-leaderboard-metric {
+    color: #38bdf8 !important;
+}
+
+.dash-leaderboard-unit {
+    color: #94a3b8 !important;
+    font-size: 0.625rem !important;
+    text-transform: uppercase !important;
+    margin-left: 0.25rem !important;
+}
+
+.dash-map-footnote {
+    padding-top: 0.75rem !important;
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 0.75rem !important;
+    font-size: 0.6875rem !important;
+    color: #94a3b8 !important;
+}
+.dark .dash-map-footnote,
+html.dark .dash-map-footnote {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+    color: #64748b !important;
+}
+
+
+
+/* Choropleth List / Table Container */
+.dash-widget-list-view {
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 200px !important;
+    overflow: hidden !important;
+}
+.dash-widget-list-scroll {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.375rem !important;
+    padding: 0.25rem 0.125rem 0.5rem 0.125rem !important;
+}
+
+/* jsVectorMap Tooltips (Reset wrapper and match APIs Hub unified design system) */
+.jvm-tooltip {
+    display: none !important;
+    position: absolute !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+.jvm-tooltip.active {
+    display: block !important;
+}
+
+/* APIs Hub unified dashboard tooltip */
+.dash-map-tooltip {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    padding: 0.45rem 0.85rem !important;
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    border-radius: 0.625rem !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    color: #0f172a !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    pointer-events: none !important;
+    line-height: 1.25 !important;
+}
+
+.dash-map-tooltip-name {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    letter-spacing: -0.01em !important;
+}
+
+.dash-map-tooltip-divider {
+    color: #cbd5e1 !important;
+    font-size: 0.875rem !important;
+    line-height: 1 !important;
+}
+
+.dash-map-tooltip-val {
+    font-weight: 700 !important;
+    color: #0284c7 !important;
+    font-variant-numeric: tabular-nums !important;
+}
+
+.dash-map-tooltip-metric {
+    font-weight: 500 !important;
+    color: #64748b !important;
+    font-size: 0.75rem !important;
+    margin-left: 0.2rem !important;
+}
+
+.dark .dash-map-tooltip,
+html.dark .dash-map-tooltip {
+    background: rgba(15, 23, 42, 0.95) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5), 0 0 15px -3px rgba(0, 167, 249, 0.25) !important;
+}
+
+.dark .dash-map-tooltip-name,
+html.dark .dash-map-tooltip-name {
+    color: #f8fafc !important;
+}
+
+.dark .dash-map-tooltip-divider,
+html.dark .dash-map-tooltip-divider {
+    color: #475569 !important;
+}
+
+.dark .dash-map-tooltip-val,
+html.dark .dash-map-tooltip-val {
+    color: #38bdf8 !important;
+}
+
+.dark .dash-map-tooltip-metric,
+html.dark .dash-map-tooltip-metric {
+    color: #94a3b8 !important;
+}
+
+/* jsVectorMap Zoom Controls (clean side-by-side buttons in top-left corner) */
+.dash-map-card .jvm-zoom-btn,
+.dash-map-canvas .jvm-zoom-btn,
+.jvm-container .jvm-zoom-btn,
+.jvm-zoom-btn {
+    position: absolute !important;
+    width: 28px !important;
+    height: 28px !important;
+    line-height: 26px !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    top: 14px !important;
+    bottom: auto !important;
+    transition: all 0.15s ease !important;
+    z-index: 50 !important;
+}
+
+.dash-map-card .jvm-zoom-btn.jvm-zoomin,
+.dash-map-canvas .jvm-zoom-btn.jvm-zoomin,
+.jvm-container .jvm-zoom-btn.jvm-zoomin,
+.jvm-zoom-btn.jvm-zoomin {
+    position: absolute !important;
+    left: 14px !important;
+    top: 14px !important;
+    bottom: auto !important;
+}
+
+.dash-map-card .jvm-zoom-btn.jvm-zoomout,
+.dash-map-canvas .jvm-zoom-btn.jvm-zoomout,
+.jvm-container .jvm-zoom-btn.jvm-zoomout,
+.jvm-zoom-btn.jvm-zoomout {
+    position: absolute !important;
+    left: 48px !important;
+    top: 14px !important;
+    bottom: auto !important;
+}
+
+.jvm-zoom-btn:hover {
+    background-color: #f1f5f9 !important;
+    color: #0284c7 !important;
+    border-color: #0284c7 !important;
+}
+
+.dark .jvm-zoom-btn,
+html.dark .jvm-zoom-btn {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .jvm-zoom-btn:hover,
+html.dark .jvm-zoom-btn:hover {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+}
+
+.dash-map-reset-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.6875rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.375rem !important;
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.08) !important;
+    border: 1px solid rgba(239, 68, 68, 0.2) !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+.dash-map-reset-btn:hover {
+    background: rgba(239, 68, 68, 0.16) !important;
+}
+.dark .dash-map-reset-btn,
+html.dark .dash-map-reset-btn {
+    color: #f87171 !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+.dark .dash-map-reset-btn:hover,
+html.dark .dash-map-reset-btn:hover {
+    background: rgba(239, 68, 68, 0.25) !important;
+}
+
+.dark .jvm-zoom-btn,
+html.dark .jvm-zoom-btn {
+    background-color: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .jvm-zoom-btn:hover,
+html.dark .jvm-zoom-btn:hover {
+    background-color: #334155 !important;
+    color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+}
+
+/* Map / Table Toggle Buttons (Universal Light & Dark Mode) */
+.dash-view-toggle {
+    display: inline-flex;
+    align-items: center !important;
+    border-radius: 0.5rem !important;
+    padding: 2px !important;
+    background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+}
+.dark .dash-view-toggle,
+html.dark .dash-view-toggle {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dash-view-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    padding: 0.375rem 0.625rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.375rem !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    color: #64748b !important;
+    background: transparent !important;
+    border: none !important;
+}
+.dark .dash-view-btn,
+html.dark .dash-view-btn {
+    color: #94a3b8 !important;
+}
+
+.dash-view-btn:hover {
+    color: #0f172a !important;
+}
+.dark .dash-view-btn:hover,
+html.dark .dash-view-btn:hover {
+    color: #f8fafc !important;
+}
+
+.dash-view-btn.is-active {
+    background: #ffffff !important;
+    color: #0284c7 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+.dark .dash-view-btn.is-active,
+html.dark .dash-view-btn.is-active {
+    background: #334155 !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+

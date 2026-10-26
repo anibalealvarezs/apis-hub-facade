@@ -86,6 +86,7 @@ class AppPanelProvider extends PanelProvider
                     <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=20260825.1">
                     <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=20261016.1">
                     <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=20260825.1">
+                    <link rel="stylesheet" href="' . asset('css/dashboards.css') . '?v=' . (file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time()) . '">
                 ')
             )
             ->renderHook(

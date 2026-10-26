@@ -18,6 +18,17 @@ export default defineConfig({
         }),
         tailwindcss(),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (id.includes('node_modules/jsvectormap') || id.includes('node_modules/leaflet')) {
+                        return 'maps';
+                    }
+                },
+            },
+        },
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

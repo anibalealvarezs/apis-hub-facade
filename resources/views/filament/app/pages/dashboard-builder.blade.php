@@ -687,7 +687,7 @@
                                 <div class="p-6">
                                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                         <template x-for="option in availableChartTypesForControls" :key="option.type">
-                                            <button @click="widgetControlsForm.widget_type = option.type"
+                                            <button @click="selectWidgetTypeForControls(option.type)"
                                                     class="flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all text-center"
                                                     :class="widgetControlsForm.widget_type === option.type
                                                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 ring-1 ring-primary-500'
@@ -699,6 +699,17 @@
                                             </button>
                                         </template>
                                     </div>
+                                    <template x-if="widgetControlsForm.widget_type === 'choropleth_map' && !(widgetControlsForm.raw_series || []).some(s => s.breakdown && s.breakdown.dimension && (s.breakdown.dimension === 'country' || s.breakdown.dimension === 'geo_country' || s.breakdown.dimension.toLowerCase().includes('country')))">
+                                        <div class="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                                                <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                            </svg>
+                                            <div class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                                                <span class="font-semibold">{{ __('Country Breakdown Recommended') }}:</span>
+                                                {{ __('Choropleth maps require data broken down by country to shade geographic regions. Please configure a Country breakdown on your series in Step 2.') }}
+                                            </div>
+                                        </div>
+                                    </template>
                                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-3">{{ __('Changing the chart type affects how data is displayed. Some types may not show all data dimensions.') }}</p>
                                 </div>
                             </div>
@@ -1251,17 +1262,41 @@
                                                              </div>
 
                                                              <div class="my-1 flex flex-col shrink-0">
-                                                                 <div class="flex items-center justify-between mb-2">
-                                                                     <label
-                                                                         class="block text-xs font-semibold text-gray-700 dark:text-gray-300">{{ __('Metrics (Leave empty for All Metrics)') }}</label>
-                                                                     <template x-if="series.channel && !isSeriesMetricsLoading(index)">
-                                                                         <div class="flex gap-3">
-                                                                             <button @click="selectAllRawMetrics(index)"
-                                                                                     class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
-                                                                             <button @click="clearAllRawMetrics(index)"
-                                                                                     class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                 {{-- Metric Selection Mode & Controls Header --}}
+                                                                 <div class="flex items-center justify-between mb-2 gap-2 flex-wrap">
+                                                                     <div>
+                                                                         <label
+                                                                             class="block text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                                             x-text="'{{ __('Metrics (Leave empty for All Metrics)') }}'"></label>
+                                                                     </div>
+                                                                     <div class="flex items-center gap-2">
+                                                                         {{-- Selector Mode: Multiple (Checkboxes) vs Single (Radio) --}}
+                                                                         <div class="inline-flex items-center p-0.5 rounded-md bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-3xs font-semibold">
+                                                                             <button type="button"
+                                                                                     @click="setRawMetricSelectionMode(index, 'multiple')"
+                                                                                     :title="'{{ __('Allow user to select multiple metrics (checkboxes)') }}'"
+                                                                                     class="px-1.5 py-0.5 rounded transition-all"
+                                                                                     :class="(series.metric_selection_mode || 'multiple') === 'multiple' ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-2xs font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">
+                                                                                 {{ __('Multiple') }}
+                                                                             </button>
+                                                                             <button type="button"
+                                                                                     @click="setRawMetricSelectionMode(index, 'single')"
+                                                                                     :title="'{{ __('Allow user to select only one metric at a time (radio)') }}'"
+                                                                                     class="px-1.5 py-0.5 rounded transition-all"
+                                                                                     :class="series.metric_selection_mode === 'single' ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-2xs font-bold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'">
+                                                                                 {{ __('Single') }}
+                                                                             </button>
                                                                          </div>
-                                                                     </template>
+
+                                                                         <template x-if="series.channel && !isSeriesMetricsLoading(index)">
+                                                                             <div class="flex gap-2">
+                                                                                 <button @click="selectAllRawMetrics(index)"
+                                                                                         class="bd-text-xs-plus font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">{{ __('Select All') }}</button>
+                                                                                 <button @click="clearAllRawMetrics(index)"
+                                                                                         class="bd-text-xs-plus font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:underline">{{ __('Clear') }}</button>
+                                                                             </div>
+                                                                         </template>
+                                                                     </div>
                                                                  </div>
                                                                  <div
                                                                      class="relative border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 shrink-0"
@@ -1290,9 +1325,12 @@
                                                                                          :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : true) ? 'bg-gray-50/70 dark:bg-white/[0.03]' : 'opacity-60 hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/5'">
                                                                                          <div @click="toggleRawMetricIncluded(index, key)"
                                                                                               class="flex gap-x-3 items-center cursor-pointer flex-1 min-w-0">
+                                                                                             {{-- Checkbox Icon --}}
                                                                                              <div
                                                                                                  class="w-4 h-4 shrink-0 flex items-center justify-center rounded border transition-colors"
-                                                                                                 :class="(series.allowed_metrics && series.allowed_metrics.length > 0 ? series.allowed_metrics.includes(key) : false) ? 'bg-primary-600 border-primary-600' : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
+                                                                                                 :class="(series.allowed_metrics && series.allowed_metrics.includes(key))
+                                                                                                     ? 'bg-primary-600 border-primary-600'
+                                                                                                     : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'">
                                                                                                  <svg
                                                                                                      x-show="series.allowed_metrics && series.allowed_metrics.includes(key)"
                                                                                                      class="w-3 h-3 text-white" fill="none"
