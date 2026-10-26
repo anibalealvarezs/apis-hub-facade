@@ -23,6 +23,13 @@
         html { background-color: #f9fafb; color-scheme: light; }
         html.dark { background-color: #030712; color-scheme: dark; }
     </style>
+    <script>
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+            origWarn.apply(console, args);
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -259,6 +266,12 @@
                 },
 
                 loadAllWidgets() {
+                    const renderer = window.dashboardRenderer || window.DashboardRenderer;
+                    if (!renderer) {
+                        setTimeout(() => this.loadAllWidgets(), 100);
+                        return;
+                    }
+
                     this.widgets.forEach(w => {
                         const el = document.getElementById('widget-container-' + w.id);
                         if (!el) return;
@@ -268,7 +281,7 @@
                             lang: this.currentLang
                         };
 
-                        DashboardRenderer.renderWidget(w.id, el, controls, 'demo-tenant');
+                        renderer.renderWidget(w.id, el, controls, 'demo-tenant');
                     });
                 }
             };

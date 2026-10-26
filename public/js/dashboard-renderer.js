@@ -4803,5 +4803,7 @@ window.dashboardRenderer = {
         } else {
             mapEl.innerHTML = `<div class="flex items-center justify-center h-full text-xs text-gray-400">Leaflet library initializing...</div>`;
         }
-    },
 };
+
+window.DashboardRenderer = window.dashboardRenderer;
+
