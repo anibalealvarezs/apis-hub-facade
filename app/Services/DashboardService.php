@@ -26,12 +26,21 @@ class DashboardService
         $clone = $dashboard->replicate();
         $clone->name = $newName ?? $dashboard->name . ' (Copy)';
         $clone->is_default = false;
-        unset($clone->widgets_count);
+        foreach (array_keys($clone->getAttributes()) as $attr) {
+            if (str_ends_with($attr, '_count')) {
+                unset($clone->{$attr});
+            }
+        }
         $clone->push();
 
         foreach ($dashboard->widgets as $widget) {
             $widgetClone = $widget->replicate();
             $widgetClone->dashboard_id = $clone->id;
+            foreach (array_keys($widgetClone->getAttributes()) as $attr) {
+                if (str_ends_with($attr, '_count')) {
+                    unset($widgetClone->{$attr});
+                }
+            }
             $widgetClone->push();
         }
 
@@ -48,7 +57,11 @@ class DashboardService
         $clone->fill($versionData);
         $clone->name = ($versionData['name'] ?? $dashboard->name) . ' (From v' . $version->version_number . ')';
         $clone->is_default = false;
-        unset($clone->widgets_count);
+        foreach (array_keys($clone->getAttributes()) as $attr) {
+            if (str_ends_with($attr, '_count')) {
+                unset($clone->{$attr});
+            }
+        }
         $clone->push();
 
         $widgetVersionIds = $version->widget_version_ids ?? [];

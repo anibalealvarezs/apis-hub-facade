@@ -44,6 +44,12 @@ class DashboardWidget extends Model
     protected static function booted(): void
     {
         static::creating(function (DashboardWidget $widget) {
+            foreach (array_keys($widget->getAttributes()) as $attr) {
+                if (str_ends_with($attr, '_count')) {
+                    unset($widget->attributes[$attr]);
+                }
+            }
+
             $autoDuplicate = $widget->auto_duplicate_translations ?? true;
             unset($widget->attributes['auto_duplicate_translations']);
 

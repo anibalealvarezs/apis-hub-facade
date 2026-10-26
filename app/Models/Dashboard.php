@@ -52,6 +52,12 @@ class Dashboard extends Model
     protected static function booted(): void
     {
         static::creating(function (Dashboard $dashboard) {
+            foreach (array_keys($dashboard->getAttributes()) as $attr) {
+                if (str_ends_with($attr, '_count')) {
+                    unset($dashboard->attributes[$attr]);
+                }
+            }
+
             $autoDuplicate = $dashboard->auto_duplicate_translations ?? true;
             unset($dashboard->attributes['auto_duplicate_translations']);
 
