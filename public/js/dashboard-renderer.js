@@ -3599,10 +3599,18 @@ window.dashboardRenderer = {
                 } else {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
-                    if (!ds.percentage && resultFormat?.multiply) v = v * resultFormat.multiply;
-                    if (ds.percentage || (ds.percentage === undefined && !ds.currency && resultFormat?.format === "percentage")) {
+                    let isCurrencyVal = false;
+                    let isPercentageVal = false;
+                    if (isMulti) {
+                        isCurrencyVal = !!ds.currency;
+                        isPercentageVal = !!ds.percentage;
+                    } else {
+                        isCurrencyVal = ds.currency || (ds.currency === undefined && !ds.percentage && resultFormat?.format === "currency");
+                        isPercentageVal = ds.percentage || (ds.percentage === undefined && !ds.currency && resultFormat?.format === "percentage");
+                    }
+                    if (isPercentageVal) {
                         val = v.toFixed(1) + "%";
-                    } else if (ds.currency || (ds.currency === undefined && !ds.percentage && resultFormat?.format === "currency")) {
+                    } else if (isCurrencyVal) {
                         val = this.formatCurrency(v);
                     } else {
                         val = this.formatNumber(v);
@@ -4100,11 +4108,20 @@ window.dashboardRenderer = {
                         const dsMetric = String(dp.dataset.metric || dp.dataset.metric_key || dp.dataset.key || "").toLowerCase();
                         const isPos = dsMetric.includes("position") || (!isMulti && ctrl?.metrics?.[0] === "position");
 
-                        if (!isPos && !dp.dataset.percentage && rFmt?.multiply) v = v * rFmt.multiply;
-                        if (!isPos && (dp.dataset.currency || rFmt?.format === "currency")) {
-                            val = this.formatCurrency(v);
-                        } else if (!isPos && (dp.dataset.percentage || rFmt?.format === "percentage")) {
+                        let isCurrencyVal = false;
+                        let isPercentageVal = false;
+                        if (isMulti) {
+                            isCurrencyVal = !!dp.dataset.currency;
+                            isPercentageVal = !!dp.dataset.percentage;
+                        } else {
+                            isCurrencyVal = dp.dataset.currency || (dp.dataset.currency === undefined && !dp.dataset.percentage && rFmt?.format === "currency");
+                            isPercentageVal = dp.dataset.percentage || (dp.dataset.percentage === undefined && !dp.dataset.currency && rFmt?.format === "percentage");
+                        }
+
+                        if (!isPos && isPercentageVal) {
                             val = v.toFixed(1) + "%";
+                        } else if (!isPos && isCurrencyVal) {
+                            val = this.formatCurrency(v);
                         } else {
                             val = this.formatNumber(v);
                         }
