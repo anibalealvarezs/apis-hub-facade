@@ -593,7 +593,8 @@ class DemoDashboardService
                         'labels' => $dates,
                         'datasets' => [
                             [
-                                'label' => 'Google Search Console (SEO)',
+                                'label' => 'GSC — Clics Orgánicos',
+                                'channel' => 'google_search_console',
                                 'data' => $gscData,
                                 'borderColor' => '#6366f1', // Indigo
                                 'backgroundColor' => 'transparent',
@@ -601,7 +602,8 @@ class DemoDashboardService
                                 'borderWidth' => 2,
                             ],
                             [
-                                'label' => 'Meta Ads (Paid Social)',
+                                'label' => '[Meta Ads] — Clics',
+                                'channel' => 'meta_ads',
                                 'data' => $metaData,
                                 'borderColor' => '#3b82f6', // Blue
                                 'backgroundColor' => 'transparent',
@@ -609,7 +611,8 @@ class DemoDashboardService
                                 'borderWidth' => 2,
                             ],
                             [
-                                'label' => 'Google Ads (Paid Search)',
+                                'label' => '[GAds] — Clics',
+                                'channel' => 'google_ads',
                                 'data' => $gadsData,
                                 'borderColor' => '#f59e0b', // Amber
                                 'backgroundColor' => 'transparent',
@@ -617,7 +620,8 @@ class DemoDashboardService
                                 'borderWidth' => 2,
                             ],
                             [
-                                'label' => 'Mailchimp (Email Marketing)',
+                                'label' => '[Mailchimp] — Clics Campañas',
+                                'channel' => 'mailchimp',
                                 'data' => $emailData,
                                 'borderColor' => '#10b981', // Emerald
                                 'backgroundColor' => 'transparent',
@@ -659,7 +663,8 @@ class DemoDashboardService
                         'labels' => $dates,
                         'datasets' => [
                             [
-                                'label' => $isEs ? 'Inversión Publicitaria Diaria' : 'Daily Ad Spend',
+                                'label' => $isEs ? '[Paid Media] — Inversión Total' : '[Paid Media] — Total Ad Spend',
+                                'channel' => 'paid_media',
                                 'data' => $spendValues,
                                 'type' => 'bar',
                                 'backgroundColor' => 'rgba(239, 68, 68, 0.65)',
@@ -670,7 +675,8 @@ class DemoDashboardService
                                 'metric' => 'spend',
                             ],
                             [
-                                'label' => $isEs ? 'Conversiones Registradas en GA4' : 'GA4 Conversions',
+                                'label' => $isEs ? '[Google Analytics] — Conversiones' : '[Google Analytics] — Conversions',
+                                'channel' => 'google_analytics',
                                 'data' => $convValues,
                                 'type' => 'line',
                                 'borderColor' => '#10b981',

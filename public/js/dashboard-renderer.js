@@ -261,18 +261,20 @@ window.dashboardRenderer = {
         const dep = String(dependency || "").trim().toLowerCase();
         const lbl = String(label || "").trim().toLowerCase();
 
-        // 1. Detect channel/provider from bracketed or prefixed label if channel isn't set directly
-        // e.g. "[IG] Likes", "[Google Analytics] - Sessions", "GSC - Clics", "GA4 - Sessions", "GAds - Clicks"
-        if (!c && lbl) {
+        // 1. Detect channel/provider from bracketed, prefixed, or contained keyword in label if channel isn't set directly
+        // e.g. "[IG] Likes", "[Google Analytics] - Sessions", "GSC - Clics", "GA4 - Sessions", "GAds - Clicks",
+        // "Google Search Console (SEO)", "Meta Ads (Paid Social)", "Google Ads (Paid Search)", "Mailchimp (Email Marketing)"
+        if ((!c || c === 'cross_channel' || c === 'omnichannel') && lbl) {
             const bracketMatch = lbl.match(/^\[([a-z0-9_\-\s]+)\]/i);
             if (bracketMatch) {
                 const tag = bracketMatch[1].trim().toLowerCase();
                 if (['ig', 'instagram'].includes(tag)) c = 'instagram';
                 else if (['fb', 'facebook'].includes(tag)) c = 'facebook';
-                else if (['meta', 'meta ads', 'meta organic'].includes(tag)) c = 'meta';
+                else if (['meta', 'meta ads', 'meta organic', 'meta social'].includes(tag)) c = 'meta';
                 else if (['ga4', 'google analytics', 'google_analytics'].includes(tag)) c = 'google_analytics';
                 else if (['gsc', 'google search console', 'google_search_console'].includes(tag)) c = 'google_search_console';
                 else if (['gads', 'google ads', 'google_ads'].includes(tag)) c = 'google_ads';
+                else if (['mc', 'mailchimp'].includes(tag)) c = 'mailchimp';
                 else if (['gbp', 'google business profile'].includes(tag)) c = 'google';
                 else c = tag;
             } else {
@@ -285,7 +287,19 @@ window.dashboardRenderer = {
                     else if (tag === 'ig') c = 'instagram';
                     else if (tag === 'fb') c = 'facebook';
                     else if (tag === 'meta') c = 'meta';
+                    else if (tag === 'mailchimp' || tag === 'mc') c = 'mailchimp';
                 }
+            }
+
+            // Keyword containment fallback if still not resolved
+            if (!c || c === 'cross_channel' || c === 'omnichannel') {
+                if (lbl.includes('search console') || lbl.includes('gsc')) c = 'google_search_console';
+                else if (lbl.includes('analytics') || lbl.includes('ga4')) c = 'google_analytics';
+                else if (lbl.includes('google ads') || lbl.includes('gads')) c = 'google_ads';
+                else if (lbl.includes('meta') || lbl.includes('facebook') || lbl.includes('instagram')) c = 'meta';
+                else if (lbl.includes('mailchimp') || lbl.includes('email marketing')) c = 'mailchimp';
+                else if (lbl.includes('shopify')) c = 'shopify';
+                else if (lbl.includes('klaviyo')) c = 'klaviyo';
             }
         }
 
