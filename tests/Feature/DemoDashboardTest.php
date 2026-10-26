@@ -119,6 +119,28 @@ class DemoDashboardTest extends TestCase
         ]);
     }
 
+    public function test_demo_table_gsc_landing_pages()
+    {
+        // Widget 114 is GSC Landing Pages table
+        $response = $this->postJson('/demo/api/widget/114/data', [
+            'controls' => [
+                'asset_group' => '3', // Argentina
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'widget_type' => 'table',
+        ]);
+        $response->assertJsonStructure([
+            'data' => [
+                'columns',
+                'rows',
+            ],
+        ]);
+    }
+
     public function test_demo_table_top_campaigns()
     {
         // Widget 112 is top campaigns table

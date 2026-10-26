@@ -257,17 +257,32 @@ class DemoDashboardService
                 ],
             ],
 
-            // ─── BLOQUE 5: TOP RENDIMIENTO DE CAMPAÑAS (FILA 5, h: 4) ───
-            // Tabla 1: Top Campañas & Canales de Captación
+            // ─── BLOQUE 5: DESGLOSE DIMENSIONAL Y RENDIMIENTO (FILA 5, h: 4) ───
+            // Tabla 1: Páginas de Destino Más Efectivas (GSC - Dimensión URL)
+            [
+                'id' => 114,
+                'name' => 'Páginas de Destino Más Efectivas (GSC)',
+                'grid_x' => 0, 'grid_y' => 12, 'grid_w' => 6, 'grid_h' => 4,
+                'widget_type' => 'table',
+                'source_type' => 'predefined_kpi',
+                'calculation_type' => 'table',
+                'resolved_controls' => [
+                    'channel' => 'google_search_console',
+                    'granularity' => 'dimensions.page',
+                    'metrics' => ['clicks', 'ctr', 'impressions', 'position'],
+                ],
+            ],
+            // Tabla 2: Top Campañas & Canales de Captación (Dimensión Campaña)
             [
                 'id' => 112,
                 'name' => 'Top Campañas & Canales de Adquisición',
-                'grid_x' => 0, 'grid_y' => 12, 'grid_w' => 12, 'grid_h' => 4,
+                'grid_x' => 6, 'grid_y' => 12, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'table',
                 'source_type' => 'cross_channel',
                 'calculation_type' => 'table',
                 'resolved_controls' => [
                     'channel' => 'cross_channel',
+                    'granularity' => 'campaign',
                 ],
             ],
         ];
@@ -966,6 +981,74 @@ class DemoDashboardService
                     'data' => [
                         'columns' => $columns,
                         'rows' => $rows,
+                    ],
+                    'controls' => [
+                        'block_first_col' => true,
+                    ],
+                ];
+
+            // ─── 114: Páginas de Destino Más Efectivas (GSC - Dimensión URL) ───
+            case 114:
+                $columns = [
+                    ['key' => 'page', 'label' => $isEs ? 'Página / URL' : 'Page / URL'],
+                    ['key' => 'clicks', 'label' => $isEs ? 'Clics' : 'Clicks'],
+                    ['key' => 'ctr', 'label' => 'CTR (%)'],
+                    ['key' => 'impressions', 'label' => $isEs ? 'Impresiones' : 'Impressions'],
+                    ['key' => 'position', 'label' => $isEs ? 'Posición Media' : 'Average Position'],
+                ];
+
+                if ($groupId === '3') {
+                    // Argentina localized URLs
+                    $rawPages = [
+                        ['/', '18,450', '9.1%', '202,750', '3.1'],
+                        ['/ar', '9,820', '8.4%', '116,900', '3.8'],
+                        ['/ar/living/sofas-seccionales', '5,420', '12.8%', '42,340', '2.4'],
+                        ['/ar/dormitorio/camas-sommiers', '4,150', '11.5%', '36,080', '2.9'],
+                        ['/ar/deco/iluminacion-calida', '3,290', '10.2%', '32,250', '3.5'],
+                        ['/ar/comedor/mesas-petiribi', '2,840', '14.1%', '20,140', '1.8'],
+                        ['/ar/ofertas/hot-sale', '2,610', '16.5%', '15,810', '1.5'],
+                        ['/ar/blog/tendencias-deco-2026', '1,980', '7.2%', '27,500', '4.2'],
+                    ];
+                } elseif ($groupId === '2') {
+                    // Europe localized URLs
+                    $rawPages = [
+                        ['/', '21,340', '8.8%', '242,500', '3.4'],
+                        ['/es/coleccion-primavera', '8,920', '13.2%', '67,570', '2.1'],
+                        ['/eu/apparel/calzado-urbano', '6,450', '10.8%', '59,720', '2.8'],
+                        ['/eu/apparel/chaquetas-eco', '4,890', '9.4%', '52,020', '3.6'],
+                        ['/es/outlet/temporada-pasada', '3,780', '15.6%', '24,230', '1.7'],
+                        ['/eu/running/zapatillas-pro', '3,120', '11.1%', '28,100', '2.9'],
+                        ['/es/blog/guia-tallas-calzado', '2,450', '7.8%', '31,410', '4.5'],
+                    ];
+                } else {
+                    // US / Global localized URLs (mirroring Marcela Rodriguez SEO structure)
+                    $rawPages = [
+                        ['/', '28,510', '9.6%', '297,000', '3.1'],
+                        ['/en', '12,420', '8.2%', '151,460', '3.9'],
+                        ['/en/categories/best-sellers', '7,840', '13.9%', '56,400', '2.1'],
+                        ['/en/catalog/new-arrivals', '5,920', '11.4%', '51,920', '2.7'],
+                        ['/en/shop/furniture-living', '4,890', '10.1%', '48,410', '3.3'],
+                        ['/en/clearance/special-deals', '3,950', '17.2%', '22,960', '1.4'],
+                        ['/en/blog/interior-design-tips', '2,840', '6.9%', '41,150', '4.8'],
+                    ];
+                }
+
+                $pageRows = array_map(function ($p) {
+                    return [
+                        'page' => $p[0],
+                        'clicks' => $p[1],
+                        'ctr' => $p[2],
+                        'impressions' => $p[3],
+                        'position' => $p[4],
+                    ];
+                }, $rawPages);
+
+                return [
+                    'success' => true,
+                    'widget_type' => 'table',
+                    'data' => [
+                        'columns' => $columns,
+                        'rows' => $pageRows,
                     ],
                     'controls' => [
                         'block_first_col' => true,
