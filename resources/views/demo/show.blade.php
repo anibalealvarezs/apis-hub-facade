@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="index, follow">
     <meta name="description" content="{{ __('Demostración pública interactiva de APIs Hub con datos normalizados en tiempo real para 6 canales y 3 grupos de activos.') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $dashboard->name }} — APIs Hub</title>
     <script>
         (function() {
