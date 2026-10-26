@@ -61,7 +61,7 @@ class DemoDashboardTest extends TestCase
 
     public function test_demo_chart_data_sessions()
     {
-        // Widget 109 is GA4 daily sessions
+        // Widget 109 is Multi-channel traffic line chart
         $response = $this->postJson('/demo/api/widget/109/data', [
             'controls' => [
                 'asset_group' => '1',
@@ -75,6 +75,44 @@ class DemoDashboardTest extends TestCase
             'data' => [
                 'datasets',
                 'labels',
+            ],
+        ]);
+    }
+
+    public function test_demo_donut_traffic_share()
+    {
+        // Widget 111 is traffic share donut
+        $response = $this->postJson('/demo/api/widget/111/data', [
+            'controls' => [
+                'asset_group' => '1',
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'widget_type' => 'donut',
+        ]);
+    }
+
+    public function test_demo_table_top_campaigns()
+    {
+        // Widget 112 is top campaigns table
+        $response = $this->postJson('/demo/api/widget/112/data', [
+            'controls' => [
+                'asset_group' => '3', // Argentina
+            ],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'widget_type' => 'table',
+        ]);
+        $response->assertJsonStructure([
+            'data' => [
+                'columns',
+                'rows',
             ],
         ]);
     }

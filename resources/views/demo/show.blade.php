@@ -192,7 +192,7 @@
                         </div>
 
                         {{-- Widget Content Container --}}
-                        <div class="widget-content flex-1 p-3 flex flex-col justify-center min-h-[120px]"
+                        <div class="widget-content flex-1 p-2 sm:p-3 flex flex-col justify-center overflow-auto"
                              id="widget-container-{{ $widget['id'] }}"
                              data-widget-id="{{ $widget['id'] }}">
                             <div class="flex items-center justify-center h-full">

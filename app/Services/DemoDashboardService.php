@@ -69,8 +69,8 @@ class DemoDashboardService
                 'en' => 'Interactive Demo — Unified Omnichannel Performance',
             ],
             'description' => [
-                'es' => 'Métricas normalizadas en tiempo real de 6 canales (Meta Ads, Meta Organic, GSC, Google Ads, GA4 y Mailchimp) en 3 grupos de activos.',
-                'en' => 'Real-time normalized metrics across 6 channels (Meta Ads, Meta Organic, GSC, Google Ads, GA4, Mailchimp) for 3 asset groups.',
+                'es' => 'Visión ejecutiva cross-channel en tiempo real: correlación de tráfico, atribución y eficiencia publicitaria en 6 canales integrados (Meta Ads, Meta Orgánico, Google Ads, GSC, GA4 y Mailchimp).',
+                'en' => 'Real-time cross-channel executive overview: traffic correlation, attribution, and blended ad efficiency across 6 integrated channels (Meta Ads, Meta Organic, Google Ads, GSC, GA4, and Mailchimp).',
             ],
             'controls' => [
                 'date_start' => $start,
@@ -89,49 +89,49 @@ class DemoDashboardService
     public function getWidgetDefinitions(): array
     {
         return [
-            // Row 1: KPI Tiles (Meta Ads, Google Ads, GA4, Mailchimp)
+            // ─── BLOQUE 1: RESUMEN EJECUTIVO (FILA 1, h: 2) ───
             [
                 'id' => 101,
-                'name' => 'Meta Ads • Inversión',
+                'name' => 'Inversión Publicitaria Total (Blended)',
                 'grid_x' => 0, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
-                'source_type' => 'predefined_kpi',
+                'source_type' => 'derived_metric',
                 'calculation_type' => 'trend_total',
                 'resolved_controls' => [
-                    'channel' => 'meta_ads',
+                    'channel' => 'paid_media',
                     'metrics' => ['spend'],
                     'tile_style' => 'simple',
                 ],
             ],
             [
                 'id' => 102,
-                'name' => 'Google Ads • Inversión',
+                'name' => 'Ingresos Atribuidos Totales',
                 'grid_x' => 3, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
-                'source_type' => 'predefined_kpi',
+                'source_type' => 'derived_metric',
                 'calculation_type' => 'trend_total',
                 'resolved_controls' => [
-                    'channel' => 'google_ads',
-                    'metrics' => ['spend'],
+                    'channel' => 'google_analytics',
+                    'metrics' => ['revenue'],
                     'tile_style' => 'simple',
                 ],
             ],
             [
                 'id' => 103,
-                'name' => 'Google Analytics • Usuarios',
+                'name' => 'Tráfico Unificado (Sesiones GA4)',
                 'grid_x' => 6, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
                 'calculation_type' => 'trend_total',
                 'resolved_controls' => [
                     'channel' => 'google_analytics',
-                    'metrics' => ['active_users'],
+                    'metrics' => ['sessions'],
                     'tile_style' => 'simple',
                 ],
             ],
             [
                 'id' => 104,
-                'name' => 'Mailchimp • Suscriptores',
+                'name' => 'Comunidad & Suscriptores (Mailchimp)',
                 'grid_x' => 9, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -143,115 +143,114 @@ class DemoDashboardService
                 ],
             ],
 
-            // Row 2: Secondary Tiles (Meta Organic Reach, GSC Clicks, GSC Avg Position, Mailchimp Open Rate)
+            // ─── BLOQUE 2: EFICIENCIA Y DIAGNÓSTICO ESTRATÉGICO (FILA 2, h: 2) ───
             [
                 'id' => 105,
-                'name' => 'Meta Orgánico • Alcance',
+                'name' => 'Cuota de Búsqueda Pagada (SEM vs SEO)',
                 'grid_x' => 0, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
-                'source_type' => 'predefined_kpi',
-                'calculation_type' => 'trend_total',
+                'source_type' => 'derived_metric',
+                'calculation_type' => 'trend_average',
                 'resolved_controls' => [
-                    'channel' => 'meta_organic',
-                    'metrics' => ['reach'],
+                    'channel' => 'cross_channel',
+                    'metrics' => ['paid_search_click_share'],
                     'tile_style' => 'simple',
                 ],
             ],
             [
                 'id' => 106,
-                'name' => 'Search Console • Clics',
+                'name' => 'ROAS Combinado (Blended Return)',
                 'grid_x' => 3, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
-                'source_type' => 'predefined_kpi',
-                'calculation_type' => 'trend_total',
+                'source_type' => 'derived_metric',
+                'calculation_type' => 'trend_average',
                 'resolved_controls' => [
-                    'channel' => 'google_search_console',
-                    'metrics' => ['clicks'],
+                    'channel' => 'cross_channel',
+                    'metrics' => ['purchase_roas'],
                     'tile_style' => 'simple',
                 ],
             ],
             [
                 'id' => 107,
-                'name' => 'Search Console • Posición',
+                'name' => 'CPA Blended (Costo por Adquisición)',
                 'grid_x' => 6, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
-                'source_type' => 'predefined_kpi',
+                'source_type' => 'derived_metric',
                 'calculation_type' => 'trend_average',
                 'resolved_controls' => [
-                    'channel' => 'google_search_console',
-                    'metrics' => ['position'],
+                    'channel' => 'cross_channel',
+                    'metrics' => ['cost_per_acquisition'],
                     'tile_style' => 'simple',
                 ],
             ],
             [
                 'id' => 108,
-                'name' => 'Mailchimp • Tasa Apertura',
+                'name' => 'Alcance Social Total (Meta Ads + Orgánico)',
                 'grid_x' => 9, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
-                'source_type' => 'predefined_kpi',
-                'calculation_type' => 'trend_average',
+                'source_type' => 'derived_metric',
+                'calculation_type' => 'trend_total',
                 'resolved_controls' => [
-                    'channel' => 'mailchimp',
-                    'metrics' => ['open_rate'],
+                    'channel' => 'meta_combined',
+                    'metrics' => ['reach'],
                     'tile_style' => 'simple',
                 ],
             ],
 
-            // Row 3: Charts
-            // Left Chart: GA4 Sesiones & Tráfico Diario (Line Chart)
+            // ─── BLOQUE 3: TRACCIÓN TEMPORAL CROSS-CHANNEL (FILA 3, h: 4) ───
+            // Gráfico 1: Evolución Multi-Canal (Meta Ads vs Google Ads vs GSC vs Mailchimp)
             [
                 'id' => 109,
-                'name' => 'Google Analytics — Tendencia Diaria de Sesiones',
+                'name' => 'Evolución del Tráfico Multicanal (GSC vs Ads vs Social vs Email)',
                 'grid_x' => 0, 'grid_y' => 4, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'line_chart',
-                'source_type' => 'predefined_kpi',
+                'source_type' => 'cross_channel',
                 'calculation_type' => 'series',
                 'resolved_controls' => [
-                    'channel' => 'google_analytics',
-                    'metrics' => ['sessions'],
-                    'granularity' => 'daily',
-                ],
-            ],
-            // Right Chart: Meta Ads vs Google Ads Inversión Diaria (Line Chart)
-            [
-                'id' => 110,
-                'name' => 'Paid Media — Comparativa Inversión Diaria (Meta vs Google)',
-                'grid_x' => 6, 'grid_y' => 4, 'grid_w' => 6, 'grid_h' => 4,
-                'widget_type' => 'line_chart',
-                'source_type' => 'predefined_kpi',
-                'calculation_type' => 'series',
-                'resolved_controls' => [
-                    'channel' => 'meta_ads',
-                    'metrics' => ['spend'],
-                    'granularity' => 'daily',
-                ],
-            ],
-
-            // Row 4: GSC & Organic Insights
-            [
-                'id' => 111,
-                'name' => 'Search Console — Tendencia de Clics vs Impresiones',
-                'grid_x' => 0, 'grid_y' => 8, 'grid_w' => 6, 'grid_h' => 4,
-                'widget_type' => 'bar_chart',
-                'source_type' => 'predefined_kpi',
-                'calculation_type' => 'series',
-                'resolved_controls' => [
-                    'channel' => 'google_search_console',
+                    'channel' => 'cross_channel',
                     'metrics' => ['clicks'],
                     'granularity' => 'daily',
                 ],
             ],
+            // Gráfico 2: Inversión en Ads vs Conversiones / Ventas Reales (GA4)
             [
-                'id' => 112,
-                'name' => 'Meta Orgánico — Tasa de Interacción (Engagement Rate)',
-                'grid_x' => 6, 'grid_y' => 8, 'grid_w' => 6, 'grid_h' => 4,
+                'id' => 110,
+                'name' => 'Eficacia Publicitaria: Inversión Total vs Conversiones (GA4)',
+                'grid_x' => 6, 'grid_y' => 4, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'line_chart',
-                'source_type' => 'predefined_kpi',
+                'source_type' => 'cross_channel',
                 'calculation_type' => 'series',
                 'resolved_controls' => [
-                    'channel' => 'meta_organic',
-                    'metrics' => ['engagement_rate'],
+                    'channel' => 'cross_channel',
+                    'metrics' => ['spend_vs_conversions'],
                     'granularity' => 'daily',
+                ],
+            ],
+
+            // ─── BLOQUE 4: ATRIBUCIÓN Y TOP RENDIMIENTO (FILA 4, h: 4) ───
+            // Gráfico 3: Mix de Adquisición de Tráfico (Donut)
+            [
+                'id' => 111,
+                'name' => 'Mix de Adquisición de Tráfico por Canal',
+                'grid_x' => 0, 'grid_y' => 8, 'grid_w' => 4, 'grid_h' => 4,
+                'widget_type' => 'donut',
+                'source_type' => 'cross_channel',
+                'calculation_type' => 'breakdown',
+                'resolved_controls' => [
+                    'channel' => 'cross_channel',
+                    'metrics' => ['traffic_share'],
+                ],
+            ],
+            // Tabla 1: Top Campañas & Canales de Captación
+            [
+                'id' => 112,
+                'name' => 'Top Campañas & Canales de Adquisición',
+                'grid_x' => 4, 'grid_y' => 8, 'grid_w' => 8, 'grid_h' => 4,
+                'widget_type' => 'table',
+                'source_type' => 'cross_channel',
+                'calculation_type' => 'table',
+                'resolved_controls' => [
+                    'channel' => 'cross_channel',
                 ],
             ],
         ];
@@ -278,18 +277,19 @@ class DemoDashboardService
         $isEs = ($lang === 'es');
 
         switch ($widgetId) {
-            case 101: // Meta Ads Spend & ROAS
+            // ─── 101: Inversión Publicitaria Total (Meta Ads + Google Ads) ───
+            case 101:
                 if ($groupId === '3') { // Argentina
                     return [
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 6840000,
-                            'previous' => 5770000,
-                            'percentage' => 18.5,
+                            'value' => 11790000,
+                            'previous' => 10090000,
+                            'percentage' => 16.8,
                             'prefix' => '$ ',
                             'suffix' => ' ARS',
-                            'label' => $isEs ? 'Inversión Total Meta Ads' : 'Total Meta Ads Spend',
+                            'label' => $isEs ? 'Meta Ads + Google Ads combinados' : 'Combined Meta & Google Ads Spend',
                             'format' => 'currency',
                         ],
                     ];
@@ -298,12 +298,12 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 9420,
-                            'previous' => 8710,
-                            'percentage' => 8.1,
+                            'value' => 17070,
+                            'previous' => 15860,
+                            'percentage' => 7.6,
                             'prefix' => '€ ',
                             'suffix' => ' EUR',
-                            'label' => $isEs ? 'Inversión Total Meta Ads' : 'Total Meta Ads Spend',
+                            'label' => $isEs ? 'Meta Ads + Google Ads combinados' : 'Combined Meta & Google Ads Spend',
                             'format' => 'currency',
                         ],
                     ];
@@ -312,79 +312,82 @@ class DemoDashboardService
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 14850,
-                            'previous' => 13210,
-                            'percentage' => 12.4,
+                            'value' => 26050,
+                            'previous' => 23660,
+                            'percentage' => 10.1,
                             'prefix' => '$ ',
                             'suffix' => ' USD',
-                            'label' => $isEs ? 'Inversión Total Meta Ads' : 'Total Meta Ads Spend',
+                            'label' => $isEs ? 'Meta Ads + Google Ads combinados' : 'Combined Meta & Google Ads Spend',
                             'format' => 'currency',
                         ],
                     ];
                 }
 
-            case 102: // Google Ads Spend
-                if ($groupId === '3') { // Argentina
+            // ─── 102: Ingresos Atribuidos Totales ───
+            case 102:
+                if ($groupId === '3') {
                     return [
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 4950000,
-                            'previous' => 4320000,
-                            'percentage' => 14.6,
+                            'value' => 54820000,
+                            'previous' => 45300000,
+                            'percentage' => 21.0,
                             'prefix' => '$ ',
                             'suffix' => ' ARS',
-                            'label' => $isEs ? 'Inversión Google Ads' : 'Google Ads Spend',
+                            'label' => $isEs ? 'Ingresos Totales (GA4 Omnicanal)' : 'Total Omnichannel Revenue',
                             'format' => 'currency',
                         ],
                     ];
-                } elseif ($groupId === '2') { // Europa
+                } elseif ($groupId === '2') {
                     return [
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 7650,
-                            'previous' => 7150,
-                            'percentage' => 7.0,
+                            'value' => 74250,
+                            'previous' => 66890,
+                            'percentage' => 11.0,
                             'prefix' => '€ ',
                             'suffix' => ' EUR',
-                            'label' => $isEs ? 'Inversión Google Ads' : 'Google Ads Spend',
+                            'label' => $isEs ? 'Ingresos Totales (GA4 Omnicanal)' : 'Total Omnichannel Revenue',
                             'format' => 'currency',
                         ],
                     ];
-                } else { // Global / US
+                } else {
                     return [
                         'success' => true,
                         'widget_type' => 'tile',
                         'data' => [
-                            'value' => 11200,
-                            'previous' => 10450,
-                            'percentage' => 7.2,
+                            'value' => 108420,
+                            'previous' => 95950,
+                            'percentage' => 13.0,
                             'prefix' => '$ ',
                             'suffix' => ' USD',
-                            'label' => $isEs ? 'Inversión Google Ads' : 'Google Ads Spend',
+                            'label' => $isEs ? 'Ingresos Totales (GA4 Omnicanal)' : 'Total Omnichannel Revenue',
                             'format' => 'currency',
                         ],
                     ];
                 }
 
-            case 103: // GA4 Active Users
-                $users = $groupId === '3' ? 38400 : ($groupId === '2' ? 51200 : 79400);
-                $prevUsers = $groupId === '3' ? 31200 : ($groupId === '2' ? 46800 : 71500);
-                $pct = round((($users - $prevUsers) / $prevUsers) * 100, 1);
+            // ─── 103: Tráfico Unificado (Sesiones GA4) ───
+            case 103:
+                $sessions = $groupId === '3' ? 58900 : ($groupId === '2' ? 76400 : 124800);
+                $prev = $groupId === '3' ? 49100 : ($groupId === '2' ? 70100 : 112500);
+                $pct = round((($sessions - $prev) / $prev) * 100, 1);
                 return [
                     'success' => true,
                     'widget_type' => 'tile',
                     'data' => [
-                        'value' => $users,
-                        'previous' => $prevUsers,
+                        'value' => $sessions,
+                        'previous' => $prev,
                         'percentage' => $pct,
-                        'label' => $isEs ? 'Usuarios Activos (GA4)' : 'Active Users (GA4)',
+                        'label' => $isEs ? 'Sesiones Totales en la Web' : 'Total Web Sessions',
                         'format' => 'number',
                     ],
                 ];
 
-            case 104: // Mailchimp Subscribers
+            // ─── 104: Comunidad & Suscriptores (Mailchimp) ───
+            case 104:
                 $subs = $groupId === '3' ? 21150 : ($groupId === '2' ? 16300 : 28450);
                 $prevSubs = $groupId === '3' ? 18970 : ($groupId === '2' ? 15410 : 27210);
                 $pct = round((($subs - $prevSubs) / $prevSubs) * 100, 1);
@@ -395,14 +398,98 @@ class DemoDashboardService
                         'value' => $subs,
                         'previous' => $prevSubs,
                         'percentage' => $pct,
-                        'label' => $isEs ? 'Audiencia Suscripta Mailchimp' : 'Total Mailchimp Audience',
+                        'label' => $isEs ? 'Audiencia Activa en Lista' : 'Active Email Subscribers',
                         'format' => 'number',
                     ],
                 ];
 
-            case 105: // Meta Organic Reach
-                $reach = $groupId === '3' ? 142800 : ($groupId === '2' ? 96400 : 184200);
-                $prevReach = $groupId === '3' ? 115100 : ($groupId === '2' ? 88000 : 161300);
+            // ─── 105: Cuota de Búsqueda Pagada (SEM vs SEO) ───
+            case 105:
+                // google_ads.clicks / (google_ads.clicks + gsc.clicks)
+                $share = $groupId === '3' ? 24.2 : ($groupId === '2' ? 29.5 : 27.8);
+                $prevShare = $groupId === '3' ? 26.8 : ($groupId === '2' ? 31.2 : 29.4);
+                $diff = round($share - $prevShare, 1);
+                return [
+                    'success' => true,
+                    'widget_type' => 'tile',
+                    'data' => [
+                        'value' => $share,
+                        'previous' => $prevShare,
+                        'percentage' => $diff,
+                        'suffix' => '%',
+                        'label' => $isEs ? 'Tráfico Google dependiente de pago' : 'Paid Search vs Organic Share',
+                        'format' => 'percentage',
+                    ],
+                ];
+
+            // ─── 106: ROAS Combinado (Blended Return on Ad Spend) ───
+            case 106:
+                $roas = $groupId === '3' ? 4.65 : ($groupId === '2' ? 4.35 : 4.16);
+                $prevRoas = $groupId === '3' ? 4.49 : ($groupId === '2' ? 4.21 : 4.05);
+                $diff = round($roas - $prevRoas, 2);
+                return [
+                    'success' => true,
+                    'widget_type' => 'tile',
+                    'data' => [
+                        'value' => $roas,
+                        'previous' => $prevRoas,
+                        'percentage' => $diff > 0 ? "+$diff" : "$diff",
+                        'suffix' => 'x',
+                        'label' => $isEs ? 'Retorno por cada $ invertido' : 'Revenue per ad dollar spent',
+                        'format' => 'number',
+                    ],
+                ];
+
+            // ─── 107: CPA Blended (Costo por Adquisición) ───
+            case 107:
+                if ($groupId === '3') {
+                    return [
+                        'success' => true,
+                        'widget_type' => 'tile',
+                        'data' => [
+                            'value' => 8420,
+                            'previous' => 9180,
+                            'percentage' => -8.3,
+                            'prefix' => '$ ',
+                            'suffix' => ' ARS',
+                            'label' => $isEs ? 'Costo medio por conversión' : 'Blended Cost per Acquisition',
+                            'format' => 'currency',
+                        ],
+                    ];
+                } elseif ($groupId === '2') {
+                    return [
+                        'success' => true,
+                        'widget_type' => 'tile',
+                        'data' => [
+                            'value' => 24.50,
+                            'previous' => 26.80,
+                            'percentage' => -8.6,
+                            'prefix' => '€ ',
+                            'suffix' => ' EUR',
+                            'label' => $isEs ? 'Costo medio por conversión' : 'Blended Cost per Acquisition',
+                            'format' => 'currency',
+                        ],
+                    ];
+                } else {
+                    return [
+                        'success' => true,
+                        'widget_type' => 'tile',
+                        'data' => [
+                            'value' => 31.80,
+                            'previous' => 34.20,
+                            'percentage' => -7.0,
+                            'prefix' => '$ ',
+                            'suffix' => ' USD',
+                            'label' => $isEs ? 'Costo medio por conversión' : 'Blended Cost per Acquisition',
+                            'format' => 'currency',
+                        ],
+                    ];
+                }
+
+            // ─── 108: Alcance Social Total (Meta Ads + Orgánico) ───
+            case 108:
+                $reach = $groupId === '3' ? 285400 : ($groupId === '2' ? 210800 : 412500);
+                $prevReach = $groupId === '3' ? 241200 : ($groupId === '2' ? 194500 : 374000);
                 $pct = round((($reach - $prevReach) / $prevReach) * 100, 1);
                 return [
                     'success' => true,
@@ -411,69 +498,44 @@ class DemoDashboardService
                         'value' => $reach,
                         'previous' => $prevReach,
                         'percentage' => $pct,
-                        'label' => $isEs ? 'Alcance Orgánico Total (FB + IG)' : 'Total Organic Reach (FB + IG)',
+                        'label' => $isEs ? 'Personas únicas impactadas' : 'Total Unified Social Reach',
                         'format' => 'number',
                     ],
                 ];
 
-            case 106: // GSC Clicks
-                $clicks = $groupId === '3' ? 31950 : ($groupId === '2' ? 26840 : 42310);
-                $prevClicks = $groupId === '3' ? 24880 : ($groupId === '2' ? 23300 : 37840);
-                $pct = round((($clicks - $prevClicks) / $prevClicks) * 100, 1);
-                return [
-                    'success' => true,
-                    'widget_type' => 'tile',
-                    'data' => [
-                        'value' => $clicks,
-                        'previous' => $prevClicks,
-                        'percentage' => $pct,
-                        'label' => $isEs ? 'Clics Orgánicos SEO (GSC)' : 'Organic SEO Clicks (GSC)',
-                        'format' => 'number',
-                    ],
-                ];
+            // ─── 109: Evolución del Tráfico Multicanal (GSC vs Ads vs Social vs Email) ───
+            case 109:
+                $multiplier = $groupId === '3' ? 0.75 : ($groupId === '2' ? 0.65 : 1.0);
 
-            case 107: // GSC Position
-                $pos = $groupId === '3' ? 6.2 : ($groupId === '2' ? 8.4 : 7.8);
-                $prevPos = $groupId === '3' ? 8.3 : ($groupId === '2' ? 9.3 : 9.2);
-                $diff = round($prevPos - $pos, 1);
-                return [
-                    'success' => true,
-                    'widget_type' => 'tile',
-                    'data' => [
-                        'value' => $pos,
-                        'previous' => $prevPos,
-                        'percentage' => $diff > 0 ? "+$diff" : "$diff",
-                        'suffix' => ' pos',
-                        'label' => $isEs ? 'Posición Media en Búsqueda (GSC)' : 'Average Search Position (GSC)',
-                        'format' => 'number',
-                    ],
-                ];
+                $gscData = [];
+                $metaData = [];
+                $gadsData = [];
+                $emailData = [];
 
-            case 108: // Mailchimp Open Rate
-                $rate = $groupId === '3' ? 46.1 : ($groupId === '2' ? 42.6 : 39.2);
-                $prevRate = $groupId === '3' ? 41.5 : ($groupId === '2' ? 39.8 : 37.1);
-                $pct = round((($rate - $prevRate) / $prevRate) * 100, 1);
-                return [
-                    'success' => true,
-                    'widget_type' => 'tile',
-                    'data' => [
-                        'value' => $rate,
-                        'previous' => $prevRate,
-                        'percentage' => $pct,
-                        'suffix' => '%',
-                        'label' => $isEs ? 'Tasa de Apertura de Correo' : 'Email Open Rate',
-                        'format' => 'percentage',
-                    ],
-                ];
-
-            case 109: // GA4 Daily Sessions Series
-                $baseSessions = $groupId === '3' ? 1400 : ($groupId === '2' ? 1900 : 2800);
-                $values = [];
                 foreach ($dates as $idx => $d) {
                     $dayOfWeek = (int) date('N', strtotime($d));
-                    $factor = ($dayOfWeek >= 6) ? 0.72 : 1.05 + sin($idx * 0.4) * 0.18;
-                    $values[] = (int) round($baseSessions * $factor + ($idx * 15));
+                    $isWeekend = ($dayOfWeek >= 6);
+
+                    // GSC organic: weekday peak
+                    $baseGsc = 1400 * $multiplier;
+                    $gscFactor = $isWeekend ? 0.65 : 1.05 + sin($idx * 0.35) * 0.15;
+                    $gscData[] = (int) round($baseGsc * $gscFactor);
+
+                    // Meta Ads: higher on weekends & promo days
+                    $baseMeta = 850 * $multiplier;
+                    $metaFactor = $isWeekend ? 1.25 : 0.95 + cos($idx * 0.4) * 0.2;
+                    $metaData[] = (int) round($baseMeta * $metaFactor);
+
+                    // Google Ads: steady search demand
+                    $baseGads = 520 * $multiplier;
+                    $gadsData[] = (int) round($baseGads * (0.9 + sin($idx * 0.25) * 0.15));
+
+                    // Mailchimp: big spikes on newsletter broadcast days (every ~7 days)
+                    $isBroadcastDay = ($idx % 7 === 2);
+                    $baseEmail = $isBroadcastDay ? (950 * $multiplier) : (90 * $multiplier + ($idx % 5) * 15);
+                    $emailData[] = (int) round($baseEmail);
                 }
+
                 return [
                     'success' => true,
                     'widget_type' => 'line_chart',
@@ -481,87 +543,65 @@ class DemoDashboardService
                         'labels' => $dates,
                         'datasets' => [
                             [
-                                'label' => $isEs ? 'Sesiones Diarias GA4' : 'Daily GA4 Sessions',
-                                'data' => $values,
-                                'borderColor' => '#10b981',
-                                'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
-                                'fill' => true,
+                                'label' => 'Google Search Console (SEO)',
+                                'data' => $gscData,
+                                'borderColor' => '#6366f1', // Indigo
+                                'backgroundColor' => 'transparent',
                                 'tension' => 0.35,
+                                'borderWidth' => 2,
                             ],
-                        ],
-                    ],
-                    'controls' => [
-                        'channel' => 'google_analytics',
-                        'metrics' => ['sessions'],
-                        'granularity' => 'daily',
-                    ],
-                ];
-
-            case 110: // Meta Ads vs Google Ads Inversión Diaria
-                $metaBase = $groupId === '3' ? 220000 : ($groupId === '2' ? 310 : 490);
-                $metaValues = [];
-                foreach ($dates as $idx => $d) {
-                    $metaValues[] = (int) round($metaBase * (0.9 + sin($idx * 0.3) * 0.25));
-                }
-                return [
-                    'success' => true,
-                    'widget_type' => 'line_chart',
-                    'data' => [
-                        'labels' => $dates,
-                        'datasets' => [
                             [
-                                'label' => $isEs ? 'Inversión Diaria Meta Ads' : 'Daily Meta Ads Spend',
-                                'data' => $metaValues,
-                                'borderColor' => '#3b82f6',
-                                'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
-                                'fill' => true,
-                                'currency' => true,
+                                'label' => 'Meta Ads (Paid Social)',
+                                'data' => $metaData,
+                                'borderColor' => '#3b82f6', // Blue
+                                'backgroundColor' => 'transparent',
                                 'tension' => 0.35,
+                                'borderWidth' => 2,
                             ],
-                        ],
-                    ],
-                    'controls' => [
-                        'channel' => 'meta_ads',
-                        'metrics' => ['spend'],
-                        'granularity' => 'daily',
-                    ],
-                ];
-
-            case 111: // GSC Clicks Bar Chart
-                $baseClicks = $groupId === '3' ? 1050 : ($groupId === '2' ? 890 : 1410);
-                $clickValues = [];
-                foreach ($dates as $idx => $d) {
-                    $dayOfWeek = (int) date('N', strtotime($d));
-                    $weekendDrop = ($dayOfWeek >= 6) ? 0.65 : 1.0;
-                    $clickValues[] = (int) round(($baseClicks + ($idx * 10)) * $weekendDrop);
-                }
-                return [
-                    'success' => true,
-                    'widget_type' => 'bar_chart',
-                    'data' => [
-                        'labels' => $dates,
-                        'datasets' => [
                             [
-                                'label' => $isEs ? 'Clics Orgánicos Diarios' : 'Daily Organic Clicks',
-                                'data' => $clickValues,
-                                'backgroundColor' => '#6366f1',
-                                'borderRadius' => 4,
+                                'label' => 'Google Ads (Paid Search)',
+                                'data' => $gadsData,
+                                'borderColor' => '#f59e0b', // Amber
+                                'backgroundColor' => 'transparent',
+                                'tension' => 0.35,
+                                'borderWidth' => 2,
+                            ],
+                            [
+                                'label' => 'Mailchimp (Email Marketing)',
+                                'data' => $emailData,
+                                'borderColor' => '#10b981', // Emerald
+                                'backgroundColor' => 'transparent',
+                                'tension' => 0.35,
+                                'borderWidth' => 2,
                             ],
                         ],
                     ],
                     'controls' => [
-                        'channel' => 'google_search_console',
+                        'channel' => 'cross_channel',
                         'metrics' => ['clicks'],
                         'granularity' => 'daily',
                     ],
                 ];
 
-            case 112: // Meta Organic Engagement Rate Line Chart
-                $baseEng = $groupId === '3' ? 6.4 : ($groupId === '2' ? 5.1 : 4.6);
-                $engValues = [];
+            // ─── 110: Inversión en Ads vs Conversiones Web Reales (GA4) ───
+            case 110:
+                $spendBase = $groupId === '3' ? 390000 : ($groupId === '2' ? 570 : 860);
+                $convBase = $groupId === '3' ? 46 : ($groupId === '2' ? 24 : 35);
+
+                $spendValues = [];
+                $convValues = [];
+
                 foreach ($dates as $idx => $d) {
-                    $engValues[] = round($baseEng + sin($idx * 0.5) * 0.8, 2);
+                    $dayOfWeek = (int) date('N', strtotime($d));
+                    $spendFactor = (0.9 + sin($idx * 0.3) * 0.22);
+                    $dailySpend = (int) round($spendBase * $spendFactor);
+                    $spendValues[] = $dailySpend;
+
+                    // Conversions correlate with spend + seasonal bump
+                    $convFactor = $spendFactor * (0.95 + cos($idx * 0.2) * 0.15);
+                    $convValues[] = (int) round($convBase * $convFactor);
                 }
+
                 return [
                     'success' => true,
                     'widget_type' => 'line_chart',
@@ -569,20 +609,109 @@ class DemoDashboardService
                         'labels' => $dates,
                         'datasets' => [
                             [
-                                'label' => 'Engagement Rate (%)',
-                                'data' => $engValues,
-                                'borderColor' => '#0ea5e9',
-                                'backgroundColor' => 'rgba(14, 165, 233, 0.1)',
+                                'label' => $isEs ? 'Inversión Publicitaria Diaria (USD/EUR/ARS)' : 'Daily Ad Spend',
+                                'data' => $spendValues,
+                                'borderColor' => '#ef4444', // Red
+                                'backgroundColor' => 'rgba(239, 68, 68, 0.08)',
                                 'fill' => true,
-                                'percentage' => true,
-                                'tension' => 0.35,
+                                'yAxisID' => 'y',
+                                'tension' => 0.3,
+                            ],
+                            [
+                                'label' => $isEs ? 'Conversiones Registradas en GA4' : 'GA4 Conversions',
+                                'data' => $convValues,
+                                'borderColor' => '#10b981', // Green
+                                'backgroundColor' => 'rgba(16, 185, 129, 0.08)',
+                                'fill' => true,
+                                'yAxisID' => 'y1',
+                                'tension' => 0.3,
                             ],
                         ],
                     ],
                     'controls' => [
-                        'channel' => 'meta_organic',
-                        'metrics' => ['engagement_rate'],
+                        'channel' => 'cross_channel',
+                        'metrics' => ['spend', 'conversions'],
                         'granularity' => 'daily',
+                    ],
+                ];
+
+            // ─── 111: Mix de Adquisición de Tráfico por Canal (Donut) ───
+            case 111:
+                return [
+                    'success' => true,
+                    'widget_type' => 'donut',
+                    'data' => [
+                        'labels' => [
+                            $isEs ? 'Búsqueda Orgánica (GSC)' : 'Organic Search (GSC)',
+                            $isEs ? 'Paid Social (Meta Ads)' : 'Paid Social (Meta Ads)',
+                            $isEs ? 'Paid Search (Google Ads)' : 'Paid Search (Google Ads)',
+                            $isEs ? 'Email Marketing (Mailchimp)' : 'Email Marketing (Mailchimp)',
+                            $isEs ? 'Meta Orgánico (FB & IG)' : 'Meta Organic (FB & IG)',
+                        ],
+                        'datasets' => [
+                            [
+                                'data' => [42, 26, 17, 10, 5],
+                                'backgroundColor' => [
+                                    '#6366f1', // GSC: Indigo
+                                    '#3b82f6', // Meta Ads: Blue
+                                    '#f59e0b', // Google Ads: Amber
+                                    '#10b981', // Mailchimp: Emerald
+                                    '#0ea5e9', // Meta Organic: Sky
+                                ],
+                                'borderWidth' => 2,
+                                'borderColor' => '#1f2937',
+                            ],
+                        ],
+                    ],
+                ];
+
+            // ─── 112: Top Campañas & Canales de Adquisición (Tabla) ───
+            case 112:
+                $currencySymbol = $groupId === '3' ? '$ ' : ($groupId === '2' ? '€ ' : '$ ');
+                $currencySuffix = $groupId === '3' ? ' ARS' : ($groupId === '2' ? ' EUR' : ' USD');
+
+                if ($groupId === '3') {
+                    $rows = [
+                        ['Meta Ads', 'Retargeting Catálogo Dinámico', '14,820', '$ 3,120,000', '$ 6,450', '484'],
+                        ['Google Ads', 'Búsqueda PMax — Hogar & Deco', '9,410', '$ 2,840,000', '$ 8,900', '319'],
+                        ['Google Search Console', 'Consultas Non-Branded (SEO)', '31,950', '$ 0.00', '$ 0.00 (Org)', '612'],
+                        ['Mailchimp', 'Newsletter Semanal & Promociones', '4,890', '$ 0.00', '$ 0.00 (Email)', '278'],
+                        ['Meta Ads', 'Prospección Lookalike 1% Compradores', '11,430', '$ 2,280,000', '$ 9,800', '232'],
+                        ['Meta Orgánico', 'Reels Virales Instagram & FB', '7,210', '$ 0.00', '$ 0.00 (Social)', '145'],
+                    ];
+                } elseif ($groupId === '2') {
+                    $rows = [
+                        ['Meta Ads', 'EU Apparel Spring Collection', '9,840', '€ 4,820', '€ 18.40', '262'],
+                        ['Google Ads', 'Google Shopping — Footwear EU', '6,920', '€ 3,950', '€ 22.10', '179'],
+                        ['Google Search Console', 'Top Landing Pages (Organic SEO)', '26,840', '€ 0.00', '€ 0.00 (Org)', '428'],
+                        ['Mailchimp', 'VIP Members Club Digest', '3,920', '€ 0.00', '€ 0.00 (Email)', '184'],
+                        ['Meta Ads', 'Instagram Stories Conversions', '7,150', '€ 3,120', '€ 21.50', '145'],
+                        ['Meta Orgánico', 'Colecciones & Lookbooks', '4,810', '€ 0.00', '€ 0.00 (Social)', '96'],
+                    ];
+                } else {
+                    $rows = [
+                        ['Meta Ads', 'US Top Sellers Advantage+', '16,920', '$ 7,850', '$ 24.20', '324'],
+                        ['Google Ads', 'PMax Search & Shopping USA', '12,410', '$ 6,240', '$ 28.50', '219'],
+                        ['Google Search Console', 'Organic Search Queries (SEO)', '42,310', '$ 0.00', '$ 0.00 (Org)', '715'],
+                        ['Mailchimp', 'Weekly Flash Sale & VIP Club', '6,840', '$ 0.00', '$ 0.00 (Email)', '342'],
+                        ['Meta Ads', 'Retargeting Carrito Abandonado', '8,450', '$ 3,820', '$ 19.80', '193'],
+                        ['Meta Orgánico', 'Instagram Community & Posts', '9,120', '$ 0.00', '$ 0.00 (Social)', '168'],
+                    ];
+                }
+
+                return [
+                    'success' => true,
+                    'widget_type' => 'table',
+                    'data' => [
+                        'columns' => [
+                            $isEs ? 'Canal' : 'Channel',
+                            $isEs ? 'Campaña / Fuente' : 'Campaign / Source',
+                            $isEs ? 'Clics / Visitas' : 'Clicks / Visits',
+                            $isEs ? 'Inversión' : 'Spend',
+                            $isEs ? 'CPA / Costo' : 'CPA / Cost',
+                            $isEs ? 'Conversiones' : 'Conversions',
+                        ],
+                        'rows' => $rows,
                     ],
                 ];
 
