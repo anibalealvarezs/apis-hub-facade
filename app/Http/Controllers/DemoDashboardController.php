@@ -65,8 +65,9 @@ class DemoDashboardController extends Controller
 
         $dateStart = $controls['date_start'] ?? $request->query('date_start');
         $dateEnd = $controls['date_end'] ?? $request->query('date_end');
+        $granularity = $controls['granularity'] ?? $request->query('granularity');
 
-        $data = $this->demoService->getWidgetData($widget, $assetGroup, $lang, $dateStart, $dateEnd);
+        $data = $this->demoService->getWidgetData($widget, $assetGroup, $lang, $dateStart, $dateEnd, $granularity);
 
         return response()->json($data, 200, [], JSON_UNESCAPED_UNICODE);
     }

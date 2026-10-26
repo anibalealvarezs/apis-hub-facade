@@ -272,17 +272,18 @@ class DemoDashboardService
                     'metrics' => ['clicks', 'ctr', 'impressions', 'position'],
                 ],
             ],
-            // Tabla 2: Top Campañas & Canales de Captación (Dimensión Campaña)
+            // Tabla 2: Rendimiento Diario Omnicanal (Granularidad Temporal por Fila)
             [
                 'id' => 112,
-                'name' => 'Top Campañas & Canales de Adquisición',
+                'name' => 'Rendimiento Diario Omnicanal',
                 'grid_x' => 6, 'grid_y' => 12, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'table',
                 'source_type' => 'cross_channel',
                 'calculation_type' => 'table',
                 'resolved_controls' => [
                     'channel' => 'cross_channel',
-                    'granularity' => 'campaign',
+                    'granularity' => 'daily',
+                    'metrics' => ['spend', 'clicks', 'conversions', 'cpa', 'roas'],
                 ],
             ],
         ];
@@ -317,7 +318,7 @@ class DemoDashboardService
     /**
      * Return mock data for a given widget ID, asset group ('1', '2', '3'), and optional date range.
      */
-    public function getWidgetData(int $widgetId, string $groupId, string $lang = 'es', ?string $dateStart = null, ?string $dateEnd = null): array
+    public function getWidgetData(int $widgetId, string $groupId, string $lang = 'es', ?string $dateStart = null, ?string $dateEnd = null, ?string $granularity = null): array
     {
         $dates = $this->getDates($dateStart, $dateEnd);
         $daysCount = count($dates);
@@ -945,69 +946,60 @@ class DemoDashboardService
                     ],
                 ];
 
-            // ─── 112: Top Campañas & Canales de Adquisición (Tabla) ───
+            // ─── 112: Rendimiento Diario Omnicanal (Tabla con Granularidad Temporal por Fila) ───
             case 112:
                 $currencySymbol = $groupId === '3' ? '$ ' : ($groupId === '2' ? '€ ' : '$ ');
                 $currencySuffix = $groupId === '3' ? ' ARS' : ($groupId === '2' ? ' EUR' : ' USD');
 
                 $columns = [
-                    ['key' => 'channel', 'label' => $isEs ? 'Canal' : 'Channel'],
-                    ['key' => 'campaign', 'label' => $isEs ? 'Campaña / Fuente' : 'Campaign / Source'],
-                    ['key' => 'clicks', 'label' => $isEs ? 'Clics / Visitas' : 'Clicks / Visits'],
-                    ['key' => 'spend', 'label' => $isEs ? 'Inversión' : 'Spend'],
-                    ['key' => 'cpa', 'label' => $isEs ? 'CPA / Costo' : 'CPA / Cost'],
-                    ['key' => 'conversions', 'label' => $isEs ? 'Conversiones' : 'Conversions'],
+                    ['key' => 'date', 'label' => $isEs ? 'Fecha' : 'Date', 'format' => 'string'],
+                    ['key' => 'spend', 'label' => $isEs ? "Inversión Total ({$currencySuffix})" : "Total Spend ({$currencySuffix})", 'format' => 'currency'],
+                    ['key' => 'clicks', 'label' => $isEs ? 'Clics Totales' : 'Total Clicks', 'format' => 'number'],
+                    ['key' => 'conversions', 'label' => $isEs ? 'Conversiones (GA4)' : 'Conversions (GA4)', 'format' => 'number'],
+                    ['key' => 'cpa', 'label' => $isEs ? "CPA Blended ({$currencySuffix})" : "Blended CPA ({$currencySuffix})", 'format' => 'currency'],
+                    ['key' => 'roas', 'label' => 'ROAS', 'format' => 'number'],
                 ];
 
-                if ($groupId === '3') {
-                    $raw = [
-                        ['Meta Ads', 'Retargeting Catálogo Dinámico', '14,820', '$ 3,120,000', '$ 6,450', '484'],
-                        ['Google Ads', 'Búsqueda PMax — Hogar & Deco', '9,410', '$ 2,840,000', '$ 8,900', '319'],
-                        ['Google Search Console', 'Consultas Non-Branded (SEO)', '31,950', '$ 0.00', '$ 0.00 (Org)', '612'],
-                        ['Mailchimp', 'Newsletter Semanal & Promociones', '4,890', '$ 0.00', '$ 0.00 (Email)', '278'],
-                        ['Meta Ads', 'Prospección Lookalike 1% Compradores', '11,430', '$ 2,280,000', '$ 9,800', '232'],
-                        ['Meta Orgánico', 'Reels Virales Instagram & FB', '7,210', '$ 0.00', '$ 0.00 (Social)', '145'],
-                    ];
-                } elseif ($groupId === '2') {
-                    $raw = [
-                        ['Meta Ads', 'EU Apparel Spring Collection', '9,840', '€ 4,820', '€ 18.40', '262'],
-                        ['Google Ads', 'Google Shopping — Footwear EU', '6,920', '€ 3,950', '€ 22.10', '179'],
-                        ['Google Search Console', 'Top Landing Pages (Organic SEO)', '26,840', '€ 0.00', '€ 0.00 (Org)', '428'],
-                        ['Mailchimp', 'VIP Members Club Digest', '3,920', '€ 0.00', '€ 0.00 (Email)', '184'],
-                        ['Meta Ads', 'Instagram Stories Conversions', '7,150', '€ 3,120', '€ 21.50', '145'],
-                        ['Meta Orgánico', 'Colecciones & Lookbooks', '4,810', '€ 0.00', '€ 0.00 (Social)', '96'],
-                    ];
-                } else {
-                    $raw = [
-                        ['Meta Ads', 'US Top Sellers Advantage+', '16,920', '$ 7,850', '$ 24.20', '324'],
-                        ['Google Ads', 'PMax Search & Shopping USA', '12,410', '$ 6,240', '$ 28.50', '219'],
-                        ['Google Search Console', 'Organic Search Queries (SEO)', '42,310', '$ 0.00', '$ 0.00 (Org)', '715'],
-                        ['Mailchimp', 'Weekly Flash Sale & VIP Club', '6,840', '$ 0.00', '$ 0.00 (Email)', '342'],
-                        ['Meta Ads', 'Retargeting Carrito Abandonado', '8,450', '$ 3,820', '$ 19.80', '193'],
-                        ['Meta Orgánico', 'Instagram Community & Posts', '9,120', '$ 0.00', '$ 0.00 (Social)', '168'],
+                $baseSpend = $groupId === '3' ? 390000 : ($groupId === '2' ? 570 : 860);
+                $baseClicks = $groupId === '3' ? 1450 : ($groupId === '2' ? 1220 : 1850);
+                $baseConv = $groupId === '3' ? 46 : ($groupId === '2' ? 24 : 35);
+
+                $dailyRows = [];
+                // Reverse chronological order (latest dates first, as standard in analytics dashboards)
+                $reversedDates = array_reverse($dates);
+                foreach ($reversedDates as $idx => $d) {
+                    $dayOfWeek = (int) date('N', strtotime($d));
+                    // Weekend boost / variance
+                    $variance = 0.88 + sin(($daysCount - $idx) * 0.35) * 0.22 + ($dayOfWeek >= 6 ? 0.12 : 0.0);
+                    $daySpend = (int) round($baseSpend * $variance);
+                    $dayClicks = (int) round($baseClicks * $variance * (0.95 + cos($idx * 0.2) * 0.08));
+                    $dayConv = (int) round($baseConv * $variance * (0.92 + sin($idx * 0.4) * 0.12));
+                    $dayCpa = $dayConv > 0 ? round($daySpend / $dayConv, 2) : 0;
+                    // Mock average order value to compute ROAS
+                    $aov = $groupId === '3' ? 28500 : ($groupId === '2' ? 88 : 95);
+                    $dayRevenue = $dayConv * $aov;
+                    $dayRoas = $daySpend > 0 ? round($dayRevenue / $daySpend, 2) : 0;
+
+                    $dailyRows[] = [
+                        'date' => $d,
+                        'spend' => $currencySymbol . number_format($daySpend),
+                        'clicks' => number_format($dayClicks),
+                        'conversions' => number_format($dayConv),
+                        'cpa' => $currencySymbol . number_format($dayCpa, $groupId === '3' ? 0 : 2),
+                        'roas' => number_format($dayRoas, 2) . 'x',
                     ];
                 }
-
-                $rows = array_map(function ($r) {
-                    return [
-                        'channel' => $r[0],
-                        'campaign' => $r[1],
-                        'clicks' => $r[2],
-                        'spend' => $r[3],
-                        'cpa' => $r[4],
-                        'conversions' => $r[5],
-                    ];
-                }, $raw);
 
                 return [
                     'success' => true,
                     'widget_type' => 'table',
                     'data' => [
                         'columns' => $columns,
-                        'rows' => $rows,
+                        'rows' => $dailyRows,
                     ],
                     'controls' => [
                         'block_first_col' => true,
+                        'granularity' => 'daily',
                     ],
                 ];
 

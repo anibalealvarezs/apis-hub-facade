@@ -198,6 +198,23 @@
             border-width: 1px;
             transition: all 0.15s ease;
         }
+
+        /* jsVectorMap tooltip isolation and leak prevention */
+        .jvm-tooltip {
+            display: none !important;
+            visibility: hidden !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            pointer-events: none !important;
+            z-index: 9999 !important;
+        }
+        .jvm-tooltip.active {
+            display: block !important;
+            visibility: visible !important;
+            top: auto !important;
+            left: auto !important;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
@@ -698,6 +715,9 @@
                 },
 
                 reloadWidget(widgetId) {
+                    if (widgetId === 113) {
+                        document.querySelectorAll('.jvm-tooltip').forEach(el => el.remove());
+                    }
                     const renderer = window.dashboardRenderer || window.DashboardRenderer;
                     const el = document.getElementById('widget-container-' + widgetId);
                     if (!el || !renderer) return;
@@ -778,6 +798,9 @@
                 },
 
                 loadAllWidgets(force = false) {
+                    // Clean up any detached or duplicate jsVectorMap tooltip DOM nodes
+                    document.querySelectorAll('.jvm-tooltip').forEach(el => el.remove());
+
                     const renderer = window.dashboardRenderer || window.DashboardRenderer;
                     if (!renderer) {
                         setTimeout(() => this.loadAllWidgets(force), 100);

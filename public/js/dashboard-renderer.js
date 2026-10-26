@@ -4288,6 +4288,9 @@ window.dashboardRenderer = {
     // ─── Choropleth Map Widget ───
 
     renderChoroplethMap(containerEl, data, controls) {
+        // Clean up any previously appended or orphaned tooltips
+        document.querySelectorAll('.jvm-tooltip').forEach(el => el.remove());
+
         const uniqueId = 'map-widget-' + Math.random().toString(36).substring(2, 9);
         const seriesMetrics = Array.isArray(data?.series_metrics) && data.series_metrics.length > 0 ? data.series_metrics : null;
         let activeIdx = 0;
