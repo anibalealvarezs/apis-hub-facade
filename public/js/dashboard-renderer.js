@@ -86,6 +86,14 @@ window.dashboardRenderer = {
     // Ratio KPIs produce a result whose type differs from the raw dependent metric.
     // Determine the display format for the KPI output based on metric[0] (dependent) and metric[1] (independent).
     getKpiResultFormat(controls) {
+        // If this widget contains a derived metric, controls.metrics describes input series, NOT output format
+        const hasDerivedMetric =
+            controls?.raw_series?.some((s) => s?.type === "derived_metric" || s?.dm_id) ||
+            controls?.source_type === "derived_metric";
+        if (hasDerivedMetric) {
+            return null;
+        }
+
         const m0 = controls?.metrics?.[0];
         const m1 = controls?.metrics?.[1];
         if (!m0) return null;
@@ -1003,10 +1011,10 @@ window.dashboardRenderer = {
             const isPos = isDatasetPosition(ds, idx);
             return {
                 ...ds,
-                currency: isPos
+                currency: isPos || ds.percentage
                     ? false
                     : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
-                percentage: isPos
+                percentage: isPos || ds.currency
                     ? false
                     : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
                 pointRadius: 6,
@@ -1192,12 +1200,12 @@ window.dashboardRenderer = {
 
         const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency:
-                ds.currency ??
-                (resultFormat?.format === "currency" ? true : undefined),
-            percentage:
-                ds.percentage ??
-                (resultFormat?.format === "percentage" ? true : undefined),
+            currency: ds.percentage
+                ? false
+                : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
+            percentage: ds.currency
+                ? false
+                : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
         }));
 
         let chartScales = {
@@ -1284,10 +1292,10 @@ window.dashboardRenderer = {
                                 let val = ctx.parsed.y;
                                 if (!ctx.dataset?.percentage && resultFormat?.multiply)
                                     val = val * resultFormat.multiply;
-                                if (ctx.dataset?.currency)
-                                    return this.formatCurrency(val);
                                 if (ctx.dataset?.percentage)
                                     return val.toFixed(1) + "%";
+                                if (ctx.dataset?.currency)
+                                    return this.formatCurrency(val);
                                 return this.formatNumber(val);
                             },
                         },
@@ -1319,8 +1327,8 @@ window.dashboardRenderer = {
 
         const mappedDatasets = datasets.map((ds) => ({
             ...ds,
-            currency: ds.currency ?? (resultFormat?.format === "currency" ? true : undefined),
-            percentage: ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined),
+            currency: ds.percentage ? false : (ds.currency ?? (resultFormat?.format === "currency" ? true : undefined)),
+            percentage: ds.currency ? false : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
             borderWidth: 2,
             borderColor: document.documentElement.classList.contains("dark") ? "#1f2937" : "#ffffff",
         }));
@@ -3573,10 +3581,10 @@ window.dashboardRenderer = {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
                     let formattedVal = this.formatNumber(v);
-                    if (ds.currency || resultFormat?.format === "currency") {
-                        formattedVal = this.formatCurrency(v);
-                    } else if (ds.percentage || resultFormat?.format === "percentage") {
+                    if (ds.percentage || (!ds.currency && resultFormat?.format === "percentage")) {
                         formattedVal = v.toFixed(1) + "%";
+                    } else if (ds.currency || resultFormat?.format === "currency") {
+                        formattedVal = this.formatCurrency(v);
                     }
                     const total = (ds.data || []).reduce((acc, curr) => acc + (typeof curr === 'number' ? curr : 0), 0);
                     const pct = total > 0 ? ((v / total) * 100).toFixed(1) + "%" : "0%";
@@ -3586,13 +3594,10 @@ window.dashboardRenderer = {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
                     if (!ds.percentage && resultFormat?.multiply) v = v * resultFormat.multiply;
-                    if (ds.currency || resultFormat?.format === "currency") {
-                        val = this.formatCurrency(v);
-                    } else if (
-                        ds.percentage ||
-                        resultFormat?.format === "percentage"
-                    ) {
+                    if (ds.percentage || (!ds.currency && resultFormat?.format === "percentage")) {
                         val = v.toFixed(1) + "%";
+                    } else if (ds.currency || resultFormat?.format === "currency") {
+                        val = this.formatCurrency(v);
                     } else {
                         val = this.formatNumber(v);
                     }
