@@ -525,7 +525,7 @@ window.dashboardRenderer = {
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                     try {
                         const response = await fetch(
-                            "/api/dashboard/widget/" +
+                            (window.dashboardWidgetDataUrlPrefix || "/api/dashboard/widget/") +
                                 widgetId +
                                 "/data?lang=" +
                                 encodeURIComponent(currentLang),

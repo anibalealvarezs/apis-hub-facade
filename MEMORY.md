@@ -11,6 +11,17 @@
 ## Current notes
 - Laravel business layer for SaaS management and operational workflows.
 
+### Interactive Public Demo Dashboard (2026-10-26)
+- **Feature & Objective:**
+  - Public interactive demo at `/demo` and `/es/demo` for prospective visitors to evaluate APIs Hub without creating accounts or connecting real credentials.
+  - Zero IP / internal architecture leakage: served via `DemoDashboardService` with realistic mocked numbers across 6 active beta channels (`meta_ads`, `meta_organic`, `google_search_console`, `google_ads`, `google_analytics`, `mailchimp`) and 3 distinct asset groups:
+    1. `Marca Principal (Global / EE.UU.)` (USD)
+    2. `Línea Apparel & Calzado (Europa)` (EUR)
+    3. `Aura Hogar & Deco (Argentina)` (ARS/USD)
+  - Endpoint `POST /demo/api/widget/{widget}/data` delivers immediate JSON responses (< 20ms) matching `DashboardRenderer` contract.
+  - Updated `dashboard-renderer.js` to support configurable `window.dashboardWidgetDataUrlPrefix` (defaulting to standard `/api/dashboard/widget/`).
+  - Automated tests in `tests/Feature/DemoDashboardTest.php`.
+
 ### Google Ads Dashboard & Custom Widget Aggregation Resolution (2026-10-24)
 - **Problem & Context:**
   - Widgets requesting `google_ads`, `google_analytics`, and `google_search_console` cross-channel data (e.g. tile widget for Spend and Derived Metric "Cost per Conversion", or bar chart for "Paid vs Organic Search Click Share") experienced failure modes:

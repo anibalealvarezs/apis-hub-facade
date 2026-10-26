@@ -48,6 +48,14 @@ Route::get('/docs/api/openapi.json', [\App\Http\Controllers\ApiDocsController::c
 Route::get('/es/docs/api/openapi.json', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\ApiDocsController::class)->spec(app(\App\Services\OpenApiSpecificationService::class), 'es'))
     ->name('docs.api.spec.es');
 
+// Interactive Public Demo (6 Channels & 3 Asset Groups)
+Route::get('/demo', [\App\Http\Controllers\DemoDashboardController::class, 'show'])
+    ->name('demo.show');
+Route::get('/es/demo', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->show($r, 'es'))
+    ->name('demo.show.es');
+Route::post('/demo/api/widget/{widget}/data', [\App\Http\Controllers\DemoDashboardController::class, 'widgetData'])
+    ->name('demo.widget.data');
+
 Route::get('/{locale?}', [\App\Http\Controllers\LandingController::class, 'index'])
     ->where('locale', 'es')
     ->name('landing.index');
