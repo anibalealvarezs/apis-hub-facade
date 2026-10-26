@@ -472,7 +472,7 @@
 
     {{-- Interactive Fullscreen Modal --}}
     <div x-show="popOutActive" x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 sm:p-6"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-6"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -480,19 +480,19 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click.self="closePopOut()">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
-            <div class="px-5 py-3 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between flex-shrink-0">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-[95vw] max-w-[1600px] h-[90vh] flex flex-col overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="popOutWidget?.name || 'Vista Detallada'"></h3>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button type="button" @click="closePopOut()" class="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+                    <button type="button" @click="closePopOut()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
-            <div class="flex-1 p-4 relative overflow-hidden" id="demo-modal-container">
+            <div class="flex-1 min-h-0 w-full p-4 sm:p-6 relative flex flex-col overflow-hidden" id="demo-modal-container">
             </div>
         </div>
     </div>
@@ -772,6 +772,11 @@
                         modalContainer.innerHTML = '';
                         if (renderer.popOutWidget && sourceContainer) {
                             renderer.popOutWidget(sourceContainer, modalContainer);
+                            // Force resize on next frame after modal is in DOM with full dimensions
+                            setTimeout(() => {
+                                const chart = renderer._chartInstances?.get(modalContainer);
+                                if (chart) chart.resize();
+                            }, 50);
                         } else {
                             const controls = {
                                 asset_group: this.selectedGroup,
@@ -789,8 +794,16 @@
                     const modalContainer = document.getElementById('demo-modal-container');
                     if (this.popOutWidget) {
                         const sourceContainer = document.getElementById('widget-container-' + this.popOutWidget.id);
-                        if (renderer?.returnPoppedOutWidget && sourceContainer && modalContainer) {
-                            renderer.returnPoppedOutWidget(sourceContainer, modalContainer);
+                        if (renderer && sourceContainer && modalContainer) {
+                            if (typeof renderer.popInWidget === 'function') {
+                                renderer.popInWidget(sourceContainer, modalContainer);
+                            } else if (typeof renderer.returnPoppedOutWidget === 'function') {
+                                renderer.returnPoppedOutWidget(sourceContainer, modalContainer);
+                            }
+                            setTimeout(() => {
+                                const chart = renderer._chartInstances?.get(sourceContainer);
+                                if (chart) chart.resize();
+                            }, 50);
                         }
                     }
                     this.popOutActive = false;
