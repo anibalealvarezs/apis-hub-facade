@@ -982,11 +982,11 @@ class DemoDashboardService
 
                     $dailyRows[] = [
                         'date' => $d,
-                        'spend' => $currencySymbol . number_format($daySpend),
-                        'clicks' => number_format($dayClicks),
-                        'conversions' => number_format($dayConv),
-                        'cpa' => $currencySymbol . number_format($dayCpa, $groupId === '3' ? 0 : 2),
-                        'roas' => number_format($dayRoas, 2) . 'x',
+                        'spend' => $daySpend,
+                        'clicks' => $dayClicks,
+                        'conversions' => $dayConv,
+                        'cpa' => $dayCpa,
+                        'roas' => $dayRoas,
                     ];
                 }
 

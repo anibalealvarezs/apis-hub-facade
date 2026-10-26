@@ -1632,16 +1632,23 @@ window.dashboardRenderer = {
                     col.format === "currency" ||
                     col.format === "percentage" ||
                     col.format === "number";
-                const formatted =
-                    isNumeric && col.format === "currency"
-                        ? this.formatCurrency(val)
-                        : isNumeric && col.format === "percentage"
-                          ? val != null
-                              ? Number(val).toFixed(1) + "%"
-                              : ""
-                          : isNumeric && col.format === "number"
-                            ? this._formatTableNumber(val)
-                            : val;
+                let formatted = val;
+                if (isNumeric) {
+                    if (typeof val === "number" || (!isNaN(Number(val)) && val !== "")) {
+                        if (col.format === "currency") {
+                            formatted = this.formatCurrency(val);
+                        } else if (col.format === "percentage") {
+                            formatted = Number(val).toFixed(1) + "%";
+                        } else {
+                            formatted = this._formatTableNumber(val);
+                        }
+                    } else if (val != null && val !== "") {
+                        // Pre-formatted string (e.g. '$ 12,410' or '2.50x')
+                        formatted = val;
+                    } else {
+                        formatted = "—";
+                    }
+                }
                 const tdClass = isNumeric
                     ? "px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right"
                     : "px-3 py-2 text-gray-700 dark:text-gray-200";
@@ -3760,8 +3767,10 @@ window.dashboardRenderer = {
             this._pinnedTooltips.delete(containerEl);
         }
 
-        const canvas = containerEl.querySelector("canvas");
-        if (canvas) {
+        const mapInst = this._chartInstances.get(containerEl);
+        const isMap = !!(mapInst && typeof mapInst.updateSize === "function");
+
+        if (canvas || isMap) {
             targetEl.style.display = "flex";
             targetEl.style.flexDirection = "column";
             targetEl.style.width = "100%";
@@ -3769,12 +3778,25 @@ window.dashboardRenderer = {
             targetEl.style.overflow = "hidden";
             targetEl.innerHTML = "";
 
-            // Move entire child tree (canvasWrap + r2 badge + tooltip + toggles) into modal
+            // Move entire child tree into modal
             while (containerEl.children.length > 0) {
                 targetEl.appendChild(containerEl.children[0]);
             }
+
+            if (isMap) {
+                this._chartInstances.set(targetEl, mapInst);
+                this._chartInstances.delete(containerEl);
+                if (this._popOutObserver) this._popOutObserver.disconnect();
+                this._popOutObserver = new ResizeObserver(() => {
+                    mapInst.updateSize();
+                });
+                this._popOutObserver.observe(targetEl);
+                setTimeout(() => mapInst.updateSize(), 50);
+                return;
+            }
+
             let chart = this._chartInstances.get(containerEl);
-            if (!chart && window.Chart?.getChart) {
+            if (!chart && window.Chart?.getChart && canvas) {
                 chart = window.Chart.getChart(canvas);
             }
             if (chart) {
@@ -3815,18 +3837,10 @@ window.dashboardRenderer = {
             this._popOutObserver = null;
         }
         const canvas = targetEl.querySelector("canvas");
-        if (canvas) {
-            const existingCanvas = containerEl.querySelector("canvas");
-            if (existingCanvas) {
-                // Grid was reloaded while popped out — discard modal's stale chart
-                const chart = this._chartInstances.get(targetEl);
-                if (chart) {
-                    chart.destroy();
-                    this._chartInstances.delete(targetEl);
-                }
-                targetEl.innerHTML = "";
-                return;
-            }
+        const mapInst = this._chartInstances.get(targetEl);
+        const isMap = !!(mapInst && typeof mapInst.updateSize === "function");
+
+        if (canvas || isMap) {
             containerEl.style.display = "flex";
             containerEl.style.flexDirection = "column";
             containerEl.style.width = "100%";
@@ -3853,6 +3867,14 @@ window.dashboardRenderer = {
                 );
                 this._pinnedTooltips.delete(targetEl);
             }
+
+            if (isMap) {
+                this._chartInstances.set(containerEl, mapInst);
+                this._chartInstances.delete(targetEl);
+                setTimeout(() => mapInst.updateSize(), 50);
+                return;
+            }
+
             const chart = this._chartInstances.get(targetEl);
             if (chart) {
                 this._chartInstances.set(containerEl, chart);
@@ -4637,13 +4659,17 @@ window.dashboardRenderer = {
             });
         }
 
-        // Setup ResizeObserver to automatically switch between 2-column landscape and toggle mode
+        // Setup ResizeObserver to automatically switch between 2-column landscape and toggle mode and resize map
         if (window.ResizeObserver) {
             const ro = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const cr = entry.contentRect;
                     if (cr && cr.width > 0 && cr.height > 0) {
                         applyAdaptiveLayout(cr.width, cr.height);
+                        const mapInstance = this._chartInstances?.get(containerEl) || window._currentMapInst;
+                        if (mapInstance && typeof mapInstance.updateSize === 'function') {
+                            mapInstance.updateSize();
+                        }
                     }
                 }
             });

@@ -774,8 +774,11 @@
                             renderer.popOutWidget(sourceContainer, modalContainer);
                             // Force resize on next frame after modal is in DOM with full dimensions
                             setTimeout(() => {
-                                const chart = renderer._chartInstances?.get(modalContainer);
-                                if (chart) chart.resize();
+                                const inst = renderer._chartInstances?.get(modalContainer);
+                                if (inst) {
+                                    if (typeof inst.resize === 'function') inst.resize();
+                                    if (typeof inst.updateSize === 'function') inst.updateSize();
+                                }
                             }, 50);
                         } else {
                             const controls = {
