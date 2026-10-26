@@ -1022,9 +1022,11 @@
 - **Official Logos:**
   - **Mailchimp:** Replaced with the complete, official Simple Icons vector for Freddie in both `BrandIcon::mailchimp()` and `dashboard-renderer.js`.
   - **Google Ads:** Replaced with the official Simple Icons vector (angled ad loop and dot mark) in both `BrandIcon::googleAds()` and `dashboard-renderer.js`.
-- **Meta Ads & Meta Organic Branding:**
-  - Updated `BrandIcon::CHANNEL_METHODS` and `dashboard-renderer.js` so `facebook_marketing`, `facebook_organic`, `meta_ads`, and `meta_organic` default to the official Meta infinity loop logo (`BrandIcon::meta()`) instead of the Facebook "F" mark. Instagram mark is preserved for specific Instagram assets under Meta Organic.
-- **Chart Datapoint Tooltips:**
-  - Fixed live hover tooltips in `dashboard-renderer.js` (`_externalTooltipHandler`): injected `this.getChannelIconSvg(dp.dataset.channel, dp.dataset.dependency, dp.dataset.label || yMN)` between the color dot swatch and the series text.
-  - Enhanced `getChannelIconSvg()` in `dashboard-renderer.js` to detect channel prefixes without brackets (e.g., `GSC - Clics`, `GA4 - Sessions`, `GAds - Clicks`, `IG - `, `FB - `, `Meta - `) as well as bracketed indicators (`[Google Analytics]`, `[GSC]`, `[Meta Ads]`).
+### Dashboard Duplication & Dynamic Count Column Safeguards (2026-10-26)
+- **Issue:** Duplicating a dashboard from the Filament Dashboard list table triggered `SQLSTATE[42703]: Undefined column: 7 ERROR: column "public_views_count" of relation "dashboards" does not exist`.
+- **Root Cause:** Filament's table applies `->counts('publicViews')` and `->counts('widgets')`. When `$dashboard->replicate()` was invoked, `$dashboard->public_views_count` was copied onto the clone instance. `DashboardService::cloneDashboard()` only had a hardcoded `unset($clone->widgets_count)`, so `public_views_count` was passed to the `insert` query.
+- **Fix:**
+  - `app/Services/DashboardService.php`: Updated `cloneDashboard()` and `cloneDashboardFromVersion()` to strip all dynamic `*_count` attributes from `$clone` and `$widgetClone` before pushing.
+  - `app/Models/Dashboard.php` & `app/Models/DashboardWidget.php`: Added model-level safeguards in the `creating` event to automatically strip any `*_count` attributes from `$dashboard->attributes` and `$widget->attributes` before the SQL insert query is compiled.
+
 
