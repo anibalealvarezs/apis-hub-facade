@@ -2741,18 +2741,18 @@ window.dashboardRenderer = {
             // 1. Determine if this dataset is a rate / ratio or volume metric
             const isRateOrPercentage =
                 ds.percentage ||
-                resultFormat?.format === "percentage" ||
+                (ds.percentage === undefined && resultFormat?.format === "percentage") ||
                 rateMetricKeywords.some(
                     (kw) => labelLower.includes(kw) || keyLower.includes(kw),
                 );
 
             const isCurrency =
-                ds.currency ??
-                (resultFormat?.format === "currency" ||
-                    ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                ds.currency !== undefined
+                    ? !!ds.currency
+                    : ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
                         (kw) =>
                             labelLower.includes(kw) || keyLower.includes(kw),
-                    ));
+                    );
 
             // 2. Determine Chart Type (User override > Dataset default > Heuristic)
             const comboEntry =
@@ -2816,44 +2816,50 @@ window.dashboardRenderer = {
                 }
             }
 
-            // 3. Determine Axis Assignment (User override > Default)
-            let yAxisID = comboEntry?.axis || ds.yAxisID || null;
-            if (!yAxisID) {
-                if (comboConfig[idx]?.axis) {
-                    yAxisID = comboConfig[idx].axis;
-                } else if (comboConfig[ds.label]?.axis) {
-                    yAxisID = comboConfig[ds.label].axis;
-                } else {
-                    const hasCurrencyInAny = data.datasets.some((d) => {
-                        const l = (d.label || "").toLowerCase();
-                        const m = (
-                            d.metric ||
-                            d.metric_key ||
-                            ""
-                        ).toLowerCase();
-                        return (
-                            d.currency ||
-                            ["spend", "cost", "revenue"].some(
-                                (kw) => l.includes(kw) || m.includes(kw),
-                            )
-                        );
-                    });
+            // 3. Determine Axis Assignment (User override > Default heuristic)
+            let yAxisID = null;
+            if (comboEntry?.axis === "y" || comboEntry?.axis === "y1") {
+                yAxisID = comboEntry.axis;
+            } else if (comboConfig[idx]?.axis === "y" || comboConfig[idx]?.axis === "y1") {
+                yAxisID = comboConfig[idx].axis;
+            } else if (comboConfig[ds.label]?.axis === "y" || comboConfig[ds.label]?.axis === "y1") {
+                yAxisID = comboConfig[ds.label].axis;
+            } else if (ds.yAxisID === "y" || ds.yAxisID === "y1") {
+                yAxisID = ds.yAxisID;
+            }
 
-                    if (hasCurrencyInAny) {
-                        // Currency on left ('y'), count/rate lines on right ('y1')
-                        const isThisCurrency =
-                            isCurrency ||
-                            ["spend", "cost", "revenue"].some(
-                                (kw) =>
-                                    labelLower.includes(kw) ||
-                                    keyLower.includes(kw),
-                            );
-                        yAxisID = isThisCurrency ? "y" : "y1";
-                    } else if (chartType === "line" && isRateOrPercentage) {
-                        yAxisID = "y1";
-                    } else {
-                        yAxisID = "y";
-                    }
+            if (!yAxisID) {
+                const hasCurrencyInAny = data.datasets.some((d) => {
+                    const l = (d.label || "").toLowerCase();
+                    const m = (
+                        d.metric ||
+                        d.metric_key ||
+                        ""
+                    ).toLowerCase();
+                    return (
+                        d.currency ||
+                        ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                            (kw) => l.includes(kw) || m.includes(kw),
+                        )
+                    );
+                });
+
+                if (hasCurrencyInAny) {
+                    // Currency on left ('y'), count/rate lines on right ('y1')
+                    const isThisCurrency =
+                        isCurrency ||
+                        ["spend", "cost", "revenue", "cpc", "cpm", "aov"].some(
+                            (kw) =>
+                                labelLower.includes(kw) ||
+                                keyLower.includes(kw),
+                        );
+                    yAxisID = isThisCurrency ? "y" : "y1";
+                } else if (chartType === "line" && isRateOrPercentage) {
+                    yAxisID = "y1";
+                } else if (data.datasets.length > 1 && idx > 0) {
+                    yAxisID = "y1";
+                } else {
+                    yAxisID = "y";
                 }
             }
 
@@ -3581,9 +3587,9 @@ window.dashboardRenderer = {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
                     let formattedVal = this.formatNumber(v);
-                    if (ds.percentage || (!ds.currency && resultFormat?.format === "percentage")) {
+                    if (ds.percentage || (ds.percentage === undefined && !ds.currency && resultFormat?.format === "percentage")) {
                         formattedVal = v.toFixed(1) + "%";
-                    } else if (ds.currency || resultFormat?.format === "currency") {
+                    } else if (ds.currency || (ds.currency === undefined && !ds.percentage && resultFormat?.format === "currency")) {
                         formattedVal = this.formatCurrency(v);
                     }
                     const total = (ds.data || []).reduce((acc, curr) => acc + (typeof curr === 'number' ? curr : 0), 0);
@@ -3594,9 +3600,9 @@ window.dashboardRenderer = {
                     const label = chart.data.labels?.[el.index] || "";
                     let v = typeof raw === "object" ? (raw.y ?? 0) : raw;
                     if (!ds.percentage && resultFormat?.multiply) v = v * resultFormat.multiply;
-                    if (ds.percentage || (!ds.currency && resultFormat?.format === "percentage")) {
+                    if (ds.percentage || (ds.percentage === undefined && !ds.currency && resultFormat?.format === "percentage")) {
                         val = v.toFixed(1) + "%";
-                    } else if (ds.currency || resultFormat?.format === "currency") {
+                    } else if (ds.currency || (ds.currency === undefined && !ds.percentage && resultFormat?.format === "currency")) {
                         val = this.formatCurrency(v);
                     } else {
                         val = this.formatNumber(v);
