@@ -9,13 +9,13 @@
             'num' => '1',
             'label' => $currentLang === 'es' ? 'Fuentes de Datos' : 'Data Sources',
             'desc' => $currentLang === 'es' ? 'Activos y Cuotas' : 'Assets & Quotas',
-            'route' => $currentLang === 'es' ? '/es/demo/data-sources' : '/demo/data-sources',
+            'route' => $currentLang === 'es' ? '/es/demo/data-sources' : '/demo/data-sources?lang=en',
         ],
         2 => [
             'num' => '2',
             'label' => $currentLang === 'es' ? 'Grupos de Activos' : 'Asset Groups',
             'desc' => $currentLang === 'es' ? 'Organización Cross-Channel' : 'Cross-Channel Setup',
-            'route' => $currentLang === 'es' ? '/es/demo/asset-groups' : '/demo/asset-groups',
+            'route' => $currentLang === 'es' ? '/es/demo/asset-groups' : '/demo/asset-groups?lang=en',
         ],
         3 => [
             'num' => '3',

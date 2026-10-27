@@ -35,7 +35,9 @@ class DemoDashboardTest extends TestCase
         $en = $this->get('/demo/data-sources?lang=en');
         $en->assertStatus(200);
         $en->assertSee('APIs Hub');
+        $en->assertSee('Data Sources Configuration');
         $en->assertSee('Google Search Console');
+        $en->assertSee('Tier Usage');
     }
 
     public function test_demo_asset_groups_page_loads_in_spanish_and_english()
@@ -49,7 +51,9 @@ class DemoDashboardTest extends TestCase
         $en = $this->get('/demo/asset-groups?lang=en');
         $en->assertStatus(200);
         $en->assertSee('APIs Hub');
-        $en->assertSee('Marca Principal (Global / EE.UU.)');
+        $en->assertSee('Asset Groups');
+        $en->assertSee('Main Brand (Global / US)');
+        $en->assertSee('Apparel & Footwear Line (Europe)');
     }
 
     public function test_demo_widget_data_for_argentina()

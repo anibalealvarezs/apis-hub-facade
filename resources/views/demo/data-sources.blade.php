@@ -124,10 +124,10 @@
                     </div>
                     <div>
                         <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-                            {{ __('Configuración de Fuentes de Datos') }}
+                            {{ $currentLang === 'es' ? 'Configuración de Fuentes de Datos' : 'Data Sources Configuration' }}
                         </h1>
                         <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                            {{ __('Conecta y habilita cuentas publicitarias, propiedades analíticas y listas de correo con control de cuota de activos.') }}
+                            {{ $currentLang === 'es' ? 'Conecta y habilita cuentas publicitarias, propiedades analíticas y listas de correo con control de cuota de activos.' : 'Connect and toggle ad accounts, web properties, and email audiences with real-time asset quota management.' }}
                         </p>
                     </div>
                 </div>
@@ -136,22 +136,22 @@
             {{-- Tier Usage Quota Badge --}}
             <div class="flex items-center gap-4 text-sm bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/80 rounded-xl px-4 py-2.5 shadow-xs">
                 <div class="flex flex-col text-xs text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 pr-3">
-                    <span class="text-[10px] uppercase font-semibold text-gray-400">{{ __('Ciclo Actual') }}</span>
+                    <span class="text-[10px] uppercase font-semibold text-gray-400">{{ $currentLang === 'es' ? 'Ciclo Actual' : 'Current Cycle' }}</span>
                     <span class="font-bold text-gray-800 dark:text-gray-200">{{ $stats['billing_cycle'] }}</span>
                 </div>
                 <div class="flex flex-col text-xs text-gray-500 dark:text-gray-400 border-r border-gray-200 dark:border-gray-700 pr-3">
-                    <span class="text-[10px] uppercase font-semibold text-gray-400">{{ __('Reinicio de Cuota') }}</span>
+                    <span class="text-[10px] uppercase font-semibold text-gray-400">{{ $currentLang === 'es' ? 'Reinicio de Cuota' : 'Quota Reset' }}</span>
                     <span class="font-bold text-gray-800 dark:text-gray-200">{{ $stats['quota_reset'] }}</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="flex flex-col">
-                        <span class="text-[10px] uppercase font-bold tracking-wide text-gray-400 dark:text-gray-500">{{ __('Uso del Tier') }}</span>
+                        <span class="text-[10px] uppercase font-bold tracking-wide text-gray-400 dark:text-gray-500">{{ $currentLang === 'es' ? 'Uso del Tier' : 'Tier Usage' }}</span>
                         <div class="font-extrabold text-base text-emerald-600 dark:text-emerald-400">
                             <span x-text="tierUsage"></span> / <span x-text="tierMax"></span>
                         </div>
                     </div>
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                        {{ __('Saludable') }}
+                        {{ $currentLang === 'es' ? 'Saludable' : 'Healthy' }}
                     </span>
                 </div>
             </div>
@@ -163,7 +163,7 @@
             {{-- Channels Sidebar (Exact Replica of DataSources sidebar) --}}
             <aside class="w-full md:w-80 md:flex-none flex-shrink-0 flex flex-col gap-3 bg-white dark:bg-gray-900 rounded-xl shadow-xs ring-1 ring-gray-200 dark:ring-gray-800 p-4 sticky top-24">
                 <div class="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-2 pb-1 border-b border-gray-100 dark:border-gray-800">
-                    {{ __('Proveedores Conectados') }}
+                    {{ $currentLang === 'es' ? 'Proveedores Conectados' : 'Connected Providers' }}
                 </div>
 
                 <template x-for="(provider, pKey) in providers" :key="pKey">
@@ -235,21 +235,21 @@
                     <div>
                         <div class="flex items-center gap-2.5">
                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider">
-                                {{ __('Conectado') }}
+                                {{ $currentLang === 'es' ? 'Conectado' : 'Connected' }}
                             </span>
                             <h2 class="text-xl font-bold text-gray-900 dark:text-white" x-text="activeChannel?.label"></h2>
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-x-2">
-                            <span>{{ __('Última sincronización') }}: {{ $stats['last_synced'] }}</span>
+                            <span>{{ $currentLang === 'es' ? 'Última sincronización' : 'Last synced' }}: {{ $stats['last_synced'] }}</span>
                             <span class="text-gray-300 dark:text-gray-600">|</span>
-                            <span>{{ __('Despliegue de infraestructura') }}: {{ $stats['last_deploy'] }}</span>
+                            <span>{{ $currentLang === 'es' ? 'Despliegue de infraestructura' : 'Server deployment' }}: {{ $stats['last_deploy'] }}</span>
                         </p>
                     </div>
 
                     <div class="flex items-center gap-2">
                         <button type="button" @click="simulateDiscovery()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs">
                             <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            <span>{{ __('Descubrir Activos') }}</span>
+                            <span>{{ $currentLang === 'es' ? 'Descubrir Activos' : 'Discover Assets' }}</span>
                         </button>
                     </div>
                 </div>
@@ -259,12 +259,16 @@
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
                         <div>
-                            <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ __('Sincronización de Canal Activa') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Los datos se sincronizan diariamente y se integran automáticamente en los modelos normalizados.') }}</p>
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                                {{ $currentLang === 'es' ? 'Sincronización de Canal Activa' : 'Channel Synchronization Active' }}
+                            </span>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $currentLang === 'es' ? 'Los datos se sincronizan diariamente y se integran automáticamente en los modelos normalizados.' : 'Daily sync extracts raw metrics and transforms them into standardized omnichannel schemas.' }}
+                            </p>
                         </div>
                     </div>
                     <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                        {{ __('Activo') }}
+                        {{ $currentLang === 'es' ? 'Activo' : 'Active' }}
                     </span>
                 </div>
 
@@ -272,11 +276,15 @@
                 <div class="space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ __('Activos Monitoreados') }}</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Cada activo habilitado cuenta para tu cuota de cuenta y se asocia a grupos de activos en el Paso 2.') }}</p>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                                {{ $currentLang === 'es' ? 'Activos Monitoreados' : 'Monitored Assets' }}
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $currentLang === 'es' ? 'Cada activo habilitado cuenta para tu cuota de cuenta y se asocia a grupos de activos en el Paso 2.' : 'Each enabled asset contributes to your project tier quota and is grouped in Step 2.' }}
+                            </p>
                         </div>
                         <span class="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-950/50 px-2.5 py-1 rounded-lg border border-primary-200 dark:border-primary-900/50"
-                              x-text="(activeChannel?.assets?.length || 0) + ' ' + '{{ __('Activos Disponibles') }}'">
+                              x-text="(activeChannel?.assets?.length || 0) + ' ' + (currentLang === 'es' ? 'Activos Disponibles' : 'Assets Available')">
                         </span>
                     </div>
 
@@ -297,7 +305,7 @@
                                         
                                         {{-- Linked Asset Groups Preview --}}
                                         <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                                            <span class="text-[10px] text-gray-400 uppercase font-semibold">{{ __('Grupos:') }}</span>
+                                            <span class="text-[10px] text-gray-400 uppercase font-semibold">{{ $currentLang === 'es' ? 'Grupos:' : 'Groups:' }}</span>
                                             <template x-for="group in asset.groups" :key="group">
                                                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
                                                     <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"/></svg>
@@ -328,11 +336,11 @@
                 {{-- Action / Bottom Stepper CTA --}}
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100 dark:border-gray-800">
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ __('💡 En este paso activas los activos que luego organizarás en Grupos de Activos.') }}
+                        {{ $currentLang === 'es' ? '💡 En este paso activas los activos que luego organizarás en Grupos de Activos.' : '💡 In this step you enable the assets which you will organize into Asset Groups next.' }}
                     </p>
-                    <a href="{{ $currentLang === 'es' ? '/es/demo/asset-groups' : '/demo/asset-groups' }}"
+                    <a href="{{ $currentLang === 'es' ? '/es/demo/asset-groups' : '/demo/asset-groups?lang=en' }}"
                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
-                        <span>{{ __('Continuar al Paso 2: Grupos de Activos') }}</span>
+                        <span>{{ $currentLang === 'es' ? 'Continuar al Paso 2: Grupos de Activos' : 'Continue to Step 2: Asset Groups' }}</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </a>
                 </div>
@@ -345,16 +353,16 @@
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div>
                 <h2 class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ __('Demostración Interactiva Paso 1 de 3') }}
-                </h1>
+                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 1 de 3' : 'Interactive Demo Step 1 of 3' }}
+                </h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {{ __('Explora cómo APIs Hub gestiona credenciales seguras, límites de cuotas y normalización cross-channel.') }}
+                    {{ $currentLang === 'es' ? 'Explora cómo APIs Hub gestiona credenciales seguras, límites de cuotas y normalización cross-channel.' : 'Explore how APIs Hub handles enterprise tokens, rate limits, and cross-channel normalization.' }}
                 </p>
             </div>
             <div class="flex items-center gap-3">
                 <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-sm transition-colors">
-                    <span>{{ __('Comenzar Prueba Gratis') }}</span>
+                    <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis' : 'Start Free Trial' }}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
             </div>

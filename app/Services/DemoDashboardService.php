@@ -7,25 +7,39 @@ class DemoDashboardService
     /**
      * Return list of 3 demo asset groups.
      */
-    public function getAssetGroups(): array
+    public function getAssetGroups(?string $lang = null): array
     {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
+        if ($lang === 'en') {
+            return [
+                '1' => 'Main Brand (Global / US)',
+                '2' => 'Apparel & Footwear Line (Europe)',
+                '3' => 'Aura Home & Living (Argentina)',
+            ];
+        }
+
         return [
-            '1' => __('Marca Principal (Global / EE.UU.)'),
-            '2' => __('Línea Apparel & Calzado (Europa)'),
-            '3' => __('Aura Hogar & Deco (Argentina)'),
+            '1' => 'Marca Principal (Global / EE.UU.)',
+            '2' => 'Línea Apparel & Calzado (Europa)',
+            '3' => 'Aura Hogar & Deco (Argentina)',
         ];
     }
 
     /**
      * Detailed Asset Group definitions for Step 2 demo.
      */
-    public function getDemoAssetGroupsList(): array
+    public function getDemoAssetGroupsList(?string $lang = null): array
     {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
+        $isEn = $lang === 'en';
+
         return [
             [
                 'id' => '1',
-                'name' => 'Marca Principal (Global / EE.UU.)',
-                'description' => 'Operaciones globales y e-commerce principal en Estados Unidos e internacional.',
+                'name' => $isEn ? 'Main Brand (Global / US)' : 'Marca Principal (Global / EE.UU.)',
+                'description' => $isEn 
+                    ? 'Global operations and primary e-commerce flagship across the United States and international markets.'
+                    : 'Operaciones globales y e-commerce principal en Estados Unidos e internacional.',
                 'created_at' => '2026-08-15 10:20:00',
                 'updated_at' => '2026-10-24 14:12:00',
                 'items_count' => 7,
@@ -41,8 +55,10 @@ class DemoDashboardService
             ],
             [
                 'id' => '2',
-                'name' => 'Línea Apparel & Calzado (Europa)',
-                'description' => 'División europea especializada en moda, calzado y distribución multicanal UE.',
+                'name' => $isEn ? 'Apparel & Footwear Line (Europe)' : 'Línea Apparel & Calzado (Europa)',
+                'description' => $isEn
+                    ? 'European business division specialized in fashion, footwear, and EU omnichannel fulfillment.'
+                    : 'División europea especializada en moda, calzado y distribución multicanal UE.',
                 'created_at' => '2026-09-01 11:45:00',
                 'updated_at' => '2026-10-25 09:30:00',
                 'items_count' => 7,
@@ -58,8 +74,10 @@ class DemoDashboardService
             ],
             [
                 'id' => '3',
-                'name' => 'Aura Hogar & Deco (Argentina)',
-                'description' => 'Comercio electrónico y retail local para el mercado argentino y conosur.',
+                'name' => $isEn ? 'Aura Home & Living (Argentina)' : 'Aura Hogar & Deco (Argentina)',
+                'description' => $isEn
+                    ? 'Local retail and direct-to-consumer online store for the Argentine and Southern Cone markets.'
+                    : 'Comercio electrónico y retail local para el mercado argentino y conosur.',
                 'created_at' => '2026-09-10 16:15:00',
                 'updated_at' => '2026-10-26 12:00:00',
                 'items_count' => 7,
@@ -79,8 +97,15 @@ class DemoDashboardService
     /**
      * Data Sources and Provider structure for Step 1 demo.
      */
-    public function getDemoDataSourcesData(): array
+    public function getDemoDataSourcesData(?string $lang = null): array
     {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
+        $isEn = $lang === 'en';
+
+        $group1Name = $isEn ? 'Main Brand (Global / US)' : 'Marca Principal (Global / EE.UU.)';
+        $group2Name = $isEn ? 'Apparel & Footwear Line (Europe)' : 'Línea Apparel & Calzado (Europa)';
+        $group3Name = $isEn ? 'Aura Home & Living (Argentina)' : 'Aura Hogar & Deco (Argentina)';
+
         return [
             'providers' => [
                 'google' => [
@@ -90,7 +115,7 @@ class DemoDashboardService
                             'key' => 'google_search_console',
                             'label' => 'Google Search Console',
                             'enabled' => true,
-                            'status' => 'Active',
+                            'status' => $isEn ? 'Active' : 'Activo',
                             'compatible' => true,
                             'count' => 3,
                             'assets' => [
@@ -101,7 +126,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Domain Property',
                                     'helper' => 'ID: sc-domain:auraliving.com',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'sc-domain:wear.auraliving.com',
@@ -110,7 +135,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Domain Property',
                                     'helper' => 'ID: sc-domain:wear.auraliving.com',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'sc-domain:ar.auraliving.com',
@@ -119,7 +144,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Domain Property',
                                     'helper' => 'ID: sc-domain:ar.auraliving.com',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'groups' => [$group3Name],
                                 ],
                             ],
                             'config' => [
@@ -131,7 +156,7 @@ class DemoDashboardService
                             'key' => 'google_analytics',
                             'label' => 'Google Analytics 4',
                             'enabled' => true,
-                            'status' => 'Active',
+                            'status' => $isEn ? 'Active' : 'Activo',
                             'compatible' => true,
                             'count' => 3,
                             'assets' => [
@@ -142,7 +167,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'GA4 Property',
                                     'helper' => 'Property ID: 319084201',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'ga4_prop_eu',
@@ -151,7 +176,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'GA4 Property',
                                     'helper' => 'Property ID: 328109312',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'ga4_prop_ar',
@@ -160,7 +185,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'GA4 Property',
                                     'helper' => 'Property ID: 340918455',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'groups' => [$group3Name],
                                 ],
                             ],
                             'config' => [
@@ -171,7 +196,7 @@ class DemoDashboardService
                             'key' => 'google_ads',
                             'label' => 'Google Ads',
                             'enabled' => true,
-                            'status' => 'Active',
+                            'status' => $isEn ? 'Active' : 'Activo',
                             'compatible' => true,
                             'count' => 3,
                             'assets' => [
@@ -181,7 +206,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Ad Account',
                                     'helper' => 'Customer ID: 412-882-9011 (MCC: Aura Global HQ)',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'gads_europe_eu_202',
@@ -189,7 +214,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Ad Account',
                                     'helper' => 'Customer ID: 619-331-4099 (MCC: Aura Global HQ)',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'gads_argentina_ar_203',
@@ -197,7 +222,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Ad Account',
                                     'helper' => 'Customer ID: 552-190-2810 (MCC: Aura Conosur Retail)',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'groups' => [$group3Name],
                                 ],
                             ],
                             'config' => [
@@ -213,7 +238,7 @@ class DemoDashboardService
                             'key' => 'facebook_marketing',
                             'label' => 'Meta Ads',
                             'enabled' => true,
-                            'status' => 'Active',
+                            'status' => $isEn ? 'Active' : 'Activo',
                             'compatible' => true,
                             'count' => 3,
                             'assets' => [
@@ -223,7 +248,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Meta Ad Account',
                                     'helper' => 'ID: act_98127391 · Business Manager: Aura Living Inc.',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'act_europe_eu_102',
@@ -231,7 +256,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Meta Ad Account',
                                     'helper' => 'ID: act_44109822 · Business Manager: Aura Fashion EU Ltd.',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'act_argentina_ar_103',
@@ -239,7 +264,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Meta Ad Account',
                                     'helper' => 'ID: act_77182903 · Business Manager: Aura Living Conosur',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'groups' => [$group3Name],
                                 ],
                             ],
                             'config' => [
@@ -250,7 +275,7 @@ class DemoDashboardService
                             'key' => 'facebook_organic',
                             'label' => 'Meta Organic',
                             'enabled' => true,
-                            'status' => 'Active',
+                            'status' => $isEn ? 'Active' : 'Activo',
                             'compatible' => true,
                             'count' => 6,
                             'assets' => [
@@ -259,16 +284,16 @@ class DemoDashboardService
                                     'title' => 'Aura Living Official Page',
                                     'enabled' => true,
                                     'type' => 'Facebook Page',
-                                    'helper' => 'Page ID: 109283748192 (184,200 fans)',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'helper' => $isEn ? 'Page ID: 109283748192 (184,200 fans)' : 'Page ID: 109283748192 (184,200 fans)',
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'ig_global',
                                     'title' => '@auraliving_official',
                                     'enabled' => true,
                                     'type' => 'Instagram Professional',
-                                    'helper' => 'IG ID: 178414029102 (312,500 followers)',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'helper' => $isEn ? 'IG ID: 178414029102 (312,500 followers)' : 'IG ID: 178414029102 (312,500 seguidores)',
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'fb_page_eu',
@@ -276,15 +301,15 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Facebook Page',
                                     'helper' => 'Page ID: 104829104812 (64,100 fans)',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'ig_eu',
                                     'title' => '@aurawear_eu',
                                     'enabled' => true,
                                     'type' => 'Instagram Professional',
-                                    'helper' => 'IG ID: 178419201948 (98,400 followers)',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'helper' => $isEn ? 'IG ID: 178419201948 (98,400 followers)' : 'IG ID: 178419201948 (98,400 seguidores)',
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'fb_page_ar',
@@ -292,15 +317,15 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Facebook Page',
                                     'helper' => 'Page ID: 105928172819 (42,800 fans)',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'groups' => [$group3Name],
                                 ],
                                 [
                                     'id' => 'ig_ar',
                                     'title' => '@aurahogar_ar',
                                     'enabled' => true,
                                     'type' => 'Instagram Professional',
-                                    'helper' => 'IG ID: 178418371928 (76,300 followers)',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'helper' => $isEn ? 'IG ID: 178418371928 (76,300 followers)' : 'IG ID: 178418371928 (76,300 seguidores)',
+                                    'groups' => [$group3Name],
                                 ],
                             ],
                             'config' => [
@@ -316,7 +341,7 @@ class DemoDashboardService
                             'key' => 'mailchimp',
                             'label' => 'Mailchimp',
                             'enabled' => true,
-                            'status' => 'Active',
+                            'status' => $isEn ? 'Active' : 'Activo',
                             'compatible' => true,
                             'count' => 3,
                             'assets' => [
@@ -326,7 +351,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Audience List',
                                     'helper' => 'Audience ID: mc_lst_9918 (48,210 subscribers) · Account: Aura Living Corp',
-                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                    'groups' => [$group1Name],
                                 ],
                                 [
                                     'id' => 'mc_list_eu',
@@ -334,7 +359,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Audience List',
                                     'helper' => 'Audience ID: mc_lst_4421 (22,940 subscribers) · Account: Aura Living Corp',
-                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                    'groups' => [$group2Name],
                                 ],
                                 [
                                     'id' => 'mc_list_ar',
@@ -342,7 +367,7 @@ class DemoDashboardService
                                     'enabled' => true,
                                     'type' => 'Audience List',
                                     'helper' => 'Audience ID: mc_lst_1109 (14,300 subscribers) · Account: Aura Living Corp',
-                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                    'groups' => [$group3Name],
                                 ],
                             ],
                             'config' => [
@@ -354,29 +379,29 @@ class DemoDashboardService
                 'tiktok' => [
                     'label' => 'TikTok',
                     'channels' => [
-                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Coming Soon', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
+                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => $isEn ? 'Coming Soon' : 'Próximamente', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
                     ],
                 ],
                 'shopify' => [
                     'label' => 'Shopify',
                     'channels' => [
-                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Coming Soon', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
+                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => $isEn ? 'Coming Soon' : 'Próximamente', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
                     ],
                 ],
                 'klaviyo' => [
                     'label' => 'Klaviyo',
                     'channels' => [
-                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Coming Soon', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
+                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => $isEn ? 'Coming Soon' : 'Próximamente', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
                     ],
                 ],
             ],
             'stats' => [
                 'tier_usage' => 21,
                 'tier_max' => 50,
-                'billing_cycle' => 'Oct 1, 2026 - Oct 31, 2026',
-                'quota_reset' => 'Nov 1, 2026',
-                'last_synced' => 'Today at 06:12 AM',
-                'last_deploy' => 'Oct 24, 2026 14:00',
+                'billing_cycle' => $isEn ? 'Oct 1, 2026 - Oct 31, 2026' : '1 Oct, 2026 - 31 Oct, 2026',
+                'quota_reset' => $isEn ? 'Nov 1, 2026' : '1 Nov, 2026',
+                'last_synced' => $isEn ? 'Today at 06:12 AM' : 'Hoy a las 06:12 AM',
+                'last_deploy' => $isEn ? 'Oct 24, 2026 14:00' : '24 Oct, 2026 14:00',
             ],
         ];
     }
@@ -423,8 +448,9 @@ class DemoDashboardService
     /**
      * Dashboard layout & widget definitions for GridStack.
      */
-    public function getDashboardDefinition(): array
+    public function getDashboardDefinition(?string $lang = null): array
     {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
         $today = date('Y-m-d');
         $start = date('Y-m-d', strtotime('-30 days'));
 
@@ -444,20 +470,23 @@ class DemoDashboardService
                 'show_asset_group_selector' => true,
                 'asset_group' => ['1', '2', '3'],
             ],
-            'widgets' => $this->getWidgetDefinitions(),
+            'widgets' => $this->getWidgetDefinitions($lang),
         ];
     }
 
     /**
      * Widget metadata matching GridStack coordinates and types.
      */
-    public function getWidgetDefinitions(): array
+    public function getWidgetDefinitions(?string $lang = null): array
     {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
+        $isEn = ($lang === 'en');
+
         return [
             // ─── BLOQUE 1: RESUMEN EJECUTIVO (FILA 1, h: 2) ───
             [
                 'id' => 101,
-                'name' => 'Inversión Publicitaria Total (Blended)',
+                'name' => $isEn ? 'Total Ad Spend (Blended)' : 'Inversión Publicitaria Total (Blended)',
                 'grid_x' => 0, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'derived_metric',
@@ -470,7 +499,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 102,
-                'name' => 'Ingresos Atribuidos Totales',
+                'name' => $isEn ? 'Total Attributed Revenue' : 'Ingresos Atribuidos Totales',
                 'grid_x' => 3, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'derived_metric',
@@ -483,7 +512,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 103,
-                'name' => 'Tráfico Unificado (Sesiones GA4)',
+                'name' => $isEn ? 'Unified Traffic (GA4 Sessions)' : 'Tráfico Unificado (Sesiones GA4)',
                 'grid_x' => 6, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -496,7 +525,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 104,
-                'name' => 'Comunidad & Suscriptores (Mailchimp)',
+                'name' => $isEn ? 'Community & Subscribers (Mailchimp)' : 'Comunidad & Suscriptores (Mailchimp)',
                 'grid_x' => 9, 'grid_y' => 0, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'predefined_kpi',
@@ -511,7 +540,7 @@ class DemoDashboardService
             // ─── BLOQUE 2: EFICIENCIA Y DIAGNÓSTICO ESTRATÉGICO (FILA 2, h: 2) ───
             [
                 'id' => 105,
-                'name' => 'Cuota de Búsqueda Pagada (SEM vs SEO)',
+                'name' => $isEn ? 'Paid Search Share (SEM vs SEO)' : 'Cuota de Búsqueda Pagada (SEM vs SEO)',
                 'grid_x' => 0, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'derived_metric',
@@ -524,7 +553,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 106,
-                'name' => 'ROAS Combinado (Blended Return)',
+                'name' => $isEn ? 'Blended ROAS (Return on Ad Spend)' : 'ROAS Combinado (Blended Return)',
                 'grid_x' => 3, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'derived_metric',
@@ -537,7 +566,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 107,
-                'name' => 'CPA Blended (Costo por Adquisición)',
+                'name' => $isEn ? 'Blended CPA (Cost per Acquisition)' : 'CPA Blended (Costo por Adquisición)',
                 'grid_x' => 6, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'derived_metric',
@@ -550,7 +579,7 @@ class DemoDashboardService
             ],
             [
                 'id' => 108,
-                'name' => 'Alcance Social Total (Meta Ads + Orgánico)',
+                'name' => $isEn ? 'Total Social Reach (Meta Ads + Organic)' : 'Alcance Social Total (Meta Ads + Orgánico)',
                 'grid_x' => 9, 'grid_y' => 2, 'grid_w' => 3, 'grid_h' => 2,
                 'widget_type' => 'tile',
                 'source_type' => 'derived_metric',
@@ -566,7 +595,7 @@ class DemoDashboardService
             // Gráfico 1: Evolución Multi-Canal (Meta Ads vs Google Ads vs GSC vs Mailchimp)
             [
                 'id' => 109,
-                'name' => 'Evolución del Tráfico Multicanal (GSC vs Ads vs Social vs Email)',
+                'name' => $isEn ? 'Multi-Channel Traffic Dynamics (GSC vs Ads vs Social vs Email)' : 'Evolución del Tráfico Multicanal (GSC vs Ads vs Social vs Email)',
                 'grid_x' => 0, 'grid_y' => 4, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'line_chart',
                 'source_type' => 'cross_channel',
@@ -580,7 +609,7 @@ class DemoDashboardService
             // Gráfico 2: Inversión en Ads vs Conversiones / Ventas Reales (GA4) — COMBO CHART
             [
                 'id' => 110,
-                'name' => 'Eficacia Publicitaria: Inversión Total vs Conversiones (GA4)',
+                'name' => $isEn ? 'Advertising Efficiency: Total Spend vs Conversions (GA4)' : 'Eficacia Publicitaria: Inversión Total vs Conversiones (GA4)',
                 'grid_x' => 6, 'grid_y' => 4, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'combo_chart',
                 'source_type' => 'cross_channel',
@@ -596,7 +625,7 @@ class DemoDashboardService
             // Gráfico 3: Mix de Adquisición de Tráfico (Donut)
             [
                 'id' => 111,
-                'name' => 'Mix de Adquisición de Tráfico por Canal',
+                'name' => $isEn ? 'Traffic Acquisition Mix by Channel' : 'Mix de Adquisición de Tráfico por Canal',
                 'grid_x' => 0, 'grid_y' => 8, 'grid_w' => 4, 'grid_h' => 4,
                 'widget_type' => 'pie_chart',
                 'source_type' => 'cross_channel',
@@ -610,7 +639,7 @@ class DemoDashboardService
             // Gráfico 4: Distribución Geográfica Global GSC (Choropleth Map)
             [
                 'id' => 113,
-                'name' => 'Distribución Geográfica de Tráfico Orgánico (GSC)',
+                'name' => $isEn ? 'Organic Search Geographic Breakdown (GSC)' : 'Distribución Geográfica de Tráfico Orgánico (GSC)',
                 'grid_x' => 4, 'grid_y' => 8, 'grid_w' => 8, 'grid_h' => 4,
                 'widget_type' => 'choropleth_map',
                 'source_type' => 'predefined_kpi',
@@ -626,7 +655,7 @@ class DemoDashboardService
             // Tabla 1: Páginas de Destino Más Efectivas (GSC - Dimensión URL)
             [
                 'id' => 114,
-                'name' => 'Páginas de Destino Más Efectivas (GSC)',
+                'name' => $isEn ? 'Top Performing Landing Pages (GSC)' : 'Páginas de Destino Más Efectivas (GSC)',
                 'grid_x' => 0, 'grid_y' => 12, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'table',
                 'source_type' => 'predefined_kpi',
@@ -640,7 +669,7 @@ class DemoDashboardService
             // Tabla 2: Rendimiento Diario Omnicanal (Granularidad Temporal por Fila)
             [
                 'id' => 112,
-                'name' => 'Rendimiento Diario Omnicanal',
+                'name' => $isEn ? 'Daily Omnichannel Performance' : 'Rendimiento Diario Omnicanal',
                 'grid_x' => 6, 'grid_y' => 12, 'grid_w' => 6, 'grid_h' => 4,
                 'widget_type' => 'table',
                 'source_type' => 'cross_channel',

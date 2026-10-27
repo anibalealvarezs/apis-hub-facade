@@ -23,9 +23,9 @@ class DemoDashboardController extends Controller
         }
         app()->setLocale($lang);
 
-        $assetGroups = $this->demoService->getAssetGroups();
+        $assetGroups = $this->demoService->getAssetGroups($lang);
         $channelAssetGroupMap = $this->demoService->getChannelAssetGroupMap();
-        $dashboardDef = $this->demoService->getDashboardDefinition();
+        $dashboardDef = $this->demoService->getDashboardDefinition($lang);
 
         $dashboard = (object) [
             'id' => 9999,
@@ -58,7 +58,7 @@ class DemoDashboardController extends Controller
         }
         app()->setLocale($lang);
 
-        $demoData = $this->demoService->getDemoDataSourcesData();
+        $demoData = $this->demoService->getDemoDataSourcesData($lang);
 
         return view('demo.data-sources', [
             'currentLang' => $lang,
@@ -80,7 +80,7 @@ class DemoDashboardController extends Controller
         }
         app()->setLocale($lang);
 
-        $assetGroupsList = $this->demoService->getDemoAssetGroupsList();
+        $assetGroupsList = $this->demoService->getDemoAssetGroupsList($lang);
 
         return view('demo.asset-groups', [
             'currentLang' => $lang,

@@ -300,21 +300,21 @@
                     <button type="button"
                             @click="toggleFullWidth()"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs cursor-pointer"
-                            :title="isFullWidth ? '{{ __('Modo Contenido') }}' : '{{ __('Ancho Completo') }}'">
+                            :title="isFullWidth ? (currentLang === 'es' ? 'Modo Contenido' : 'Contained Mode') : (currentLang === 'es' ? 'Ancho Completo' : 'Full Width')">
                         <template x-if="!isFullWidth">
                             <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                         </template>
                         <template x-if="isFullWidth">
                             <svg class="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9L4 4m0 0h4m-4 0v4m11 5l5 5m0 0v-4m0 4h-4m-7-7l5-5m0 0v4m0-4h-4M9 15l-5 5m0 0v-4m0 4h4"/></svg>
                         </template>
-                        <span x-text="isFullWidth ? '{{ __('Contenido') }}' : '{{ __('Ancho Completo') }}'"></span>
+                        <span x-text="isFullWidth ? (currentLang === 'es' ? 'Contenido' : 'Contained') : (currentLang === 'es' ? 'Ancho Completo' : 'Full Width')"></span>
                     </button>
 
                     <button @click="refreshAll()"
                             :disabled="isRefreshing"
                             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors shadow-xs cursor-pointer disabled:opacity-60">
                         <svg class="w-3.5 h-3.5 text-gray-500 transition-transform" :class="{ 'animate-spin text-primary-500': isRefreshing }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                        <span x-text="isRefreshing ? '{{ __('Actualizando...') }}' : '{{ __('Actualizar') }}'"></span>
+                        <span x-text="isRefreshing ? (currentLang === 'es' ? 'Actualizando...' : 'Refreshing...') : (currentLang === 'es' ? 'Actualizar' : 'Refresh')"></span>
                     </button>
                 </div>
             </div>
@@ -325,7 +325,7 @@
                 <div class="flex items-center gap-2.5 flex-wrap">
                     <label for="demo-asset-group" class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                        <span>{{ __('Grupo de Activos:') }}</span>
+                        <span>{{ $currentLang === 'es' ? 'Grupo de Activos:' : 'Asset Group:' }}</span>
                     </label>
                     <div class="relative">
                         <select id="demo-asset-group"
@@ -436,21 +436,21 @@
                                 <button type="button"
                                         @click="openSettings({{ $widget['id'] }})"
                                         class="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                        title="{{ __('Configuración / Métrica') }}">
+                                        title="{{ $currentLang === 'es' ? 'Configuración / Métrica' : 'Settings / Metric' }}">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 </button>
                                 {{-- Fullscreen Zoom Pop-out --}}
                                 <button type="button"
                                         @click="openPopOut({{ $widget['id'] }})"
                                         class="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                        title="{{ __('Pantalla Completa') }}">
+                                        title="{{ $currentLang === 'es' ? 'Pantalla Completa' : 'Full Screen' }}">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                                 </button>
                                 {{-- Reload Widget --}}
                                 <button type="button"
                                         @click="reloadWidget({{ $widget['id'] }})"
                                         class="p-1 rounded-md text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                        title="{{ __('Recargar') }}">
+                                        title="{{ $currentLang === 'es' ? 'Recargar' : 'Reload' }}">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                 </button>
                             </div>
@@ -487,7 +487,7 @@
             <div class="px-5 py-3.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="popOutWidget?.name || 'Vista Detallada'"></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="popOutWidget?.name || '{{ $currentLang === 'es' ? 'Vista Detallada' : 'Detailed View' }}'"></h3>
                 </div>
                 <div class="flex items-center gap-2">
                     <button type="button" @click="closePopOut()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -516,7 +516,7 @@
                     <div class="p-1.5 rounded-lg bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                     </div>
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="activeWidget?.name || 'Configuración de Widget'"></h3>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white" x-text="activeWidget?.name || '{{ $currentLang === 'es' ? 'Configuración de Widget' : 'Widget Settings' }}'"></h3>
                 </div>
                 <button type="button" @click="settingsActive = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -526,18 +526,20 @@
             {{-- Granularity Selector --}}
             <div class="space-y-1.5">
                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    {{ __('Granularidad Temporal / Dimensión:') }}
+                    {{ $currentLang === 'es' ? 'Granularidad Temporal / Dimensión:' : 'Time Granularity / Dimension:' }}
                 </label>
                 <select x-model="modalGranularity"
                         class="w-full text-xs font-medium bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-2 focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-gray-100">
-                    <option value="daily">{{ __('Diario (Daily)') }}</option>
-                    <option value="weekly">{{ __('Semanal (Weekly)') }}</option>
-                    <option value="monthly">{{ __('Mensual (Monthly)') }}</option>
-                    <option value="trailing_weekly">{{ __('Rolling 7 Días') }}</option>
-                    <option value="trailing_monthly">{{ __('Rolling 30 Días') }}</option>
+                    <option value="daily">{{ $currentLang === 'es' ? 'Diario (Daily)' : 'Daily' }}</option>
+                    <option value="weekly">{{ $currentLang === 'es' ? 'Semanal (Weekly)' : 'Weekly' }}</option>
+                    <option value="monthly">{{ $currentLang === 'es' ? 'Mensual (Monthly)' : 'Monthly' }}</option>
+                    <option value="trailing_weekly">{{ $currentLang === 'es' ? 'Rolling 7 Días' : 'Rolling 7 Days' }}</option>
+                    <option value="trailing_monthly">{{ $currentLang === 'es' ? 'Rolling 30 Días' : 'Rolling 30 Days' }}</option>
                 </select>
                 <p class="text-[11px] text-gray-400">
-                    {{ __('Permite recalcular la serie de tiempo al vuelo sin recargar la página.') }}
+                    {{ $currentLang === 'es'
+                        ? 'Permite recalcular la serie de tiempo al vuelo sin recargar la página.'
+                        : 'Recalculates time-series on the fly without reloading the page.' }}
                 </p>
             </div>
 
@@ -545,32 +547,32 @@
             <template x-if="activeWidget?.id === 113">
                 <div class="space-y-1.5 pt-2 border-t border-gray-100 dark:border-gray-800">
                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {{ __('Métrica Activa para el Mapa Global:') }}
+                        {{ $currentLang === 'es' ? 'Métrica Activa para el Mapa Global:' : 'Active Metric for Global Map:' }}
                     </label>
                     <div class="grid grid-cols-2 gap-2 text-xs">
                         <button type="button"
                                 @click="switchMapMetric('clicks')"
                                 :class="selectedMapMetric === 'clicks' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
                                 class="p-2 rounded-lg border border-transparent transition-all text-center">
-                            Clics Orgánicos
+                            {{ $currentLang === 'es' ? 'Clics Orgánicos' : 'Organic Clicks' }}
                         </button>
                         <button type="button"
                                 @click="switchMapMetric('impressions')"
                                 :class="selectedMapMetric === 'impressions' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
                                 class="p-2 rounded-lg border border-transparent transition-all text-center">
-                            Impresiones
+                            {{ $currentLang === 'es' ? 'Impresiones' : 'Impressions' }}
                         </button>
                         <button type="button"
                                 @click="switchMapMetric('ctr')"
                                 :class="selectedMapMetric === 'ctr' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
                                 class="p-2 rounded-lg border border-transparent transition-all text-center">
-                            CTR Promedio (%)
+                            {{ $currentLang === 'es' ? 'CTR Promedio (%)' : 'Average CTR (%)' }}
                         </button>
                         <button type="button"
                                 @click="switchMapMetric('position')"
                                 :class="selectedMapMetric === 'position' ? 'bg-primary-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'"
                                 class="p-2 rounded-lg border border-transparent transition-all text-center">
-                            Posición Media
+                            {{ $currentLang === 'es' ? 'Posición Media' : 'Average Position' }}
                         </button>
                     </div>
                 </div>
@@ -579,10 +581,10 @@
             {{-- Apply Button --}}
             <div class="pt-3 flex items-center justify-end gap-2">
                 <button type="button" @click="settingsActive = false" class="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800">
-                    {{ __('Cancelar') }}
+                    {{ $currentLang === 'es' ? 'Cancelar' : 'Cancel' }}
                 </button>
                 <button type="button" @click="applyModalSettings()" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-500 text-white shadow-xs">
-                    {{ __('Aplicar Cambios') }}
+                    {{ $currentLang === 'es' ? 'Aplicar Cambios' : 'Apply Changes' }}
                 </button>
             </div>
         </div>
@@ -593,16 +595,18 @@
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div>
                 <h2 class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ __('¿Listo para unificar tus métricas reales?') }}
+                    {{ $currentLang === 'es' ? '¿Listo para unificar tus métricas reales?' : 'Ready to unify your real metrics?' }}
                 </h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {{ __('Conecta tus cuentas de Google, Meta y Mailchimp sin esfuerzo y personaliza tus propios dashboards.') }}
+                    {{ $currentLang === 'es'
+                        ? 'Conecta tus cuentas de Google, Meta y Mailchimp sin esfuerzo y personaliza tus propios dashboards.'
+                        : 'Connect your Google, Meta, and Mailchimp accounts effortlessly and customize your own live dashboards.' }}
                 </p>
             </div>
             <div class="flex items-center gap-3">
                 <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
                    class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
-                    {{ __('Ver Planes y Comenzar') }}
+                    {{ $currentLang === 'es' ? 'Ver Planes y Comenzar' : 'View Plans & Get Started' }}
                 </a>
             </div>
         </div>
