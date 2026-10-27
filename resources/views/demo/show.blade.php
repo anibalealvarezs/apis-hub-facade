@@ -34,7 +34,6 @@
         <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/maps/world.js"></script>
         <script src="{{ asset('js/demo-controllers.js') }}"></script>
         <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ time() }}"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     </x-slot:extra-head>
 
     <x-slot:stepper>
@@ -44,7 +43,7 @@
     </x-slot:stepper>
 
     <main class="flex-1 w-full p-4 sm:p-6 space-y-4 transition-all duration-200"
-          :class="isFullWidth ? 'max-w-none px-4 sm:px-8' : 'max-w-7xl mx-auto'">x-w-7xl mx-auto'">
+          :class="isFullWidth ? 'max-w-none px-4 sm:px-8' : 'max-w-7xl mx-auto'">
         {{-- Hero Context & Filter Controls --}}
         <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs space-y-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">

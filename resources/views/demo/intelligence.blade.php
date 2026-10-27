@@ -21,7 +21,6 @@
         <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="{{ asset('js/demo-controllers.js') }}"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     </x-slot:extra-head>
 
     <x-slot:stepper>
@@ -30,7 +29,7 @@
         </div>
     </x-slot:stepper>
 
-    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">p-4 sm:p-6 space-y-6">
+    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
 
         {{-- Page Header --}}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-xs">

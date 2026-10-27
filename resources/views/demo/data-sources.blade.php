@@ -9,7 +9,7 @@
         'activeChannelKey' => 'google_search_console',
         'tierUsage' => $stats['tier_usage'],
         'tierMax' => $stats['tier_max'],
-        'theme' => 'dark',
+        'theme' => 'auto',
         'currentLang' => $currentLang
     ]) . ')'"
     :portals="$portals"
@@ -19,7 +19,6 @@
         <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="{{ asset('js/demo-controllers.js') }}"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     </x-slot:extra-head>
 
     <x-slot:stepper>
