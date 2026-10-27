@@ -3,9 +3,58 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow">
-    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración interactiva de APIs Hub: Alertas de KPIs, API REST y Servidor MCP para IA.' : 'APIs Hub Interactive Demo: KPI Alerts, Live API Aggregations, and MCP Server for AI agents.' }}">
-    <title>{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence' : 'Step 5: Data Intelligence' }} — APIs Hub</title>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <title>{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence | Demostración Interactiva — APIs Hub' : 'Step 5: Data Intelligence | Interactive Demo — APIs Hub' }}</title>
+    <meta name="title" content="{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence | Demostración Interactiva — APIs Hub' : 'Step 5: Data Intelligence | Interactive Demo — APIs Hub' }}">
+    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Alertas predictivas de KPIs, API REST analítica y Servidor MCP para agentes de IA.' : 'APIs Hub interactive public demo: Proactive KPI alerts, high-speed analytical REST API, and Model Context Protocol (MCP) server for AI agents.' }}">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Canonical URL & Hreflang -->
+    <link rel="canonical" href="{{ $currentLang === 'es' ? route('demo.intelligence.es') : route('demo.intelligence', ['lang' => 'en']) }}" />
+    <link rel="alternate" hreflang="en" href="{{ route('demo.intelligence', ['lang' => 'en']) }}" />
+    <link rel="alternate" hreflang="es" href="{{ route('demo.intelligence.es') }}" />
+    <link rel="alternate" hreflang="x-default" href="{{ route('demo.intelligence') }}" />
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:site_name" content="APIs Hub">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="{{ $currentLang === 'es' ? 'Data Intelligence & MCP para IA | APIs Hub' : 'Data Intelligence & AI MCP Server | APIs Hub' }}">
+    <meta property="og:description" content="{{ $currentLang === 'es' ? 'Audita métricas normalizadas con Claude o Cursor y activa alertas automáticas de anomalías.' : 'Audit reconciled metrics with Claude or Cursor and trigger automated KPI anomaly alerts.' }}">
+    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+    <meta property="og:image:width" content="620">
+    <meta property="og:image:height" content="135">
+    <meta property="og:locale" content="{{ $currentLang === 'es' ? 'es_ES' : 'en_US' }}">
+    <meta property="og:locale:alternate" content="{{ $currentLang === 'es' ? 'en_US' : 'es_ES' }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:title" content="{{ $currentLang === 'es' ? 'Data Intelligence & MCP para IA | APIs Hub' : 'Data Intelligence & AI MCP Server | APIs Hub' }}">
+    <meta name="twitter:description" content="{{ $currentLang === 'es' ? 'Audita métricas normalizadas con Claude o Cursor y activa alertas automáticas de anomalías.' : 'Audit reconciled metrics with Claude or Cursor and trigger automated KPI anomaly alerts.' }}">
+    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "WebPage",
+      "name": "{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence | APIs Hub' : 'Step 5: Data Intelligence | APIs Hub' }}",
+      "url": "{{ url()->current() }}",
+      "inLanguage": "{{ $currentLang }}",
+      "description": "{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Alertas predictivas de KPIs, API REST analítica y Servidor MCP para agentes de IA.' : 'APIs Hub interactive public demo: Proactive KPI alerts, high-speed analytical REST API, and Model Context Protocol (MCP) server for AI agents.' }}",
+      "publisher": {
+        "@@type": "Organization",
+        "name": "APIs Hub Network",
+        "url": "{{ url('/') }}",
+        "logo": {
+          "@@type": "ImageObject",
+          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+        }
+      }
+    }
+    </script>
+
     <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
     <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
@@ -265,13 +314,13 @@
 
         {{-- Bottom Stepper CTA --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <a href="{{ $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en' }}"
+            <a href="{{ $currentLang === 'es' ? route('demo.collaboration.es') : route('demo.collaboration', ['lang' => 'en']) }}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>{{ $currentLang === 'es' ? 'Volver al Paso 4: Colaboración & Equipos' : 'Back to Step 4: Team Collaboration' }}</span>
             </a>
 
-            <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
+            <a href="{{ $currentLang === 'es' ? route('landing.plans.es') : route('landing.plans') }}"
                class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors">
                 <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis en APIs Hub' : 'Start Your Free Trial with APIs Hub' }}</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>

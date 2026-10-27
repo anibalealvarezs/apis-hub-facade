@@ -12,29 +12,45 @@
     <!-- Google Fonts: Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <meta name="description" content="Legal and compliance documentation for the APIs Hub platform.">
+    @php
+        $routeName = request()->route() ? request()->route()->getName() : null;
+        $baseRoute = $routeName ? str_replace('.es', '', $routeName) : null;
+        $isEs = app()->getLocale() === 'es';
+        $metaDescription = $isEs 
+            ? 'Documentación legal, términos de servicio y políticas de privacidad y cumplimiento para la plataforma APIs Hub.'
+            : 'Legal, terms of service, privacy policies, and compliance documentation for the APIs Hub platform.';
+    @endphp
+
+    <meta name="description" content="{{ $metaDescription }}">
     
     <!-- Canonical URL -->
     <link rel="canonical" href="{{ url()->current() }}" />
 
+    @if($baseRoute)
+        <!-- Localization / Hreflang -->
+        <link rel="alternate" hreflang="en" href="{{ route($baseRoute) }}" />
+        <link rel="alternate" hreflang="es" href="{{ route($baseRoute . '.es') }}" />
+        <link rel="alternate" hreflang="x-default" href="{{ route($baseRoute) }}" />
+    @endif
+
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="APIs Hub">
+    <meta property="og:type" content="article">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="@yield('title') | APIs Hub">
-    <meta property="og:description" content="Legal and compliance documentation for the APIs Hub platform.">
+    <meta property="og:description" content="{{ $metaDescription }}">
+    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+    <meta property="og:image:width" content="620">
+    <meta property="og:image:height" content="135">
+    <meta property="og:locale" content="{{ $isEs ? 'es_ES' : 'en_US' }}">
+    <meta property="og:locale:alternate" content="{{ $isEs ? 'en_US' : 'es_ES' }}">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary">
-    <meta property="twitter:url" content="{{ url()->current() }}">
-    <meta property="twitter:title" content="@yield('title') | APIs Hub">
-    <meta property="twitter:description" content="Legal and compliance documentation for the APIs Hub platform.">
-
-    @if(request()->route() && request()->route()->getName())
-        <!-- Localization -->
-        <link rel="alternate" hreflang="en" href="{{ route(request()->route()->getName(), ['locale' => null]) }}" />
-        <link rel="alternate" hreflang="es" href="{{ route(request()->route()->getName(), ['locale' => 'es']) }}" />
-        <link rel="alternate" hreflang="x-default" href="{{ route(request()->route()->getName(), ['locale' => null]) }}" />
-    @endif
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:title" content="@yield('title') | APIs Hub">
+    <meta name="twitter:description" content="{{ $metaDescription }}">
+    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -43,9 +59,16 @@
       "@@type": "WebPage",
       "name": "@yield('title') | APIs Hub",
       "url": "{{ url()->current() }}",
+      "inLanguage": "{{ app()->getLocale() }}",
+      "description": "{{ $metaDescription }}",
       "publisher": {
         "@@type": "Organization",
-        "name": "APIs Hub Network"
+        "name": "APIs Hub Network",
+        "url": "{{ url('/') }}",
+        "logo": {
+          "@@type": "ImageObject",
+          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+        }
       }
     }
     </script>

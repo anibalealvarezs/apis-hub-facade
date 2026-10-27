@@ -33,13 +33,45 @@
         <link rel="alternate" hreflang="es" href="{{ route('landing.architecture.es') }}" />
         <link rel="alternate" hreflang="x-default" href="{{ route('landing.architecture') }}" />
 
-        <!-- Open Graph -->
+        <!-- Open Graph / Social Sharing -->
         <meta property="og:site_name" content="APIs Hub">
         <meta property="og:type" content="article">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:title" content="{{ app()->getLocale() === 'es' ? 'Arquitectura de Datos Aislada | APIs Hub' : 'Isolated Data Cluster Architecture | APIs Hub' }}">
         <meta property="og:description" content="{{ app()->getLocale() === 'es' ? 'Sincronización diaria persistente y clusters independientes por cliente para analítica de marketing sin caídas.' : 'Persistent daily synchronization and isolated client clusters for unbreakable marketing analytics.' }}">
         <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+        <meta property="og:image:width" content="620">
+        <meta property="og:image:height" content="135">
+        <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
+        <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'es' ? 'en_US' : 'es_ES' }}">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ url()->current() }}">
+        <meta name="twitter:title" content="{{ app()->getLocale() === 'es' ? 'Arquitectura de Datos Aislada | APIs Hub' : 'Isolated Data Cluster Architecture | APIs Hub' }}">
+        <meta name="twitter:description" content="{{ app()->getLocale() === 'es' ? 'Sincronización diaria persistente y clusters independientes por cliente para analítica de marketing sin caídas.' : 'Persistent daily synchronization and isolated client clusters for unbreakable marketing analytics.' }}">
+        <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
+
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebPage",
+          "name": "{{ app()->getLocale() === 'es' ? 'Arquitectura de Datos Aislada | APIs Hub' : 'Isolated Data Cluster Architecture | APIs Hub' }}",
+          "url": "{{ url()->current() }}",
+          "inLanguage": "{{ app()->getLocale() }}",
+          "description": "{{ app()->getLocale() === 'es' ? 'Descubre cómo la arquitectura de clusters dedicados por proyecto en APIs Hub elimina caídas de cuota en Looker Studio y tiempos de espera en reportes de marketing.' : 'Learn how APIs Hub dedicated project data clusters eliminate Looker Studio API quota ceilings, connector timeouts, and multi-tenant lag.' }}",
+          "publisher": {
+            "@@type": "Organization",
+            "name": "APIs Hub Network",
+            "url": "{{ url('/') }}",
+            "logo": {
+              "@@type": "ImageObject",
+              "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+            }
+          }
+        }
+        </script>
 
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
     </head>

@@ -32,13 +32,45 @@
         <link rel="alternate" hreflang="es" href="{{ route('landing.guides.looker-quota.es') }}" />
         <link rel="alternate" hreflang="x-default" href="{{ route('landing.guides.looker-quota') }}" />
 
-        <!-- Open Graph -->
+        <!-- Open Graph / Social Sharing -->
         <meta property="og:site_name" content="APIs Hub">
         <meta property="og:type" content="article">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:title" content="{{ app()->getLocale() === 'es' ? 'Solución Definitiva al Error de Cuota de Google Search Console en Looker Studio' : 'Permanently Fix Looker Studio GSC Quota Errors' }}">
         <meta property="og:description" content="{{ app()->getLocale() === 'es' ? 'Aprende por qué ocurre este error y cómo eliminarlo para siempre.' : 'Understand why live connectors exhaust API tokens and how local caching solves it.' }}">
         <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+        <meta property="og:image:width" content="620">
+        <meta property="og:image:height" content="135">
+        <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
+        <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'es' ? 'en_US' : 'es_ES' }}">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ url()->current() }}">
+        <meta name="twitter:title" content="{{ app()->getLocale() === 'es' ? 'Solución Definitiva al Error de Cuota de Google Search Console en Looker Studio' : 'Permanently Fix Looker Studio GSC Quota Errors' }}">
+        <meta name="twitter:description" content="{{ app()->getLocale() === 'es' ? 'Aprende por qué ocurre este error y cómo eliminarlo para siempre.' : 'Understand why live connectors exhaust API tokens and how local caching solves it.' }}">
+        <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
+
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "TechArticle",
+          "headline": "{{ app()->getLocale() === 'es' ? 'Cómo Solucionar el Error de Cuota en Looker Studio con Google Search Console | APIs Hub' : 'How to Fix Looker Studio Google Search Console Quota Limit Errors | APIs Hub' }}",
+          "url": "{{ url()->current() }}",
+          "inLanguage": "{{ app()->getLocale() }}",
+          "description": "{{ app()->getLocale() === 'es' ? 'Guía técnica para resolver definitivamente el error de cuota agotada de Google Search Console y GA4 en Looker Studio mediante un cluster de datos con persistencia local.' : 'Step-by-step technical guide to permanently eliminate Google Search Console and GA4 API quota exceeded errors in Looker Studio using local data clustering.' }}",
+          "publisher": {
+            "@@type": "Organization",
+            "name": "APIs Hub Network",
+            "url": "{{ url('/') }}",
+            "logo": {
+              "@@type": "ImageObject",
+              "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+            }
+          }
+        }
+        </script>
 
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
     </head>

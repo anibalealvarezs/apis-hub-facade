@@ -32,13 +32,45 @@
         <link rel="alternate" hreflang="es" href="{{ route('landing.solutions.agency.es') }}" />
         <link rel="alternate" hreflang="x-default" href="{{ route('landing.solutions.agency') }}" />
 
-        <!-- Open Graph -->
+        <!-- Open Graph / Social Sharing -->
         <meta property="og:site_name" content="APIs Hub">
         <meta property="og:type" content="article">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:title" content="{{ app()->getLocale() === 'es' ? 'Reportes Multi-Cliente para Agencias de Marketing | APIs Hub' : 'Multi-Client Reporting Engine for Marketing Agencies | APIs Hub' }}">
         <meta property="og:description" content="{{ app()->getLocale() === 'es' ? 'Aislamiento de clientes, perfiles de facturación independientes y dashboards instantáneos.' : 'Client data isolation, independent billing profiles, and instant client dashboards.' }}">
         <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+        <meta property="og:image:width" content="620">
+        <meta property="og:image:height" content="135">
+        <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
+        <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'es' ? 'en_US' : 'es_ES' }}">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ url()->current() }}">
+        <meta name="twitter:title" content="{{ app()->getLocale() === 'es' ? 'Reportes Multi-Cliente para Agencias de Marketing | APIs Hub' : 'Multi-Client Reporting Engine for Marketing Agencies | APIs Hub' }}">
+        <meta name="twitter:description" content="{{ app()->getLocale() === 'es' ? 'Aislamiento de clientes, perfiles de facturación independientes y dashboards instantáneos.' : 'Client data isolation, independent billing profiles, and instant client dashboards.' }}">
+        <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
+
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebPage",
+          "name": "{{ app()->getLocale() === 'es' ? 'Soluciones para Agencias: Reportes Multi-Cliente Sin Caídas | APIs Hub' : 'Agency Solutions: Multi-Client Reporting Without Timeouts | APIs Hub' }}",
+          "url": "{{ url()->current() }}",
+          "inLanguage": "{{ app()->getLocale() }}",
+          "description": "{{ app()->getLocale() === 'es' ? 'Gestiona decenas de clientes con clusters aislados, separación entre proyectos y facturación, y reportes ejecutivos automatizados sin errores de cuota.' : 'Manage dozens of client portfolios with isolated data clusters, project vs billing separation, and zero connector timeouts.' }}",
+          "publisher": {
+            "@@type": "Organization",
+            "name": "APIs Hub Network",
+            "url": "{{ url('/') }}",
+            "logo": {
+              "@@type": "ImageObject",
+              "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+            }
+          }
+        }
+        </script>
 
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
     </head>

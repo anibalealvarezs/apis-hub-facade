@@ -3,9 +3,58 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow">
-    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración interactiva de APIs Hub: Proyectos compartidos, gestión de equipos y vistas públicas protegidas.' : 'APIs Hub Interactive Demo: Shareable projects, team collaboration, role-based asset scoping, and protected public dashboard links.' }}">
-    <title>{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos' : 'Step 4: Team Collaboration' }} — APIs Hub</title>
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <title>{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | Demostración Interactiva — APIs Hub' : 'Step 4: Team Collaboration | Interactive Demo — APIs Hub' }}</title>
+    <meta name="title" content="{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | Demostración Interactiva — APIs Hub' : 'Step 4: Team Collaboration | Interactive Demo — APIs Hub' }}">
+    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Proyectos compartidos, gestión de equipos, roles de acceso y enlaces públicos de dashboards.' : 'APIs Hub interactive public demo: Shareable client projects, team management, role-based asset scoping, and protected public dashboard links.' }}">
+    <meta name="theme-color" content="#0f172a">
+
+    <!-- Canonical URL & Hreflang -->
+    <link rel="canonical" href="{{ $currentLang === 'es' ? route('demo.collaboration.es') : route('demo.collaboration', ['lang' => 'en']) }}" />
+    <link rel="alternate" hreflang="en" href="{{ route('demo.collaboration', ['lang' => 'en']) }}" />
+    <link rel="alternate" hreflang="es" href="{{ route('demo.collaboration.es') }}" />
+    <link rel="alternate" hreflang="x-default" href="{{ route('demo.collaboration') }}" />
+
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:site_name" content="APIs Hub">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="{{ $currentLang === 'es' ? 'Colaboración y Equipos | APIs Hub' : 'Team Collaboration & Projects | APIs Hub' }}">
+    <meta property="og:description" content="{{ $currentLang === 'es' ? 'Invita colaboradores con roles de acceso granular y genera vistas públicas seguras para clientes.' : 'Invite collaborators with granular roles and generate client-facing read-only public dashboard links.' }}">
+    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+    <meta property="og:image:width" content="620">
+    <meta property="og:image:height" content="135">
+    <meta property="og:locale" content="{{ $currentLang === 'es' ? 'es_ES' : 'en_US' }}">
+    <meta property="og:locale:alternate" content="{{ $currentLang === 'es' ? 'en_US' : 'es_ES' }}">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:title" content="{{ $currentLang === 'es' ? 'Colaboración y Equipos | APIs Hub' : 'Team Collaboration & Projects | APIs Hub' }}">
+    <meta name="twitter:description" content="{{ $currentLang === 'es' ? 'Invita colaboradores con roles de acceso granular y genera vistas públicas seguras para clientes.' : 'Invite collaborators with granular roles and generate client-facing read-only public dashboard links.' }}">
+    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "WebPage",
+      "name": "{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | APIs Hub' : 'Step 4: Team Collaboration | APIs Hub' }}",
+      "url": "{{ url()->current() }}",
+      "inLanguage": "{{ $currentLang }}",
+      "description": "{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Proyectos compartidos, gestión de equipos, roles de acceso y enlaces públicos de dashboards.' : 'APIs Hub interactive public demo: Shareable client projects, team management, role-based asset scoping, and protected public dashboard links.' }}",
+      "publisher": {
+        "@@type": "Organization",
+        "name": "APIs Hub Network",
+        "url": "{{ url('/') }}",
+        "logo": {
+          "@@type": "ImageObject",
+          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+        }
+      }
+    }
+    </script>
+
     <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
     <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
@@ -230,13 +279,13 @@
 
         {{-- Bottom Stepper CTA --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <a href="{{ $currentLang === 'es' ? '/es/demo' : '/demo?lang=en' }}"
+            <a href="{{ $currentLang === 'es' ? route('demo.show.es') : route('demo.show', ['lang' => 'en']) }}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span>{{ $currentLang === 'es' ? 'Volver al Paso 3: Dashboard Omnicanal' : 'Back to Step 3: Omnichannel Dashboard' }}</span>
             </a>
 
-            <a href="{{ $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en' }}"
+            <a href="{{ $currentLang === 'es' ? route('demo.intelligence.es') : route('demo.intelligence', ['lang' => 'en']) }}"
                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
                 <span>{{ $currentLang === 'es' ? 'Continuar al Paso 5: Data Intelligence' : 'Continue to Step 5: Data Intelligence' }}</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>

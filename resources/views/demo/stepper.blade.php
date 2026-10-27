@@ -9,31 +9,31 @@
             'num' => '1',
             'label' => $currentLang === 'es' ? 'Fuentes de Datos' : 'Data Sources',
             'desc' => $currentLang === 'es' ? 'Activos y Cuotas' : 'Assets & Quotas',
-            'route' => $currentLang === 'es' ? '/es/demo/data-sources' : '/demo/data-sources?lang=en',
+            'route' => $currentLang === 'es' ? route('demo.data-sources.es') : route('demo.data-sources', ['lang' => 'en']),
         ],
         2 => [
             'num' => '2',
             'label' => $currentLang === 'es' ? 'Grupos de Activos' : 'Asset Groups',
             'desc' => $currentLang === 'es' ? 'Organización Cross-Channel' : 'Cross-Channel Setup',
-            'route' => $currentLang === 'es' ? '/es/demo/asset-groups' : '/demo/asset-groups?lang=en',
+            'route' => $currentLang === 'es' ? route('demo.asset-groups.es') : route('demo.asset-groups', ['lang' => 'en']),
         ],
         3 => [
             'num' => '3',
             'label' => $currentLang === 'es' ? 'Dashboard Omnicanal' : 'Omnichannel Dashboard',
             'desc' => $currentLang === 'es' ? 'Analítica y Visualización' : 'Analytics & Insights',
-            'route' => $currentLang === 'es' ? '/es/demo' : '/demo?lang=en',
+            'route' => $currentLang === 'es' ? route('demo.show.es') : route('demo.show', ['lang' => 'en']),
         ],
         4 => [
             'num' => '4',
             'label' => $currentLang === 'es' ? 'Colaboración & Equipos' : 'Team Collaboration',
             'desc' => $currentLang === 'es' ? 'Proyectos y Roles' : 'Projects & Roles',
-            'route' => $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en',
+            'route' => $currentLang === 'es' ? route('demo.collaboration.es') : route('demo.collaboration', ['lang' => 'en']),
         ],
         5 => [
             'num' => '5',
             'label' => $currentLang === 'es' ? 'Data Intelligence' : 'Data Intelligence',
             'desc' => $currentLang === 'es' ? 'Alertas, API & MCP' : 'Alerts, API & MCP',
-            'route' => $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en',
+            'route' => $currentLang === 'es' ? route('demo.intelligence.es') : route('demo.intelligence', ['lang' => 'en']),
         ],
     ];
 @endphp
@@ -97,7 +97,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             @else
-                <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
+                <a href="{{ $currentLang === 'es' ? route('landing.plans.es') : route('landing.plans') }}"
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs transition-colors">
                     <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis' : 'Start Free Trial' }}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>

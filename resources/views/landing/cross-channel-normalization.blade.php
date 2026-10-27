@@ -32,13 +32,45 @@
         <link rel="alternate" hreflang="es" href="{{ route('landing.solutions.normalization.es') }}" />
         <link rel="alternate" hreflang="x-default" href="{{ route('landing.solutions.normalization') }}" />
 
-        <!-- Open Graph -->
+        <!-- Open Graph / Social Sharing -->
         <meta property="og:site_name" content="APIs Hub">
         <meta property="og:type" content="article">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:title" content="{{ app()->getLocale() === 'es' ? 'Normalización de Métricas Cross-Channel | APIs Hub' : 'Cross-Channel Metric Normalization Engine | APIs Hub' }}">
         <meta property="og:description" content="{{ app()->getLocale() === 'es' ? 'Unifica clics, ventas y gasto entre Meta, Google y Shopify en un solo lenguaje.' : 'Unify clicks, revenue, and ad spend across Meta, Google, and Shopify into one language.' }}">
         <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
+        <meta property="og:image:width" content="620">
+        <meta property="og:image:height" content="135">
+        <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
+        <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'es' ? 'en_US' : 'es_ES' }}">
+
+        <!-- Twitter Card -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:url" content="{{ url()->current() }}">
+        <meta name="twitter:title" content="{{ app()->getLocale() === 'es' ? 'Normalización de Métricas Cross-Channel | APIs Hub' : 'Cross-Channel Metric Normalization Engine | APIs Hub' }}">
+        <meta name="twitter:description" content="{{ app()->getLocale() === 'es' ? 'Unifica clics, ventas y gasto entre Meta, Google y Shopify en un solo lenguaje.' : 'Unify clicks, revenue, and ad spend across Meta, Google, and Shopify into one language.' }}">
+        <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
+
+        <!-- Structured Data -->
+        <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "WebPage",
+          "name": "{{ app()->getLocale() === 'es' ? 'Normalización de Métricas Multi-Canal | APIs Hub' : 'Cross-Channel Marketing Metric Normalization | APIs Hub' }}",
+          "url": "{{ url()->current() }}",
+          "inLanguage": "{{ app()->getLocale() }}",
+          "description": "{{ app()->getLocale() === 'es' ? 'Reconcilia Meta, Google, Shopify y Klaviyo con un diccionario de equivalencias común. Calcula Blended ROAS y MER real sin fórmulas complejas de hojas de cálculo.' : 'Reconcile Meta, Google, Shopify, and Klaviyo with a shared metric dictionary. Calculate true Blended ROAS and MER without spreadsheet formula chaos.' }}",
+          "publisher": {
+            "@@type": "Organization",
+            "name": "APIs Hub Network",
+            "url": "{{ url('/') }}",
+            "logo": {
+              "@@type": "ImageObject",
+              "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
+            }
+          }
+        }
+        </script>
 
         @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
     </head>
