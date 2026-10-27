@@ -21,7 +21,8 @@
             </div>
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 class="public-hero-title !text-left !text-3xl sm:!text-4xl lg:!text-5xl !mb-2">
+                    <h1 class="public-hero-title !text-left !text-3xl sm:!text-4xl lg:!text-5xl !mb-2"
+                        :style="darkMode ? 'background-image: linear-gradient(135deg, #FFFFFF 30%, #00cac4 100%) !important;' : 'background-image: linear-gradient(135deg, #3b3b3b 20%, #00a7f9 100%) !important;'">
                         {{ __('APIs Hub Developer Reference') }}
                     </h1>
                     <p class="text-slate-600 dark:text-slate-300 text-sm sm:text-base max-w-3xl mt-2 leading-relaxed">
