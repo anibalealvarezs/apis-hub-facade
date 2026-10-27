@@ -25,15 +25,15 @@
         ],
         4 => [
             'num' => '4',
-            'label' => $currentLang === 'es' ? 'Data Intelligence' : 'Data Intelligence',
-            'desc' => $currentLang === 'es' ? 'Alertas, API & MCP' : 'Alerts, API & MCP',
-            'route' => $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en',
-        ],
-        5 => [
-            'num' => '5',
             'label' => $currentLang === 'es' ? 'Colaboración & Equipos' : 'Team Collaboration',
             'desc' => $currentLang === 'es' ? 'Proyectos y Roles' : 'Projects & Roles',
             'route' => $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en',
+        ],
+        5 => [
+            'num' => '5',
+            'label' => $currentLang === 'es' ? 'Data Intelligence' : 'Data Intelligence',
+            'desc' => $currentLang === 'es' ? 'Alertas, API & MCP' : 'Alerts, API & MCP',
+            'route' => $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en',
         ],
     ];
 @endphp

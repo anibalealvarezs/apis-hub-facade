@@ -599,9 +599,9 @@
                 <span>{{ $currentLang === 'es' ? 'Volver al Paso 2: Grupos de Activos' : 'Back to Step 2: Asset Groups' }}</span>
             </a>
 
-            <a href="{{ $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en' }}"
+            <a href="{{ $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en' }}"
                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
-                <span>{{ $currentLang === 'es' ? 'Siguiente Paso: Data Intelligence (Paso 4)' : 'Next Step: Data Intelligence (Step 4)' }}</span>
+                <span>{{ $currentLang === 'es' ? 'Siguiente Paso: Colaboración & Equipos (Paso 4)' : 'Next Step: Team Collaboration (Step 4)' }}</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
         </div>

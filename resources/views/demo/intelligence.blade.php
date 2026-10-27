@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="index, follow">
     <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración interactiva de APIs Hub: Alertas de KPIs, API REST y Servidor MCP para IA.' : 'APIs Hub Interactive Demo: KPI Alerts, Live API Aggregations, and MCP Server for AI agents.' }}">
-    <title>{{ $currentLang === 'es' ? 'Paso 4: Data Intelligence' : 'Step 4: Data Intelligence' }} — APIs Hub</title>
+    <title>{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence' : 'Step 5: Data Intelligence' }} — APIs Hub</title>
     <script>
         (function() {
             var theme = localStorage.getItem('demo_theme');
@@ -104,7 +104,7 @@
     </header>
 
     {{-- Interactive Multi-Step Demo Progress Bar --}}
-    @include('demo.stepper', ['currentStep' => 4, 'currentLang' => $currentLang])
+    @include('demo.stepper', ['currentStep' => 5, 'currentLang' => $currentLang])
 
     {{-- Main Container --}}
     <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -343,15 +343,15 @@
 
         {{-- Bottom Stepper CTA --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <a href="{{ $currentLang === 'es' ? '/es/demo' : '/demo?lang=en' }}"
+            <a href="{{ $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en' }}"
                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>{{ $currentLang === 'es' ? 'Volver al Paso 3: Dashboard Omnicanal' : 'Back to Step 3: Omnichannel Dashboard' }}</span>
+                <span>{{ $currentLang === 'es' ? 'Volver al Paso 4: Colaboración & Equipos' : 'Back to Step 4: Team Collaboration' }}</span>
             </a>
 
-            <a href="{{ $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en' }}"
-               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
-                <span>{{ $currentLang === 'es' ? 'Continuar al Paso 5: Colaboración & Equipos' : 'Continue to Step 5: Team Collaboration' }}</span>
+            <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
+               class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors">
+                <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis en APIs Hub' : 'Start Your Free Trial with APIs Hub' }}</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
             </a>
         </div>
@@ -362,7 +362,7 @@
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div>
                 <h2 class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 4 de 5' : 'Interactive Demo Step 4 of 5' }}
+                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 5 de 5 (Fin del Recorrido)' : 'Interactive Demo Step 5 of 5 (Journey Complete)' }}
                 </h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {{ $currentLang === 'es'
@@ -373,7 +373,7 @@
             <div class="flex items-center gap-3">
                 <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-sm transition-colors">
-                    <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis' : 'Start Free Trial' }}</span>
+                    <span>{{ $currentLang === 'es' ? 'Ver Planes y Comenzar' : 'View Plans & Get Started' }}</span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                 </a>
             </div>
