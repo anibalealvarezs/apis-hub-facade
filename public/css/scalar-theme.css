@@ -5,13 +5,10 @@
     min-height: 800px;
 }
 
-/* Dark Mode High-Contrast Overrides: target html.dark, .dark-mode, [data-theme='dark'] */
-html.dark,
-html.dark body,
+/* Dark Mode High-Contrast Overrides inside Scalar */
 html.dark .scalar-container,
-html.dark .scalar-api-reference,
-html.dark .scalar-app,
-.dark-mode {
+.scalar-container.dark-mode,
+.scalar-container [data-theme='dark'] {
     --scalar-color-1: #f8fafc !important; /* bright white/slate-50 for high contrast headers & titles */
     --scalar-color-2: #cbd5e1 !important; /* slate-300 for readable body text & descriptions */
     --scalar-color-3: #94a3b8 !important; /* slate-400 for subtext & labels */
@@ -24,13 +21,10 @@ html.dark .scalar-app,
     --scalar-button-1-color: #ffffff !important;
 }
 
-/* Light Mode High-Contrast Overrides: target html:not(.dark), .light-mode, [data-theme='light'] */
-html:not(.dark),
-html:not(.dark) body,
+/* Light Mode High-Contrast Overrides inside Scalar */
 html:not(.dark) .scalar-container,
-html:not(.dark) .scalar-api-reference,
-html:not(.dark) .scalar-app,
-.light-mode {
+.scalar-container.light-mode,
+.scalar-container [data-theme='light'] {
     --scalar-color-1: #0f172a !important; /* slate-900 for high-contrast dark text */
     --scalar-color-2: #334155 !important; /* slate-700 for readable body text */
     --scalar-color-3: #64748b !important; /* slate-500 for labels */
@@ -43,74 +37,62 @@ html:not(.dark) .scalar-app,
     --scalar-button-1-color: #ffffff !important;
 }
 
-/* Force high contrast font colors on markdown prose & description elements in Dark Mode */
-html.dark .scalar-api-reference,
-html.dark .scalar-app,
-.dark-mode {
+/* Force high contrast font colors on markdown prose & description elements in Dark Mode inside Scalar */
+.scalar-container.dark-mode .scalar-api-reference,
+.scalar-container.dark-mode .scalar-app,
+html.dark .scalar-container .scalar-api-reference,
+html.dark .scalar-container .scalar-app {
     color: #cbd5e1 !important;
 }
-html.dark .scalar-api-reference p,
-html.dark .scalar-api-reference li,
-html.dark .scalar-api-reference td,
-html.dark .scalar-api-reference span:not([class*="bg-"]):not([class*="badge"]),
-html.dark .scalar-app p,
-html.dark .scalar-app li,
-html.dark .scalar-app td,
-.dark-mode p,
-.dark-mode li,
-.dark-mode td {
+.scalar-container.dark-mode p,
+.scalar-container.dark-mode li,
+.scalar-container.dark-mode td,
+html.dark .scalar-container p,
+html.dark .scalar-container li,
+html.dark .scalar-container td {
     color: #cbd5e1 !important;
 }
-html.dark .scalar-api-reference h1,
-html.dark .scalar-api-reference h2,
-html.dark .scalar-api-reference h3,
-html.dark .scalar-api-reference h4,
-html.dark .scalar-api-reference h5,
-html.dark .scalar-api-reference h6,
-html.dark .scalar-api-reference strong,
-html.dark .scalar-app h1,
-html.dark .scalar-app h2,
-html.dark .scalar-app h3,
-html.dark .scalar-app strong,
-.dark-mode h1,
-.dark-mode h2,
-.dark-mode h3,
-.dark-mode strong {
+.scalar-container.dark-mode h1,
+.scalar-container.dark-mode h2,
+.scalar-container.dark-mode h3,
+.scalar-container.dark-mode h4,
+.scalar-container.dark-mode h5,
+.scalar-container.dark-mode strong,
+html.dark .scalar-container h1,
+html.dark .scalar-container h2,
+html.dark .scalar-container h3,
+html.dark .scalar-container h4,
+html.dark .scalar-container h5,
+html.dark .scalar-container strong {
     color: #f8fafc !important;
 }
 
-/* Force crisp dark text colors on markdown prose & description elements in Light Mode */
-html:not(.dark) .scalar-api-reference,
-html:not(.dark) .scalar-app,
-.light-mode {
+/* Force crisp dark text colors on markdown prose & description elements in Light Mode inside Scalar */
+.scalar-container.light-mode .scalar-api-reference,
+.scalar-container.light-mode .scalar-app,
+html:not(.dark) .scalar-container .scalar-api-reference,
+html:not(.dark) .scalar-container .scalar-app {
     color: #334155 !important;
 }
-html:not(.dark) .scalar-api-reference p,
-html:not(.dark) .scalar-api-reference li,
-html:not(.dark) .scalar-api-reference td,
-html:not(.dark) .scalar-api-reference span:not([class*="bg-"]):not([class*="badge"]),
-html:not(.dark) .scalar-app p,
-html:not(.dark) .scalar-app li,
-html:not(.dark) .scalar-app td,
-.light-mode p,
-.light-mode li,
-.light-mode td {
+.scalar-container.light-mode p,
+.scalar-container.light-mode li,
+.scalar-container.light-mode td,
+html:not(.dark) .scalar-container p,
+html:not(.dark) .scalar-container li,
+html:not(.dark) .scalar-container td {
     color: #334155 !important;
 }
-html:not(.dark) .scalar-api-reference h1,
-html:not(.dark) .scalar-api-reference h2,
-html:not(.dark) .scalar-api-reference h3,
-html:not(.dark) .scalar-api-reference h4,
-html:not(.dark) .scalar-api-reference h5,
-html:not(.dark) .scalar-api-reference h6,
-html:not(.dark) .scalar-api-reference strong,
-html:not(.dark) .scalar-app h1,
-html:not(.dark) .scalar-app h2,
-html:not(.dark) .scalar-app h3,
-html:not(.dark) .scalar-app strong,
-.light-mode h1,
-.light-mode h2,
-.light-mode h3,
-.light-mode strong {
+.scalar-container.light-mode h1,
+.scalar-container.light-mode h2,
+.scalar-container.light-mode h3,
+.scalar-container.light-mode h4,
+.scalar-container.light-mode h5,
+.scalar-container.light-mode strong,
+html:not(.dark) .scalar-container h1,
+html:not(.dark) .scalar-container h2,
+html:not(.dark) .scalar-container h3,
+html:not(.dark) .scalar-container h4,
+html:not(.dark) .scalar-container h5,
+html:not(.dark) .scalar-container strong {
     color: #0f172a !important;
 }
