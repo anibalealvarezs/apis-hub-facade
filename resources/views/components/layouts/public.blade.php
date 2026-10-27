@@ -47,11 +47,24 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', $currentLocale) }}" dir="ltr" class="dark">
+<html lang="{{ str_replace('_', '-', $currentLocale) }}" dir="ltr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Anti-Flicker Synchronous Early Theme Init -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('color-theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'dark' || (!theme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     
     <!-- Preconnect / DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

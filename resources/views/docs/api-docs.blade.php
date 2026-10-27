@@ -21,7 +21,7 @@
             </div>
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    <h1 class="public-hero-title !text-left !text-3xl sm:!text-4xl lg:!text-5xl !mb-2">
                         {{ __('APIs Hub Developer Reference') }}
                     </h1>
                     <p class="text-slate-600 dark:text-slate-300 text-sm sm:text-base max-w-3xl mt-2 leading-relaxed">
