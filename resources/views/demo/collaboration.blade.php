@@ -13,7 +13,7 @@
     <script src="{{ asset('js/demo-controllers.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col font-sans antialiased selection:bg-primary-500 selection:text-white"
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-blue selection:text-white relative"
       x-data="demoCollaboration({
           theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
           currentLang: '{{ $currentLang }}',
@@ -246,5 +246,8 @@
 
     {{-- Unified Public Footer --}}
     @include('components.public.footer')
+
+    {{-- Background Mesh --}}
+    <div class="hero-mesh" aria-hidden="true"></div>
 </body>
 </html>

@@ -13,6 +13,7 @@
         <link rel="preconnect" href="https://www.google.com">
 
         <!-- Google reCAPTCHA Enterprise -->
+        <meta name="recaptcha-site-key" content="{{ config('services.recaptcha.site_key') }}">
         <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
         
         <!-- Primary Meta Tags -->
@@ -211,24 +212,6 @@
                                 {{ __('Subscribe') }}
                             </button>
                         </div>
-                        
-                        <script>
-                            document.getElementById('waitlist-form').addEventListener('submit', function(e) {
-                                e.preventDefault();
-                                const form = this;
-                                
-                                if (typeof grecaptcha !== 'undefined') {
-                                    grecaptcha.enterprise.ready(function() {
-                                        grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', {action: 'subscribe'}).then(function(token) {
-                                            document.getElementById('recaptcha_token').value = token;
-                                            form.submit();
-                                        });
-                                    });
-                                } else {
-                                    form.submit();
-                                }
-                            });
-                        </script>
 
                         @if(session('error'))
                             <p class="mt-3 text-red-500 text-sm font-medium" role="alert">{{ session('error') }}</p>
@@ -321,6 +304,7 @@
         <div class="hero-mesh" aria-hidden="true"></div>
 
         <!-- External Marketing & Analytics (Vite Optimized) -->
+        <script src="{{ asset('js/waitlist-form.js') }}" defer></script>
         @vite(['resources/js/gtm.js'])
     </body>
 </html>

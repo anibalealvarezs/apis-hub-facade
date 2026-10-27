@@ -28,6 +28,10 @@
         theme: {
             extend: {
                 colors: {
+                    'brand-blue': '#00a7f9',
+                    'brand-teal': '#00cac4',
+                    'brand-dark': '#3b3b3b',
+                    'brand-slate': '#494949',
                     primary: {
                         '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd',
                         '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8',
@@ -39,6 +43,10 @@
                     warning: {
                         '50': '#fffbeb', '500': '#f59e0b', '600': '#d97706', '700': '#b45309'
                     }
+                },
+                boxShadow: {
+                    'glow': '0 0 20px -5px #00a7f9',
+                    'glow-intense': '0 0 30px -5px #00a7f9'
                 }
             }
         }

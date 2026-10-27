@@ -24,7 +24,7 @@
     <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ time() }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 dark:bg-gray-950 min-h-screen text-gray-900 dark:text-gray-100 flex flex-col font-sans"
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased selection:bg-brand-blue selection:text-white relative"
       x-data="demoDashboard({
           selectedGroup: '1',
           currentLang: '{{ $currentLang }}',
@@ -369,5 +369,8 @@
 
     {{-- Unified Public Footer --}}
     @include('components.public.footer')
+
+    {{-- Background Mesh --}}
+    <div class="hero-mesh" aria-hidden="true"></div>
 </body>
 </html>
