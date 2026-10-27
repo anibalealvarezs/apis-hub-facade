@@ -64,6 +64,5 @@
             <script src="{{ asset('js/scalar-docs.js') }}"></script>
             <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest"></script>
         </div>
-
     </main>
 </x-layouts.public>
