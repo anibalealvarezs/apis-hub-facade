@@ -804,8 +804,11 @@
                                 renderer.returnPoppedOutWidget(sourceContainer, modalContainer);
                             }
                             setTimeout(() => {
-                                const chart = renderer._chartInstances?.get(sourceContainer);
-                                if (chart) chart.resize();
+                                const inst = renderer._chartInstances?.get(sourceContainer);
+                                if (inst) {
+                                    if (typeof inst.resize === 'function') inst.resize();
+                                    if (typeof inst.updateSize === 'function') inst.updateSize();
+                                }
                             }, 50);
                         }
                     }

@@ -3767,6 +3767,7 @@ window.dashboardRenderer = {
             this._pinnedTooltips.delete(containerEl);
         }
 
+        const canvas = containerEl.querySelector("canvas");
         const mapInst = this._chartInstances.get(containerEl);
         const isMap = !!(mapInst && typeof mapInst.updateSize === "function");
 
