@@ -1,97 +1,313 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <!-- Home Page -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+    <!-- Home Page / Landing -->
     <url>
         <loc>https://apis-hub.cloud/</loc>
-        <lastmod>2026-06-12</lastmod>
-        <changefreq>weekly</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/es</loc>
-        <lastmod>2026-06-12</lastmod>
-        <changefreq>weekly</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
 
-    <!-- Features & Plans Pages -->
+    <!-- Interactive Public Demo Multi-Step Flow -->
+    <url>
+        <loc>https://apis-hub.cloud/demo</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.95</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/demo</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.95</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/demo/data-sources</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/data-sources" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/data-sources" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/data-sources" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/demo/data-sources</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/data-sources" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/data-sources" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/data-sources" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/demo/asset-groups</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/asset-groups" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/asset-groups" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/asset-groups" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/demo/asset-groups</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/asset-groups" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/asset-groups" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/asset-groups" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/demo/collaboration</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/collaboration" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/collaboration" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/collaboration" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/demo/collaboration</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/collaboration" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/collaboration" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/collaboration" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/demo/intelligence</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/intelligence" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/intelligence" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/intelligence" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/demo/intelligence</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/demo/intelligence" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/demo/intelligence" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/demo/intelligence" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+
+    <!-- Pricing & Plans Pages -->
     <url>
         <loc>https://apis-hub.cloud/plans</loc>
-        <lastmod>2026-09-24</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/plans" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/planes" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/plans" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/es/planes</loc>
-        <lastmod>2026-09-24</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/plans" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/planes" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/plans" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
 
-    <!-- Developer & API Documentation -->
+    <!-- Solutions & Architectural Landing Pages -->
+    <url>
+        <loc>https://apis-hub.cloud/architecture</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/architecture" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/arquitectura" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/architecture" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/arquitectura</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/architecture" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/arquitectura" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/architecture" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/solutions/agency-client-reporting</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/solutions/agency-client-reporting" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/soluciones/reportes-agencias-marketing" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/solutions/agency-client-reporting" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/soluciones/reportes-agencias-marketing</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/solutions/agency-client-reporting" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/soluciones/reportes-agencias-marketing" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/solutions/agency-client-reporting" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/solutions/cross-channel-normalization</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/solutions/cross-channel-normalization" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/soluciones/normalizacion-metricas-marketing" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/solutions/cross-channel-normalization" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/soluciones/normalizacion-metricas-marketing</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/solutions/cross-channel-normalization" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/soluciones/normalizacion-metricas-marketing" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/solutions/cross-channel-normalization" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.85</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/guias/solucion-error-cuota-looker-studio-gsc" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/guias/solucion-error-cuota-looker-studio-gsc</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/guias/solucion-error-cuota-looker-studio-gsc" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Developer, API & MCP Documentation -->
     <url>
         <loc>https://apis-hub.cloud/docs/api</loc>
-        <lastmod>2026-09-24</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/docs/api" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/docs/api" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/docs/api" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/es/docs/api</loc>
-        <lastmod>2026-09-24</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/docs/api" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/docs/api" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/docs/api" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/docs/api/openapi.json</loc>
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://apis-hub.cloud/es/docs/api/openapi.json</loc>
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
     </url>
 
     <!-- App Auth Pages -->
     <url>
         <loc>https://apis-hub.cloud/app/login</loc>
-        <lastmod>2026-06-12</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/app/register</loc>
-        <lastmod>2026-06-12</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>0.8</priority>
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
 
-    <!-- Legal Pages -->
+    <!-- Legal Pages (English) -->
     <url>
         <loc>https://apis-hub.cloud/privacy</loc>
-        <lastmod>2026-06-12</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/privacy" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/privacy" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/privacy" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/tos</loc>
-        <lastmod>2026-06-12</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/tos" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/tos" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/tos" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/data-deletion</loc>
-        <lastmod>2026-06-12</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/data-deletion" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/data-deletion" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/data-deletion" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
 
-    <!-- Localized Legal Pages (Spanish) -->
+    <!-- Legal Pages (Spanish) -->
     <url>
         <loc>https://apis-hub.cloud/es/privacy</loc>
-        <lastmod>2026-06-12</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/privacy" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/privacy" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/privacy" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/es/tos</loc>
-        <lastmod>2026-06-12</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/tos" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/tos" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/tos" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://apis-hub.cloud/es/data-deletion</loc>
-        <lastmod>2026-06-12</lastmod>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/data-deletion" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/data-deletion" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/data-deletion" />
+        <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>

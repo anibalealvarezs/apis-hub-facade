@@ -6,43 +6,10 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
     <title>{{ $dashboard->name }}</title>
-    <script>
-        (function() {
-            var theme = localStorage.getItem('pv_theme');
-            if (!theme) {
-                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        })();
-    </script>
-    <style>
-        html { background-color: #f9fafb; color-scheme: light; }
-        html.dark { background-color: #030712; color-scheme: dark; }
-    </style>
-    <script>
-        const origWarn = console.warn;
-        console.warn = function(...args) {
-            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-            origWarn.apply(console, args);
-        };
-    </script>
+    <script>window.demoThemeStorageKey = 'pv_theme';</script>
+    <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
+    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: { '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd', '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8', '800': '#1e40af', '900': '#1e3a8a', '950': '#172554' },
-                    }
-                }
-            }
-        }
-    </script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}" />
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -41,6 +41,18 @@ body::-webkit-scrollbar-thumb {
 }
 
 /* Glassmorphism Panels & Cards */
+.glass-panel {
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .glass-panel, html.dark .glass-panel {
+    background-color: rgba(15, 23, 42, 0.7) !important;
+    border-color: rgba(30, 41, 59, 0.5) !important;
+}
+
 .fi-sidebar {
     backdrop-filter: blur(12px) !important;
     background-color: rgba(255, 255, 255, 0.75) !important;
@@ -168,5 +180,26 @@ body.fi-body {
     scrollbar-width: thin;
     margin-inline: calc(-1.5rem) !important;
     padding-inline: 1rem;
+}
+
+/* APIs Hub Brand Utilities Fallback */
+.bg-brand-blue {
+    background-color: var(--brand-blue) !important;
+}
+
+.text-brand-blue {
+    color: var(--brand-blue) !important;
+}
+
+.border-brand-blue {
+    border-color: var(--brand-blue) !important;
+}
+
+.shadow-glow {
+    box-shadow: 0 0 20px -5px var(--brand-blue) !important;
+}
+
+.shadow-glow:hover, .hover\:shadow-glow-intense:hover {
+    box-shadow: 0 0 30px -5px var(--brand-blue) !important;
 }
 

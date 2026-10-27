@@ -1,0 +1,116 @@
+/* High-contrast and seamless theme adaptation for Scalar UI */
+.scalar-container {
+    border-radius: 1rem;
+    overflow: hidden;
+    min-height: 800px;
+}
+
+/* Dark Mode High-Contrast Overrides: target html.dark, .dark-mode, [data-theme='dark'] */
+html.dark,
+html.dark body,
+html.dark .scalar-container,
+html.dark .scalar-api-reference,
+html.dark .scalar-app,
+.dark-mode {
+    --scalar-color-1: #f8fafc !important; /* bright white/slate-50 for high contrast headers & titles */
+    --scalar-color-2: #cbd5e1 !important; /* slate-300 for readable body text & descriptions */
+    --scalar-color-3: #94a3b8 !important; /* slate-400 for subtext & labels */
+    --scalar-color-accent: #00a7f9 !important; /* APIs Hub Brand Blue */
+    --scalar-background-1: #090d16 !important; /* deep slate-950 for backdrop */
+    --scalar-background-2: #0f172a !important; /* slate-900 for sidebar & cards */
+    --scalar-background-3: #1e293b !important; /* slate-800 for inputs & panels */
+    --scalar-border-color: rgba(255, 255, 255, 0.12) !important;
+    --scalar-button-1: #00a7f9 !important;
+    --scalar-button-1-color: #ffffff !important;
+}
+
+/* Light Mode High-Contrast Overrides: target html:not(.dark), .light-mode, [data-theme='light'] */
+html:not(.dark),
+html:not(.dark) body,
+html:not(.dark) .scalar-container,
+html:not(.dark) .scalar-api-reference,
+html:not(.dark) .scalar-app,
+.light-mode {
+    --scalar-color-1: #0f172a !important; /* slate-900 for high-contrast dark text */
+    --scalar-color-2: #334155 !important; /* slate-700 for readable body text */
+    --scalar-color-3: #64748b !important; /* slate-500 for labels */
+    --scalar-color-accent: #0284c7 !important; /* Brand Blue */
+    --scalar-background-1: #ffffff !important; /* pure white canvas */
+    --scalar-background-2: #f8fafc !important; /* slate-50 for cards & sidebar */
+    --scalar-background-3: #f1f5f9 !important; /* slate-100 for code blocks */
+    --scalar-border-color: rgba(0, 0, 0, 0.1) !important;
+    --scalar-button-1: #00a7f9 !important;
+    --scalar-button-1-color: #ffffff !important;
+}
+
+/* Force high contrast font colors on markdown prose & description elements in Dark Mode */
+html.dark .scalar-api-reference,
+html.dark .scalar-app,
+.dark-mode {
+    color: #cbd5e1 !important;
+}
+html.dark .scalar-api-reference p,
+html.dark .scalar-api-reference li,
+html.dark .scalar-api-reference td,
+html.dark .scalar-api-reference span:not([class*="bg-"]):not([class*="badge"]),
+html.dark .scalar-app p,
+html.dark .scalar-app li,
+html.dark .scalar-app td,
+.dark-mode p,
+.dark-mode li,
+.dark-mode td {
+    color: #cbd5e1 !important;
+}
+html.dark .scalar-api-reference h1,
+html.dark .scalar-api-reference h2,
+html.dark .scalar-api-reference h3,
+html.dark .scalar-api-reference h4,
+html.dark .scalar-api-reference h5,
+html.dark .scalar-api-reference h6,
+html.dark .scalar-api-reference strong,
+html.dark .scalar-app h1,
+html.dark .scalar-app h2,
+html.dark .scalar-app h3,
+html.dark .scalar-app strong,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode strong {
+    color: #f8fafc !important;
+}
+
+/* Force crisp dark text colors on markdown prose & description elements in Light Mode */
+html:not(.dark) .scalar-api-reference,
+html:not(.dark) .scalar-app,
+.light-mode {
+    color: #334155 !important;
+}
+html:not(.dark) .scalar-api-reference p,
+html:not(.dark) .scalar-api-reference li,
+html:not(.dark) .scalar-api-reference td,
+html:not(.dark) .scalar-api-reference span:not([class*="bg-"]):not([class*="badge"]),
+html:not(.dark) .scalar-app p,
+html:not(.dark) .scalar-app li,
+html:not(.dark) .scalar-app td,
+.light-mode p,
+.light-mode li,
+.light-mode td {
+    color: #334155 !important;
+}
+html:not(.dark) .scalar-api-reference h1,
+html:not(.dark) .scalar-api-reference h2,
+html:not(.dark) .scalar-api-reference h3,
+html:not(.dark) .scalar-api-reference h4,
+html:not(.dark) .scalar-api-reference h5,
+html:not(.dark) .scalar-api-reference h6,
+html:not(.dark) .scalar-api-reference strong,
+html:not(.dark) .scalar-app h1,
+html:not(.dark) .scalar-app h2,
+html:not(.dark) .scalar-app h3,
+html:not(.dark) .scalar-app strong,
+.light-mode h1,
+.light-mode h2,
+.light-mode h3,
+.light-mode strong {
+    color: #0f172a !important;
+}

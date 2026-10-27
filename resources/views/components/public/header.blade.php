@@ -40,6 +40,10 @@
                     $baseLegal = str_replace('.es', '', $currentRoute);
                     $enUrl = route($baseLegal);
                     $esUrl = route($baseLegal . '.es');
+                } elseif ($currentRoute && str_starts_with($currentRoute, 'demo.')) {
+                    $baseDemo = str_replace('.es', '', $currentRoute);
+                    $enUrl = route($baseDemo, ['lang' => 'en']);
+                    $esUrl = route($baseDemo . '.es');
                 } else {
                     $enUrl = route('landing.index');
                     $esUrl = route('landing.index', ['locale' => 'es']);

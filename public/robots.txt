@@ -14,6 +14,15 @@ Allow: /favicon.ico
 # Allow explicitly indexed URLs (English)
 Allow: /$
 Allow: /plans$
+Allow: /demo$
+Allow: /demo/data-sources$
+Allow: /demo/asset-groups$
+Allow: /demo/collaboration$
+Allow: /demo/intelligence$
+Allow: /architecture$
+Allow: /solutions/agency-client-reporting$
+Allow: /solutions/cross-channel-normalization$
+Allow: /guides/fix-gsc-looker-quota-limits$
 Allow: /docs/api$
 Allow: /docs/api/openapi.json$
 Allow: /app/login$
@@ -25,6 +34,15 @@ Allow: /data-deletion$
 # Allow explicitly indexed URLs (Spanish)
 Allow: /es$
 Allow: /es/planes$
+Allow: /es/demo$
+Allow: /es/demo/data-sources$
+Allow: /es/demo/asset-groups$
+Allow: /es/demo/collaboration$
+Allow: /es/demo/intelligence$
+Allow: /es/arquitectura$
+Allow: /es/soluciones/reportes-agencias-marketing$
+Allow: /es/soluciones/normalizacion-metricas-marketing$
+Allow: /es/guias/solucion-error-cuota-looker-studio-gsc$
 Allow: /es/docs/api$
 Allow: /es/docs/api/openapi.json$
 Allow: /es/privacy$

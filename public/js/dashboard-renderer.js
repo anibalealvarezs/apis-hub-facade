@@ -261,18 +261,20 @@ window.dashboardRenderer = {
         const dep = String(dependency || "").trim().toLowerCase();
         const lbl = String(label || "").trim().toLowerCase();
 
-        // 1. Detect channel/provider from bracketed or prefixed label if channel isn't set directly
-        // e.g. "[IG] Likes", "[Google Analytics] - Sessions", "GSC - Clics", "GA4 - Sessions", "GAds - Clicks"
-        if (!c && lbl) {
+        // 1. Detect channel/provider from bracketed, prefixed, or contained keyword in label if channel isn't set directly
+        // e.g. "[IG] Likes", "[Google Analytics] - Sessions", "GSC - Clics", "GA4 - Sessions", "GAds - Clicks",
+        // "Google Search Console (SEO)", "Meta Ads (Paid Social)", "Google Ads (Paid Search)", "Mailchimp (Email Marketing)"
+        if ((!c || c === 'cross_channel' || c === 'omnichannel') && lbl) {
             const bracketMatch = lbl.match(/^\[([a-z0-9_\-\s]+)\]/i);
             if (bracketMatch) {
                 const tag = bracketMatch[1].trim().toLowerCase();
                 if (['ig', 'instagram'].includes(tag)) c = 'instagram';
                 else if (['fb', 'facebook'].includes(tag)) c = 'facebook';
-                else if (['meta', 'meta ads', 'meta organic'].includes(tag)) c = 'meta';
+                else if (['meta', 'meta ads', 'meta organic', 'meta social'].includes(tag)) c = 'meta';
                 else if (['ga4', 'google analytics', 'google_analytics'].includes(tag)) c = 'google_analytics';
                 else if (['gsc', 'google search console', 'google_search_console'].includes(tag)) c = 'google_search_console';
                 else if (['gads', 'google ads', 'google_ads'].includes(tag)) c = 'google_ads';
+                else if (['mc', 'mailchimp'].includes(tag)) c = 'mailchimp';
                 else if (['gbp', 'google business profile'].includes(tag)) c = 'google';
                 else c = tag;
             } else {
@@ -285,7 +287,19 @@ window.dashboardRenderer = {
                     else if (tag === 'ig') c = 'instagram';
                     else if (tag === 'fb') c = 'facebook';
                     else if (tag === 'meta') c = 'meta';
+                    else if (tag === 'mailchimp' || tag === 'mc') c = 'mailchimp';
                 }
+            }
+
+            // Keyword containment fallback if still not resolved
+            if (!c || c === 'cross_channel' || c === 'omnichannel') {
+                if (lbl.includes('search console') || lbl.includes('gsc')) c = 'google_search_console';
+                else if (lbl.includes('analytics') || lbl.includes('ga4')) c = 'google_analytics';
+                else if (lbl.includes('google ads') || lbl.includes('gads')) c = 'google_ads';
+                else if (lbl.includes('meta') || lbl.includes('facebook') || lbl.includes('instagram')) c = 'meta';
+                else if (lbl.includes('mailchimp') || lbl.includes('email marketing')) c = 'mailchimp';
+                else if (lbl.includes('shopify')) c = 'shopify';
+                else if (lbl.includes('klaviyo')) c = 'klaviyo';
             }
         }
 
@@ -525,7 +539,7 @@ window.dashboardRenderer = {
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
                     try {
                         const response = await fetch(
-                            "/api/dashboard/widget/" +
+                            (window.dashboardWidgetDataUrlPrefix || "/api/dashboard/widget/") +
                                 widgetId +
                                 "/data?lang=" +
                                 encodeURIComponent(currentLang),
@@ -1444,6 +1458,7 @@ window.dashboardRenderer = {
     // ─── Table ───
 
     renderTable(containerEl, data, controls) {
+        controls = controls || {};
         const columns = data?.columns ?? [];
         const rows = data?.rows ?? [];
 
@@ -1530,7 +1545,7 @@ window.dashboardRenderer = {
         }
 
         const blockFirstCol =
-            controls.block_first_col !== undefined
+            controls?.block_first_col !== undefined
                 ? !!controls.block_first_col
                 : true;
 
@@ -1552,7 +1567,7 @@ window.dashboardRenderer = {
                 : "";
 
             html +=
-                '<div class="fixed-col-wrap" style="flex:0 1 auto;max-width:50%;min-width:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
+                '<div class="fixed-col-wrap" style="flex:0 0 25%;width:25%;max-width:25%;min-width:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
             html +=
                 '<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">';
             html += '<thead style="position:sticky;top:0;z-index:2;">';
@@ -1595,7 +1610,7 @@ window.dashboardRenderer = {
             const thAlign = isNumeric ? "text-right" : "text-left";
             const isFirstOfAll = !blockFirstCol && cIdx === 0;
             const thStyle = isFirstOfAll
-                ? "max-width:50%;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                ? "width:25%;max-width:25%;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
                 : (isNumeric
                     ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
                     : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;");
@@ -1617,22 +1632,29 @@ window.dashboardRenderer = {
                     col.format === "currency" ||
                     col.format === "percentage" ||
                     col.format === "number";
-                const formatted =
-                    isNumeric && col.format === "currency"
-                        ? this.formatCurrency(val)
-                        : isNumeric && col.format === "percentage"
-                          ? val != null
-                              ? Number(val).toFixed(1) + "%"
-                              : ""
-                          : isNumeric && col.format === "number"
-                            ? this._formatTableNumber(val)
-                            : val;
+                let formatted = val;
+                if (isNumeric) {
+                    if (typeof val === "number" || (!isNaN(Number(val)) && val !== "")) {
+                        if (col.format === "currency") {
+                            formatted = this.formatCurrency(val);
+                        } else if (col.format === "percentage") {
+                            formatted = Number(val).toFixed(1) + "%";
+                        } else {
+                            formatted = this._formatTableNumber(val);
+                        }
+                    } else if (val != null && val !== "") {
+                        // Pre-formatted string (e.g. '$ 12,410' or '2.50x')
+                        formatted = val;
+                    } else {
+                        formatted = "—";
+                    }
+                }
                 const tdClass = isNumeric
                     ? "px-3 py-2 whitespace-nowrap text-gray-700 dark:text-gray-200 text-right"
                     : "px-3 py-2 text-gray-700 dark:text-gray-200";
                 const isFirstOfAll = !blockFirstCol && cIdx === 0;
                 const tdStyle = isFirstOfAll
-                    ? "max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                    ? "width:25%;max-width:25%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
                     : "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
                 const valStr = String(val);
                 html += `<td class="${tdClass} ${cellBgClass} data-has-tooltip" data-tooltip="${this.escapeHtml(valStr)}" title="${this.escapeHtml(valStr)}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
@@ -3746,7 +3768,10 @@ window.dashboardRenderer = {
         }
 
         const canvas = containerEl.querySelector("canvas");
-        if (canvas) {
+        const mapInst = this._chartInstances.get(containerEl);
+        const isMap = !!(mapInst && typeof mapInst.updateSize === "function");
+
+        if (canvas || isMap) {
             targetEl.style.display = "flex";
             targetEl.style.flexDirection = "column";
             targetEl.style.width = "100%";
@@ -3754,12 +3779,25 @@ window.dashboardRenderer = {
             targetEl.style.overflow = "hidden";
             targetEl.innerHTML = "";
 
-            // Move entire child tree (canvasWrap + r2 badge + tooltip + toggles) into modal
+            // Move entire child tree into modal
             while (containerEl.children.length > 0) {
                 targetEl.appendChild(containerEl.children[0]);
             }
+
+            if (isMap) {
+                this._chartInstances.set(targetEl, mapInst);
+                this._chartInstances.delete(containerEl);
+                if (this._popOutObserver) this._popOutObserver.disconnect();
+                this._popOutObserver = new ResizeObserver(() => {
+                    mapInst.updateSize();
+                });
+                this._popOutObserver.observe(targetEl);
+                setTimeout(() => mapInst.updateSize(), 50);
+                return;
+            }
+
             let chart = this._chartInstances.get(containerEl);
-            if (!chart && window.Chart?.getChart) {
+            if (!chart && window.Chart?.getChart && canvas) {
                 chart = window.Chart.getChart(canvas);
             }
             if (chart) {
@@ -3800,18 +3838,10 @@ window.dashboardRenderer = {
             this._popOutObserver = null;
         }
         const canvas = targetEl.querySelector("canvas");
-        if (canvas) {
-            const existingCanvas = containerEl.querySelector("canvas");
-            if (existingCanvas) {
-                // Grid was reloaded while popped out — discard modal's stale chart
-                const chart = this._chartInstances.get(targetEl);
-                if (chart) {
-                    chart.destroy();
-                    this._chartInstances.delete(targetEl);
-                }
-                targetEl.innerHTML = "";
-                return;
-            }
+        const mapInst = this._chartInstances.get(targetEl);
+        const isMap = !!(mapInst && typeof mapInst.updateSize === "function");
+
+        if (canvas || isMap) {
             containerEl.style.display = "flex";
             containerEl.style.flexDirection = "column";
             containerEl.style.width = "100%";
@@ -3838,6 +3868,14 @@ window.dashboardRenderer = {
                 );
                 this._pinnedTooltips.delete(targetEl);
             }
+
+            if (isMap) {
+                this._chartInstances.set(containerEl, mapInst);
+                this._chartInstances.delete(targetEl);
+                setTimeout(() => mapInst.updateSize(), 50);
+                return;
+            }
+
             const chart = this._chartInstances.get(targetEl);
             if (chart) {
                 this._chartInstances.set(containerEl, chart);
@@ -4273,6 +4311,9 @@ window.dashboardRenderer = {
     // ─── Choropleth Map Widget ───
 
     renderChoroplethMap(containerEl, data, controls) {
+        // Clean up any previously appended or orphaned tooltips
+        document.querySelectorAll('.jvm-tooltip').forEach(el => el.remove());
+
         const uniqueId = 'map-widget-' + Math.random().toString(36).substring(2, 9);
         const seriesMetrics = Array.isArray(data?.series_metrics) && data.series_metrics.length > 0 ? data.series_metrics : null;
         let activeIdx = 0;
@@ -4619,13 +4660,17 @@ window.dashboardRenderer = {
             });
         }
 
-        // Setup ResizeObserver to automatically switch between 2-column landscape and toggle mode
+        // Setup ResizeObserver to automatically switch between 2-column landscape and toggle mode and resize map
         if (window.ResizeObserver) {
             const ro = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const cr = entry.contentRect;
                     if (cr && cr.width > 0 && cr.height > 0) {
                         applyAdaptiveLayout(cr.width, cr.height);
+                        const mapInstance = this._chartInstances?.get(containerEl) || window._currentMapInst;
+                        if (mapInstance && typeof mapInstance.updateSize === 'function') {
+                            mapInstance.updateSize();
+                        }
                     }
                 }
             });
@@ -4805,3 +4850,6 @@ window.dashboardRenderer = {
         }
     },
 };
+
+window.DashboardRenderer = window.dashboardRenderer;
+

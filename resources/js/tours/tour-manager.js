@@ -99,13 +99,15 @@ class TourManager {
      * @returns {Array<{ id: string, config: object }>}
      */
     getAvailableTours(path = window.location.pathname) {
+        if (!this.isTenantRoute(path)) {
+            return [];
+        }
+
         const available = [];
 
         for (const [id, config] of this.tours.entries()) {
             if (id === 'global-ui') {
-                if (this.isTenantRoute(path)) {
-                    available.push({ id, config });
-                }
+                available.push({ id, config });
                 continue;
             }
 
@@ -379,6 +381,10 @@ class TourManager {
      * @returns {string|null}
      */
     getPageTourForRoute(path = window.location.pathname) {
+        if (!this.isTenantRoute(path)) {
+            return null;
+        }
+
         for (const [tourId, config] of this.tours.entries()) {
             if (tourId === 'global-ui') continue;
 
@@ -400,6 +406,11 @@ class TourManager {
      */
     autoRun() {
         const path = window.location.pathname;
+
+        if (!this.isTenantRoute(path)) {
+            this.removeTourTrigger();
+            return;
+        }
 
         // 0. Check for explicitly forced tour from cross-page navigation
         const forcedTour = sessionStorage.getItem('force_play_tour');

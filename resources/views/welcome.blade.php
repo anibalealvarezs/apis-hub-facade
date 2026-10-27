@@ -13,6 +13,7 @@
         <link rel="preconnect" href="https://www.google.com">
 
         <!-- Google reCAPTCHA Enterprise -->
+        <meta name="recaptcha-site-key" content="{{ config('services.recaptcha.site_key') }}">
         <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
         
         <!-- Primary Meta Tags -->
@@ -121,31 +122,6 @@
         <!-- Google Fonts: Outfit -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-        <style>
-            body {
-                background-color: #f8fafc;
-            }
-            html.dark body {
-                background-color: #0f172a;
-            }
-            .hero-mesh {
-                position: fixed;
-                inset: 0;
-                z-index: -10;
-                background-color: #f8fafc;
-                background-repeat: no-repeat;
-                background-image: 
-                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.12) 0, transparent 50%), 
-                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.12) 0, transparent 50%);
-            }
-            html.dark .hero-mesh {
-                background-color: #0f172a;
-                background-image: 
-                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.08) 0, transparent 40%), 
-                    radial-gradient(at 70% 30%, rgba(139, 92, 246, 0.05) 0, transparent 40%), 
-                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%);
-            }
-        </style>
     </head>
     <body class="antialiased min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white relative" 
           x-data="themeControl" 
@@ -236,24 +212,6 @@
                                 {{ __('Subscribe') }}
                             </button>
                         </div>
-                        
-                        <script>
-                            document.getElementById('waitlist-form').addEventListener('submit', function(e) {
-                                e.preventDefault();
-                                const form = this;
-                                
-                                if (typeof grecaptcha !== 'undefined') {
-                                    grecaptcha.enterprise.ready(function() {
-                                        grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', {action: 'subscribe'}).then(function(token) {
-                                            document.getElementById('recaptcha_token').value = token;
-                                            form.submit();
-                                        });
-                                    });
-                                } else {
-                                    form.submit();
-                                }
-                            });
-                        </script>
 
                         @if(session('error'))
                             <p class="mt-3 text-red-500 text-sm font-medium" role="alert">{{ session('error') }}</p>
@@ -346,6 +304,7 @@
         <div class="hero-mesh" aria-hidden="true"></div>
 
         <!-- External Marketing & Analytics (Vite Optimized) -->
+        <script src="{{ asset('js/waitlist-form.js') }}" defer></script>
         @vite(['resources/js/gtm.js'])
     </body>
 </html>
