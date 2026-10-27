@@ -121,31 +121,6 @@
         <!-- Google Fonts: Outfit -->
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-        <style>
-            body {
-                background-color: #f8fafc;
-            }
-            html.dark body {
-                background-color: #0f172a;
-            }
-            .hero-mesh {
-                position: fixed;
-                inset: 0;
-                z-index: -10;
-                background-color: #f8fafc;
-                background-repeat: no-repeat;
-                background-image: 
-                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.12) 0, transparent 50%), 
-                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.12) 0, transparent 50%);
-            }
-            html.dark .hero-mesh {
-                background-color: #0f172a;
-                background-image: 
-                    radial-gradient(at 0% 0%, rgba(0, 167, 249, 0.08) 0, transparent 40%), 
-                    radial-gradient(at 70% 30%, rgba(139, 92, 246, 0.05) 0, transparent 40%), 
-                    radial-gradient(at 100% 100%, rgba(0, 202, 196, 0.08) 0, transparent 40%);
-            }
-        </style>
     </head>
     <body class="antialiased min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white relative" 
           x-data="themeControl" 

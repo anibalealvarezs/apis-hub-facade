@@ -6,66 +6,11 @@
     <meta name="robots" content="index, follow">
     <meta name="description" content="{{ __('Demostración pública interactiva de APIs Hub: Configuración de Fuentes de Datos y Cuota de Activos.') }}">
     <title>{{ __('Paso 1: Fuentes de Datos') }} — APIs Hub</title>
-    <script>
-        (function() {
-            var theme = localStorage.getItem('demo_theme');
-            if (!theme) {
-                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            }
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        })();
-    </script>
-    <style>
-        html { background-color: #f9fafb; color-scheme: light; }
-        html.dark { background-color: #030712; color-scheme: dark; }
-    </style>
-    <script>
-        const origWarn = console.warn;
-        console.warn = function(...args) {
-            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-            origWarn.apply(console, args);
-        };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd',
-                            '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8',
-                            '800': '#1e40af', '900': '#1e3a8a', '950': '#172554'
-                        },
-                        success: {
-                            '500': '#10b981', '600': '#059669', '700': '#047857'
-                        },
-                        warning: {
-                            '50': '#fffbeb', '500': '#f59e0b', '600': '#d97706', '700': '#b45309'
-                        }
-                    }
-                }
-            }
-        };
-    </script>
-    <style>
-        .glass-panel {
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            background-color: rgba(255, 255, 255, 0.7) !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-        }
-        .dark .glass-panel, html.dark .glass-panel {
-            background-color: rgba(15, 23, 42, 0.7) !important;
-            border-color: rgba(30, 41, 59, 0.5) !important;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
+    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('js/demo-controllers.js') }}"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col font-sans antialiased selection:bg-primary-500 selection:text-white"
@@ -324,74 +269,5 @@
 
     {{-- Unified Public Footer --}}
     @include('components.public.footer')
-
-    <script>
-        function demoDataSources(config) {
-            return {
-                darkMode: document.documentElement.classList.contains('dark'),
-                providers: config.providers || {},
-                activeChannelKey: config.activeChannelKey || 'google_search_console',
-                tierUsage: config.tierUsage || 21,
-                tierMax: config.tierMax || 50,
-                theme: config.theme || 'dark',
-                currentLang: config.currentLang || 'es',
-
-                init() {
-                    this.$watch('darkMode', val => {
-                        this.theme = val ? 'dark' : 'light';
-                        localStorage.setItem('color-theme', this.theme);
-                        localStorage.setItem('demo_theme', this.theme);
-                        document.documentElement.classList.toggle('dark', val);
-                    });
-                },
-
-                get activeChannel() {
-                    for (const p of Object.values(this.providers)) {
-                        for (const ch of p.channels) {
-                            if (ch.key === this.activeChannelKey) return ch;
-                        }
-                    }
-                    return null;
-                },
-
-                getProviderCount(provider) {
-                    return provider.channels.reduce((sum, ch) => sum + (ch.count || 0), 0);
-                },
-
-                selectChannel(key) {
-                    this.activeChannelKey = key;
-                },
-
-                toggleAsset(asset) {
-                    asset.enabled = !asset.enabled;
-                    if (asset.enabled) {
-                        this.tierUsage++;
-                    } else {
-                        this.tierUsage = Math.max(0, this.tierUsage - 1);
-                    }
-                    // Update active channel count
-                    if (this.activeChannel) {
-                        this.activeChannel.count = this.activeChannel.assets.filter(a => a.enabled).length;
-                    }
-                },
-
-                simulateDiscovery() {
-                    alert(this.currentLang === 'es' 
-                        ? '¡Descubrimiento completado! Todos los activos disponibles están sincronizados.' 
-                        : 'Asset discovery completed! All available assets are synced.');
-                },
-
-                toggleTheme() {
-                    this.theme = this.theme === 'dark' ? 'light' : 'dark';
-                    localStorage.setItem('demo_theme', this.theme);
-                    if (this.theme === 'dark') {
-                        document.documentElement.classList.add('dark');
-                    } else {
-                        document.documentElement.classList.remove('dark');
-                    }
-                }
-            };
-        }
-    </script>
 </body>
 </html>

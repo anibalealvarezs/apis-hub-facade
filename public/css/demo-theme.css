@@ -1,0 +1,10 @@
+/* Global demo theme background initialization and base styles */
+html {
+    background-color: #f9fafb;
+    color-scheme: light;
+}
+
+html.dark {
+    background-color: #030712;
+    color-scheme: dark;
+}

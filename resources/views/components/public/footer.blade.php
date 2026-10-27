@@ -65,22 +65,3 @@
     </div>
 </footer>
 
-<!-- Portal Link Resolver Script -->
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.js-portal-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const encodedPath = link.getAttribute('data-portal');
-                if (encodedPath) {
-                    try {
-                        const decodedPath = atob(encodedPath);
-                        window.location.href = decodedPath;
-                    } catch (err) {
-                        console.error('Failed to resolve portal link', err);
-                    }
-                }
-            });
-        });
-    });
-</script>
