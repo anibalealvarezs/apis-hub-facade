@@ -30,11 +30,22 @@ Route::get('/solutions/cross-channel-normalization', [\App\Http\Controllers\Land
 Route::get('/es/soluciones/normalizacion-metricas-marketing', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->crossChannelNormalization($r, 'es'))
     ->name('landing.solutions.normalization.es');
 
-// Guides: Looker Studio Quota Fix
-Route::get('/guides/fix-gsc-looker-quota-limits', [\App\Http\Controllers\LandingController::class, 'fixLookerQuota'])
-    ->name('landing.guides.looker-quota');
-Route::get('/es/guias/solucion-error-cuota-looker-studio-gsc', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->fixLookerQuota($r, 'es'))
-    ->name('landing.guides.looker-quota.es');
+// Blog Index & Technical Articles
+Route::get('/blog', [\App\Http\Controllers\LandingController::class, 'blogIndex'])
+    ->name('landing.blog.index');
+Route::get('/es/blog', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->blogIndex($r, 'es'))
+    ->name('landing.blog.index.es');
+
+Route::get('/blog/fix-gsc-looker-quota-limits', [\App\Http\Controllers\LandingController::class, 'fixLookerQuota'])
+    ->name('landing.blog.looker-quota');
+Route::get('/es/blog/solucion-error-cuota-looker-studio-gsc', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->fixLookerQuota($r, 'es'))
+    ->name('landing.blog.looker-quota.es');
+
+// 301 Permanent Redirects from legacy /guides/ URLs
+Route::redirect('/guides/fix-gsc-looker-quota-limits', '/blog/fix-gsc-looker-quota-limits', 301);
+Route::redirect('/es/guias/solucion-error-cuota-looker-studio-gsc', '/es/blog/solucion-error-cuota-looker-studio-gsc', 301);
+Route::redirect('/guides', '/blog', 301);
+Route::redirect('/es/guias', '/es/blog', 301);
 
 Route::get('/docs/api', [\App\Http\Controllers\ApiDocsController::class, 'show'])
     ->name('docs.api');

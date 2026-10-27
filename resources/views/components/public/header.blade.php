@@ -30,9 +30,12 @@
                 } elseif ($currentRoute === 'landing.solutions.normalization' || $currentRoute === 'landing.solutions.normalization.es') {
                     $enUrl = route('landing.solutions.normalization');
                     $esUrl = route('landing.solutions.normalization.es');
-                } elseif ($currentRoute === 'landing.guides.looker-quota' || $currentRoute === 'landing.guides.looker-quota.es') {
-                    $enUrl = route('landing.guides.looker-quota');
-                    $esUrl = route('landing.guides.looker-quota.es');
+                } elseif ($currentRoute === 'landing.blog.index' || $currentRoute === 'landing.blog.index.es') {
+                    $enUrl = route('landing.blog.index');
+                    $esUrl = route('landing.blog.index.es');
+                } elseif ($currentRoute === 'landing.blog.looker-quota' || $currentRoute === 'landing.blog.looker-quota.es' || $currentRoute === 'landing.guides.looker-quota' || $currentRoute === 'landing.guides.looker-quota.es') {
+                    $enUrl = route('landing.blog.looker-quota');
+                    $esUrl = route('landing.blog.looker-quota.es');
                 } elseif ($currentRoute === 'docs.api' || $currentRoute === 'docs.api.es') {
                     $enUrl = route('docs.api');
                     $esUrl = route('docs.api.es');

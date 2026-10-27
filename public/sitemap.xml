@@ -187,22 +187,41 @@
         <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/solutions/cross-channel-normalization" />
         <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
+    <!-- Blog Feed / Index -->
+    <url>
+        <loc>https://apis-hub.cloud/blog</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/blog" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/blog" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/blog" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
         <priority>0.85</priority>
     </url>
     <url>
-        <loc>https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits</loc>
-        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
-        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/guias/solucion-error-cuota-looker-studio-gsc" />
-        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
+        <loc>https://apis-hub.cloud/es/blog</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/blog" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/blog" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/blog" />
+        <lastmod>2026-10-27</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.85</priority>
+    </url>
+
+    <!-- Blog Articles -->
+    <url>
+        <loc>https://apis-hub.cloud/blog/fix-gsc-looker-quota-limits</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/blog/fix-gsc-looker-quota-limits" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/blog/solucion-error-cuota-looker-studio-gsc" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/blog/fix-gsc-looker-quota-limits" />
         <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
-        <loc>https://apis-hub.cloud/es/guias/solucion-error-cuota-looker-studio-gsc</loc>
-        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
-        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/guias/solucion-error-cuota-looker-studio-gsc" />
-        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/guides/fix-gsc-looker-quota-limits" />
+        <loc>https://apis-hub.cloud/es/blog/solucion-error-cuota-looker-studio-gsc</loc>
+        <xhtml:link rel="alternate" hreflang="en" href="https://apis-hub.cloud/blog/fix-gsc-looker-quota-limits" />
+        <xhtml:link rel="alternate" hreflang="es" href="https://apis-hub.cloud/es/blog/solucion-error-cuota-looker-studio-gsc" />
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://apis-hub.cloud/blog/fix-gsc-looker-quota-limits" />
         <lastmod>2026-10-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>

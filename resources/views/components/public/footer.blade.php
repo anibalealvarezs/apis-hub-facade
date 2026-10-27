@@ -1,8 +1,8 @@
 <!-- Semantic Footer / Micro Branding -->
 <footer class="relative w-full z-10 py-10 px-6 sm:px-8 mt-auto flex flex-col items-center gap-8 text-sm font-medium text-slate-500 dark:text-slate-400 border-t border-slate-200/50 dark:border-slate-800/50">
-    <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+    <div class="w-full max-w-6xl grid grid-cols-2 md:grid-cols-4 gap-8 text-left">
         {{-- Column 1: Core Platform / Technology --}}
-        <div class="flex flex-col gap-2.5 items-center md:items-start">
+        <div class="flex flex-col gap-2.5 items-start">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                 {{ app()->getLocale() === 'es' ? 'Plataforma' : 'Platform' }}
             </span>
@@ -14,14 +14,18 @@
                class="hover:text-brand-blue {{ request()->routeIs('landing.solutions.normalization*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
                 {{ __('Normalization') }}
             </a>
+            <a href="{{ app()->getLocale() === 'es' ? route('demo.data-sources.es') : route('demo.data-sources', ['lang' => 'en']) }}" 
+               class="hover:text-brand-blue {{ request()->routeIs('demo.*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
+                {{ __('Interactive Demo') }}
+            </a>
             <a href="{{ app()->getLocale() === 'es' ? route('docs.api.es') : route('docs.api') }}" 
                class="hover:text-brand-blue {{ request()->routeIs('docs.api*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
                 {{ __('API Docs') }}
             </a>
         </div>
 
-        {{-- Column 2: Solutions & Product --}}
-        <div class="flex flex-col gap-2.5 items-center md:items-start">
+        {{-- Column 2: Solutions & Pricing --}}
+        <div class="flex flex-col gap-2.5 items-start">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                 {{ app()->getLocale() === 'es' ? 'Soluciones' : 'Solutions' }}
             </span>
@@ -33,14 +37,21 @@
                class="hover:text-brand-blue {{ request()->routeIs('landing.solutions.agency*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
                 {{ __('For Agencies') }}
             </a>
-            <a href="{{ app()->getLocale() === 'es' ? route('demo.data-sources.es') : route('demo.data-sources', ['lang' => 'en']) }}" 
-               class="hover:text-brand-blue {{ request()->routeIs('demo.*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
-                {{ __('Demo') }}
+        </div>
+
+        {{-- Column 3: Resources & Editorial --}}
+        <div class="flex flex-col gap-2.5 items-start">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
+                {{ app()->getLocale() === 'es' ? 'Recursos' : 'Resources' }}
+            </span>
+            <a href="{{ app()->getLocale() === 'es' ? route('landing.blog.index.es') : route('landing.blog.index') }}" 
+               class="hover:text-brand-blue {{ request()->routeIs('landing.blog*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
+                {{ __('Blog & Articles') }}
             </a>
         </div>
 
-        {{-- Column 3: Legal & Privacy --}}
-        <div class="flex flex-col gap-2.5 items-center md:items-start">
+        {{-- Column 4: Legal & Privacy --}}
+        <div class="flex flex-col gap-2.5 items-start">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                 {{ app()->getLocale() === 'es' ? 'Legal' : 'Legal' }}
             </span>

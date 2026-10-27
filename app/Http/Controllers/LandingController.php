@@ -176,6 +176,37 @@ class LandingController extends Controller
     }
 
     /**
+     * Show the Blog feed / index page.
+     */
+     public function blogIndex(Request $request, $locale = null)
+     {
+         $this->resolveLocale($request, $locale);
+         $isEs = app()->getLocale() === 'es';
+
+         $posts = [
+             [
+                 'slug' => $isEs ? 'solucion-error-cuota-looker-studio-gsc' : 'fix-gsc-looker-quota-limits',
+                 'url' => $isEs ? route('landing.blog.looker-quota.es') : route('landing.blog.looker-quota'),
+                 'title' => $isEs
+                     ? 'Cómo solucionar definitivamente el error de cuota de Google Search Console en Looker Studio'
+                     : 'How to Permanently Fix Looker Studio Google Search Console Quota Errors',
+                 'excerpt' => $isEs
+                     ? 'Si administras paneles de Looker Studio conectados directamente a Google Search Console o GA4, probablemente te has encontrado con el error "Resource has been exhausted". Aquí explicamos el fallo arquitectónico y cómo resolverlo de raíz.'
+                     : 'If you manage Looker Studio reports connected directly to Google Search Console or GA4, you have likely encountered "Resource has been exhausted" quota limit errors. Here is why direct connectors fail and how to fix them.',
+                 'category' => $isEs ? 'Guía Técnica' : 'Engineering Guide',
+                 'reading_time' => $isEs ? '5 min de lectura' : '5 min read',
+                 'date' => '2026-10-27',
+                 'image' => asset($isEs ? 'images/seo/pages/og-guia-looker-cuota.webp' : 'images/seo/pages/og-guide-looker-quota.webp'),
+                 'tags' => ['Looker Studio', 'Google Search Console', 'GA4', 'API Quotas'],
+             ],
+         ];
+
+         return view('landing.blog-index', array_merge($this->baseViewData(), [
+             'posts' => $posts,
+         ]));
+     }
+
+    /**
      * Show the problem-solving guide for Looker Studio quota limits.
      */
     public function fixLookerQuota(Request $request, $locale = null)
