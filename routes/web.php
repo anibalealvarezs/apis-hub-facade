@@ -63,6 +63,17 @@ Route::get('/demo', [\App\Http\Controllers\DemoDashboardController::class, 'show
     ->name('demo.show');
 Route::get('/es/demo', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->show($r, 'es'))
     ->name('demo.show.es');
+
+Route::get('/demo/intelligence', [\App\Http\Controllers\DemoDashboardController::class, 'intelligence'])
+    ->name('demo.intelligence');
+Route::get('/es/demo/intelligence', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->intelligence($r, 'es'))
+    ->name('demo.intelligence.es');
+
+Route::get('/demo/collaboration', [\App\Http\Controllers\DemoDashboardController::class, 'collaboration'])
+    ->name('demo.collaboration');
+Route::get('/es/demo/collaboration', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->collaboration($r, 'es'))
+    ->name('demo.collaboration.es');
+
 Route::post('/demo/api/widget/{widget}/data', [\App\Http\Controllers\DemoDashboardController::class, 'widgetData'])
     ->name('demo.widget.data');
 

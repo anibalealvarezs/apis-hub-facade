@@ -56,6 +56,36 @@ class DemoDashboardTest extends TestCase
         $en->assertSee('Apparel & Footwear Line (Europe)');
     }
 
+    public function test_demo_intelligence_page_loads_in_spanish_and_english()
+    {
+        $es = $this->get('/es/demo/intelligence');
+        $es->assertStatus(200);
+        $es->assertSee('Data Intelligence');
+        $es->assertSee('Alerta de CPA Blended Elevado');
+        $es->assertSee('Model Context Protocol');
+
+        $en = $this->get('/demo/intelligence?lang=en');
+        $en->assertStatus(200);
+        $en->assertSee('Data Intelligence');
+        $en->assertSee('High Blended CPA Warning');
+        $en->assertSee('summarize_performance');
+    }
+
+    public function test_demo_collaboration_page_loads_in_spanish_and_english()
+    {
+        $es = $this->get('/es/demo/collaboration');
+        $es->assertStatus(200);
+        $es->assertSee('Colaboración en Equipo');
+        $es->assertSee('Sophia Vance');
+        $es->assertSee('Dueña del Proyecto');
+
+        $en = $this->get('/demo/collaboration?lang=en');
+        $en->assertStatus(200);
+        $en->assertSee('Team Collaboration');
+        $en->assertSee('Sophia Vance');
+        $en->assertSee('Project Owner');
+    }
+
     public function test_demo_widget_data_for_argentina()
     {
         // Widget 101 is Meta Ads Spend

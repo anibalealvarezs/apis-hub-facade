@@ -23,6 +23,18 @@
             'desc' => $currentLang === 'es' ? 'Analítica y Visualización' : 'Analytics & Insights',
             'route' => $currentLang === 'es' ? '/es/demo' : '/demo?lang=en',
         ],
+        4 => [
+            'num' => '4',
+            'label' => $currentLang === 'es' ? 'Data Intelligence' : 'Data Intelligence',
+            'desc' => $currentLang === 'es' ? 'Alertas, API & MCP' : 'Alerts, API & MCP',
+            'route' => $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en',
+        ],
+        5 => [
+            'num' => '5',
+            'label' => $currentLang === 'es' ? 'Colaboración & Equipos' : 'Team Collaboration',
+            'desc' => $currentLang === 'es' ? 'Proyectos y Roles' : 'Projects & Roles',
+            'route' => $currentLang === 'es' ? '/es/demo/collaboration' : '/demo/collaboration?lang=en',
+        ],
     ];
 @endphp
 
@@ -78,7 +90,7 @@
                 </a>
             @endif
 
-            @if($currentStep < 3)
+            @if($currentStep < 5)
                 <a href="{{ $steps[$currentStep + 1]['route'] }}"
                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
                     <span>{{ $currentLang === 'es' ? 'Siguiente Paso' : 'Next Step' }}</span>

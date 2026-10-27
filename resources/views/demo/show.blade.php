@@ -590,17 +590,34 @@
         </div>
     </div>
 
+    {{-- Bottom Stepper CTA --}}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 my-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xs">
+            <a href="{{ $currentLang === 'es' ? '/es/demo/asset-groups' : '/demo/asset-groups?lang=en' }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>{{ $currentLang === 'es' ? 'Volver al Paso 2: Grupos de Activos' : 'Back to Step 2: Asset Groups' }}</span>
+            </a>
+
+            <a href="{{ $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en' }}"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
+                <span>{{ $currentLang === 'es' ? 'Siguiente Paso: Data Intelligence (Paso 4)' : 'Next Step: Data Intelligence (Step 4)' }}</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+        </div>
+    </div>
+
     {{-- Bottom Banner Floating CTA --}}
     <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-6 px-4 mt-8">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div>
                 <h2 class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ $currentLang === 'es' ? '¿Listo para unificar tus métricas reales?' : 'Ready to unify your real metrics?' }}
+                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 3 de 5' : 'Interactive Demo Step 3 of 5' }}
                 </h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {{ $currentLang === 'es'
-                        ? 'Conecta tus cuentas de Google, Meta y Mailchimp sin esfuerzo y personaliza tus propios dashboards.'
-                        : 'Connect your Google, Meta, and Mailchimp accounts effortlessly and customize your own live dashboards.' }}
+                        ? 'Explora dashboards interactivos unificados con datos multi-canal pre-procesados.'
+                        : 'Explore unified interactive dashboards powered by pre-processed multi-channel cached data.' }}
                 </p>
             </div>
             <div class="flex items-center gap-3">

@@ -353,7 +353,7 @@
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div>
                 <h2 class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 1 de 3' : 'Interactive Demo Step 1 of 3' }}
+                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 1 de 5' : 'Interactive Demo Step 1 of 5' }}
                 </h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                     {{ $currentLang === 'es' ? 'Explora cómo APIs Hub gestiona credenciales seguras, límites de cuotas y normalización cross-channel.' : 'Explore how APIs Hub handles enterprise tokens, rate limits, and cross-channel normalization.' }}

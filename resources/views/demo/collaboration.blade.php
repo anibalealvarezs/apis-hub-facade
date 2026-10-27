@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración interactiva de APIs Hub: Proyectos compartidos, gestión de equipos y vistas públicas protegidas.' : 'APIs Hub Interactive Demo: Shareable projects, team collaboration, role-based asset scoping, and protected public dashboard links.' }}">
+    <title>{{ $currentLang === 'es' ? 'Paso 5: Colaboración & Equipos' : 'Step 5: Team Collaboration' }} — APIs Hub</title>
+    <script>
+        (function() {
+            var theme = localStorage.getItem('demo_theme');
+            if (!theme) {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+    <style>
+        html { background-color: #f9fafb; color-scheme: light; }
+        html.dark { background-color: #030712; color-scheme: dark; }
+    </style>
+    <script>
+        const origWarn = console.warn;
+        console.warn = function(...args) {
+            if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
+            origWarn.apply(console, args);
+        };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            '50': '#eff6ff', '100': '#dbeafe', '200': '#bfdbfe', '300': '#93c5fd',
+                            '400': '#60a5fa', '500': '#3b82f6', '600': '#2563eb', '700': '#1d4ed8',
+                            '800': '#1e40af', '900': '#1e3a8a', '950': '#172554'
+                        },
+                        success: {
+                            '500': '#10b981', '600': '#059669', '700': '#047857'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen flex flex-col font-sans antialiased selection:bg-primary-500 selection:text-white"
+      x-data="demoCollaboration({
+          theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+          currentLang: '{{ $currentLang }}',
+          showInviteModal: false
+      })">
+
+    {{-- Header --}}
+    <header class="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-xs px-4 py-2.5">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <a href="{{ $currentLang === 'es' ? '/' : '/en' }}" class="flex items-center gap-2 group">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
+                        AH
+                    </div>
+                    <span class="font-bold text-base tracking-tight text-gray-900 dark:text-white">APIs Hub</span>
+                </a>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {{ $currentLang === 'es' ? 'Demo Interactivo Beta' : 'Interactive Beta Demo' }}
+                </span>
+            </div>
+
+            <div class="flex items-center gap-3 text-xs">
+                {{-- Theme Switcher --}}
+                <button @click="toggleTheme()" class="p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="{{ $currentLang === 'es' ? 'Cambiar Modo' : 'Toggle Theme' }}">
+                    <template x-if="theme === 'dark'">
+                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </template>
+                    <template x-if="theme !== 'dark'">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </template>
+                </button>
+
+                {{-- Language Switcher --}}
+                <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200 dark:border-gray-700">
+                    <a href="/es/demo/collaboration" class="px-2 py-1 rounded text-xs font-semibold {{ $currentLang === 'es' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">ES</a>
+                    <a href="/demo/collaboration?lang=en" class="px-2 py-1 rounded text-xs font-semibold {{ $currentLang === 'en' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">EN</a>
+                </div>
+
+                {{-- CTA Button --}}
+                <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold bg-primary-600 hover:bg-primary-500 text-white shadow-sm transition-colors focus:ring-2 focus:ring-primary-400">
+                    <span>{{ $currentLang === 'es' ? 'Comenzar Prueba' : 'Start Free Trial' }}</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    {{-- Interactive Multi-Step Demo Progress Bar --}}
+    @include('demo.stepper', ['currentStep' => 5, 'currentLang' => $currentLang])
+
+    {{-- Main Container --}}
+    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+
+        {{-- Page Header --}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-xs">
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <div class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                            {{ $currentLang === 'es' ? 'Colaboración en Equipo & Proyectos Compartidos' : 'Team Collaboration & Shareable Projects' }}
+                        </h1>
+                        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 max-w-3xl">
+                            {{ $currentLang === 'es'
+                                ? 'Invita a tu equipo y agencias externas con control de acceso por Grupos de Activos, o comparte dashboards en vivo mediante enlaces públicos protegidos.'
+                                : 'Invite in-house teams and external media agencies with granular Asset Group access scopes, or publish secure read-only live dashboards with tokenized links.' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button type="button"
+                        @click="showInviteModal = true"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary-600 hover:bg-primary-500 text-white shadow-xs transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    <span>{{ $currentLang === 'es' ? 'Invitar Colaborador' : 'Invite Collaborator' }}</span>
+                </button>
+            </div>
+        </div>
+
+        {{-- Section 1: Active Collaborators with Role-Based Asset Scope --}}
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-xs overflow-hidden">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                        {{ $currentLang === 'es' ? 'Miembros del Equipo & Alcance de Acceso' : 'Team Members & Granular Asset Group Scopes' }}
+                    </h3>
+                    <p class="text-[11px] text-gray-400 mt-0.5">
+                        {{ $currentLang === 'es'
+                            ? 'Cada colaborador solo ve los Grupos de Activos y datos que le correspondan (ej. Agencia US vs Gerente Regional EU).'
+                            : 'Each user is restricted to their assigned Asset Groups so agencies only see their relevant market.' }}
+                    </p>
+                </div>
+                <span class="text-xs text-gray-400 font-mono">{{ count($collaborators) }} {{ $currentLang === 'es' ? 'miembros' : 'members' }}</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 uppercase font-semibold">
+                        <tr>
+                            <th class="px-4 py-3">{{ $currentLang === 'es' ? 'Usuario' : 'Member' }}</th>
+                            <th class="px-4 py-3">{{ $currentLang === 'es' ? 'Rol en el Proyecto' : 'Project Role' }}</th>
+                            <th class="px-4 py-3">{{ $currentLang === 'es' ? 'Grupos de Activos Asignados' : 'Assigned Asset Scope' }}</th>
+                            <th class="px-4 py-3 text-center">{{ $currentLang === 'es' ? 'Estado' : 'Status' }}</th>
+                            <th class="px-4 py-3 text-right">{{ $currentLang === 'es' ? 'Último Acceso' : 'Last Active' }}</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                        @foreach($collaborators as $member)
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                                <td class="px-4 py-3.5 font-bold text-gray-900 dark:text-white">
+                                    <div class="flex items-center gap-2.5">
+                                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-primary-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                            {{ $member['avatar'] }}
+                                        </div>
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-900 dark:text-white">{{ $member['name'] }}</p>
+                                            <p class="text-[10px] text-gray-400 font-normal">{{ $member['email'] }}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
+                                        {{ $member['role'] }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-primary-500"></span>
+                                        <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $member['asset_scope'] }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300">
+                                        {{ $member['status'] }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 text-right text-gray-400 font-mono text-[11px]">
+                                    {{ $member['last_login'] }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Section 2: Shareable Live Dashboards (Public Views) --}}
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>{{ $currentLang === 'es' ? 'Dashboards Compartibles & Enlaces Públicos' : 'Shareable Dashboards & Public Views' }}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">Live Embedded View</span>
+                    </h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {{ $currentLang === 'es'
+                            ? 'Publica dashboards interactivos de solo lectura para clientes o inversionistas con protección de contraseña o tokens firmados.'
+                            : 'Publish read-only interactive live dashboards with tokenized security, auto-refreshing charts, and full-screen kiosk support.' }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @foreach($shareableDashboards as $sd)
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/40 flex flex-col justify-between space-y-3">
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-xs font-bold text-gray-900 dark:text-white">{{ $sd['title'] }}</h4>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                    {{ $sd['status'] }}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-gray-500 dark:text-gray-400 font-mono break-all bg-white dark:bg-gray-900 p-2 rounded border border-gray-200 dark:border-gray-800">
+                                {{ $sd['url'] }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] pt-2 border-t border-gray-200 dark:border-gray-700 text-gray-500">
+                            <span>🔒 {{ $sd['access'] }}</span>
+                            <span class="font-bold">{{ $sd['views_count'] }} {{ $currentLang === 'es' ? 'visitas' : 'views' }}</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Interactive Invitation Modal (Mock) --}}
+        <div x-show="showInviteModal" x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+             @click.self="showInviteModal = false">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-full max-w-md p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+                        {{ $currentLang === 'es' ? 'Invitar Nuevo Colaborador' : 'Invite New Team Member' }}
+                    </h3>
+                    <button type="button" @click="showInviteModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ $currentLang === 'es' ? 'Correo Electrónico' : 'Email Address' }}</label>
+                        <input type="email" placeholder="colleague@agency.com" class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-900 dark:text-gray-100"/>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ $currentLang === 'es' ? 'Rol' : 'Role' }}</label>
+                        <select class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-900 dark:text-gray-100">
+                            <option>{{ $currentLang === 'es' ? 'Analista / Visualizador' : 'Analyst / Viewer' }}</option>
+                            <option>{{ $currentLang === 'es' ? 'Gestor de Medios' : 'Media Manager' }}</option>
+                            <option>{{ $currentLang === 'es' ? 'Administrador' : 'Admin' }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ $currentLang === 'es' ? 'Alcance de Grupos de Activos' : 'Asset Group Scope' }}</label>
+                        <select class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-900 dark:text-gray-100">
+                            <option>{{ $currentLang === 'es' ? 'Todos los Grupos de Activos' : 'All Asset Groups' }}</option>
+                            <option>{{ $currentLang === 'es' ? 'Marca Principal (Global / EE.UU.)' : 'Main Brand (Global / US)' }}</option>
+                            <option>{{ $currentLang === 'es' ? 'Línea Apparel & Calzado (Europa)' : 'Apparel & Footwear Line (Europe)' }}</option>
+                            <option>{{ $currentLang === 'es' ? 'Aura Hogar & Deco (Argentina)' : 'Aura Home & Living (Argentina)' }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-3 flex items-center justify-end gap-2 border-t border-gray-100 dark:border-gray-800">
+                    <button type="button" @click="showInviteModal = false" class="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400">
+                        {{ $currentLang === 'es' ? 'Cancelar' : 'Cancel' }}
+                    </button>
+                    <button type="button" @click="showInviteModal = false; alert(currentLang === 'es' ? 'Invitación enviada exitosamente.' : 'Invitation sent successfully.')" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary-600 hover:bg-primary-500 text-white shadow-xs">
+                        {{ $currentLang === 'es' ? 'Enviar Invitación' : 'Send Invitation' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Bottom Stepper CTA --}}
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+            <a href="{{ $currentLang === 'es' ? '/es/demo/intelligence' : '/demo/intelligence?lang=en' }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>{{ $currentLang === 'es' ? 'Volver al Paso 4: Data Intelligence' : 'Back to Step 4: Data Intelligence' }}</span>
+            </a>
+
+            <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
+               class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors">
+                <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis en APIs Hub' : 'Start Your Free Trial with APIs Hub' }}</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+        </div>
+    </main>
+
+    {{-- Footer CTA --}}
+    <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-6 px-4 mt-12">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+                <h2 class="text-sm font-bold text-gray-900 dark:text-white">
+                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 5 de 5 (Fin del Recorrido)' : 'Interactive Demo Step 5 of 5 (Journey Complete)' }}
+                </h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {{ $currentLang === 'es'
+                        ? 'Has explorado todo el flujo: desde la sincronización de activos hasta la colaboración segura en equipo.'
+                        : 'You have explored the entire flow: from asset connection and normalization to multi-team collaboration.' }}
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
+                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-sm transition-colors">
+                    <span>{{ $currentLang === 'es' ? 'Ver Planes y Comenzar' : 'View Plans & Get Started' }}</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        function demoCollaboration(config) {
+            return {
+                theme: config.theme || 'dark',
+                currentLang: config.currentLang || 'es',
+                showInviteModal: false,
+
+                toggleTheme() {
+                    this.theme = this.theme === 'dark' ? 'light' : 'dark';
+                    localStorage.setItem('demo_theme', this.theme);
+                    if (this.theme === 'dark') {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>

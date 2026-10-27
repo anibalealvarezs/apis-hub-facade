@@ -1431,7 +1431,7 @@ class DemoDashboardService
                         ['/es/blog/guia-tallas-calzado', '2,450', '7.8%', '31,410', '4.5'],
                     ];
                 } else {
-                    // US / Global localized URLs (mirroring Marcela Rodriguez SEO structure)
+                    // US / Global localized URLs (e-commerce catalog structure)
                     $rawPages = [
                         ['/', '28,510', '9.6%', '297,000', '3.1'],
                         ['/en', '12,420', '8.2%', '151,460', '3.9'],
@@ -1471,5 +1471,181 @@ class DemoDashboardService
                     'error' => 'Widget not found',
                 ];
         }
+    }
+
+    /**
+     * Mock data for Step 4: Data Intelligence (Alerts, Direct API, MCP Server).
+     */
+    public function getDemoIntelligenceData(?string $lang = null): array
+    {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
+        $isEn = ($lang === 'en');
+
+        return [
+            'alerts' => [
+                [
+                    'id' => 1,
+                    'name' => $isEn ? 'High Blended CPA Warning' : 'Alerta de CPA Blended Elevado',
+                    'condition' => 'Blended CPA > $ 45.00',
+                    'channel' => 'Cross-Channel (Paid Media)',
+                    'threshold' => '$ 45.00',
+                    'status' => 'active',
+                    'status_label' => $isEn ? 'Normal (Passing)' : 'Normal (Cumple)',
+                    'current_value' => '$ 38.40',
+                    'notification_channels' => ['Slack #growth-alerts', 'Email (Marketing Lead)'],
+                    'last_evaluated' => $isEn ? '12 minutes ago' : 'Hace 12 minutos',
+                ],
+                [
+                    'id' => 2,
+                    'name' => $isEn ? 'GSC Organic CTR Anomaly' : 'Anomalía de CTR Orgánico en GSC',
+                    'condition' => 'Average CTR < 2.5% (Rolling 7D)',
+                    'channel' => 'Google Search Console',
+                    'threshold' => '2.50 %',
+                    'status' => 'triggered',
+                    'status_label' => $isEn ? 'Triggered (Attention)' : 'Disparada (Atención)',
+                    'current_value' => '1.98 %',
+                    'notification_channels' => ['Slack #seo-alerts'],
+                    'last_evaluated' => $isEn ? '1 hour ago' : 'Hace 1 hora',
+                ],
+                [
+                    'id' => 3,
+                    'name' => $isEn ? 'Daily Ad Spend Spike Guard' : 'Protección de Sobregasto Diario en Ads',
+                    'condition' => 'Daily Spend > $ 1,500.00',
+                    'channel' => 'Meta Ads + Google Ads',
+                    'threshold' => '$ 1,500.00',
+                    'status' => 'active',
+                    'status_label' => $isEn ? 'Normal (Passing)' : 'Normal (Cumple)',
+                    'current_value' => '$ 982.50',
+                    'notification_channels' => ['Telegram (Emergency Ops)', 'Email (Ops Lead)'],
+                    'last_evaluated' => $isEn ? '30 minutes ago' : 'Hace 30 minutos',
+                ],
+            ],
+            'api_endpoints' => [
+                [
+                    'method' => 'POST',
+                    'endpoint' => '/api/dashboard/widget/101/data',
+                    'label' => $isEn ? 'Total Blended Spend (Cached Node)' : 'Inversión Total Blended (Nodo Cacheado)',
+                    'sample_response' => '{"success":true,"widget_type":"tile","data":{"value":31870,"percentage":14.2,"format":"currency","suffix":" USD"}}',
+                ],
+                [
+                    'method' => 'POST',
+                    'endpoint' => '/api/dashboard/widget/109/data',
+                    'label' => $isEn ? 'Multi-Channel Traffic Series (Pre-Aggregated)' : 'Series Multicanal de Tráfico (Pre-Agregadas)',
+                    'sample_response' => '{"success":true,"widget_type":"line_chart","data":{"labels":["2026-10-01","..."],"datasets":[{"label":"Meta Ads","data":[310,340]}]}}',
+                ],
+                [
+                    'method' => 'POST',
+                    'endpoint' => '/api/dashboard/widget/113/data',
+                    'label' => $isEn ? 'Geographic Organic Breakdown (Choropleth ISO)' : 'Desglose Geográfico Orgánico (Choropleth ISO)',
+                    'sample_response' => '{"success":true,"widget_type":"choropleth_map","data":{"values":{"US":18450,"ES":7820,"AR":5410}}}',
+                ],
+            ],
+            'mcp_tools' => [
+                [
+                    'name' => 'summarize_performance',
+                    'desc' => $isEn
+                        ? 'Analyzes ad spend, ROI, organic search, and blended conversion efficiency across all connected channels.'
+                        : 'Analiza inversión en publicidad, ROI, tráfico orgánico y eficiencia de conversión entre todos los canales.',
+                    'example' => 'Using APIs Hub MCP, analyze my blended ROAS vs CAC for the last 30 days.',
+                ],
+                [
+                    'name' => 'get_analytics_catalog',
+                    'desc' => $isEn
+                        ? 'Returns list of normalized metrics, available granularities, and data schemas across connected channels.'
+                        : 'Devuelve la lista de métricas normalizadas, granularidades y esquemas de datos entre los canales conectados.',
+                    'example' => 'List all metrics available for Google Search Console and Meta Ads in this project.',
+                ],
+                [
+                    'name' => 'list_configured_alerts',
+                    'desc' => $isEn
+                        ? 'Retrieves all active alerts, trigger conditions, current evaluated values, and recent status logs.'
+                        : 'Obtiene todas las alertas activas, condiciones de disparo, valores actuales y registros recientes.',
+                    'example' => 'Check if any KPIs or budget thresholds were breached in the last 24 hours.',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Mock data for Step 5: Team Collaboration and Shareable Projects.
+     */
+    public function getDemoCollaborationData(?string $lang = null): array
+    {
+        $lang = $lang ?? app()->getLocale() ?? 'es';
+        $isEn = ($lang === 'en');
+
+        return [
+            'project' => [
+                'name' => 'Aura Living Worldwide Inc.',
+                'slug' => 'aura-living',
+                'tier' => 'Ultra Dedicated',
+                'node_subdomain' => 'aura-living.apishub.io',
+                'created_at' => $isEn ? 'Aug 14, 2026' : '14 Ago, 2026',
+            ],
+            'collaborators' => [
+                [
+                    'id' => 1,
+                    'name' => 'Sophia Vance',
+                    'email' => 'sophia.vance@auraliving.com',
+                    'avatar' => 'SV',
+                    'role' => $isEn ? 'Project Owner' : 'Dueña del Proyecto',
+                    'badge_color' => 'amber',
+                    'asset_scope' => $isEn ? 'All Asset Groups (Global / US, EU, AR)' : 'Todos los Grupos (Global / US, UE, AR)',
+                    'status' => $isEn ? 'Active' : 'Activo',
+                    'last_login' => $isEn ? 'Active now' : 'Activo ahora',
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'David Kim',
+                    'email' => 'david.kim@agency-growth.io',
+                    'avatar' => 'DK',
+                    'role' => $isEn ? 'Media Buyer / Analyst' : 'Comprador de Medios / Analista',
+                    'badge_color' => 'blue',
+                    'asset_scope' => $isEn ? 'Main Brand (Global / US)' : 'Marca Principal (Global / EE.UU.)',
+                    'status' => $isEn ? 'Active' : 'Activo',
+                    'last_login' => $isEn ? '2 hours ago' : 'Hace 2 horas',
+                ],
+                [
+                    'id' => 3,
+                    'name' => 'Elena Rostova',
+                    'email' => 'elena.rostova@aura-eu.com',
+                    'avatar' => 'ER',
+                    'role' => $isEn ? 'Regional Manager (EU)' : 'Gerente Regional (UE)',
+                    'badge_color' => 'emerald',
+                    'asset_scope' => $isEn ? 'Apparel & Footwear Line (Europe)' : 'Línea Apparel & Calzado (Europa)',
+                    'status' => $isEn ? 'Active' : 'Activo',
+                    'last_login' => $isEn ? 'Yesterday' : 'Ayer',
+                ],
+                [
+                    'id' => 4,
+                    'name' => 'Facundo Morales',
+                    'email' => 'facundo.m@aurahogar.ar',
+                    'avatar' => 'FM',
+                    'role' => $isEn ? 'DTC Lead (Argentina)' : 'Líder DTC (Argentina)',
+                    'badge_color' => 'indigo',
+                    'asset_scope' => $isEn ? 'Aura Home & Living (Argentina)' : 'Aura Hogar & Deco (Argentina)',
+                    'status' => $isEn ? 'Active' : 'Activo',
+                    'last_login' => $isEn ? '3 days ago' : 'Hace 3 días',
+                ],
+            ],
+            'shareable_dashboards' => [
+                [
+                    'id' => 1,
+                    'title' => $isEn ? 'Executive Board Summary' : 'Resumen para Directorio Ejecutivo',
+                    'url' => 'https://aura-living.apishub.io/shared/dashboard/executive-board',
+                    'access' => $isEn ? 'Password Protected + IP Allowlist' : 'Contraseña + Allowlist de IPs',
+                    'views_count' => 142,
+                    'status' => $isEn ? 'Live Public View' : 'Vista Pública Activa',
+                ],
+                [
+                    'id' => 2,
+                    'title' => $isEn ? 'Growth Agency Realtime KPIs' : 'KPIs en Tiempo Real para Agencia Growth',
+                    'url' => 'https://aura-living.apishub.io/shared/dashboard/agency-portal',
+                    'access' => $isEn ? 'Secure Token Link (No login required)' : 'Enlace Seguro con Token (Sin login)',
+                    'views_count' => 488,
+                    'status' => $isEn ? 'Live Public View' : 'Vista Pública Activa',
+                ],
+            ],
+        ];
     }
 }

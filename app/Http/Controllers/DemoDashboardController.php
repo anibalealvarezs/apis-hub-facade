@@ -91,6 +91,52 @@ class DemoDashboardController extends Controller
     }
 
     /**
+     * Display Step 4: Data Intelligence demo page (Alerts, API & MCP Server).
+     */
+    public function intelligence(Request $request, ?string $locale = null)
+    {
+        $lang = $locale ?? $request->query('lang') ?? $request->cookie('pv_lang') ?? 'es';
+        if (!in_array($lang, ['en', 'es'])) {
+            $lang = 'es';
+        }
+        app()->setLocale($lang);
+
+        $intelligenceData = $this->demoService->getDemoIntelligenceData($lang);
+
+        return view('demo.intelligence', [
+            'currentLang' => $lang,
+            'alerts' => $intelligenceData['alerts'],
+            'apiEndpoints' => $intelligenceData['api_endpoints'],
+            'mcpTools' => $intelligenceData['mcp_tools'],
+            'isDemo' => true,
+            'currentStep' => 4,
+        ]);
+    }
+
+    /**
+     * Display Step 5: Team Collaboration and Shareable Projects demo page.
+     */
+    public function collaboration(Request $request, ?string $locale = null)
+    {
+        $lang = $locale ?? $request->query('lang') ?? $request->cookie('pv_lang') ?? 'es';
+        if (!in_array($lang, ['en', 'es'])) {
+            $lang = 'es';
+        }
+        app()->setLocale($lang);
+
+        $collabData = $this->demoService->getDemoCollaborationData($lang);
+
+        return view('demo.collaboration', [
+            'currentLang' => $lang,
+            'project' => $collabData['project'],
+            'collaborators' => $collabData['collaborators'],
+            'shareableDashboards' => $collabData['shareable_dashboards'],
+            'isDemo' => true,
+            'currentStep' => 5,
+        ]);
+    }
+
+    /**
      * Provide instant mock data for demo widgets.
      */
     public function widgetData(Request $request, int $widget): JsonResponse
