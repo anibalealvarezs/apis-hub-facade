@@ -206,6 +206,7 @@ function demoDashboard(config) {
                 }
             }
 
+            window.dashboardWidgetDataUrlPrefix = '/demo/api/widget/';
             const renderer = window.dashboardRenderer || window.DashboardRenderer;
             if (renderer && renderer.clearStorageCache) {
                 renderer.clearStorageCache();

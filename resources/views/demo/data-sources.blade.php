@@ -16,8 +16,6 @@
 >
     <x-slot:extra-head>
         <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
-        <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
-        <script src="https://cdn.tailwindcss.com"></script>
         <script src="{{ asset('js/demo-controllers.js') }}"></script>
     </x-slot:extra-head>
 
