@@ -41,6 +41,18 @@ body::-webkit-scrollbar-thumb {
 }
 
 /* Glassmorphism Panels & Cards */
+.glass-panel {
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    background-color: rgba(255, 255, 255, 0.7) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.dark .glass-panel, html.dark .glass-panel {
+    background-color: rgba(15, 23, 42, 0.7) !important;
+    border-color: rgba(30, 41, 59, 0.5) !important;
+}
+
 .fi-sidebar {
     backdrop-filter: blur(12px) !important;
     background-color: rgba(255, 255, 255, 0.75) !important;

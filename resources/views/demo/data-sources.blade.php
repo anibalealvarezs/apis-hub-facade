@@ -51,8 +51,20 @@
                     }
                 }
             }
-        }
+        };
     </script>
+    <style>
+        .glass-panel {
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            background-color: rgba(255, 255, 255, 0.7) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        .dark .glass-panel, html.dark .glass-panel {
+            background-color: rgba(15, 23, 42, 0.7) !important;
+            border-color: rgba(30, 41, 59, 0.5) !important;
+        }
+    </style>
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
