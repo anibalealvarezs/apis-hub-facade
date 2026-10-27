@@ -8,7 +8,7 @@
         if (!scriptTag) return;
 
         const highContrastCss = `
-            .dark-mode, .dark-mode .scalar-api-reference, .dark-mode .scalar-app {
+            .scalar-container.dark-mode, .scalar-container .scalar-api-reference, .scalar-container .scalar-app {
                 --scalar-color-1: #f8fafc !important;
                 --scalar-color-2: #cbd5e1 !important;
                 --scalar-color-3: #94a3b8 !important;
@@ -17,13 +17,13 @@
                 --scalar-background-3: #1e293b !important;
                 --scalar-color-accent: #00a7f9 !important;
             }
-            .dark-mode p, .dark-mode li, .dark-mode td, .dark-mode .markdown {
+            .scalar-container p, .scalar-container li, .scalar-container td, .scalar-container .markdown {
                 color: #cbd5e1 !important;
             }
-            .dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4, .dark-mode h5, .dark-mode strong {
+            .scalar-container h1, .scalar-container h2, .scalar-container h3, .scalar-container h4, .scalar-container h5, .scalar-container strong {
                 color: #f8fafc !important;
             }
-            .light-mode, .light-mode .scalar-api-reference, .light-mode .scalar-app {
+            .scalar-container.light-mode, .scalar-container.light-mode .scalar-api-reference, .scalar-container.light-mode .scalar-app {
                 --scalar-color-1: #0f172a !important;
                 --scalar-color-2: #334155 !important;
                 --scalar-color-3: #64748b !important;
@@ -32,10 +32,10 @@
                 --scalar-background-3: #f1f5f9 !important;
                 --scalar-color-accent: #0284c7 !important;
             }
-            .light-mode p, .light-mode li, .light-mode td, .light-mode .markdown {
+            .scalar-container.light-mode p, .scalar-container.light-mode li, .scalar-container.light-mode td, .scalar-container.light-mode .markdown {
                 color: #334155 !important;
             }
-            .light-mode h1, .light-mode h2, .light-mode h3, .light-mode strong {
+            .scalar-container.light-mode h1, .scalar-container.light-mode h2, .scalar-container.light-mode h3, .scalar-container.light-mode strong {
                 color: #0f172a !important;
             }
         `;
@@ -77,6 +77,15 @@
                     el.setAttribute('data-theme', 'light');
                 }
             });
+
+            // Ensure document.body dark-mode class added by Scalar is in sync with html.dark
+            if (isDark) {
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+            }
         };
 
         const observer = new MutationObserver((mutations) => {
