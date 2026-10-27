@@ -1523,21 +1523,24 @@ class DemoDashboardService
             'api_endpoints' => [
                 [
                     'method' => 'POST',
-                    'endpoint' => '/api/dashboard/widget/101/data',
-                    'label' => $isEn ? 'Total Blended Spend (Cached Node)' : 'Inversión Total Blended (Nodo Cacheado)',
-                    'sample_response' => '{"success":true,"widget_type":"tile","data":{"value":31870,"percentage":14.2,"format":"currency","suffix":" USD"}}',
+                    'endpoint' => '/facebook_marketing/metric/aggregate',
+                    'label' => $isEn ? 'Channel Analytical Aggregation (Meta Ads OLAP Reduction)' : 'Agregación Analítica de Canal (Reducción OLAP Meta Ads)',
+                    'payload' => "{\n  \"aggregations\": {\"spend\": \"spend\", \"impressions\": \"impressions\", \"roas\": \"roas_purchase\"},\n  \"groupBy\": [\"channeledAccount\"],\n  \"startDate\": \"2026-10-01\",\n  \"endDate\": \"2026-10-26\"\n}",
+                    'sample_response' => "{\n  \"status\": \"success\",\n  \"data\": [\n    {\"channeledAccount\": \"act_98127391\", \"spend\": 19450.00, \"impressions\": 845200, \"roas\": 3.82}\n  ],\n  \"meta\": {\"cached\": true, \"execution_time_ms\": 4.12}\n}",
                 ],
                 [
                     'method' => 'POST',
-                    'endpoint' => '/api/dashboard/widget/109/data',
-                    'label' => $isEn ? 'Multi-Channel Traffic Series (Pre-Aggregated)' : 'Series Multicanal de Tráfico (Pre-Agregadas)',
-                    'sample_response' => '{"success":true,"widget_type":"line_chart","data":{"labels":["2026-10-01","..."],"datasets":[{"label":"Meta Ads","data":[310,340]}]}}',
+                    'endpoint' => '/entity/metric/aggregate',
+                    'label' => $isEn ? 'Omnichannel Cross-Network Aggregation (Blended Time-Series)' : 'Agregación Maestra Omnicanal (Series Temporales Combinadas)',
+                    'payload' => "{\n  \"aggregations\": {\"total_spend\": \"spend\", \"conversions\": \"conversions\", \"cpa\": \"cost_per_acquisition\"},\n  \"groupBy\": [\"date\"],\n  \"startDate\": \"2026-10-01\",\n  \"endDate\": \"2026-10-26\",\n  \"limit\": 30\n}",
+                    'sample_response' => "{\n  \"status\": \"success\",\n  \"data\": [\n    {\"date\": \"2026-10-25\", \"total_spend\": 1120.50, \"conversions\": 38, \"cpa\": 29.48},\n    {\"date\": \"2026-10-26\", \"total_spend\": 985.20, \"conversions\": 35, \"cpa\": 28.14}\n  ],\n  \"meta\": {\"cached\": true, \"execution_time_ms\": 5.84}\n}",
                 ],
                 [
-                    'method' => 'POST',
-                    'endpoint' => '/api/dashboard/widget/113/data',
-                    'label' => $isEn ? 'Geographic Organic Breakdown (Choropleth ISO)' : 'Desglose Geográfico Orgánico (Choropleth ISO)',
-                    'sample_response' => '{"success":true,"widget_type":"choropleth_map","data":{"values":{"US":18450,"ES":7820,"AR":5410}}}',
+                    'method' => 'GET',
+                    'endpoint' => '/google_search_console/account',
+                    'label' => $isEn ? 'Connected Assets Discovery (Zero Rate-Limit Impact)' : 'Descubrimiento de Recursos Conectados (Sin impacto en cuota externa)',
+                    'payload' => null,
+                    'sample_response' => "{\n  \"status\": \"success\",\n  \"data\": [\n    {\"id\": 101, \"platform_id\": \"sc-domain:auraliving.com\", \"name\": \"sc-domain:auraliving.com\", \"channel\": \"google_search_console\"}\n  ],\n  \"meta\": {\"limit\": 50, \"pagination\": 0}\n}",
                 ],
             ],
             'mcp_tools' => [
@@ -1579,7 +1582,7 @@ class DemoDashboardService
                 'name' => 'Aura Living Worldwide Inc.',
                 'slug' => 'aura-living',
                 'tier' => 'Ultra Dedicated',
-                'node_subdomain' => 'aura-living.apishub.io',
+                'node_subdomain' => 'aura-living.apis-hub.cloud',
                 'created_at' => $isEn ? 'Aug 14, 2026' : '14 Ago, 2026',
             ],
             'collaborators' => [
@@ -1632,7 +1635,7 @@ class DemoDashboardService
                 [
                     'id' => 1,
                     'title' => $isEn ? 'Executive Board Summary' : 'Resumen para Directorio Ejecutivo',
-                    'url' => 'https://aura-living.apishub.io/shared/dashboard/executive-board',
+                    'url' => 'https://aura-living.apis-hub.cloud/shared/dashboard/executive-board',
                     'access' => $isEn ? 'Password Protected + IP Allowlist' : 'Contraseña + Allowlist de IPs',
                     'views_count' => 142,
                     'status' => $isEn ? 'Live Public View' : 'Vista Pública Activa',
@@ -1640,7 +1643,7 @@ class DemoDashboardService
                 [
                     'id' => 2,
                     'title' => $isEn ? 'Growth Agency Realtime KPIs' : 'KPIs en Tiempo Real para Agencia Growth',
-                    'url' => 'https://aura-living.apishub.io/shared/dashboard/agency-portal',
+                    'url' => 'https://aura-living.apis-hub.cloud/shared/dashboard/agency-portal',
                     'access' => $isEn ? 'Secure Token Link (No login required)' : 'Enlace Seguro con Token (Sin login)',
                     'views_count' => 488,
                     'status' => $isEn ? 'Live Public View' : 'Vista Pública Activa',

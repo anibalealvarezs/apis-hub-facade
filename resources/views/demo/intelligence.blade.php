@@ -258,16 +258,37 @@
 
                 <div class="mt-4 space-y-4">
                     @foreach($apiEndpoints as $ep)
-                        <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-4 space-y-2">
+                        <div class="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 p-4 space-y-3">
                             <div class="flex items-center justify-between gap-2 flex-wrap">
                                 <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white font-mono">{{ $ep['method'] }}</span>
-                                    <span class="text-xs font-mono font-semibold text-gray-900 dark:text-white">{{ $ep['endpoint'] }}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold {{ $ep['method'] === 'POST' ? 'bg-blue-600' : 'bg-emerald-600' }} text-white font-mono">{{ $ep['method'] }}</span>
+                                    <span class="text-xs font-mono font-bold text-gray-900 dark:text-white">https://aura-living.apis-hub.cloud{{ $ep['endpoint'] }}</span>
                                 </div>
-                                <span class="text-[11px] font-medium text-gray-500 dark:text-gray-400">{{ $ep['label'] }}</span>
+                                <span class="text-[11px] font-semibold text-primary-600 dark:text-primary-400">{{ $ep['label'] }}</span>
                             </div>
-                            <div class="bg-gray-900 text-emerald-400 p-3 rounded-lg font-mono text-[11px] overflow-x-auto shadow-inner">
-                                <pre>{{ $ep['sample_response'] }}</pre>
+
+                            <div class="grid grid-cols-1 {{ !empty($ep['payload']) ? 'lg:grid-cols-2' : '' }} gap-3">
+                                @if(!empty($ep['payload']))
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between text-[10px] text-gray-400 uppercase font-semibold">
+                                            <span>{{ $currentLang === 'es' ? 'Carga Útil (Request Body)' : 'Request Payload' }}</span>
+                                            <span class="font-mono">X-API-KEY: ah_live_...</span>
+                                        </div>
+                                        <div class="bg-gray-900 text-sky-300 p-3 rounded-lg font-mono text-[11px] overflow-x-auto shadow-inner leading-relaxed">
+                                            <pre>{{ $ep['payload'] }}</pre>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="space-y-1">
+                                    <div class="flex items-center justify-between text-[10px] text-gray-400 uppercase font-semibold">
+                                        <span>{{ $currentLang === 'es' ? 'Respuesta Normalizada (200 OK)' : 'Normalized Response (200 OK)' }}</span>
+                                        <span class="text-emerald-400 font-mono">meta.cached: true</span>
+                                    </div>
+                                    <div class="bg-gray-900 text-emerald-400 p-3 rounded-lg font-mono text-[11px] overflow-x-auto shadow-inner leading-relaxed">
+                                        <pre>{{ $ep['sample_response'] }}</pre>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     @endforeach
@@ -291,7 +312,7 @@
                         </p>
                     </div>
                     <div class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">
-                        SSE: https://aura-living.apishub.io/mcp/sse
+                        SSE: https://aura-living.apis-hub.cloud/mcp/sse
                     </div>
                 </div>
 
