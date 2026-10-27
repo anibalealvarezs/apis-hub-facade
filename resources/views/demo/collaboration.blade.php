@@ -181,13 +181,21 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3.5">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
-                                        {{ $member['role'] }}
-                                    </span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold 
+                                            {{ ($member['role_key'] ?? '') === 'project_owner' ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700' : '' }}
+                                            {{ ($member['role_key'] ?? '') === 'project_editor' ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-700' : '' }}
+                                            {{ ($member['role_key'] ?? '') === 'project_viewer' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700' : '' }}
+                                            {{ ($member['role_key'] ?? '') === 'project_user' ? 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 border border-gray-300 dark:border-gray-700' : '' }}
+                                        ">
+                                            {{ $member['role'] }}
+                                        </span>
+                                        <span class="text-[10px] font-mono text-gray-400">({{ $member['role_key'] ?? 'role' }})</span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3.5">
                                     <div class="flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-primary-500"></span>
+                                        <span class="w-2 h-2 rounded-full {{ ($member['role_key'] ?? '') === 'project_owner' ? 'bg-emerald-500' : 'bg-primary-500' }}"></span>
                                         <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ $member['asset_scope'] }}</span>
                                     </div>
                                 </td>
@@ -265,12 +273,17 @@
                         <input type="email" placeholder="colleague@agency.com" class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-900 dark:text-gray-100"/>
                     </div>
                     <div>
-                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ $currentLang === 'es' ? 'Rol' : 'Role' }}</label>
-                        <select class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-900 dark:text-gray-100">
-                            <option>{{ $currentLang === 'es' ? 'Analista / Visualizador' : 'Analyst / Viewer' }}</option>
-                            <option>{{ $currentLang === 'es' ? 'Gestor de Medios' : 'Media Manager' }}</option>
-                            <option>{{ $currentLang === 'es' ? 'Administrador' : 'Admin' }}</option>
+                        <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ $currentLang === 'es' ? 'Rol del Proyecto' : 'Project Role' }}</label>
+                        <select class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-900 dark:text-gray-100 font-medium">
+                            <option value="project_editor">{{ $currentLang === 'es' ? 'Project Editor (Editor del Proyecto)' : 'Project Editor' }}</option>
+                            <option value="project_viewer" selected>{{ $currentLang === 'es' ? 'Project Viewer (Visualizador del Proyecto)' : 'Project Viewer' }}</option>
+                            <option value="project_user">{{ $currentLang === 'es' ? 'Project User (Usuario Básico del Proyecto)' : 'Project User' }}</option>
                         </select>
+                        <p class="text-[10px] text-gray-400 mt-1">
+                            {{ $currentLang === 'es'
+                                ? 'Los roles de colaborador disponibles para invitar son project_editor, project_viewer y project_user.'
+                                : 'Available assignable collaborator roles are project_editor, project_viewer, and project_user.' }}
+                        </p>
                     </div>
                     <div>
                         <label class="block font-semibold text-gray-700 dark:text-gray-300 mb-1">{{ $currentLang === 'es' ? 'Alcance de Grupos de Activos' : 'Asset Group Scope' }}</label>

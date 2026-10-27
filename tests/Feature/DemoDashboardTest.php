@@ -77,13 +77,15 @@ class DemoDashboardTest extends TestCase
         $es->assertStatus(200);
         $es->assertSee('Colaboración en Equipo');
         $es->assertSee('Sophia Vance');
-        $es->assertSee('Dueña del Proyecto');
+        $es->assertSee('Propietario del Proyecto');
+        $es->assertSee('project_owner');
 
         $en = $this->get('/demo/collaboration?lang=en');
         $en->assertStatus(200);
         $en->assertSee('Team Collaboration');
         $en->assertSee('Sophia Vance');
         $en->assertSee('Project Owner');
+        $en->assertSee('project_owner');
     }
 
     public function test_demo_widget_data_for_argentina()
