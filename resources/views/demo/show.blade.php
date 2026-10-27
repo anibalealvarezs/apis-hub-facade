@@ -620,7 +620,7 @@
                 assetGroups: config.assetGroups || {},
                 widgets: config.widgets || [],
                 isRefreshing: false,
-                isFullWidth: localStorage.getItem('demo_full_width') === 'true',
+                isFullWidth: localStorage.getItem('demo_full_width') !== 'false',
                 datePreset: '30',
                 dateStart: defaultStart,
                 dateEnd: defaultEnd,
@@ -635,10 +635,25 @@
                 init() {
                     const grid = GridStack.init({
                         staticGrid: true,
+                        float: true,
+                        column: 12,
                         margin: 12,
                         cellHeight: 95,
-                        animate: true
+                        animate: true,
+                        columnOpts: {
+                            columnMax: 12,
+                            breakpointForWindow: true,
+                            layout: 'moveScale',
+                            breakpoints: [
+                                { w: 1024, c: 12 },
+                                { w: 1023, c: 1 }
+                            ]
+                        }
                     }, '#demo-grid-stack');
+
+                    if (grid && window.innerWidth < 1024) {
+                        grid.column(1, 'moveScale');
+                    }
 
                     const renderer = window.dashboardRenderer || window.DashboardRenderer;
                     if (renderer && renderer.clearStorageCache) {

@@ -1567,7 +1567,7 @@ window.dashboardRenderer = {
                 : "";
 
             html +=
-                '<div class="fixed-col-wrap" style="flex:0 1 auto;max-width:50%;min-width:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
+                '<div class="fixed-col-wrap" style="flex:0 0 25%;width:25%;max-width:25%;min-width:0;z-index:2;overflow:hidden;" class="border-r border-gray-200 dark:border-gray-700">';
             html +=
                 '<table style="width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;">';
             html += '<thead style="position:sticky;top:0;z-index:2;">';
@@ -1610,7 +1610,7 @@ window.dashboardRenderer = {
             const thAlign = isNumeric ? "text-right" : "text-left";
             const isFirstOfAll = !blockFirstCol && cIdx === 0;
             const thStyle = isFirstOfAll
-                ? "max-width:50%;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                ? "width:25%;max-width:25%;min-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
                 : (isNumeric
                     ? "min-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
                     : "min-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;");
@@ -1654,7 +1654,7 @@ window.dashboardRenderer = {
                     : "px-3 py-2 text-gray-700 dark:text-gray-200";
                 const isFirstOfAll = !blockFirstCol && cIdx === 0;
                 const tdStyle = isFirstOfAll
-                    ? "max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                    ? "width:25%;max-width:25%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
                     : "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
                 const valStr = String(val);
                 html += `<td class="${tdClass} ${cellBgClass} data-has-tooltip" data-tooltip="${this.escapeHtml(valStr)}" title="${this.escapeHtml(valStr)}" style="${tdStyle}">${this.escapeHtml(String(formatted))}</td>`;
