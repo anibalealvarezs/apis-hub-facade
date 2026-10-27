@@ -17,6 +17,371 @@ class DemoDashboardService
     }
 
     /**
+     * Detailed Asset Group definitions for Step 2 demo.
+     */
+    public function getDemoAssetGroupsList(): array
+    {
+        return [
+            [
+                'id' => '1',
+                'name' => 'Marca Principal (Global / EE.UU.)',
+                'description' => 'Operaciones globales y e-commerce principal en Estados Unidos e internacional.',
+                'created_at' => '2026-08-15 10:20:00',
+                'updated_at' => '2026-10-24 14:12:00',
+                'items_count' => 7,
+                'items' => [
+                    ['channel' => 'google_search_console', 'name' => 'Google Search Console (1)', 'asset_id' => 'sc-domain:auraliving.com', 'title' => 'sc-domain:auraliving.com'],
+                    ['channel' => 'google_analytics', 'name' => 'Google Analytics 4 (1)', 'asset_id' => 'ga4_prop_global', 'title' => 'Aura Living — Main Web (GA4)'],
+                    ['channel' => 'google_ads', 'name' => 'Google Ads (1)', 'asset_id' => 'gads_global_us_201', 'title' => 'Aura Global Campaigns (412-882-9011)'],
+                    ['channel' => 'facebook_marketing', 'name' => 'Meta Ads (1)', 'asset_id' => 'act_global_us_101', 'title' => 'Aura US / Global Ads (act_98127391)'],
+                    ['channel' => 'facebook_organic', 'name' => 'Meta Organic (2)', 'asset_id' => 'fb_page_global', 'title' => 'Aura Living Official Page'],
+                    ['channel' => 'facebook_organic', 'name' => 'Meta Organic', 'asset_id' => 'ig_global', 'title' => '@auraliving_official (IG)'],
+                    ['channel' => 'mailchimp', 'name' => 'Mailchimp (1)', 'asset_id' => 'mc_list_global', 'title' => 'Global Master Newsletter'],
+                ],
+            ],
+            [
+                'id' => '2',
+                'name' => 'Línea Apparel & Calzado (Europa)',
+                'description' => 'División europea especializada en moda, calzado y distribución multicanal UE.',
+                'created_at' => '2026-09-01 11:45:00',
+                'updated_at' => '2026-10-25 09:30:00',
+                'items_count' => 7,
+                'items' => [
+                    ['channel' => 'google_search_console', 'name' => 'Google Search Console (1)', 'asset_id' => 'sc-domain:wear.auraliving.com', 'title' => 'sc-domain:wear.auraliving.com'],
+                    ['channel' => 'google_analytics', 'name' => 'Google Analytics 4 (1)', 'asset_id' => 'ga4_prop_eu', 'title' => 'Aura Wear Europe (GA4)'],
+                    ['channel' => 'google_ads', 'name' => 'Google Ads (1)', 'asset_id' => 'gads_europe_eu_202', 'title' => 'Aura Europe Fashion (619-331-4099)'],
+                    ['channel' => 'facebook_marketing', 'name' => 'Meta Ads (1)', 'asset_id' => 'act_europe_eu_102', 'title' => 'Aura Europe Brand Ads (act_44109822)'],
+                    ['channel' => 'facebook_organic', 'name' => 'Meta Organic (2)', 'asset_id' => 'fb_page_eu', 'title' => 'Aura Wear Europe'],
+                    ['channel' => 'facebook_organic', 'name' => 'Meta Organic', 'asset_id' => 'ig_eu', 'title' => '@aurawear_eu (IG)'],
+                    ['channel' => 'mailchimp', 'name' => 'Mailchimp (1)', 'asset_id' => 'mc_list_eu', 'title' => 'EU Fashion VIP List'],
+                ],
+            ],
+            [
+                'id' => '3',
+                'name' => 'Aura Hogar & Deco (Argentina)',
+                'description' => 'Comercio electrónico y retail local para el mercado argentino y conosur.',
+                'created_at' => '2026-09-10 16:15:00',
+                'updated_at' => '2026-10-26 12:00:00',
+                'items_count' => 7,
+                'items' => [
+                    ['channel' => 'google_search_console', 'name' => 'Google Search Console (1)', 'asset_id' => 'sc-domain:ar.auraliving.com', 'title' => 'sc-domain:ar.auraliving.com'],
+                    ['channel' => 'google_analytics', 'name' => 'Google Analytics 4 (1)', 'asset_id' => 'ga4_prop_ar', 'title' => 'Aura Argentina Local (GA4)'],
+                    ['channel' => 'google_ads', 'name' => 'Google Ads (1)', 'asset_id' => 'gads_argentina_ar_203', 'title' => 'Aura Argentina Performance (552-190-2810)'],
+                    ['channel' => 'facebook_marketing', 'name' => 'Meta Ads (1)', 'asset_id' => 'act_argentina_ar_103', 'title' => 'Aura Deco AR Ads (act_77182903)'],
+                    ['channel' => 'facebook_organic', 'name' => 'Meta Organic (2)', 'asset_id' => 'fb_page_ar', 'title' => 'Aura Hogar Argentina'],
+                    ['channel' => 'facebook_organic', 'name' => 'Meta Organic', 'asset_id' => 'ig_ar', 'title' => '@aurahogar_ar (IG)'],
+                    ['channel' => 'mailchimp', 'name' => 'Mailchimp (1)', 'asset_id' => 'mc_list_ar', 'title' => 'Club de Beneficios Deco AR'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Data Sources and Provider structure for Step 1 demo.
+     */
+    public function getDemoDataSourcesData(): array
+    {
+        return [
+            'providers' => [
+                'google' => [
+                    'label' => 'Google',
+                    'channels' => [
+                        [
+                            'key' => 'google_search_console',
+                            'label' => 'Google Search Console',
+                            'enabled' => true,
+                            'status' => 'Active',
+                            'compatible' => true,
+                            'count' => 3,
+                            'assets' => [
+                                [
+                                    'id' => 'sc-domain:auraliving.com',
+                                    'title' => 'sc-domain:auraliving.com',
+                                    'url' => 'https://auraliving.com',
+                                    'enabled' => true,
+                                    'type' => 'Domain Property',
+                                    'helper' => 'ID: sc-domain:auraliving.com',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'sc-domain:wear.auraliving.com',
+                                    'title' => 'sc-domain:wear.auraliving.com',
+                                    'url' => 'https://wear.auraliving.com',
+                                    'enabled' => true,
+                                    'type' => 'Domain Property',
+                                    'helper' => 'ID: sc-domain:wear.auraliving.com',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'sc-domain:ar.auraliving.com',
+                                    'title' => 'sc-domain:ar.auraliving.com',
+                                    'url' => 'https://ar.auraliving.com',
+                                    'enabled' => true,
+                                    'type' => 'Domain Property',
+                                    'helper' => 'ID: sc-domain:ar.auraliving.com',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                            ],
+                            'config' => [
+                                'cron_time' => '04:00',
+                                'calculate_synthetics' => true,
+                            ],
+                        ],
+                        [
+                            'key' => 'google_analytics',
+                            'label' => 'Google Analytics 4',
+                            'enabled' => true,
+                            'status' => 'Active',
+                            'compatible' => true,
+                            'count' => 3,
+                            'assets' => [
+                                [
+                                    'id' => 'ga4_prop_global',
+                                    'title' => 'Aura Living — Main Web',
+                                    'platformId' => '319084201',
+                                    'enabled' => true,
+                                    'type' => 'GA4 Property',
+                                    'helper' => 'Property ID: 319084201',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'ga4_prop_eu',
+                                    'title' => 'Aura Wear Europe Store',
+                                    'platformId' => '328109312',
+                                    'enabled' => true,
+                                    'type' => 'GA4 Property',
+                                    'helper' => 'Property ID: 328109312',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'ga4_prop_ar',
+                                    'title' => 'Aura Deco Argentina',
+                                    'platformId' => '340918455',
+                                    'enabled' => true,
+                                    'type' => 'GA4 Property',
+                                    'helper' => 'Property ID: 340918455',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                            ],
+                            'config' => [
+                                'cron_time' => '04:30',
+                            ],
+                        ],
+                        [
+                            'key' => 'google_ads',
+                            'label' => 'Google Ads',
+                            'enabled' => true,
+                            'status' => 'Active',
+                            'compatible' => true,
+                            'count' => 3,
+                            'assets' => [
+                                [
+                                    'id' => 'gads_global_us_201',
+                                    'title' => 'Aura Living US Global',
+                                    'enabled' => true,
+                                    'type' => 'Ad Account',
+                                    'helper' => 'Customer ID: 412-882-9011 (MCC: Aura Global HQ)',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'gads_europe_eu_202',
+                                    'title' => 'Aura Apparel Europe',
+                                    'enabled' => true,
+                                    'type' => 'Ad Account',
+                                    'helper' => 'Customer ID: 619-331-4099 (MCC: Aura Global HQ)',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'gads_argentina_ar_203',
+                                    'title' => 'Aura Argentina Local',
+                                    'enabled' => true,
+                                    'type' => 'Ad Account',
+                                    'helper' => 'Customer ID: 552-190-2810 (MCC: Aura Conosur Retail)',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                            ],
+                            'config' => [
+                                'cron_time' => '05:00',
+                            ],
+                        ],
+                    ],
+                ],
+                'facebook' => [
+                    'label' => 'Meta',
+                    'channels' => [
+                        [
+                            'key' => 'facebook_marketing',
+                            'label' => 'Meta Ads',
+                            'enabled' => true,
+                            'status' => 'Active',
+                            'compatible' => true,
+                            'count' => 3,
+                            'assets' => [
+                                [
+                                    'id' => 'act_global_us_101',
+                                    'title' => 'Aura Living Global Ad Account',
+                                    'enabled' => true,
+                                    'type' => 'Meta Ad Account',
+                                    'helper' => 'ID: act_98127391 · Business Manager: Aura Living Inc.',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'act_europe_eu_102',
+                                    'title' => 'Aura Europe Brand Ads',
+                                    'enabled' => true,
+                                    'type' => 'Meta Ad Account',
+                                    'helper' => 'ID: act_44109822 · Business Manager: Aura Fashion EU Ltd.',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'act_argentina_ar_103',
+                                    'title' => 'Aura Deco AR Ads',
+                                    'enabled' => true,
+                                    'type' => 'Meta Ad Account',
+                                    'helper' => 'ID: act_77182903 · Business Manager: Aura Living Conosur',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                            ],
+                            'config' => [
+                                'cron_time' => '05:15',
+                            ],
+                        ],
+                        [
+                            'key' => 'facebook_organic',
+                            'label' => 'Meta Organic',
+                            'enabled' => true,
+                            'status' => 'Active',
+                            'compatible' => true,
+                            'count' => 6,
+                            'assets' => [
+                                [
+                                    'id' => 'fb_page_global',
+                                    'title' => 'Aura Living Official Page',
+                                    'enabled' => true,
+                                    'type' => 'Facebook Page',
+                                    'helper' => 'Page ID: 109283748192 (184,200 fans)',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'ig_global',
+                                    'title' => '@auraliving_official',
+                                    'enabled' => true,
+                                    'type' => 'Instagram Professional',
+                                    'helper' => 'IG ID: 178414029102 (312,500 followers)',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'fb_page_eu',
+                                    'title' => 'Aura Wear Europe',
+                                    'enabled' => true,
+                                    'type' => 'Facebook Page',
+                                    'helper' => 'Page ID: 104829104812 (64,100 fans)',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'ig_eu',
+                                    'title' => '@aurawear_eu',
+                                    'enabled' => true,
+                                    'type' => 'Instagram Professional',
+                                    'helper' => 'IG ID: 178419201948 (98,400 followers)',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'fb_page_ar',
+                                    'title' => 'Aura Hogar Argentina',
+                                    'enabled' => true,
+                                    'type' => 'Facebook Page',
+                                    'helper' => 'Page ID: 105928172819 (42,800 fans)',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                                [
+                                    'id' => 'ig_ar',
+                                    'title' => '@aurahogar_ar',
+                                    'enabled' => true,
+                                    'type' => 'Instagram Professional',
+                                    'helper' => 'IG ID: 178418371928 (76,300 followers)',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                            ],
+                            'config' => [
+                                'cron_time' => '05:30',
+                            ],
+                        ],
+                    ],
+                ],
+                'mailchimp' => [
+                    'label' => 'Mailchimp',
+                    'channels' => [
+                        [
+                            'key' => 'mailchimp',
+                            'label' => 'Mailchimp',
+                            'enabled' => true,
+                            'status' => 'Active',
+                            'compatible' => true,
+                            'count' => 3,
+                            'assets' => [
+                                [
+                                    'id' => 'mc_list_global',
+                                    'title' => 'Global Master Newsletter',
+                                    'enabled' => true,
+                                    'type' => 'Audience List',
+                                    'helper' => 'Audience ID: mc_lst_9918 (48,210 subscribers) · Account: Aura Living Corp',
+                                    'groups' => ['Marca Principal (Global / EE.UU.)'],
+                                ],
+                                [
+                                    'id' => 'mc_list_eu',
+                                    'title' => 'EU Fashion VIP List',
+                                    'enabled' => true,
+                                    'type' => 'Audience List',
+                                    'helper' => 'Audience ID: mc_lst_4421 (22,940 subscribers) · Account: Aura Living Corp',
+                                    'groups' => ['Línea Apparel & Calzado (Europa)'],
+                                ],
+                                [
+                                    'id' => 'mc_list_ar',
+                                    'title' => 'Club de Beneficios Deco AR',
+                                    'enabled' => true,
+                                    'type' => 'Audience List',
+                                    'helper' => 'Audience ID: mc_lst_1109 (14,300 subscribers) · Account: Aura Living Corp',
+                                    'groups' => ['Aura Hogar & Deco (Argentina)'],
+                                ],
+                            ],
+                            'config' => [
+                                'cron_time' => '06:00',
+                            ],
+                        ],
+                    ],
+                ],
+                'tiktok' => [
+                    'label' => 'TikTok',
+                    'channels' => [
+                        ['key' => 'tiktok_marketing', 'label' => 'TikTok Marketing', 'status' => 'Coming Soon', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
+                    ],
+                ],
+                'shopify' => [
+                    'label' => 'Shopify',
+                    'channels' => [
+                        ['key' => 'shopify_metrics', 'label' => 'Shopify Metrics', 'status' => 'Coming Soon', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
+                    ],
+                ],
+                'klaviyo' => [
+                    'label' => 'Klaviyo',
+                    'channels' => [
+                        ['key' => 'klaviyo_metrics', 'label' => 'Klaviyo Metrics', 'status' => 'Coming Soon', 'compatible' => false, 'enabled' => false, 'count' => 0, 'assets' => []],
+                    ],
+                ],
+            ],
+            'stats' => [
+                'tier_usage' => 21,
+                'tier_max' => 50,
+                'billing_cycle' => 'Oct 1, 2026 - Oct 31, 2026',
+                'quota_reset' => 'Nov 1, 2026',
+                'last_synced' => 'Today at 06:12 AM',
+                'last_deploy' => 'Oct 24, 2026 14:00',
+            ],
+        ];
+    }
+
+    /**
      * Asset Group to Channel Accounts mapping.
      */
     public function getChannelAssetGroupMap(): array

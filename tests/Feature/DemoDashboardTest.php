@@ -13,6 +13,7 @@ class DemoDashboardTest extends TestCase
         $response->assertSee('Demo Interactivo Beta');
         $response->assertSee('demo-asset-group');
         $response->assertSee('demo-grid-stack');
+        $response->assertSee('Dashboard Omnicanal');
     }
 
     public function test_demo_page_loads_in_english()
@@ -20,6 +21,35 @@ class DemoDashboardTest extends TestCase
         $response = $this->get('/demo?lang=en');
         $response->assertStatus(200);
         $response->assertSee('APIs Hub');
+        $response->assertSee('Omnichannel Dashboard');
+    }
+
+    public function test_demo_data_sources_page_loads_in_spanish_and_english()
+    {
+        $es = $this->get('/es/demo/data-sources');
+        $es->assertStatus(200);
+        $es->assertSee('Configuración de Fuentes de Datos');
+        $es->assertSee('Google Search Console');
+        $es->assertSee('Uso del Tier');
+
+        $en = $this->get('/demo/data-sources?lang=en');
+        $en->assertStatus(200);
+        $en->assertSee('APIs Hub');
+        $en->assertSee('Google Search Console');
+    }
+
+    public function test_demo_asset_groups_page_loads_in_spanish_and_english()
+    {
+        $es = $this->get('/es/demo/asset-groups');
+        $es->assertStatus(200);
+        $es->assertSee('Grupos de Activos');
+        $es->assertSee('Marca Principal (Global / EE.UU.)');
+        $es->assertSee('Línea Apparel & Calzado (Europa)');
+
+        $en = $this->get('/demo/asset-groups?lang=en');
+        $en->assertStatus(200);
+        $en->assertSee('APIs Hub');
+        $en->assertSee('Marca Principal (Global / EE.UU.)');
     }
 
     public function test_demo_widget_data_for_argentina()

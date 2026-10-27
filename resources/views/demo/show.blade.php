@@ -278,6 +278,9 @@
         </div>
     </header>
 
+    {{-- Interactive Multi-Step Demo Progress Bar --}}
+    @include('demo.stepper', ['currentStep' => 3, 'currentLang' => $currentLang])
+
     {{-- Main Container --}}
     <main class="flex-1 w-full p-4 sm:p-6 space-y-4 transition-all duration-200"
           :class="isFullWidth ? 'max-w-none px-4 sm:px-8' : 'max-w-7xl mx-auto'">

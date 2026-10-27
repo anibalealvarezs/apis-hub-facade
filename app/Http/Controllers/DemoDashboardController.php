@@ -43,6 +43,50 @@ class DemoDashboardController extends Controller
             'channelAssetGroupMap' => $channelAssetGroupMap,
             'currentLang' => $lang,
             'isDemo' => true,
+            'currentStep' => 3,
+        ]);
+    }
+
+    /**
+     * Display Step 1: Data Sources demo page.
+     */
+    public function dataSources(Request $request, ?string $locale = null)
+    {
+        $lang = $locale ?? $request->query('lang') ?? $request->cookie('pv_lang') ?? 'es';
+        if (!in_array($lang, ['en', 'es'])) {
+            $lang = 'es';
+        }
+        app()->setLocale($lang);
+
+        $demoData = $this->demoService->getDemoDataSourcesData();
+
+        return view('demo.data-sources', [
+            'currentLang' => $lang,
+            'providers' => $demoData['providers'],
+            'stats' => $demoData['stats'],
+            'isDemo' => true,
+            'currentStep' => 1,
+        ]);
+    }
+
+    /**
+     * Display Step 2: Asset Groups demo page.
+     */
+    public function assetGroups(Request $request, ?string $locale = null)
+    {
+        $lang = $locale ?? $request->query('lang') ?? $request->cookie('pv_lang') ?? 'es';
+        if (!in_array($lang, ['en', 'es'])) {
+            $lang = 'es';
+        }
+        app()->setLocale($lang);
+
+        $assetGroupsList = $this->demoService->getDemoAssetGroupsList();
+
+        return view('demo.asset-groups', [
+            'currentLang' => $lang,
+            'assetGroupsList' => $assetGroupsList,
+            'isDemo' => true,
+            'currentStep' => 2,
         ]);
     }
 

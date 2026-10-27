@@ -48,7 +48,17 @@ Route::get('/docs/api/openapi.json', [\App\Http\Controllers\ApiDocsController::c
 Route::get('/es/docs/api/openapi.json', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\ApiDocsController::class)->spec(app(\App\Services\OpenApiSpecificationService::class), 'es'))
     ->name('docs.api.spec.es');
 
-// Interactive Public Demo (6 Channels & 3 Asset Groups)
+// Interactive Public Demo Multi-Step Flow (Step 1: Data Sources, Step 2: Asset Groups, Step 3: Dashboard)
+Route::get('/demo/data-sources', [\App\Http\Controllers\DemoDashboardController::class, 'dataSources'])
+    ->name('demo.data-sources');
+Route::get('/es/demo/data-sources', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->dataSources($r, 'es'))
+    ->name('demo.data-sources.es');
+
+Route::get('/demo/asset-groups', [\App\Http\Controllers\DemoDashboardController::class, 'assetGroups'])
+    ->name('demo.asset-groups');
+Route::get('/es/demo/asset-groups', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->assetGroups($r, 'es'))
+    ->name('demo.asset-groups.es');
+
 Route::get('/demo', [\App\Http\Controllers\DemoDashboardController::class, 'show'])
     ->name('demo.show');
 Route::get('/es/demo', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\DemoDashboardController::class)->show($r, 'es'))
