@@ -60,51 +60,13 @@
           currentLang: '{{ $currentLang }}'
       })">
 
-    {{-- Top Demo Announcement & CTA Bar --}}
-    <header class="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-xs px-4 py-2.5">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <a href="{{ $currentLang === 'es' ? '/' : '/en' }}" class="flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary-600 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-                        AH
-                    </div>
-                    <span class="font-bold text-base tracking-tight text-gray-900 dark:text-white">APIs Hub</span>
-                </a>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    {{ $currentLang === 'es' ? 'Demo Interactivo Beta' : 'Interactive Beta Demo' }}
-                </span>
-            </div>
-
-            <div class="flex items-center gap-3 text-xs">
-                {{-- Theme Switcher --}}
-                <button @click="toggleTheme()" class="p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" title="{{ $currentLang === 'es' ? 'Cambiar Modo' : 'Toggle Theme' }}">
-                    <template x-if="theme === 'dark'">
-                        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </template>
-                    <template x-if="theme !== 'dark'">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                    </template>
-                </button>
-
-                {{-- Language Switcher --}}
-                <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 border border-gray-200 dark:border-gray-700">
-                    <a href="/es/demo/asset-groups" class="px-2 py-1 rounded text-xs font-semibold {{ $currentLang === 'es' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">ES</a>
-                    <a href="/demo/asset-groups?lang=en" class="px-2 py-1 rounded text-xs font-semibold {{ $currentLang === 'en' ? 'bg-primary-600 text-white shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900' }}">EN</a>
-                </div>
-
-                {{-- CTA Button --}}
-                <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
-                   class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-semibold bg-primary-600 hover:bg-primary-500 text-white shadow-sm transition-colors focus:ring-2 focus:ring-primary-400">
-                    <span>{{ $currentLang === 'es' ? 'Comenzar Prueba' : 'Start Free Trial' }}</span>
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                </a>
-            </div>
-        </div>
-    </header>
+    {{-- Unified Public Header --}}
+    @include('components.public.header')
 
     {{-- Interactive Multi-Step Demo Progress Bar --}}
-    @include('demo.stepper', ['currentStep' => 2, 'currentLang' => $currentLang])
+    <div class="pt-20 md:pt-24">
+        @include('demo.stepper', ['currentStep' => 2, 'currentLang' => $currentLang])
+    </div>
 
     {{-- Main Container --}}
     <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -299,38 +261,28 @@
         </div>
     </main>
 
-    {{-- Footer CTA --}}
-    <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-6 px-4 mt-12">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-            <div>
-                <h2 class="text-sm font-bold text-gray-900 dark:text-white">
-                    {{ $currentLang === 'es' ? 'Demostración Interactiva Paso 2 de 5' : 'Interactive Demo Step 2 of 5' }}
-                </h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {{ $currentLang === 'es'
-                        ? 'Descubre la flexibilidad de filtrar métricas complejas asignando activos a grupos dedicados.'
-                        : 'Discover the flexibility of filtering complex metrics by assigning assets to dedicated groups.' }}
-                </p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ $currentLang === 'es' ? '/es/planes' : '/plans' }}"
-                   class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-primary-600 hover:bg-primary-500 text-white shadow-sm transition-colors">
-                    <span>{{ $currentLang === 'es' ? 'Comenzar Prueba Gratis' : 'Start Free Trial' }}</span>
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                </a>
-            </div>
-        </div>
-    </footer>
+    {{-- Unified Public Footer --}}
+    @include('components.public.footer')
 
     <script>
         function demoAssetGroups(config) {
             return {
+                darkMode: document.documentElement.classList.contains('dark'),
                 groups: config.groups || [],
                 search: '',
                 activeGroup: config.groups && config.groups[0] ? config.groups[0] : null,
                 showCreateModal: false,
                 theme: config.theme || 'dark',
                 currentLang: config.currentLang || 'es',
+
+                init() {
+                    this.$watch('darkMode', val => {
+                        this.theme = val ? 'dark' : 'light';
+                        localStorage.setItem('color-theme', this.theme);
+                        localStorage.setItem('demo_theme', this.theme);
+                        document.documentElement.classList.toggle('dark', val);
+                    });
+                },
 
                 get filteredGroups() {
                     if (!this.search) return this.groups;

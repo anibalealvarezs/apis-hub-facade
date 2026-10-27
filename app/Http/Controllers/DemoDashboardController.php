@@ -44,6 +44,7 @@ class DemoDashboardController extends Controller
             'currentLang' => $lang,
             'isDemo' => true,
             'currentStep' => 3,
+            'portals' => $this->getPortals(),
         ]);
     }
 
@@ -66,6 +67,7 @@ class DemoDashboardController extends Controller
             'stats' => $demoData['stats'],
             'isDemo' => true,
             'currentStep' => 1,
+            'portals' => $this->getPortals(),
         ]);
     }
 
@@ -87,34 +89,12 @@ class DemoDashboardController extends Controller
             'assetGroupsList' => $assetGroupsList,
             'isDemo' => true,
             'currentStep' => 2,
+            'portals' => $this->getPortals(),
         ]);
     }
 
     /**
-     * Display Step 4: Data Intelligence demo page (Alerts, API & MCP Server).
-     */
-    public function intelligence(Request $request, ?string $locale = null)
-    {
-        $lang = $locale ?? $request->query('lang') ?? $request->cookie('pv_lang') ?? 'es';
-        if (!in_array($lang, ['en', 'es'])) {
-            $lang = 'es';
-        }
-        app()->setLocale($lang);
-
-        $intelligenceData = $this->demoService->getDemoIntelligenceData($lang);
-
-        return view('demo.intelligence', [
-            'currentLang' => $lang,
-            'alerts' => $intelligenceData['alerts'],
-            'apiEndpoints' => $intelligenceData['api_endpoints'],
-            'mcpTools' => $intelligenceData['mcp_tools'],
-            'isDemo' => true,
-            'currentStep' => 4,
-        ]);
-    }
-
-    /**
-     * Display Step 5: Team Collaboration and Shareable Projects demo page.
+     * Display Step 4: Team Collaboration and Shareable Projects demo page.
      */
     public function collaboration(Request $request, ?string $locale = null)
     {
@@ -132,8 +112,45 @@ class DemoDashboardController extends Controller
             'collaborators' => $collabData['collaborators'],
             'shareableDashboards' => $collabData['shareable_dashboards'],
             'isDemo' => true,
-            'currentStep' => 5,
+            'currentStep' => 4,
+            'portals' => $this->getPortals(),
         ]);
+    }
+
+    /**
+     * Display Step 5: Data Intelligence demo page (Alerts, API & MCP Server).
+     */
+    public function intelligence(Request $request, ?string $locale = null)
+    {
+        $lang = $locale ?? $request->query('lang') ?? $request->cookie('pv_lang') ?? 'es';
+        if (!in_array($lang, ['en', 'es'])) {
+            $lang = 'es';
+        }
+        app()->setLocale($lang);
+
+        $intelligenceData = $this->demoService->getDemoIntelligenceData($lang);
+
+        return view('demo.intelligence', [
+            'currentLang' => $lang,
+            'alerts' => $intelligenceData['alerts'],
+            'apiEndpoints' => $intelligenceData['api_endpoints'],
+            'mcpTools' => $intelligenceData['mcp_tools'],
+            'isDemo' => true,
+            'currentStep' => 5,
+            'portals' => $this->getPortals(),
+        ]);
+    }
+
+    /**
+     * Helper to retrieve portal URLs.
+     */
+    protected function getPortals(): array
+    {
+        return [
+            'app' => base64_encode('/app'),
+            'admin' => base64_encode('/admin'),
+            'docs' => base64_encode(config('services.docs.url', 'https://docs.apis-hub.cloud')),
+        ];
     }
 
     /**

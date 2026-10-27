@@ -10,7 +10,7 @@ class DemoDashboardTest extends TestCase
     {
         $response = $this->get('/es/demo');
         $response->assertStatus(200);
-        $response->assertSee('Demo Interactivo Beta');
+        $response->assertSee('APIs Hub');
         $response->assertSee('demo-asset-group');
         $response->assertSee('demo-grid-stack');
         $response->assertSee('Dashboard Omnicanal');
