@@ -1,84 +1,36 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <title>{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence | Demostración Interactiva — APIs Hub' : 'Step 5: Data Intelligence | Interactive Demo — APIs Hub' }}</title>
-    <meta name="title" content="{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence | Demostración Interactiva — APIs Hub' : 'Step 5: Data Intelligence | Interactive Demo — APIs Hub' }}">
-    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Alertas predictivas de KPIs, API REST analítica y Servidor MCP para agentes de IA.' : 'APIs Hub interactive public demo: Proactive KPI alerts, high-speed analytical REST API, and Model Context Protocol (MCP) server for AI agents.' }}">
-    <meta name="theme-color" content="#0f172a">
+<x-layouts.public 
+    :title="$currentLang === 'es' ? 'Paso 5: Data Intelligence | Demostración Interactiva — APIs Hub' : 'Step 5: Data Intelligence | Interactive Demo — APIs Hub'"
+    :description="$currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Alertas predictivas de KPIs, API REST analítica y Servidor MCP para agentes de IA.' : 'APIs Hub interactive public demo: Proactive KPI alerts, high-speed analytical REST API, and Model Context Protocol (MCP) server for AI agents.'"
+    :keywords="$currentLang === 'es' ? 'data intelligence, MCP server, servidor MCP, IA analitica, alertas de KPIs, APIs Hub demo' : 'data intelligence, MCP server, AI analytics, KPI alerts, APIs Hub demo'"
+    :canonical-url="$currentLang === 'es' ? route('demo.intelligence.es') : route('demo.intelligence', ['lang' => 'en'])"
+    :alternate-en="route('demo.intelligence', ['lang' => 'en'])"
+    :alternate-es="route('demo.intelligence.es')"
+    :alternate-default="route('demo.intelligence')"
+    :meta-image="asset('images/branding/apishub-620.png')"
+    :og-type="'website'"
+    :body-class="'font-sans'"
+    :x-data="'demoIntelligence({
+        theme: localStorage.getItem(\'demo_theme\') || (window.matchMedia(\'(prefers-color-scheme: dark)\').matches ? \'dark\' : \'light\'),
+        currentLang: \'' . $currentLang . '\',
+        activeTab: \'alerts\'
+    })'"
+    :portals="$portals"
+>
+    <x-slot:extra-head>
+        <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
+        <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="{{ asset('js/demo-controllers.js') }}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    </x-slot:extra-head>
 
-    <!-- Canonical URL & Hreflang -->
-    <link rel="canonical" href="{{ $currentLang === 'es' ? route('demo.intelligence.es') : route('demo.intelligence', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="en" href="{{ route('demo.intelligence', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="es" href="{{ route('demo.intelligence.es') }}" />
-    <link rel="alternate" hreflang="x-default" href="{{ route('demo.intelligence') }}" />
+    <x-slot:stepper>
+        <div class="pt-20 md:pt-24">
+            <x-demo.stepper :current-step="5" :current-lang="$currentLang" />
+        </div>
+    </x-slot:stepper>
 
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:site_name" content="APIs Hub">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $currentLang === 'es' ? 'Data Intelligence & MCP para IA | APIs Hub' : 'Data Intelligence & AI MCP Server | APIs Hub' }}">
-    <meta property="og:description" content="{{ $currentLang === 'es' ? 'Audita métricas normalizadas con Claude o Cursor y activa alertas automáticas de anomalías.' : 'Audit reconciled metrics with Claude or Cursor and trigger automated KPI anomaly alerts.' }}">
-    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
-    <meta property="og:image:width" content="620">
-    <meta property="og:image:height" content="135">
-    <meta property="og:locale" content="{{ $currentLang === 'es' ? 'es_ES' : 'en_US' }}">
-    <meta property="og:locale:alternate" content="{{ $currentLang === 'es' ? 'en_US' : 'es_ES' }}">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ url()->current() }}">
-    <meta name="twitter:title" content="{{ $currentLang === 'es' ? 'Data Intelligence & MCP para IA | APIs Hub' : 'Data Intelligence & AI MCP Server | APIs Hub' }}">
-    <meta name="twitter:description" content="{{ $currentLang === 'es' ? 'Audita métricas normalizadas con Claude o Cursor y activa alertas automáticas de anomalías.' : 'Audit reconciled metrics with Claude or Cursor and trigger automated KPI anomaly alerts.' }}">
-    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@type": "WebPage",
-      "name": "{{ $currentLang === 'es' ? 'Paso 5: Data Intelligence | APIs Hub' : 'Step 5: Data Intelligence | APIs Hub' }}",
-      "url": "{{ url()->current() }}",
-      "inLanguage": "{{ $currentLang }}",
-      "description": "{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Alertas predictivas de KPIs, API REST analítica y Servidor MCP para agentes de IA.' : 'APIs Hub interactive public demo: Proactive KPI alerts, high-speed analytical REST API, and Model Context Protocol (MCP) server for AI agents.' }}",
-      "publisher": {
-        "@@type": "Organization",
-        "name": "APIs Hub Network",
-        "url": "{{ url('/') }}",
-        "logo": {
-          "@@type": "ImageObject",
-          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
-        }
-      }
-    }
-    </script>
-
-    <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
-    <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
-    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="{{ asset('js/demo-controllers.js') }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-</head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-blue selection:text-white relative"
-      x-data="demoIntelligence({
-          theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-          currentLang: '{{ $currentLang }}',
-          activeTab: 'alerts'
-      })">
-
-    {{-- Unified Public Header --}}
-    @include('components.public.header')
-
-    {{-- Interactive Multi-Step Demo Progress Bar --}}
-    <div class="pt-20 md:pt-24">
-        @include('demo.stepper', ['currentStep' => 5, 'currentLang' => $currentLang])
-    </div>
-
-    {{-- Main Container --}}
-    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">p-4 sm:p-6 space-y-6">
 
         {{-- Page Header --}}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-xs">
@@ -327,11 +279,4 @@
             </a>
         </div>
     </main>
-
-    {{-- Unified Public Footer --}}
-    @include('components.public.footer')
-
-    {{-- Background Mesh --}}
-    <div class="hero-mesh" aria-hidden="true"></div>
-</body>
-</html>
+</x-layouts.public>

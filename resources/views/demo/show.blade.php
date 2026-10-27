@@ -1,97 +1,50 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <title>{{ $currentLang === 'es' ? 'Paso 3: Dashboard Omnicanal | Demostración Interactiva — APIs Hub' : 'Step 3: Omnichannel Dashboard | Interactive Demo — APIs Hub' }}</title>
-    <meta name="title" content="{{ $currentLang === 'es' ? 'Paso 3: Dashboard Omnicanal | Demostración Interactiva — APIs Hub' : 'Step 3: Omnichannel Dashboard | Interactive Demo — APIs Hub' }}">
-    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Dashboard omnicanal con datos normalizados en tiempo real para 6 canales publicitarios y analíticos.' : 'APIs Hub interactive public demo: Omnichannel marketing dashboard with normalized real-time data across 6 channels.' }}">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#0f172a">
+<x-layouts.public 
+    :title="$currentLang === 'es' ? 'Paso 3: Dashboard Omnicanal | Demostración Interactiva — APIs Hub' : 'Step 3: Omnichannel Dashboard | Interactive Demo — APIs Hub'"
+    :description="$currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Dashboard omnicanal con datos normalizados en tiempo real para 6 canales publicitarios y analíticos.' : 'APIs Hub interactive public demo: Omnichannel marketing dashboard with normalized real-time data across 6 channels.'"
+    :keywords="$currentLang === 'es' ? 'dashboard omnicanal, analitica en tiempo real, KPIs marketing, blended ROAS, APIs Hub demo' : 'omnichannel dashboard, real-time analytics, marketing KPIs, blended ROAS, APIs Hub demo'"
+    :canonical-url="$currentLang === 'es' ? route('demo.show.es') : route('demo.show', ['lang' => 'en'])"
+    :alternate-en="route('demo.show', ['lang' => 'en'])"
+    :alternate-es="route('demo.show.es')"
+    :alternate-default="route('demo.show')"
+    :meta-image="asset('images/branding/apishub-620.png')"
+    :og-type="'website'"
+    :body-class="'font-sans'"
+    :x-data="'demoDashboard({
+        selectedGroup: \'1\',
+        currentLang: \'' . $currentLang . '\',
+        assetGroups: ' . json_encode($assetGroups) . ',
+        widgets: ' . json_encode($widgets) . '
+    })'"
+    :x-init="'init()'"
+    :portals="$portals"
+>
+    <x-slot:extra-head>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/css/jsvectormap.min.css"/>
+        <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
+        <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ time() }}"/>
+        <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ time() }}"/>
+        <link rel="stylesheet" href="{{ asset('css/demo-dashboard.css') }}"/>
+        <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/jsvectormap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/maps/world.js"></script>
+        <script src="{{ asset('js/demo-controllers.js') }}"></script>
+        <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ time() }}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    </x-slot:extra-head>
 
-    <!-- Canonical URL & Hreflang -->
-    <link rel="canonical" href="{{ $currentLang === 'es' ? route('demo.show.es') : route('demo.show', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="en" href="{{ route('demo.show', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="es" href="{{ route('demo.show.es') }}" />
-    <link rel="alternate" hreflang="x-default" href="{{ route('demo.show') }}" />
+    <x-slot:stepper>
+        <div class="pt-20 md:pt-24">
+            <x-demo.stepper :current-step="3" :current-lang="$currentLang" />
+        </div>
+    </x-slot:stepper>
 
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:site_name" content="APIs Hub">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $currentLang === 'es' ? 'Dashboard Omnicanal Interactivo | APIs Hub' : 'Interactive Omnichannel Dashboard | APIs Hub' }}">
-    <meta property="og:description" content="{{ $currentLang === 'es' ? 'Visualiza ROAS blended, conversiones y métricas reconciliadas sin cuellos de botella.' : 'Visualize blended ROAS, conversions, and reconciled marketing metrics without connector bottlenecks.' }}">
-    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
-    <meta property="og:image:width" content="620">
-    <meta property="og:image:height" content="135">
-    <meta property="og:locale" content="{{ $currentLang === 'es' ? 'es_ES' : 'en_US' }}">
-    <meta property="og:locale:alternate" content="{{ $currentLang === 'es' ? 'en_US' : 'es_ES' }}">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ url()->current() }}">
-    <meta name="twitter:title" content="{{ $currentLang === 'es' ? 'Dashboard Omnicanal Interactivo | APIs Hub' : 'Interactive Omnichannel Dashboard | APIs Hub' }}">
-    <meta name="twitter:description" content="{{ $currentLang === 'es' ? 'Visualiza ROAS blended, conversiones y métricas reconciliadas sin cuellos de botella.' : 'Visualize blended ROAS, conversions, and reconciled marketing metrics without connector bottlenecks.' }}">
-    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@type": "WebPage",
-      "name": "{{ $currentLang === 'es' ? 'Paso 3: Dashboard Omnicanal | APIs Hub' : 'Step 3: Omnichannel Dashboard | APIs Hub' }}",
-      "url": "{{ url()->current() }}",
-      "inLanguage": "{{ $currentLang }}",
-      "description": "{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Dashboard omnicanal con datos normalizados en tiempo real para 6 canales publicitarios y analíticos.' : 'APIs Hub interactive public demo: Omnichannel marketing dashboard with normalized real-time data across 6 channels.' }}",
-      "publisher": {
-        "@@type": "Organization",
-        "name": "APIs Hub Network",
-        "url": "{{ url('/') }}",
-        "logo": {
-          "@@type": "ImageObject",
-          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
-        }
-      }
-    }
-    </script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/css/jsvectormap.min.css"/>
-    <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ time() }}"/>
-    <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ time() }}"/>
-    <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
-    <link rel="stylesheet" href="{{ asset('css/demo-dashboard.css') }}"/>
-    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/jsvectormap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/maps/world.js"></script>
-    <script src="{{ asset('js/demo-controllers.js') }}"></script>
-    <script src="{{ asset('js/dashboard-renderer.js') }}?v={{ time() }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</head>
-<body class="bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-900 dark:text-slate-100 flex flex-col font-sans antialiased selection:bg-brand-blue selection:text-white relative"
-      x-data="demoDashboard({
-          selectedGroup: '1',
-          currentLang: '{{ $currentLang }}',
-          assetGroups: @js($assetGroups),
-          widgets: @js($widgets)
-      })"
-      x-init="init()">
-
-    {{-- Unified Public Header --}}
-    @include('components.public.header')
-
-    {{-- Interactive Multi-Step Demo Progress Bar --}}
-    <div class="pt-20 md:pt-24">
-        @include('demo.stepper', ['currentStep' => 3, 'currentLang' => $currentLang])
-    </div>
-
-    {{-- Main Container --}}
     <main class="flex-1 w-full p-4 sm:p-6 space-y-4 transition-all duration-200"
-          :class="isFullWidth ? 'max-w-none px-4 sm:px-8' : 'max-w-7xl mx-auto'">
+          :class="isFullWidth ? 'max-w-none px-4 sm:px-8' : 'max-w-7xl mx-auto'">x-w-7xl mx-auto'">
         {{-- Hero Context & Filter Controls --}}
         <div class="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 shadow-xs space-y-4">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
@@ -415,10 +368,5 @@
         </div>
     </div>
 
-    {{-- Unified Public Footer --}}
-    @include('components.public.footer')
-
-    {{-- Background Mesh --}}
-    <div class="hero-mesh" aria-hidden="true"></div>
-</body>
-</html>
+    {{-- Unified Public Footer & Background Mesh are provided by x-layouts.public --}}
+</x-layouts.public>

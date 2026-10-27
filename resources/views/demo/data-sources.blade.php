@@ -1,84 +1,32 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <title>{{ $currentLang === 'es' ? 'Paso 1: Fuentes de Datos | Demostración Interactiva — APIs Hub' : 'Step 1: Data Sources | Interactive Demo — APIs Hub' }}</title>
-    <meta name="title" content="{{ $currentLang === 'es' ? 'Paso 1: Fuentes de Datos | Demostración Interactiva — APIs Hub' : 'Step 1: Data Sources | Interactive Demo — APIs Hub' }}">
-    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Configuración de fuentes de datos, control de cuotas y activación de activos cross-channel.' : 'APIs Hub interactive public demo: Connect marketing data sources, manage asset quotas, and toggle cross-channel assets.' }}">
-    <meta name="theme-color" content="#0f172a">
+<x-layouts.public 
+    :title="$currentLang === 'es' ? 'Paso 1: Fuentes de Datos | Demostración Interactiva — APIs Hub' : 'Step 1: Data Sources | Interactive Demo — APIs Hub'"
+    :description="$currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Configuración de fuentes de datos, control de cuotas y activación de activos cross-channel.' : 'APIs Hub interactive public demo: Connect marketing data sources, manage asset quotas, and toggle cross-channel assets.'"
+    :meta-image="asset('images/branding/apishub-620.png')"
+    :og-type="'website'"
+    :body-class="'font-sans'"
+    :x-data="'demoDataSources(' . json_encode([
+        'providers' => $providers,
+        'activeChannelKey' => 'google_search_console',
+        'tierUsage' => $stats['tier_usage'],
+        'tierMax' => $stats['tier_max'],
+        'theme' => 'dark',
+        'currentLang' => $currentLang
+    ]) . ')'"
+    :portals="$portals"
+>
+    <x-slot:extra-head>
+        <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
+        <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="{{ asset('js/demo-controllers.js') }}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    </x-slot:extra-head>
 
-    <!-- Canonical URL & Hreflang -->
-    <link rel="canonical" href="{{ $currentLang === 'es' ? route('demo.data-sources.es') : route('demo.data-sources', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="en" href="{{ route('demo.data-sources', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="es" href="{{ route('demo.data-sources.es') }}" />
-    <link rel="alternate" hreflang="x-default" href="{{ route('demo.data-sources') }}" />
-
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:site_name" content="APIs Hub">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $currentLang === 'es' ? 'Demostración de Fuentes de Datos | APIs Hub' : 'Data Sources Interactive Demo | APIs Hub' }}">
-    <meta property="og:description" content="{{ $currentLang === 'es' ? 'Configura activos de Google Ads, Meta, GSC, Shopify y Klaviyo con control de cuota en tiempo real.' : 'Configure Google Ads, Meta, GSC, Shopify, and Klaviyo assets with live quota management.' }}">
-    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
-    <meta property="og:image:width" content="620">
-    <meta property="og:image:height" content="135">
-    <meta property="og:locale" content="{{ $currentLang === 'es' ? 'es_ES' : 'en_US' }}">
-    <meta property="og:locale:alternate" content="{{ $currentLang === 'es' ? 'en_US' : 'es_ES' }}">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ url()->current() }}">
-    <meta name="twitter:title" content="{{ $currentLang === 'es' ? 'Demostración de Fuentes de Datos | APIs Hub' : 'Data Sources Interactive Demo | APIs Hub' }}">
-    <meta name="twitter:description" content="{{ $currentLang === 'es' ? 'Configura activos de Google Ads, Meta, GSC, Shopify y Klaviyo con control de cuota en tiempo real.' : 'Configure Google Ads, Meta, GSC, Shopify, and Klaviyo assets with live quota management.' }}">
-    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@type": "WebPage",
-      "name": "{{ $currentLang === 'es' ? 'Paso 1: Fuentes de Datos | APIs Hub' : 'Step 1: Data Sources | APIs Hub' }}",
-      "url": "{{ url()->current() }}",
-      "inLanguage": "{{ $currentLang }}",
-      "description": "{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Configuración de fuentes de datos, control de cuotas y activación de activos cross-channel.' : 'APIs Hub interactive public demo: Connect marketing data sources, manage asset quotas, and toggle cross-channel assets.' }}",
-      "publisher": {
-        "@@type": "Organization",
-        "name": "APIs Hub Network",
-        "url": "{{ url('/') }}",
-        "logo": {
-          "@@type": "ImageObject",
-          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
-        }
-      }
-    }
-    </script>
-
-    <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
-    <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
-    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="{{ asset('js/demo-controllers.js') }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-</head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-blue selection:text-white relative"
-      x-data="demoDataSources({
-          providers: @js($providers),
-          activeChannelKey: 'google_search_console',
-          tierUsage: {{ $stats['tier_usage'] }},
-          tierMax: {{ $stats['tier_max'] }},
-          theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-          currentLang: '{{ $currentLang }}'
-      })">
-
-    {{-- Unified Public Header --}}
-    @include('components.public.header')
-
-    {{-- Interactive Multi-Step Demo Progress Bar --}}
-    <div class="pt-20 md:pt-24">
-        @include('demo.stepper', ['currentStep' => 1, 'currentLang' => $currentLang])
-    </div>
+    <x-slot:stepper>
+        <div class="pt-20 md:pt-24">
+            <x-demo.stepper :current-step="1" :current-lang="$currentLang" />
+        </div>
+    </x-slot:stepper>
 
     {{-- Main Container --}}
     <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -315,11 +263,4 @@
             </section>
         </div>
     </main>
-
-    {{-- Unified Public Footer --}}
-    @include('components.public.footer')
-
-    {{-- Background Mesh --}}
-    <div class="hero-mesh" aria-hidden="true"></div>
-</body>
-</html>
+</x-layouts.public>

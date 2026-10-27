@@ -1,85 +1,14 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr" class="dark">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <!-- Preconnect / DNS Prefetch -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://www.googletagmanager.com">
-    <link rel="preconnect" href="https://www.google.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Primary Meta Tags -->
-    <title>{{ app()->getLocale() === 'es' ? 'Documentación de API y Especificación OpenAPI — APIs Hub' : 'API Documentation & OpenAPI Specification — APIs Hub' }}</title>
-    <meta name="title" content="{{ app()->getLocale() === 'es' ? 'Documentación de API y Especificación OpenAPI — APIs Hub' : 'API Documentation & OpenAPI Specification — APIs Hub' }}">
-    <meta name="description" content="{{ app()->getLocale() === 'es' ? 'Referencia pública completa y sandbox interactivo para la API de APIs Hub. Consultas analíticas multidimensionales, agregaciones, pings y métricas normalizadas.' : 'Complete public developer reference and interactive sandbox for the APIs Hub RESTful API. Multi-dimensional analytical queries, aggregations, pings, and normalized channel metrics.' }}">
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <meta name="theme-color" content="#0f172a">
-    <meta name="color-scheme" content="dark light">
-
-    <!-- Favicons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/branding/apishub-favicon.png') }}">
-    <link rel="icon" type="image/webp" href="{{ asset('images/branding/apishub-favicon.webp') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/branding/apishub-favicon.png') }}">
-
-    <!-- Canonical URL & Hreflang -->
-    <link rel="canonical" href="{{ app()->getLocale() === 'es' ? route('docs.api.es') : route('docs.api') }}" />
-    <link rel="alternate" hreflang="en" href="{{ route('docs.api') }}" />
-    <link rel="alternate" hreflang="es" href="{{ route('docs.api.es') }}" />
-    <link rel="alternate" hreflang="x-default" href="{{ route('docs.api') }}" />
-
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:site_name" content="APIs Hub">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ app()->getLocale() === 'es' ? 'Documentación de API — APIs Hub' : 'API Documentation — APIs Hub' }}">
-    <meta property="og:description" content="{{ app()->getLocale() === 'es' ? 'Especificación OpenAPI 3.1 y portal para desarrolladores de APIs Hub.' : 'OpenAPI 3.1 specification and developer documentation portal for APIs Hub.' }}">
-    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
-    <meta property="og:image:width" content="620">
-    <meta property="og:image:height" content="135">
-    <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
-    <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'es' ? 'en_US' : 'es_ES' }}">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ url()->current() }}">
-    <meta name="twitter:title" content="{{ app()->getLocale() === 'es' ? 'Documentación de API — APIs Hub' : 'API Documentation — APIs Hub' }}">
-    <meta name="twitter:description" content="{{ app()->getLocale() === 'es' ? 'Especificación OpenAPI 3.1 y portal para desarrolladores de APIs Hub.' : 'OpenAPI 3.1 specification and developer documentation portal for APIs Hub.' }}">
-    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@type": "TechArticle",
-      "headline": "{{ app()->getLocale() === 'es' ? 'Documentación de API y Especificación OpenAPI — APIs Hub' : 'API Documentation & OpenAPI Specification — APIs Hub' }}",
-      "url": "{{ url()->current() }}",
-      "inLanguage": "{{ app()->getLocale() }}",
-      "description": "{{ app()->getLocale() === 'es' ? 'Referencia pública completa y sandbox interactivo para la API de APIs Hub. Consultas analíticas multidimensionales, agregaciones, pings y métricas normalizadas.' : 'Complete public developer reference and interactive sandbox for the APIs Hub RESTful API. Multi-dimensional analytical queries, aggregations, pings, and normalized channel metrics.' }}",
-      "publisher": {
-        "@@type": "Organization",
-        "name": "APIs Hub Network",
-        "url": "{{ url('/') }}",
-        "logo": {
-          "@@type": "ImageObject",
-          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
-        }
-      }
-    }
-    </script>
-
-    @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
-
-    <link rel="stylesheet" href="{{ asset('css/scalar-theme.css') }}"/>
-</head>
-<body class="antialiased min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white"
-      x-data="themeControl">
-
-    <!-- Unified Header Navigation -->
-    @include('components.public.header')
+<x-layouts.public 
+    :title="app()->getLocale() === 'es' ? 'Documentación de API y Especificación OpenAPI — APIs Hub' : 'API Documentation & OpenAPI Specification — APIs Hub'"
+    :description="app()->getLocale() === 'es' ? 'Referencia pública completa y sandbox interactivo para la API de APIs Hub. Consultas analíticas multidimensionales, agregaciones, pings y métricas normalizadas.' : 'Complete public developer reference and interactive sandbox for the APIs Hub RESTful API. Multi-dimensional analytical queries, aggregations, pings, and normalized channel metrics.'"
+    :meta-image="asset('images/branding/apishub-620.png')"
+    :og-type="'website'"
+    :body-class="'bg-slate-50 dark:bg-slate-950'"
+    :portals="$portals"
+>
+    <x-slot:extra-head>
+        <link rel="stylesheet" href="{{ asset('css/scalar-theme.css') }}"/>
+    </x-slot:extra-head>
 
     <!-- Main Content -->
     <main class="relative pt-28 sm:pt-36 pb-20 px-4 sm:px-8 lg:px-12 w-full flex-grow flex flex-col">
@@ -138,13 +67,4 @@
         </div>
 
     </main>
-
-    <!-- Semantic Footer -->
-    @include('components.public.footer')
-
-    <!-- Background Mesh -->
-    <div class="hero-mesh" aria-hidden="true"></div>
-
-    @vite(['resources/js/gtm.js'])
-</body>
-</html>
+</x-layouts.public>

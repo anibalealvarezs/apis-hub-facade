@@ -1,120 +1,63 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr" class="dark">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        
-        <!-- Preconnect / DNS Prefetch -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-        <link rel="preconnect" href="https://www.googletagmanager.com">
-        <link rel="preconnect" href="https://www.google.com">
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-        <!-- Primary Meta Tags -->
-        <title>{{ app()->getLocale() === 'es' ? 'Planes y Funcionalidades | Analítica de Marketing Unificada — APIs Hub' : 'Plans & Features | Unified Marketing Analytics & Dashboards — APIs Hub' }}</title>
-        <meta name="title" content="{{ app()->getLocale() === 'es' ? 'Planes y Funcionalidades | Analítica de Marketing Unificada — APIs Hub' : 'Plans & Features | Unified Marketing Analytics & Dashboards — APIs Hub' }}">
-        <meta name="description" content="{{ app()->getLocale() === 'es' ? 'Descubre las funcionalidades y límites de cada plan en APIs Hub. Conectores de Meta, Google y Shopify, dashboards públicos, KPIs a medida y clasificación semántica por IA.' : 'Compare APIs Hub plans and capabilities. Discover marketing connectors, automated AI keyword classification, custom KPIs, and client reporting dashboards.' }}">
-        <meta name="keywords" content="{{ __('marketing analytics plans, unified dashboards, data sync tiers, custom KPIs, agency client reporting, AI semantic classification, APIs Hub') }}">
-        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-        <meta name="author" content="APIs Hub Network">
-        <meta name="application-name" content="APIs Hub">
-        <meta name="theme-color" content="#0f172a">
-        <meta name="color-scheme" content="dark light">
-
-        <!-- Favicons & App Icons -->
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/branding/apishub-favicon.png') }}">
-        <link rel="icon" type="image/webp" href="{{ asset('images/branding/apishub-favicon.webp') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/branding/apishub-favicon.png') }}">
-
-        <!-- Canonical URL -->
-        <link rel="canonical" href="{{ app()->getLocale() === 'es' ? route('landing.plans.es') : route('landing.plans') }}" />
-
-        <!-- Multilingual Alternate Links (hreflang) -->
-        <link rel="alternate" hreflang="en" href="{{ route('landing.plans') }}" />
-        <link rel="alternate" hreflang="es" href="{{ route('landing.plans.es') }}" />
-        <link rel="alternate" hreflang="x-default" href="{{ route('landing.plans') }}" />
-
-        <!-- Open Graph / Social Sharing -->
-        <meta property="og:site_name" content="APIs Hub">
-        <meta property="og:type" content="website">
-        <meta property="og:url" content="{{ url()->current() }}">
-        <meta property="og:title" content="{{ app()->getLocale() === 'es' ? 'Planes y Funcionalidades | APIs Hub' : 'Plans & Features | APIs Hub' }}">
-        <meta property="og:description" content="{{ app()->getLocale() === 'es' ? 'Conoce la escala y funcionalidades incluidas en los planes Free, Pro, Ultra y Enterprise de APIs Hub.' : 'Explore tier capabilities and features included across Free, Pro, Ultra, and Enterprise plans.' }}">
-        <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
-        <meta property="og:image:width" content="620">
-        <meta property="og:image:height" content="135">
-        <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
-        <meta property="og:locale:alternate" content="{{ app()->getLocale() === 'es' ? 'en_US' : 'es_ES' }}">
-
-        <!-- Twitter Card -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:url" content="{{ url()->current() }}">
-        <meta name="twitter:title" content="{{ app()->getLocale() === 'es' ? 'Planes y Funcionalidades | APIs Hub' : 'Plans & Features | APIs Hub' }}">
-        <meta name="twitter:description" content="{{ app()->getLocale() === 'es' ? 'Descubre la escala técnica y arquitectura para analítica de marketing de APIs Hub.' : 'Discover APIs Hub technical architecture and features for unified marketing analytics.' }}">
-        <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
-
-        <!-- Schema.org Structured Data: SoftwareApplication & FAQPage -->
+@php
+    $plansStructuredData = <<<'JSON'
         <script type="application/ld+json">
         {
-          "@@context": "https://schema.org",
-          "@@graph": [
+          "@context": "https://schema.org",
+          "@graph": [
             {
-              "@@type": "SoftwareApplication",
+              "@type": "SoftwareApplication",
               "name": "APIs Hub",
               "applicationCategory": "BusinessApplication",
               "operatingSystem": "Web Cloud",
-              "description": "{{ app()->getLocale() === 'es' ? 'Plataforma desacoplada de analítica de marketing, sincronización multi-canal y dashboards unificados.' : 'Decoupled marketing analytics, multi-channel synchronization, and unified dashboard platform.' }}",
+              "description": "Decoupled marketing analytics, multi-channel synchronization, and unified dashboard platform.",
               "offers": [
                 {
-                  "@@type": "Offer",
+                  "@type": "Offer",
                   "name": "Free Tier",
-                  "description": "{{ app()->getLocale() === 'es' ? 'Plan inicial para proyectos personales y validación' : 'Entry plan for personal projects and early testing' }}"
+                  "description": "Entry plan for personal projects and early testing"
                 },
                 {
-                  "@@type": "Offer",
+                  "@type": "Offer",
                   "name": "Pro Tier",
-                  "description": "{{ app()->getLocale() === 'es' ? 'Plan para profesionales independientes y consultores' : 'Professional tier for freelancers and consultants' }}"
+                  "description": "Professional tier for freelancers and consultants"
                 },
                 {
-                  "@@type": "Offer",
+                  "@type": "Offer",
                   "name": "Ultra / Founder Tier",
-                  "description": "{{ app()->getLocale() === 'es' ? 'Plan para agencias con gestión de múltiples marcas y colaboradores' : 'Agency tier for multi-brand management and collaborators' }}"
+                  "description": "Agency tier for multi-brand management and collaborators"
                 },
                 {
-                  "@@type": "Offer",
+                  "@type": "Offer",
                   "name": "Enterprise Tier",
-                  "description": "{{ app()->getLocale() === 'es' ? 'Infraestructura dedicada, SLA garantizado y cuentas a medida' : 'Dedicated infrastructure, custom quotas, and guaranteed SLA' }}"
+                  "description": "Dedicated infrastructure, custom quotas, and guaranteed SLA"
                 }
               ]
             },
             {
-              "@@type": "FAQPage",
+              "@type": "FAQPage",
               "mainEntity": [
                 {
-                  "@@type": "Question",
-                  "name": "{{ app()->getLocale() === 'es' ? '¿Puedo cambiar de plan en cualquier momento?' : 'Can I change my plan at any time?' }}",
+                  "@type": "Question",
+                  "name": "Can I change my plan at any time?",
                   "acceptedAnswer": {
-                    "@@type": "Answer",
-                    "text": "{{ app()->getLocale() === 'es' ? 'Sí. APIs Hub calcula los ciclos de facturación de forma proporcional y predecible, permitiéndote ascender o descender de plan según las necesidades de tu equipo.' : 'Yes. APIs Hub manages prorated cycles predictably, allowing you to upgrade or adjust plans as your agency or project scales.' }}"
+                    "@type": "Answer",
+                    "text": "Yes. APIs Hub manages prorated cycles predictably, allowing you to upgrade or adjust plans as your agency or project scales."
                   }
                 },
                 {
-                  "@@type": "Question",
-                  "name": "{{ app()->getLocale() === 'es' ? '¿Qué ocurre si alcanzo el límite de dashboards o KPIs de mi plan?' : 'What happens if I reach the dashboard or KPI limit of my plan?' }}",
+                  "@type": "Question",
+                  "name": "What happens if I reach the dashboard or KPI limit of my plan?",
                   "acceptedAnswer": {
-                    "@@type": "Answer",
-                    "text": "{{ app()->getLocale() === 'es' ? 'Tus datos existentes y paneles permanecen seguros e intactos. La interfaz te ofrecerá una opción contextual e inmediata para ampliar la cuota al siguiente tier sin interrupción del servicio.' : 'Your existing data and dashboards remain fully functional and secure. The platform provides a seamless in-app upgrade path to expand your quota.' }}"
+                    "@type": "Answer",
+                    "text": "Your existing data and dashboards remain fully functional and secure. The platform provides a seamless in-app upgrade path to expand your quota."
                   }
                 },
                 {
-                  "@@type": "Question",
-                  "name": "{{ app()->getLocale() === 'es' ? '¿Cómo funciona la clasificación de keywords de SEO asistida por IA?' : 'How does AI-assisted SEO keyword classification work?' }}",
+                  "@type": "Question",
+                  "name": "How does AI-assisted SEO keyword classification work?",
                   "acceptedAnswer": {
-                    "@@type": "Answer",
-                    "text": "{{ app()->getLocale() === 'es' ? 'Clasifica automáticamente las consultas de Google Search Console en intención de búsqueda, relevancia y marca mediante IA, enriquecidas con el contexto específico de cada sitio web.' : 'It automatically tags and categorizes Search Console queries into search intent, brand, and relevance using AI, enriched with tailored business context per website.' }}"
+                    "@type": "Answer",
+                    "text": "It automatically tags and categorizes Search Console queries into search intent, brand, and relevance using AI, enriched with tailored business context per website."
                   }
                 }
               ]
@@ -122,16 +65,20 @@
           ]
         }
         </script>
+JSON;
+@endphp
 
-        @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="antialiased min-h-screen text-slate-900 dark:text-slate-100 selection:bg-brand-blue selection:text-white" x-data="themeControl">
-        
-        <!-- Header Sticky Navigation -->
-        @include('components.public.header')
-
-        <!-- Main Content -->
-        <main class="relative pt-32 sm:pt-40 pb-24 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col items-center">
+<x-layouts.public 
+    :title="app()->getLocale() === 'es' ? 'Planes y Funcionalidades | Analítica de Marketing Unificada — APIs Hub' : 'Plans & Features | Unified Marketing Analytics & Dashboards — APIs Hub'"
+    :description="app()->getLocale() === 'es' ? 'Descubre las funcionalidades y límites de cada plan en APIs Hub. Conectores de Meta, Google y Shopify, dashboards públicos, KPIs a medida y clasificación semántica por IA.' : 'Compare APIs Hub plans and capabilities. Discover marketing connectors, automated AI keyword classification, custom KPIs, and client reporting dashboards.'"
+    :keywords="__('marketing analytics plans, unified dashboards, data sync tiers, custom KPIs, agency client reporting, AI semantic classification, APIs Hub')"
+    :meta-image="asset('images/branding/apishub-620.png')"
+    :og-type="'website'"
+    :structured-data="$plansStructuredData"
+    :portals="$portals"
+>
+    <!-- Main Content -->
+    <main class="relative pt-32 sm:pt-40 pb-24 px-4 sm:px-8 max-w-7xl mx-auto flex flex-col items-center">
             
             <!-- Hero Section -->
             <section class="text-center max-w-4xl mx-auto mb-16 sm:mb-20">
@@ -691,14 +638,4 @@
             </section>
 
         </main>
-
-        <!-- Semantic Footer / Micro Branding -->
-        @include('components.public.footer')
-        
-        <!-- Background Mesh -->
-        <div class="hero-mesh" aria-hidden="true"></div>
-
-        <!-- External Marketing & Analytics (Vite Optimized) -->
-        @vite(['resources/js/gtm.js'])
-    </body>
-</html>
+</x-layouts.public>

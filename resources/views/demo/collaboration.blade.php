@@ -1,84 +1,36 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-    <title>{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | Demostración Interactiva — APIs Hub' : 'Step 4: Team Collaboration | Interactive Demo — APIs Hub' }}</title>
-    <meta name="title" content="{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | Demostración Interactiva — APIs Hub' : 'Step 4: Team Collaboration | Interactive Demo — APIs Hub' }}">
-    <meta name="description" content="{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Proyectos compartidos, gestión de equipos, roles de acceso y enlaces públicos de dashboards.' : 'APIs Hub interactive public demo: Shareable client projects, team management, role-based asset scoping, and protected public dashboard links.' }}">
-    <meta name="theme-color" content="#0f172a">
+<x-layouts.public 
+    :title="$currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | Demostración Interactiva — APIs Hub' : 'Step 4: Team Collaboration | Interactive Demo — APIs Hub'"
+    :description="$currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Proyectos compartidos, gestión de equipos, roles de acceso y enlaces públicos de dashboards.' : 'APIs Hub interactive public demo: Shareable client projects, team management, role-based asset scoping, and protected public dashboard links.'"
+    :keywords="$currentLang === 'es' ? 'colaboracion, equipos, gestion de roles, dashboards compartidos, APIs Hub demo' : 'collaboration, teams, role management, shared dashboards, APIs Hub demo'"
+    :canonical-url="$currentLang === 'es' ? route('demo.collaboration.es') : route('demo.collaboration', ['lang' => 'en'])"
+    :alternate-en="route('demo.collaboration', ['lang' => 'en'])"
+    :alternate-es="route('demo.collaboration.es')"
+    :alternate-default="route('demo.collaboration')"
+    :meta-image="asset('images/branding/apishub-620.png')"
+    :og-type="'website'"
+    :body-class="'font-sans'"
+    :x-data="'demoCollaboration({
+        theme: localStorage.getItem(\'demo_theme\') || (window.matchMedia(\'(prefers-color-scheme: dark)\').matches ? \'dark\' : \'light\'),
+        currentLang: \'' . $currentLang . '\',
+        showInviteModal: false
+    })'"
+    :portals="$portals"
+>
+    <x-slot:extra-head>
+        <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
+        <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="{{ asset('js/demo-controllers.js') }}"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+    </x-slot:extra-head>
 
-    <!-- Canonical URL & Hreflang -->
-    <link rel="canonical" href="{{ $currentLang === 'es' ? route('demo.collaboration.es') : route('demo.collaboration', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="en" href="{{ route('demo.collaboration', ['lang' => 'en']) }}" />
-    <link rel="alternate" hreflang="es" href="{{ route('demo.collaboration.es') }}" />
-    <link rel="alternate" hreflang="x-default" href="{{ route('demo.collaboration') }}" />
+    <x-slot:stepper>
+        <div class="pt-20 md:pt-24">
+            <x-demo.stepper :current-step="4" :current-lang="$currentLang" />
+        </div>
+    </x-slot:stepper>
 
-    <!-- Open Graph / Social Sharing -->
-    <meta property="og:site_name" content="APIs Hub">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $currentLang === 'es' ? 'Colaboración y Equipos | APIs Hub' : 'Team Collaboration & Projects | APIs Hub' }}">
-    <meta property="og:description" content="{{ $currentLang === 'es' ? 'Invita colaboradores con roles de acceso granular y genera vistas públicas seguras para clientes.' : 'Invite collaborators with granular roles and generate client-facing read-only public dashboard links.' }}">
-    <meta property="og:image" content="{{ asset('images/branding/apishub-620.png') }}">
-    <meta property="og:image:width" content="620">
-    <meta property="og:image:height" content="135">
-    <meta property="og:locale" content="{{ $currentLang === 'es' ? 'es_ES' : 'en_US' }}">
-    <meta property="og:locale:alternate" content="{{ $currentLang === 'es' ? 'en_US' : 'es_ES' }}">
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ url()->current() }}">
-    <meta name="twitter:title" content="{{ $currentLang === 'es' ? 'Colaboración y Equipos | APIs Hub' : 'Team Collaboration & Projects | APIs Hub' }}">
-    <meta name="twitter:description" content="{{ $currentLang === 'es' ? 'Invita colaboradores con roles de acceso granular y genera vistas públicas seguras para clientes.' : 'Invite collaborators with granular roles and generate client-facing read-only public dashboard links.' }}">
-    <meta name="twitter:image" content="{{ asset('images/branding/apishub-620.png') }}">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@@context": "https://schema.org",
-      "@@type": "WebPage",
-      "name": "{{ $currentLang === 'es' ? 'Paso 4: Colaboración & Equipos | APIs Hub' : 'Step 4: Team Collaboration | APIs Hub' }}",
-      "url": "{{ url()->current() }}",
-      "inLanguage": "{{ $currentLang }}",
-      "description": "{{ $currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Proyectos compartidos, gestión de equipos, roles de acceso y enlaces públicos de dashboards.' : 'APIs Hub interactive public demo: Shareable client projects, team management, role-based asset scoping, and protected public dashboard links.' }}",
-      "publisher": {
-        "@@type": "Organization",
-        "name": "APIs Hub Network",
-        "url": "{{ url('/') }}",
-        "logo": {
-          "@@type": "ImageObject",
-          "url": "{{ asset('images/branding/apishub-trans-620.webp') }}"
-        }
-      }
-    }
-    </script>
-
-    <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
-    <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
-    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="{{ asset('js/demo-controllers.js') }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-</head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-blue selection:text-white relative"
-      x-data="demoCollaboration({
-          theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
-          currentLang: '{{ $currentLang }}',
-          showInviteModal: false
-      })">
-
-    {{-- Unified Public Header --}}
-    @include('components.public.header')
-
-    {{-- Interactive Multi-Step Demo Progress Bar --}}
-    <div class="pt-20 md:pt-24">
-        @include('demo.stepper', ['currentStep' => 4, 'currentLang' => $currentLang])
-    </div>
-
-    {{-- Main Container --}}
-    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <main class="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 space-y-6">to p-4 sm:p-6 space-y-6">
 
         {{-- Page Header --}}
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 p-5 shadow-xs">
@@ -292,11 +244,4 @@
             </a>
         </div>
     </main>
-
-    {{-- Unified Public Footer --}}
-    @include('components.public.footer')
-
-    {{-- Background Mesh --}}
-    <div class="hero-mesh" aria-hidden="true"></div>
-</body>
-</html>
+</x-layouts.public>
