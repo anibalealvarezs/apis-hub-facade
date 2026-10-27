@@ -19,7 +19,6 @@ function demoDataSources(config) {
             this.$watch('darkMode', val => {
                 this.theme = val ? 'dark' : 'light';
                 localStorage.setItem('color-theme', this.theme);
-                localStorage.setItem('demo_theme', this.theme);
                 document.documentElement.classList.toggle('dark', val);
             });
         },
@@ -60,13 +59,7 @@ function demoDataSources(config) {
         },
 
         toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('demo_theme', this.theme);
-            if (this.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            this.darkMode = !this.darkMode;
         }
     };
 }
@@ -88,7 +81,6 @@ function demoAssetGroups(config) {
             this.$watch('darkMode', val => {
                 this.theme = val ? 'dark' : 'light';
                 localStorage.setItem('color-theme', this.theme);
-                localStorage.setItem('demo_theme', this.theme);
                 document.documentElement.classList.toggle('dark', val);
             });
         },
@@ -148,13 +140,7 @@ function demoAssetGroups(config) {
         },
 
         toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('demo_theme', this.theme);
-            if (this.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            this.darkMode = !this.darkMode;
         }
     };
 }
@@ -187,13 +173,12 @@ function demoDashboard(config) {
         activeWidget: null,
         modalGranularity: 'daily',
         selectedMapMetric: 'clicks',
-        theme: localStorage.getItem('demo_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+        theme: localStorage.getItem('color-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
 
         init() {
             this.$watch('darkMode', val => {
                 this.theme = val ? 'dark' : 'light';
                 localStorage.setItem('color-theme', this.theme);
-                localStorage.setItem('demo_theme', this.theme);
                 document.documentElement.classList.toggle('dark', val);
             });
 
@@ -264,13 +249,7 @@ function demoDashboard(config) {
         },
 
         toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('demo_theme', this.theme);
-            if (this.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            this.darkMode = !this.darkMode;
             this.loadAllWidgets(true);
         },
 
@@ -440,19 +419,12 @@ function demoCollaboration(config) {
             this.$watch('darkMode', val => {
                 this.theme = val ? 'dark' : 'light';
                 localStorage.setItem('color-theme', this.theme);
-                localStorage.setItem('demo_theme', this.theme);
                 document.documentElement.classList.toggle('dark', val);
             });
         },
 
         toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('demo_theme', this.theme);
-            if (this.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            this.darkMode = !this.darkMode;
         }
     };
 }
@@ -471,19 +443,12 @@ function demoIntelligence(config) {
             this.$watch('darkMode', val => {
                 this.theme = val ? 'dark' : 'light';
                 localStorage.setItem('color-theme', this.theme);
-                localStorage.setItem('demo_theme', this.theme);
                 document.documentElement.classList.toggle('dark', val);
             });
         },
 
         toggleTheme() {
-            this.theme = this.theme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem('demo_theme', this.theme);
-            if (this.theme === 'dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            this.darkMode = !this.darkMode;
         }
     };
 }

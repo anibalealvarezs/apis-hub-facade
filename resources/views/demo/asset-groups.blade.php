@@ -11,7 +11,7 @@
     :body-class="'font-sans'"
     :x-data="'demoAssetGroups({
         groups: ' . json_encode($assetGroupsList) . ',
-        theme: localStorage.getItem(\'demo_theme\') || (window.matchMedia(\'(prefers-color-scheme: dark)\').matches ? \'dark\' : \'light\'),
+        theme: localStorage.getItem(\'color-theme\') || (window.matchMedia(\'(prefers-color-scheme: dark)\').matches ? \'dark\' : \'light\'),
         currentLang: \'' . $currentLang . '\'
     })'"
     :portals="$portals"

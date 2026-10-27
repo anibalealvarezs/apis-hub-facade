@@ -3,7 +3,7 @@
  */
 (function() {
     // 1. Synchronous early theme application (avoids flash of light theme)
-    var storageKey = window.demoThemeStorageKey || 'demo_theme';
+    var storageKey = window.demoThemeStorageKey || 'color-theme';
     var theme = localStorage.getItem(storageKey);
     if (!theme) {
         theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';

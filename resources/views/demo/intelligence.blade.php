@@ -10,7 +10,7 @@
     :og-type="'website'"
     :body-class="'font-sans'"
     :x-data="'demoIntelligence({
-        theme: localStorage.getItem(\'demo_theme\') || (window.matchMedia(\'(prefers-color-scheme: dark)\').matches ? \'dark\' : \'light\'),
+        theme: localStorage.getItem(\'color-theme\') || (window.matchMedia(\'(prefers-color-scheme: dark)\').matches ? \'dark\' : \'light\'),
         currentLang: \'' . $currentLang . '\',
         activeTab: \'alerts\'
     })'"
