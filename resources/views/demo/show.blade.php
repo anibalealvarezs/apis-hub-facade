@@ -6,7 +6,7 @@
     :alternate-en="route('demo.show', ['lang' => 'en'])"
     :alternate-es="route('demo.show.es')"
     :alternate-default="route('demo.show')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset($currentLang === 'es' ? 'images/seo/demo/og-demo-panel.webp' : 'images/seo/demo/og-demo-dashboard.webp')"
     :og-type="'website'"
     :body-class="'font-sans'"
     :x-data="'demoDashboard({

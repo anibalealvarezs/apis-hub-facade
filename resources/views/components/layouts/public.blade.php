@@ -99,9 +99,14 @@
     <meta property="og:url" content="{{ $pageCanonical }}">
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $pageDesc }}">
+    @php
+        $isOgCustom = $pageImage && !str_contains($pageImage, 'apishub-620.png');
+        $imgWidth = $isOgCustom ? '1500' : '620';
+        $imgHeight = $isOgCustom ? '991' : '135';
+    @endphp
     <meta property="og:image" content="{{ $pageImage }}">
-    <meta property="og:image:width" content="620">
-    <meta property="og:image:height" content="135">
+    <meta property="og:image:width" content="{{ $imgWidth }}">
+    <meta property="og:image:height" content="{{ $imgHeight }}">
     <meta property="og:locale" content="{{ $isEs ? 'es_ES' : 'en_US' }}">
     <meta property="og:locale:alternate" content="{{ $isEs ? 'en_US' : 'es_ES' }}">
 

@@ -2,7 +2,7 @@
     :title="app()->getLocale() === 'es' ? 'Cómo Solucionar el Error de Cuota en Looker Studio con Google Search Console | APIs Hub' : 'How to Fix Looker Studio Google Search Console Quota Limit Errors | APIs Hub'"
     :description="app()->getLocale() === 'es' ? 'Guía técnica para resolver definitivamente el error de cuota agotada de Google Search Console y GA4 en Looker Studio mediante un cluster de datos con persistencia local.' : 'Step-by-step technical guide to permanently eliminate Google Search Console and GA4 API quota exceeded errors in Looker Studio using local data clustering.'"
     :keywords="__('looker studio google search console quota exceeded, looker studio quota limit fix, gsc api quota error, google analytics 4 quota exceeded, marketing data caching, APIs Hub')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset(app()->getLocale() === 'es' ? 'images/seo/pages/og-guia-looker-cuota.webp' : 'images/seo/pages/og-guide-looker-quota.webp')"
     :og-type="'article'"
     :portals="$portals"
 >

@@ -6,7 +6,7 @@
     :alternate-en="route('demo.intelligence', ['lang' => 'en'])"
     :alternate-es="route('demo.intelligence.es')"
     :alternate-default="route('demo.intelligence')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset($currentLang === 'es' ? 'images/seo/demo/og-demo-inteligencia-datos.webp' : 'images/seo/demo/og-demo-data-intelligence.webp')"
     :og-type="'website'"
     :body-class="'font-sans'"
     :x-data="'demoIntelligence({

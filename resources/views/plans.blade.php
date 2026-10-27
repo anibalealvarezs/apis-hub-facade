@@ -72,7 +72,7 @@ JSON;
     :title="app()->getLocale() === 'es' ? 'Planes y Funcionalidades | Analítica de Marketing Unificada — APIs Hub' : 'Plans & Features | Unified Marketing Analytics & Dashboards — APIs Hub'"
     :description="app()->getLocale() === 'es' ? 'Descubre las funcionalidades y límites de cada plan en APIs Hub. Conectores de Meta, Google y Shopify, dashboards públicos, KPIs a medida y clasificación semántica por IA.' : 'Compare APIs Hub plans and capabilities. Discover marketing connectors, automated AI keyword classification, custom KPIs, and client reporting dashboards.'"
     :keywords="__('marketing analytics plans, unified dashboards, data sync tiers, custom KPIs, agency client reporting, AI semantic classification, APIs Hub')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset(app()->getLocale() === 'es' ? 'images/seo/pages/og-planes-precios.webp' : 'images/seo/pages/og-plans-pricing.webp')"
     :og-type="'website'"
     :structured-data="$plansStructuredData"
     :portals="$portals"

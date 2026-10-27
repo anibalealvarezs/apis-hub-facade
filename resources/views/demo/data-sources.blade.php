@@ -1,7 +1,7 @@
 <x-layouts.public 
     :title="$currentLang === 'es' ? 'Paso 1: Fuentes de Datos | Demostración Interactiva — APIs Hub' : 'Step 1: Data Sources | Interactive Demo — APIs Hub'"
     :description="$currentLang === 'es' ? 'Demostración pública interactiva de APIs Hub: Configuración de fuentes de datos, control de cuotas y activación de activos cross-channel.' : 'APIs Hub interactive public demo: Connect marketing data sources, manage asset quotas, and toggle cross-channel assets.'"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset($currentLang === 'es' ? 'images/seo/demo/og-demo-fuentes-datos.webp' : 'images/seo/demo/og-demo-data-sources.webp')"
     :og-type="'website'"
     :body-class="'font-sans'"
     :x-data="'demoDataSources(' . json_encode([

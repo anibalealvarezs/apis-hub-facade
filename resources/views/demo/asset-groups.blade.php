@@ -6,7 +6,7 @@
     :alternate-en="route('demo.asset-groups', ['lang' => 'en'])"
     :alternate-es="route('demo.asset-groups.es')"
     :alternate-default="route('demo.asset-groups')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset($currentLang === 'es' ? 'images/seo/demo/og-demo-grupos-activos.webp' : 'images/seo/demo/og-demo-asset-groups.webp')"
     :og-type="'website'"
     :body-class="'font-sans'"
     :x-data="'demoAssetGroups({

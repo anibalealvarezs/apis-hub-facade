@@ -6,7 +6,7 @@
     :alternate-en="route('demo.collaboration', ['lang' => 'en'])"
     :alternate-es="route('demo.collaboration.es')"
     :alternate-default="route('demo.collaboration')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset($currentLang === 'es' ? 'images/seo/demo/og-demo-colab-equipo.webp' : 'images/seo/demo/og-demo-team-collab.webp')"
     :og-type="'website'"
     :body-class="'font-sans'"
     :x-data="'demoCollaboration({

@@ -1,7 +1,7 @@
 <x-layouts.public 
     :title="app()->getLocale() === 'es' ? 'Documentación de API y Especificación OpenAPI — APIs Hub' : 'API Documentation & OpenAPI Specification — APIs Hub'"
     :description="app()->getLocale() === 'es' ? 'Referencia pública completa y sandbox interactivo para la API de APIs Hub. Consultas analíticas multidimensionales, agregaciones, pings y métricas normalizadas.' : 'Complete public developer reference and interactive sandbox for the APIs Hub RESTful API. Multi-dimensional analytical queries, aggregations, pings, and normalized channel metrics.'"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset(app()->getLocale() === 'es' ? 'images/seo/pages/og-api-docs-es.webp' : 'images/seo/pages/og-api-docs.webp')"
     :og-type="'website'"
     :body-class="'bg-slate-50 dark:bg-slate-950'"
     :portals="$portals"

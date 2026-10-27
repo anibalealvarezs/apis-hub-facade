@@ -2,7 +2,7 @@
     :title="app()->getLocale() === 'es' ? 'Soluciones para Agencias: Reportes Multi-Cliente Sin Caídas | APIs Hub' : 'Agency Solutions: Multi-Client Reporting Without Timeouts | APIs Hub'"
     :description="app()->getLocale() === 'es' ? 'Gestiona decenas de clientes con clusters aislados, separación entre proyectos y facturación, y reportes ejecutivos automatizados sin errores de cuota.' : 'Manage dozens of client portfolios with isolated data clusters, project vs billing separation, and zero connector timeouts.'"
     :keywords="__('agency client reporting, multi client marketing dashboard, agency billing profile, white label marketing reports, client data isolation, APIs Hub')"
-    :meta-image="asset('images/branding/apishub-620.png')"
+    :meta-image="asset(app()->getLocale() === 'es' ? 'images/seo/pages/og-reportes-agencia.webp' : 'images/seo/pages/og-agency-reporting.webp')"
     :og-type="'article'"
     :portals="$portals"
 >
