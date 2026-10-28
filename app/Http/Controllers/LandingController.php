@@ -196,7 +196,7 @@ class LandingController extends Controller
                  'category' => $isEs ? 'Guía Técnica' : 'Engineering Guide',
                  'reading_time' => $isEs ? '5 min de lectura' : '5 min read',
                  'date' => '2026-10-27',
-                 'image' => asset($isEs ? 'images/seo/pages/og-guia-looker-cuota.webp' : 'images/seo/pages/og-guide-looker-quota.webp'),
+                 'image' => asset('images/seo/blog/fix-looker-studio-limits.webp'),
                  'tags' => ['Looker Studio', 'Google Search Console', 'GA4', 'API Quotas'],
              ],
          ];
