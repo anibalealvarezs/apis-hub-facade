@@ -13,6 +13,9 @@
     'tags' => [],
     'authorName' => 'Aníbal Álvarez',
     'authorUrl' => 'https://anibalalvarez.com',
+    'showFeaturedImage' => true,
+    'featuredImage' => null,
+    'featuredImageCaption' => null,
     'portals' => [],
 ])
 
@@ -22,6 +25,7 @@
     $canonicalUrl = url()->current();
     $readingTime = $readingTime ?? ($isEs ? '5 min de lectura' : '5 min read');
     $category = $category ?? ($isEs ? 'Ingeniería de Datos' : 'Data Engineering');
+    $activeFeaturedImage = $featuredImage ?? $metaImage;
 
     // Generate Schema.org JSON-LD structured data for BlogPosting with BreadcrumbList
     $blogStructuredData = [
@@ -143,6 +147,25 @@
                 </p>
             @endif
         </header>
+
+        <!-- Featured Image Section (Enabled by default, configurable via :show-featured-image) -->
+        @if($showFeaturedImage && !empty($activeFeaturedImage))
+            <section class="w-full mb-12" aria-label="{{ __('Featured Image') }}">
+                <figure class="overflow-hidden rounded-2xl glass-panel border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
+                    <img src="{{ $activeFeaturedImage }}" 
+                         alt="{{ $articleTitle }}" 
+                         class="w-full h-auto aspect-[16/10] object-cover object-center" 
+                         loading="eager"
+                         width="1500" 
+                         height="991">
+                    @if(!empty($featuredImageCaption))
+                        <figcaption class="px-4 py-2.5 text-xs text-center text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200/50 dark:border-slate-800/50">
+                            {{ $featuredImageCaption }}
+                        </figcaption>
+                    @endif
+                </figure>
+            </section>
+        @endif
 
         <!-- Read-Only Article Body Slot -->
         <article class="w-full space-y-10 text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
