@@ -19,6 +19,7 @@ class SocialAuthController extends Controller
     public function redirectToGoogle(Request $request)
     {
         return Socialite::driver('google')
+            ->stateless()
             ->scopes(['openid', 'profile', 'email'])
             ->with([
                 'prompt' => 'select_account',
@@ -91,12 +92,18 @@ class SocialAuthController extends Controller
             session()->regenerate();
 
             // 5. Determine redirect destination
+            $intended = session()->pull('url.intended');
             $preferredProject = $user->preferredProject();
             $redirectUrl = $preferredProject
                 ? route('filament.app.pages.dashboard', ['tenant' => $preferredProject->subdomain])
                 : route('filament.app.tenant.registration');
 
-            return redirect()->intended($redirectUrl);
+            // If an intended URL exists and is not the login or root page, honor it
+            if ($intended && !str_contains($intended, '/login') && !str_contains($intended, '/auth/')) {
+                return redirect($intended);
+            }
+
+            return redirect($redirectUrl);
 
         } catch (\Exception $e) {
             Log::error('Google Social Auth Error: ' . $e->getMessage(), [
