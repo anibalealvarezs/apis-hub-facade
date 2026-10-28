@@ -112,6 +112,12 @@ Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subs
     ->name('landing.subscribe');
 Route::get('/unsubscribe', [\App\Http\Controllers\LandingController::class, 'unsubscribe'])->name('landing.unsubscribe')->middleware('signed');
 
+// APIs Hub Authentication: Independent Login with Google
+Route::middleware(['web'])->group(function () {
+    Route::get('auth/google/redirect', [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('auth/google/callback', [\App\Http\Controllers\Auth\SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+});
+
 // APIs Hub SaaS: OAuth Hub for Tenants
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('social/{provider}/redirect', [App\Http\Controllers\OAuthController::class, 'redirect'])->name('app.social-login');
