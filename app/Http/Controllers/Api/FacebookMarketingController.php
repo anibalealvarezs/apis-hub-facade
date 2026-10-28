@@ -214,7 +214,12 @@ class FacebookMarketingController extends Controller
                 'results' => 'results',
                 'purchase_roas' => 'purchase_roas',
                 'cost_per_result' => 'cost_per_result',
-                'result_rate' => 'result_rate'
+                'result_rate' => 'result_rate',
+                'purchases' => 'purchases',
+                'purchase_value' => 'purchase_value',
+                'cost_per_purchase' => 'cost_per_purchase',
+                'leads' => 'leads',
+                'cost_per_lead' => 'cost_per_lead',
             ];
 
             $aggregations = $defaultAggregations;
@@ -326,7 +331,12 @@ class FacebookMarketingController extends Controller
                 'total_results' => 'results',
                 'average_purchase_roas' => 'purchase_roas',
                 'average_cost_per_result' => 'cost_per_result',
-                'average_result_rate' => 'result_rate'
+                'average_result_rate' => 'result_rate',
+                'total_purchases' => 'purchases',
+                'total_purchase_value' => 'purchase_value',
+                'average_cost_per_purchase' => 'cost_per_purchase',
+                'total_leads' => 'leads',
+                'average_cost_per_lead' => 'cost_per_lead',
             ];
 
             $accountFilter = ['channel' => 'facebook_marketing'];

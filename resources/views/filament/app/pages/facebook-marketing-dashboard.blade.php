@@ -160,6 +160,51 @@
                         <span x-text="formatVariance(variance.purchase_roas)"></span>
                     </div>
                 </div>
+                <div class="card-stat-fb" :class="activeMetrics.purchases ? 'active' : ''" @click="toggleMetric('purchases')"
+                     data-metric="purchases">
+                    <div class="fb-label">{{ __('Purchases') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.purchases)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.purchases)">
+                        <span x-text="getVarianceIcon(variance.purchases)"></span>
+                        <span x-text="formatVariance(variance.purchases)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.purchase_value ? 'active' : ''" @click="toggleMetric('purchase_value')"
+                     data-metric="purchase_value">
+                    <div class="fb-label">{{ __('Purchase Value') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.purchase_value)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.purchase_value)">
+                        <span x-text="getVarianceIcon(variance.purchase_value)"></span>
+                        <span x-text="formatVariance(variance.purchase_value)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.cost_per_purchase ? 'active' : ''"
+                     @click="toggleMetric('cost_per_purchase')" data-metric="cost_per_purchase">
+                    <div class="fb-label">{{ __('Cost per Purchase') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_purchase)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_purchase, true)">
+                        <span x-text="getVarianceIcon(variance.cost_per_purchase, true)"></span>
+                        <span x-text="formatVariance(variance.cost_per_purchase)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.leads ? 'active' : ''" @click="toggleMetric('leads')"
+                     data-metric="leads">
+                    <div class="fb-label">{{ __('Leads') }}</div>
+                    <div class="card-metric-value" x-text="formatNumber(summary.leads)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.leads)">
+                        <span x-text="getVarianceIcon(variance.leads)"></span>
+                        <span x-text="formatVariance(variance.leads)"></span>
+                    </div>
+                </div>
+                <div class="card-stat-fb" :class="activeMetrics.cost_per_lead ? 'active' : ''"
+                     @click="toggleMetric('cost_per_lead')" data-metric="cost_per_lead">
+                    <div class="fb-label">{{ __('Cost per Lead') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cost_per_lead)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cost_per_lead, true)">
+                        <span x-text="getVarianceIcon(variance.cost_per_lead, true)"></span>
+                        <span x-text="formatVariance(variance.cost_per_lead)"></span>
+                    </div>
+                </div>
             </div>
 
             <div class="chart-container-fb relative w-full" wire:ignore>
@@ -226,10 +271,15 @@
                     <x-data-table.column state="tableState" key="frequency" label="{{ __('Freq.') }}"/>
                     <x-data-table.column state="tableState" key="cpm" label="{{ __('CPM') }}"/>
                     <x-data-table.column state="tableState" key="clicks" label="{{ __('Link Clicks') }}"/>
-                    <x-data-table.column state="tableState" key="results" label="{{ __('Purchases') }}"/>
+                    <x-data-table.column state="tableState" key="results" label="{{ __('Results') }}"/>
                     <x-data-table.column state="tableState" key="cost_per_result" label="{{ __('CPR') }}"/>
                     <x-data-table.column state="tableState" key="result_rate" label="{{ __('RR') }}"/>
                     <x-data-table.column state="tableState" key="purchase_roas" label="{{ __('ROAS') }}"/>
+                    <x-data-table.column state="tableState" key="purchases" label="{{ __('Purchases') }}"/>
+                    <x-data-table.column state="tableState" key="purchase_value" label="{{ __('Purchase Value') }}"/>
+                    <x-data-table.column state="tableState" key="cost_per_purchase" label="{{ __('Cost / Purchase') }}"/>
+                    <x-data-table.column state="tableState" key="leads" label="{{ __('Leads') }}"/>
+                    <x-data-table.column state="tableState" key="cost_per_lead" label="{{ __('Cost / Lead') }}"/>
                 </tr>
                 </thead>
                 <tbody>
@@ -264,6 +314,11 @@
                         <td class="metric-cell" x-text="formatCurrency(row.cost_per_result)"></td>
                         <td class="metric-cell" x-text="formatPercent(row.result_rate)"></td>
                         <td class="metric-cell" x-text="formatNumber(row.purchase_roas) + 'x'"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.purchases)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.purchase_value)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.cost_per_purchase)"></td>
+                        <td class="metric-cell" x-text="formatNumber(row.leads)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.cost_per_lead)"></td>
                     </x-data-table.row>
                 </template>
                 <tr x-show="tableState.paginatedRows.length === 0">

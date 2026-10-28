@@ -26,7 +26,12 @@ export function fbDashboard(config = {}) {
             results: 0,
             purchase_roas: 0,
             cost_per_result: 0,
-            result_rate: 0
+            result_rate: 0,
+            purchases: 0,
+            purchase_value: 0,
+            cost_per_purchase: 0,
+            leads: 0,
+            cost_per_lead: 0
         },
         previous: {
             spend: 0,
@@ -40,7 +45,12 @@ export function fbDashboard(config = {}) {
             results: 0,
             purchase_roas: 0,
             cost_per_result: 0,
-            result_rate: 0
+            result_rate: 0,
+            purchases: 0,
+            purchase_value: 0,
+            cost_per_purchase: 0,
+            leads: 0,
+            cost_per_lead: 0
         },
         chartDataRaw: [],
         tableState: dataTable({ sortCol: 'spend', sortDir: 'desc', searchKeys: ['name'] }),
@@ -60,7 +70,12 @@ export function fbDashboard(config = {}) {
             results: false,
             purchase_roas: false,
             cost_per_result: false,
-            result_rate: false
+            result_rate: false,
+            purchases: false,
+            purchase_value: false,
+            cost_per_purchase: false,
+            leads: false,
+            cost_per_lead: false
         },
 
         activeFilters: { campaigns: [], adsets: [], ads: [], age: [], gender: [], publisher_platform: [], platform_position: [], country: [] },
@@ -306,34 +321,16 @@ export function fbDashboard(config = {}) {
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
-                this.summary = data.summary || {
-                    spend: 0,
-                    clicks: 0,
-                    impressions: 0,
-                    reach: 0,
-                    frequency: 0,
-                    cpm: 0,
-                    ctr: 0,
-                    cpc: 0,
-                    results: 0,
-                    purchase_roas: 0,
-                    cost_per_result: 0,
-                    result_rate: 0
-                };
-                this.previous = data.previous || {
-                    spend: 0,
-                    clicks: 0,
-                    impressions: 0,
-                    reach: 0,
-                    frequency: 0,
-                    cpm: 0,
-                    ctr: 0,
-                    cpc: 0,
-                    results: 0,
-                    purchase_roas: 0,
-                    cost_per_result: 0,
-                    result_rate: 0
-                };
+                this.summary = Object.assign({
+                    spend: 0, clicks: 0, impressions: 0, reach: 0, frequency: 0, cpm: 0,
+                    ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0,
+                    purchases: 0, purchase_value: 0, cost_per_purchase: 0, leads: 0, cost_per_lead: 0
+                }, data.summary || {});
+                this.previous = Object.assign({
+                    spend: 0, clicks: 0, impressions: 0, reach: 0, frequency: 0, cpm: 0,
+                    ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0,
+                    purchases: 0, purchase_value: 0, cost_per_purchase: 0, leads: 0, cost_per_lead: 0
+                }, data.previous || {});
                 return;
             }
 
@@ -343,34 +340,16 @@ export function fbDashboard(config = {}) {
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.summary = data.summary || {
-                        spend: 0,
-                        clicks: 0,
-                        impressions: 0,
-                        reach: 0,
-                        frequency: 0,
-                        cpm: 0,
-                        ctr: 0,
-                        cpc: 0,
-                        results: 0,
-                        purchase_roas: 0,
-                        cost_per_result: 0,
-                        result_rate: 0
-                    };
-                    this.previous = data.previous || {
-                        spend: 0,
-                        clicks: 0,
-                        impressions: 0,
-                        reach: 0,
-                        frequency: 0,
-                        cpm: 0,
-                        ctr: 0,
-                        cpc: 0,
-                        results: 0,
-                        purchase_roas: 0,
-                        cost_per_result: 0,
-                        result_rate: 0
-                    };
+                    this.summary = Object.assign({
+                        spend: 0, clicks: 0, impressions: 0, reach: 0, frequency: 0, cpm: 0,
+                        ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0,
+                        purchases: 0, purchase_value: 0, cost_per_purchase: 0, leads: 0, cost_per_lead: 0
+                    }, data.summary || {});
+                    this.previous = Object.assign({
+                        spend: 0, clicks: 0, impressions: 0, reach: 0, frequency: 0, cpm: 0,
+                        ctr: 0, cpc: 0, results: 0, purchase_roas: 0, cost_per_result: 0, result_rate: 0,
+                        purchases: 0, purchase_value: 0, cost_per_purchase: 0, leads: 0, cost_per_lead: 0
+                    }, data.previous || {});
                 }
             } catch (error) {
                 console.error('Error fetching summary:', error);
@@ -562,7 +541,12 @@ export function fbDashboard(config = {}) {
                 results: calc(this.summary.results, this.previous.results),
                 purchase_roas: calc(this.summary.purchase_roas, this.previous.purchase_roas),
                 cost_per_result: calc(this.summary.cost_per_result, this.previous.cost_per_result),
-                result_rate: calc(this.summary.result_rate, this.previous.result_rate)
+                result_rate: calc(this.summary.result_rate, this.previous.result_rate),
+                purchases: calc(this.summary.purchases, this.previous.purchases),
+                purchase_value: calc(this.summary.purchase_value, this.previous.purchase_value),
+                cost_per_purchase: calc(this.summary.cost_per_purchase, this.previous.cost_per_purchase),
+                leads: calc(this.summary.leads, this.previous.leads),
+                cost_per_lead: calc(this.summary.cost_per_lead, this.previous.cost_per_lead)
             };
         },
 
@@ -617,7 +601,7 @@ export function fbDashboard(config = {}) {
                                 label: function(context) {
                                     var label = context.dataset.label || '';
                                     var value = context.parsed.y;
-                                    if (['Amount Spent', 'CPC', 'Cost per Result', 'CPM'].includes(label)) {
+                                    if (['Amount Spent', 'CPC', 'Cost per Result', 'CPM', 'Purchase Value', 'Cost per Purchase', 'Cost per Lead'].includes(label)) {
                                         return label + ': $' + Number(value).toFixed(2);
                                     }
                                     if (['CTR', 'Result Rate'].includes(label)) {
@@ -704,7 +688,12 @@ export function fbDashboard(config = {}) {
                     results: 0,
                     purchase_roas: 0,
                     cost_per_result: 0,
-                    result_rate: 0
+                    result_rate: 0,
+                    purchases: 0,
+                    purchase_value: 0,
+                    cost_per_purchase: 0,
+                    leads: 0,
+                    cost_per_lead: 0
                 };
             });
 
@@ -893,6 +882,81 @@ export function fbDashboard(config = {}) {
                 });
             }
 
+            if (this.activeMetrics.purchases) {
+                datasets.push({
+                    label: 'Purchases',
+                    data: chartData.map(r => r.purchases || 0),
+                    borderColor: '#06B6D4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    yAxisID: 'yPurchases',
+                    tension: 0.4
+                });
+            }
+
+            if (this.activeMetrics.purchase_value) {
+                datasets.push({
+                    label: 'Purchase Value',
+                    data: chartData.map(r => r.purchase_value || 0),
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    yAxisID: 'yPurchaseValue',
+                    tension: 0.4
+                });
+            }
+
+            if (this.activeMetrics.cost_per_purchase) {
+                datasets.push({
+                    label: 'Cost per Purchase',
+                    data: chartData.map(r => r.cost_per_purchase || 0),
+                    borderColor: '#D97706',
+                    backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    yAxisID: 'yCostPerPurchase',
+                    tension: 0.4
+                });
+            }
+
+            if (this.activeMetrics.leads) {
+                datasets.push({
+                    label: 'Leads',
+                    data: chartData.map(r => r.leads || 0),
+                    borderColor: '#8B5CF6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    yAxisID: 'yLeads',
+                    tension: 0.4
+                });
+            }
+
+            if (this.activeMetrics.cost_per_lead) {
+                datasets.push({
+                    label: 'Cost per Lead',
+                    data: chartData.map(r => r.cost_per_lead || 0),
+                    borderColor: '#F97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    yAxisID: 'yCostPerLead',
+                    tension: 0.4
+                });
+            }
+
             if (this.showTrends) {
                 const metricConfig = {
                     spend: { label: 'Amount Spent', color: '#10B981', yAxis: 'ySpend', mult: 1 },
@@ -903,10 +967,15 @@ export function fbDashboard(config = {}) {
                     clicks: { label: 'Clicks', color: '#0EA5E9', yAxis: 'yClicks', mult: 1 },
                     ctr: { label: 'CTR', color: '#8B5CF6', yAxis: 'yCtr', mult: 100 },
                     cpc: { label: 'CPC', color: '#F59E0B', yAxis: 'yCpc', mult: 1 },
-                    results: { label: 'Purchases', color: '#14B8A6', yAxis: 'yResults', mult: 1 },
+                    results: { label: 'Results', color: '#14B8A6', yAxis: 'yResults', mult: 1 },
                     purchase_roas: { label: 'ROAS', color: '#EC4899', yAxis: 'yRoas', mult: 1 },
                     cost_per_result: { label: 'Cost per Result', color: '#A855F7', yAxis: 'yCpr', mult: 1 },
-                    result_rate: { label: 'Result Rate', color: '#EF4444', yAxis: 'yRr', mult: 100 }
+                    result_rate: { label: 'Result Rate', color: '#EF4444', yAxis: 'yRr', mult: 100 },
+                    purchases: { label: 'Purchases', color: '#06B6D4', yAxis: 'yPurchases', mult: 1 },
+                    purchase_value: { label: 'Purchase Value', color: '#10B981', yAxis: 'yPurchaseValue', mult: 1 },
+                    cost_per_purchase: { label: 'Cost per Purchase', color: '#D97706', yAxis: 'yCostPerPurchase', mult: 1 },
+                    leads: { label: 'Leads', color: '#8B5CF6', yAxis: 'yLeads', mult: 1 },
+                    cost_per_lead: { label: 'Cost per Lead', color: '#F97316', yAxis: 'yCostPerLead', mult: 1 }
                 };
 
                 Object.keys(this.activeMetrics).forEach(metric => {
@@ -959,11 +1028,14 @@ export function fbDashboard(config = {}) {
             chart.options.scales.x.grid.color = cssGridColor;
             chart.options.scales.x.ticks.color = cssTicksColor;
 
-            ['spend', 'impressions', 'reach', 'frequency', 'cpm', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate'].forEach(m => {
+            ['spend', 'impressions', 'reach', 'frequency', 'cpm', 'clicks', 'ctr', 'cpc', 'results', 'purchase_roas', 'cost_per_result', 'result_rate', 'purchases', 'purchase_value', 'cost_per_purchase', 'leads', 'cost_per_lead'].forEach(m => {
                 let scaleId;
                 if (m === 'purchase_roas') scaleId = 'yRoas';
                 else if (m === 'cost_per_result') scaleId = 'yCpr';
                 else if (m === 'result_rate') scaleId = 'yRr';
+                else if (m === 'cost_per_purchase') scaleId = 'yCostPerPurchase';
+                else if (m === 'cost_per_lead') scaleId = 'yCostPerLead';
+                else if (m === 'purchase_value') scaleId = 'yPurchaseValue';
                 else scaleId = 'y' + m.charAt(0).toUpperCase() + m.slice(1);
 
                 if (!chart.options.scales[scaleId]) {
