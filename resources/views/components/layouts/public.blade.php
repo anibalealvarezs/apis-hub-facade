@@ -132,7 +132,13 @@
 
     <!-- Structured Data (JSON-LD) -->
     @if($structuredData)
-        {!! $structuredData !!}
+        @if(str_contains($structuredData, '<script'))
+            {!! $structuredData !!}
+        @else
+            <script type="application/ld+json">
+            {!! $structuredData !!}
+            </script>
+        @endif
     @else
         <script type="application/ld+json">
         {
