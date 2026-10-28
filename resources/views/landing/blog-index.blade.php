@@ -37,6 +37,8 @@
                             <a href="{{ $post['url'] }}" class="block overflow-hidden rounded-xl mb-5 aspect-[16/10] bg-slate-100 dark:bg-slate-800/60">
                                 <img src="{{ $post['image'] }}" 
                                      alt="{{ $post['title'] }}" 
+                                     width="800"
+                                     height="500"
                                      loading="lazy" 
                                      class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300">
                             </a>
