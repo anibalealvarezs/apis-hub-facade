@@ -248,6 +248,7 @@ class DataSync extends Page
                         \Filament\Forms\Components\Toggle::make('wipe_metrics')
                             ->label(__('Wipe Cached Historical Metrics'))
                             ->default(false)
+                            ->visible(fn () => $tenant->releaseSupportsMetaBreakdowns())
                             ->helperText(new \Illuminate\Support\HtmlString(
                                 '<div class="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1 mt-1">' .
                                     '<span>⚠️</span>' .

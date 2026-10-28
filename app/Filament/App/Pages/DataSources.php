@@ -1159,30 +1159,32 @@
             }
 
             if ($this->activeChannel === 'facebook_marketing') {
-                // Breakdowns & Metric Set dedicated section
-                $secondarySections[] = \Filament\Forms\Components\Section::make(__('Breakdown Passes & Metrics'))
-                    ->description(__('Configure independent breakdown passes and metric extraction fidelity.'))
-                    ->schema([
-                        \Filament\Forms\Components\CheckboxList::make('facebook_marketing.breakdown_passes')
-                            ->label(__('Breakdown Passes'))
-                            ->helperText(__('Select which dimensions to synchronize in independent passes. Unbroken baseline is always synchronized.'))
-                            ->options([
-                                'demographics' => 'Demographics (Age & Gender)',
-                                'placement' => 'Placement (Platform & Position)',
-                                'geography' => 'Geography (Country)',
-                            ])
-                            ->default(['demographics']),
+                // Breakdowns & Metric Set dedicated section (Requires APIs Hub >= v1.18.2)
+                if ($tenant->releaseSupportsMetaBreakdowns()) {
+                    $secondarySections[] = \Filament\Forms\Components\Section::make(__('Breakdown Passes & Metrics'))
+                        ->description(__('Configure independent breakdown passes and metric extraction fidelity.'))
+                        ->schema([
+                            \Filament\Forms\Components\CheckboxList::make('facebook_marketing.breakdown_passes')
+                                ->label(__('Breakdown Passes'))
+                                ->helperText(__('Select which dimensions to synchronize in independent passes. Unbroken baseline is always synchronized.'))
+                                ->options([
+                                    'demographics' => 'Demographics (Age & Gender)',
+                                    'placement' => 'Placement (Platform & Position)',
+                                    'geography' => 'Geography (Country)',
+                                ])
+                                ->default(['demographics']),
 
-                        \Filament\Forms\Components\Select::make('facebook_marketing.metric_set')
-                            ->label(__('Metric Set'))
-                            ->options([
-                                'basic' => 'Basic (Spend, Impressions, Clicks, CTR, CPC, Actions)',
-                                'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Conversions)',
-                                'full' => 'Full (Comprehensive Meta Marketing Metrics)',
-                            ])
-                            ->default('full')
-                            ->helperText(__('Controls the depth of metrics requested from Meta Graph API.')),
-                    ])->columns(1);
+                            \Filament\Forms\Components\Select::make('facebook_marketing.metric_set')
+                                ->label(__('Metric Set'))
+                                ->options([
+                                    'basic' => 'Basic (Spend, Impressions, Clicks, CTR, CPC, Actions)',
+                                    'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Conversions)',
+                                    'full' => 'Full (Comprehensive Meta Marketing Metrics)',
+                                ])
+                                ->default('full')
+                                ->helperText(__('Controls the depth of metrics requested from Meta Graph API.')),
+                        ])->columns(1);
+                }
 
                 // Insert custom extraction granularity UI in the secondary column
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Extraction Granularity'))
@@ -2234,8 +2236,8 @@
                     }
                 }
 
-                // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (e.g. facebook_marketing)
-                if ($this->activeChannel === 'facebook_marketing') {
+                // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (Requires APIs Hub >= v1.18.2)
+                if ($this->activeChannel === 'facebook_marketing' && $tenant->releaseSupportsMetaBreakdowns()) {
                     $oldPasses = (array) ($dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
                     $newPasses = (array) ($proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
                     $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'full';

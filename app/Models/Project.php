@@ -286,6 +286,25 @@ class Project extends Model
         return version_compare($version, '1.18.0', '>=');
     }
 
+    /**
+     * Check if the deployed apis-hub release version supports dynamic Meta Ads breakdown passes and wipe-metrics nuclear resync (>= v1.18.2).
+     */
+    public function releaseSupportsMetaBreakdowns(): bool
+    {
+        if (!$this->apisHubRelease) {
+            // Unassigned / new projects inherit default release which is >= 1.18.2
+            $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->first();
+            if ($defaultRelease) {
+                $version = ltrim($defaultRelease->version_tag, 'v');
+                return version_compare($version, '1.18.2', '>=');
+            }
+            return false;
+        }
+
+        $version = ltrim($this->apisHubRelease->version_tag, 'v');
+        return version_compare($version, '1.18.2', '>=');
+    }
+
     public function supportsAiClassification(): bool
     {
         if (!$this->releaseSupportsAiClassification()) {
