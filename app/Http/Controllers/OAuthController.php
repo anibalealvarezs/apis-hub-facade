@@ -231,6 +231,34 @@ class OAuthController extends Controller
                 Log::warning("Failed to reschedule auth-failed jobs for provider {$provider} on project {$tenant->id}: " . $e->getMessage());
             }
 
+            // Automatically update and synchronize channel assets so lost access assets are immediately flagged
+            try {
+                $providerChannels = match ($provider) {
+                    'facebook' => ['facebook_marketing', 'facebook_organic'],
+                    'google' => ['google_search_console', 'google_analytics', 'google_ads'],
+                    'mailchimp' => ['mailchimp'],
+                    default => [],
+                };
+
+                $channelsToSync = !empty($authorizedChannels)
+                    ? array_intersect($authorizedChannels, $providerChannels)
+                    : $providerChannels;
+
+                if (!empty($channelsToSync)) {
+                    $discoveryService = app(\App\Services\LocalAssetDiscoveryService::class);
+                    foreach ($channelsToSync as $ch) {
+                        try {
+                            $syncResult = $discoveryService->syncChannelAssets($tenant, $ch);
+                            Log::info("Auto-synced assets for channel {$ch} on project {$tenant->id} post-OAuth: " . json_encode($syncResult));
+                        } catch (\Throwable $chException) {
+                            Log::warning("Failed to auto-sync assets for channel {$ch} on project {$tenant->id} post-OAuth: " . $chException->getMessage());
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning("Failed to execute post-OAuth asset synchronization for project {$tenant->id}: " . $e->getMessage());
+            }
+
             // Reactivate workers if they were paused for a safe update
             if (in_array($tenant->health_status, ['stopping_workers', 'ready_for_auth'])) {
                 Log::info("Reactivating workers for project {$tenant->id} post OAuth update.");
