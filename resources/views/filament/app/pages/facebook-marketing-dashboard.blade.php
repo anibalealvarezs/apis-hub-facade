@@ -205,16 +205,10 @@
         <x-data-table variant="fb" state="tableState" loading="isTableLoading" search>
             <x-slot:header>
                 <div class="tab-nav-fb">
-                    <div class="tab-fb" :class="activeTab === 'campaigns' ? 'active' : ''"
-                         @click="setTab('campaigns')">{{ __('CAMPAIGNS') }}</div>
-                    <div class="tab-fb" :class="activeTab === 'adsets' ? 'active' : ''"
-                         @click="setTab('adsets')">{{ __('AD SETS') }}</div>
-                    <div class="tab-fb" :class="activeTab === 'ads' ? 'active' : ''"
-                         @click="setTab('ads')">{{ __('ADS') }}</div>
-                    <div class="tab-fb" :class="activeTab === 'age' ? 'active' : ''"
-                         @click="setTab('age')">{{ __('AGE') }}</div>
-                    <div class="tab-fb" :class="activeTab === 'gender' ? 'active' : ''"
-                         @click="setTab('gender')">{{ __('GENDER') }}</div>
+                    @foreach($this->getAvailableTabs() as $tabKey => $tabLabel)
+                        <div class="tab-fb" :class="activeTab === '{{ $tabKey }}' ? 'active' : ''"
+                             @click="setTab('{{ $tabKey }}')">{{ $tabLabel }}</div>
+                    @endforeach
                 </div>
             </x-slot:header>
 

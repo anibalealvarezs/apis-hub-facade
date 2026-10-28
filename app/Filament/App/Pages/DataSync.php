@@ -245,6 +245,15 @@ class DataSync extends Page
                             ->required()
                             ->minItems(1)
                             ->helperText(__('Select one or more channels to reset.')),
+                        \Filament\Forms\Components\Toggle::make('wipe_metrics')
+                            ->label(__('Wipe Cached Historical Metrics'))
+                            ->default(false)
+                            ->helperText(new \Illuminate\Support\HtmlString(
+                                '<div class="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1 mt-1">' .
+                                    '<span>⚠️</span>' .
+                                    '<span>' . __('CAUTION: Enabling this permanently purges all existing metrics rows for the selected channels to prevent duplication or reset aggregation counters. Unchecked by default.') . '</span>' .
+                                '</div>'
+                            )),
                         \Filament\Forms\Components\TextInput::make('confirmation')
                             ->label(__('Confirmation'))
                             ->required()
@@ -259,12 +268,14 @@ class DataSync extends Page
                     if ($data['confirmation'] !== 'RESYNC') {
                         return;
                     }
-                    $response = $service->triggerHistoricalResync($tenant, $data['channels']);
+                    $wipeMetrics = !empty($data['wipe_metrics']);
+                    $response = $service->triggerHistoricalResync($tenant, $data['channels'], $wipeMetrics);
                     if (($response['status'] ?? '') === 'error') {
                         Notification::make()->title(__('Error:').' '.($response['error'] ?? 'Unknown'))->danger()->send();
                     } else {
                         $tenant->update(['last_historical_resync_at' => now()]);
-                        Notification::make()->title(__('Historical resync initiated for ').count($data['channels']).__(' channels... New jobs will be processed as soon as workers become available.'))->success()->send();
+                        $wipedNote = $wipeMetrics ? __(' (with metrics wipe)') : '';
+                        Notification::make()->title(__('Historical resync initiated for ').count($data['channels']).__(' channels').$wipedNote.'... '.__('New jobs will be processed as soon as workers become available.'))->success()->send();
                     }
                 }),
         ];

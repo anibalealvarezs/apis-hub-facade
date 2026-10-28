@@ -645,14 +645,15 @@ EOT;
      * @param Project $project
      * @param string[] $channels
      */
-    public function nuclearResync(Project $project, array $channels)
+    public function nuclearResync(Project $project, array $channels, bool $wipeMetrics = false)
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         
         $channelArg = '--channel=' . implode(',', $channels);
+        $wipeArg = $wipeMetrics ? '--wipe-metrics' : '';
         $commands = [
             "cd {$path}",
-            "bash bin/nuclear-sync.sh {$channelArg}",
+            trim("bash bin/nuclear-sync.sh {$channelArg} {$wipeArg}"),
         ];
 
         return $this->runSshCommands($project->server, $commands);
@@ -664,16 +665,18 @@ EOT;
      * @param Project $project
      * @param string $channel
      * @param string $assetId
+     * @param bool $wipeMetrics
      */
-    public function nuclearResyncAsset(Project $project, string $channel, string $assetId)
+    public function nuclearResyncAsset(Project $project, string $channel, string $assetId, bool $wipeMetrics = false)
     {
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
         
         $channelArg = '--channel=' . $channel;
         $assetArg = '--asset=' . escapeshellarg($assetId);
+        $wipeArg = $wipeMetrics ? '--wipe-metrics' : '';
         $commands = [
             "cd {$path}",
-            "bash bin/nuclear-sync.sh {$channelArg} {$assetArg}",
+            trim("bash bin/nuclear-sync.sh {$channelArg} {$assetArg} {$wipeArg}"),
         ];
 
         return $this->runSshCommands($project->server, $commands);

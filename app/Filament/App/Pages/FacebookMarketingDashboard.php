@@ -120,4 +120,42 @@ class FacebookMarketingDashboard extends Page
     {
         $this->activeTab = $tab;
     }
+
+    public function getAvailableTabs(): array
+    {
+        $tenant = Filament::getTenant();
+        $configuredPasses = null;
+        if ($tenant instanceof \App\Models\Project) {
+            $fbmConfig = $tenant->sync_config['facebook_marketing'] ?? [];
+            if (isset($fbmConfig['breakdown_passes']) && is_array($fbmConfig['breakdown_passes'])) {
+                $configuredPasses = $fbmConfig['breakdown_passes'];
+            }
+        }
+
+        $tabs = [
+            'campaigns' => __('CAMPAIGNS'),
+            'adsets' => __('AD SETS'),
+            'ads' => __('ADS'),
+        ];
+
+        $hasDemographics = $configuredPasses === null || in_array('demographics', $configuredPasses, true);
+        $hasPlacement = $configuredPasses === null || in_array('placement', $configuredPasses, true);
+        $hasGeography = $configuredPasses !== null && in_array('geography', $configuredPasses, true);
+
+        if ($hasDemographics) {
+            $tabs['age'] = __('AGE');
+            $tabs['gender'] = __('GENDER');
+        }
+
+        if ($hasPlacement) {
+            $tabs['publisher_platform'] = __('PLATFORM');
+            $tabs['platform_position'] = __('PLACEMENT');
+        }
+
+        if ($hasGeography) {
+            $tabs['country'] = __('COUNTRY');
+        }
+
+        return $tabs;
+    }
 }

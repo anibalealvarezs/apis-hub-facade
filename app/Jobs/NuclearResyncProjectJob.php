@@ -21,7 +21,8 @@ class NuclearResyncProjectJob implements ShouldQueue
     public function __construct(
         public Project $project,
         public array $channels,
-        public ?string $assetId = null
+        public ?string $assetId = null,
+        public bool $wipeMetrics = false
     ) {}
 
     public function handle(DeployerService $deployer): void
@@ -34,21 +35,22 @@ class NuclearResyncProjectJob implements ShouldQueue
 
         $channelsStr = implode(', ', $this->channels);
         $assetStr = $this->assetId ? " (Asset: {$this->assetId})" : "";
+        $wipeStr = $this->wipeMetrics ? " [Wipe Metrics: YES]" : "";
 
         // 1. Create a Deployment Log
         $deploymentLog = ProjectDeploymentLog::create([
             'project_id' => $this->project->id,
             'status'     => 'running',
             'started_at' => now(),
-            'output'     => "Starting nuclear historical resync for channels: {$channelsStr}{$assetStr}...",
+            'output'     => "Starting nuclear historical resync for channels: {$channelsStr}{$assetStr}{$wipeStr}...",
         ]);
 
         try {
             // 2. Run Nuclear Resync
             if ($this->assetId && count($this->channels) === 1) {
-                $result = $deployer->nuclearResyncAsset($this->project, $this->channels[0], $this->assetId);
+                $result = $deployer->nuclearResyncAsset($this->project, $this->channels[0], $this->assetId, $this->wipeMetrics);
             } else {
-                $result = $deployer->nuclearResync($this->project, $this->channels);
+                $result = $deployer->nuclearResync($this->project, $this->channels, $this->wipeMetrics);
             }
 
             // 3. Update Log with Result

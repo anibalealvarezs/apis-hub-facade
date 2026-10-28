@@ -63,7 +63,7 @@ export function fbDashboard(config = {}) {
             result_rate: false
         },
 
-        activeFilters: { campaigns: [], adsets: [], ads: [], age: [], gender: [] },
+        activeFilters: { campaigns: [], adsets: [], ads: [], age: [], gender: [], publisher_platform: [], platform_position: [], country: [] },
         filterLabels: {},
 
         get hasAnyFilters() {
@@ -82,7 +82,7 @@ export function fbDashboard(config = {}) {
             const de = params.get('dateEnd');
             if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
             const tab = params.get('tab');
-            if (tab && ['campaigns', 'adsets', 'ads', 'age', 'gender'].includes(tab)) this.activeTab = tab;
+            if (tab && ['campaigns', 'adsets', 'ads', 'age', 'gender', 'publisher_platform', 'platform_position', 'country'].includes(tab)) this.activeTab = tab;
             const metricsParam = params.get('metrics');
             if (metricsParam) {
                 const enabledMetrics = metricsParam.split(',');
@@ -196,7 +196,7 @@ export function fbDashboard(config = {}) {
         },
 
         clearFiltersLocal() {
-            this.activeFilters = { campaigns: [], adsets: [], ads: [], age: [], gender: [] };
+            this.activeFilters = { campaigns: [], adsets: [], ads: [], age: [], gender: [], publisher_platform: [], platform_position: [], country: [] };
             this.filterLabels = {};
         },
 
@@ -208,7 +208,7 @@ export function fbDashboard(config = {}) {
         },
 
         canFilter(tab) {
-            if (tab === 'age' || tab === 'gender') return true;
+            if (['age', 'gender', 'publisher_platform', 'platform_position', 'country'].includes(tab)) return true;
             if (tab === 'campaigns') return this.accounts.length === 1;
             if (tab === 'adsets') return this.accounts.length === 1 && this.activeFilters.campaigns.length === 1;
             if (tab === 'ads') return this.accounts.length === 1 && this.activeFilters.campaigns.length === 1 && this.activeFilters.adsets.length === 1;

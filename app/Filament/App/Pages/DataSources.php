@@ -600,8 +600,11 @@
             return $providers;
         }
 
-        public function getChannelLabel(string $key): string
+        public function getChannelLabel(?string $key): string
         {
+            if (!$key) {
+                return __('Configuration');
+            }
             foreach ($this->getProviders() as $provider) {
                 foreach ($provider['channels'] as $channel) {
                     if ($channel['key'] === $key) {
@@ -613,15 +616,21 @@
             return __('Configuration');
         }
 
-        public function isConnected(string $channel): bool
+        public function isConnected(?string $channel): bool
         {
+            if (!$channel) {
+                return false;
+            }
             $tenant = Filament::getTenant();
 
             return $tenant ? $tenant->isChannelConnected($channel) : false;
         }
 
-        public function isChannelCompatible(string $channel): bool
+        public function isChannelCompatible(?string $channel): bool
         {
+            if (!$channel) {
+                return false;
+            }
             $tenant = Filament::getTenant();
             if (!$tenant) {
                 return false;
@@ -637,8 +646,11 @@
             return in_array($channel, $supportedChannels, true);
         }
 
-        public function getLastSyncTime(string $channel): string
+        public function getLastSyncTime(?string $channel): string
         {
+            if (!$channel) {
+                return 'Never';
+            }
             // To be implemented via SDK or local tenant timestamp
             return 'Never';
         }
@@ -1398,6 +1410,11 @@
                         ->numeric()
                         ->label(Str::headline($key))
                         ->default($definition['default'] ?? null);
+                } elseif ($type === 'array' && isset($definition['options'])) {
+                    $advanced[] = \Filament\Forms\Components\CheckboxList::make($fieldKey)
+                        ->label(Str::headline($key))
+                        ->options($definition['options'])
+                        ->default($definition['default'] ?? []);
                 } elseif ($type === 'array' && isset($definition['item_schema'])) {
                     // This is the Assets array (Repeater)
                     $repeaters[] = $this->buildAssetRepeater($fieldKey, $key, $definition['item_schema']);
@@ -2169,6 +2186,7 @@
 
             // Detect if any channel's enabled state changed
             $hasChannelToggle = false;
+            $hasBreakdownChange = false;
             if ($tenant->last_deployed_at) {
                 foreach ($proposedState as $channel => $config) {
                     if (!is_array($config)) continue;
@@ -2177,6 +2195,20 @@
                     if ($oldEnabled !== $newEnabled) {
                         $hasChannelToggle = true;
                         break;
+                    }
+                }
+
+                // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (e.g. facebook_marketing)
+                if ($this->activeChannel === 'facebook_marketing') {
+                    $oldPasses = $dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement'];
+                    $newPasses = $proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement'];
+                    $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'key';
+                    $newMetricSet = $proposedState['facebook_marketing']['metric_set'] ?? 'key';
+
+                    sort($oldPasses);
+                    sort($newPasses);
+                    if ($oldPasses !== $newPasses || $oldMetricSet !== $newMetricSet) {
+                        $hasBreakdownChange = true;
                     }
                 }
             }
@@ -2524,6 +2556,24 @@
                     ->body(__('A full infrastructure redeploy is required for channel changes to take effect.'))
                     ->warning()
                     ->send();
+            } elseif ($hasBreakdownChange) {
+                try {
+                    app(\App\Services\RemoteEngineService::class)->triggerHistoricalResync($tenant, [$this->activeChannel], true);
+                    $tenant->update(['last_historical_resync_at' => now()]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Breakdown Configuration Updated'))
+                        ->body(__('A nuclear resync has been automatically initiated with metrics wipe for :channel to prevent data duplication and refresh historical breakdowns.', ['channel' => $this->getChannelLabel($this->activeChannel)]))
+                        ->warning()
+                        ->persistent()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved but Nuclear Resync Failed'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
             } else {
                 if ($tenant->fresh()->health_status !== 'online') {
                     \Filament\Notifications\Notification::make()

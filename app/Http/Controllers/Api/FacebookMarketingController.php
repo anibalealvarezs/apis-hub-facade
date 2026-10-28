@@ -19,7 +19,7 @@ class FacebookMarketingController extends Controller
             'account.*' => 'nullable', // Temporarily remove strict type check to bypass 422
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age,gender',
+            'activeTab' => 'nullable|string|in:campaigns,adsets,ads,age,gender,publisher_platform,platform_position,country',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
             'filters' => 'nullable|array',
@@ -50,6 +50,9 @@ class FacebookMarketingController extends Controller
             'ads' => 'ad',
             'gender' => 'gender',
             'age' => 'age',
+            'publisher_platform' => 'publisher_platform',
+            'platform_position' => 'platform_position',
+            'country' => 'country',
         ];
 
         foreach ($dimensionMap as $tab => $dimKey) {
@@ -100,7 +103,12 @@ class FacebookMarketingController extends Controller
                 'average_purchase_roas' => 'purchase_roas',
                 'total_results' => 'results',
                 'average_cost_per_result' => 'cost_per_result',
-                'average_result_rate' => 'result_rate'
+                'average_result_rate' => 'result_rate',
+                'total_purchases' => 'purchases',
+                'total_purchase_value' => 'purchase_value',
+                'average_cost_per_purchase' => 'cost_per_purchase',
+                'total_leads' => 'leads',
+                'average_cost_per_lead' => 'cost_per_lead',
             ];
 
             $payloads = [
@@ -146,7 +154,12 @@ class FacebookMarketingController extends Controller
                     'average_purchase_roas' => 'purchase_roas',
                     'total_results' => 'results',
                     'average_cost_per_result' => 'cost_per_result',
-                    'average_result_rate' => 'result_rate'
+                    'average_result_rate' => 'result_rate',
+                    'total_purchases' => 'purchases',
+                    'total_purchase_value' => 'purchase_value',
+                    'average_cost_per_purchase' => 'cost_per_purchase',
+                    'total_leads' => 'leads',
+                    'average_cost_per_lead' => 'cost_per_lead',
                 ];
                 foreach ($mappings as $prefixed => $standard) {
                     if (isset($data[$prefixed])) {
@@ -225,6 +238,7 @@ class FacebookMarketingController extends Controller
                 $groupBy = ['daily', $validated['breakdown']];
             }
 
+            $limit = (int) $request->input('limit', 1000);
             $payloads = [
                 'chart' => [
                     'aggregations' => $aggregations,
@@ -232,7 +246,7 @@ class FacebookMarketingController extends Controller
                     'filters' => $baseFilters,
                     'startDate' => $validated['dateStart'],
                     'endDate' => $validated['dateEnd'],
-                    'limit' => 5000
+                    'limit' => $limit
                 ]
             ];
 
@@ -348,6 +362,12 @@ class FacebookMarketingController extends Controller
                 $tabPayload['groupBy'] = ['age'];
             } elseif ($tab === 'gender') {
                 $tabPayload['groupBy'] = ['gender'];
+            } elseif ($tab === 'publisher_platform') {
+                $tabPayload['groupBy'] = ['publisher_platform'];
+            } elseif ($tab === 'platform_position') {
+                $tabPayload['groupBy'] = ['platform_position'];
+            } elseif ($tab === 'country') {
+                $tabPayload['groupBy'] = ['country'];
             }
 
             $payloads = ['table' => $tabPayload];
@@ -386,6 +406,15 @@ class FacebookMarketingController extends Controller
                 } elseif (isset($rowLower['gender'])) {
                     $row['id'] = $rowLower['gender'];
                     $row['name'] = ucfirst($rowLower['gender']);
+                } elseif (isset($rowLower['publisher_platform'])) {
+                    $row['id'] = $rowLower['publisher_platform'];
+                    $row['name'] = ucfirst($rowLower['publisher_platform']);
+                } elseif (isset($rowLower['platform_position'])) {
+                    $row['id'] = $rowLower['platform_position'];
+                    $row['name'] = str_replace('_', ' ', ucfirst($rowLower['platform_position']));
+                } elseif (isset($rowLower['country'])) {
+                    $row['id'] = $rowLower['country'];
+                    $row['name'] = strtoupper($rowLower['country']);
                 } else {
                     $row['id'] = 'Unknown';
                     $row['name'] = 'Unknown';
@@ -403,7 +432,12 @@ class FacebookMarketingController extends Controller
                     'average_purchase_roas' => 'purchase_roas',
                     'total_results' => 'results',
                     'average_cost_per_result' => 'cost_per_result',
-                    'average_result_rate' => 'result_rate'
+                    'average_result_rate' => 'result_rate',
+                    'total_purchases' => 'purchases',
+                    'total_purchase_value' => 'purchase_value',
+                    'average_cost_per_purchase' => 'cost_per_purchase',
+                    'total_leads' => 'leads',
+                    'average_cost_per_lead' => 'cost_per_lead',
                 ];
 
                 foreach ($mappings as $prefixed => $standard) {

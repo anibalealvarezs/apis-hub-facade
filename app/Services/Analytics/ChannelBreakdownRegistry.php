@@ -16,33 +16,7 @@ class ChannelBreakdownRegistry
         $defaultOperators = ['in', 'not_in', 'eq', 'neq', 'like', 'not_like', 'is_null', 'is_not_null'];
 
         return match ($channel) {
-            'facebook_marketing' => [
-                'channeledCampaign' => [
-                    'label' => __('Campaign'),
-                    'type' => 'relational',
-                    'operators' => $defaultOperators,
-                ],
-                'adGroup' => [
-                    'label' => __('Ad Set'),
-                    'type' => 'relational',
-                    'operators' => $defaultOperators,
-                ],
-                'ad' => [
-                    'label' => __('Ad'),
-                    'type' => 'relational',
-                    'operators' => $defaultOperators,
-                ],
-                'dimensions.age' => [
-                    'label' => __('Age Bracket'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-                'dimensions.gender' => [
-                    'label' => __('Gender'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-            ],
+            'facebook_marketing' => self::getFacebookMarketingBreakdowns($defaultOperators),
 
             'google_ads' => self::getGoogleAdsBreakdowns($defaultOperators),
 
@@ -83,6 +57,77 @@ class ChannelBreakdownRegistry
 
             default => [],
         };
+    }
+
+    private static function getFacebookMarketingBreakdowns(array $defaultOperators): array
+    {
+        $breakdowns = [
+            'channeledCampaign' => [
+                'label' => __('Campaign'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'adGroup' => [
+                'label' => __('Ad Set'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'ad' => [
+                'label' => __('Ad'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+        ];
+
+        $tenant = \Filament\Facades\Filament::getTenant();
+        $configuredPasses = null;
+        if ($tenant instanceof \App\Models\Project) {
+            $fbmConfig = $tenant->sync_config['facebook_marketing'] ?? [];
+            if (isset($fbmConfig['breakdown_passes']) && is_array($fbmConfig['breakdown_passes'])) {
+                $configuredPasses = $fbmConfig['breakdown_passes'];
+            }
+        }
+
+        // If no explicit configuration yet, demographics and placement are default enabled
+        $hasDemographics = $configuredPasses === null || in_array('demographics', $configuredPasses, true);
+        $hasPlacement = $configuredPasses === null || in_array('placement', $configuredPasses, true);
+        $hasGeography = $configuredPasses !== null && in_array('geography', $configuredPasses, true);
+
+        if ($hasDemographics) {
+            $breakdowns['dimensions.age'] = [
+                'label' => __('Age Bracket'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ];
+            $breakdowns['dimensions.gender'] = [
+                'label' => __('Gender'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ];
+        }
+
+        if ($hasPlacement) {
+            $breakdowns['dimensions.publisher_platform'] = [
+                'label' => __('Publisher Platform'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ];
+            $breakdowns['dimensions.platform_position'] = [
+                'label' => __('Platform Position'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ];
+        }
+
+        if ($hasGeography) {
+            $breakdowns['dimensions.country'] = [
+                'label' => __('Country'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ];
+        }
+
+        return $breakdowns;
     }
 
     private static function getGoogleAdsBreakdowns(array $defaultOperators): array
