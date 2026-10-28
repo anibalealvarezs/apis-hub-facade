@@ -27,9 +27,12 @@
                 } elseif ($currentRoute === 'landing.solutions.agency' || $currentRoute === 'landing.solutions.agency.es') {
                     $enUrl = route('landing.solutions.agency');
                     $esUrl = route('landing.solutions.agency.es');
-                } elseif ($currentRoute === 'landing.solutions.normalization' || $currentRoute === 'landing.solutions.normalization.es') {
-                    $enUrl = route('landing.solutions.normalization');
-                    $esUrl = route('landing.solutions.normalization.es');
+                } elseif ($currentRoute === 'landing.solutions.channels' || $currentRoute === 'landing.solutions.channels.es') {
+                    $enUrl = route('landing.solutions.channels');
+                    $esUrl = route('landing.solutions.channels.es');
+                } elseif ($currentRoute === 'landing.faq' || $currentRoute === 'landing.faq.es') {
+                    $enUrl = route('landing.faq');
+                    $esUrl = route('landing.faq.es');
                 } elseif ($currentRoute === 'landing.blog.index' || $currentRoute === 'landing.blog.index.es') {
                     $enUrl = route('landing.blog.index');
                     $esUrl = route('landing.blog.index.es');

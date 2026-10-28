@@ -207,6 +207,129 @@ class LandingController extends Controller
      }
 
     /**
+     * Show the Supported Channels & Providers Matrix page.
+     */
+    public function supportedChannels(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        $isEs = app()->getLocale() === 'es';
+
+        $supported = [
+            [
+                'provider' => 'Google',
+                'description' => $isEs ? 'Ecosistema de búsqueda, analítica y publicidad de Google.' : 'Google search, analytics, and advertising ecosystem.',
+                'channels' => [
+                    ['name' => 'Search Console', 'badge' => 'Active', 'metrics' => $isEs ? 'Clics, impresiones, CTR, posición media' : 'Clicks, impressions, CTR, average position'],
+                    ['name' => 'Ads', 'badge' => 'Active', 'metrics' => $isEs ? 'Gasto, impresiones, conversiones, CPC, ROAS' : 'Spend, impressions, conversions, CPC, ROAS'],
+                    ['name' => 'Analytics (GA4)', 'badge' => 'Active', 'metrics' => $isEs ? 'Sesiones, usuarios, eventos clave, ingresos' : 'Sessions, users, key events, revenue'],
+                ],
+            ],
+            [
+                'provider' => 'Meta',
+                'description' => $isEs ? 'Plataforma publicitaria y presencia social en Facebook e Instagram.' : 'Facebook & Instagram advertising and organic social presence.',
+                'channels' => [
+                    ['name' => 'Ads', 'badge' => 'Active', 'metrics' => $isEs ? 'Gasto, alcance, clics salientes, compras, ROAS' : 'Spend, reach, outbound clicks, purchases, ROAS'],
+                    ['name' => $isEs ? 'Orgánico (Facebook / Instagram)' : 'Organic (FB Page / Instagram)', 'badge' => 'Active', 'metrics' => $isEs ? 'Engagement, impresiones orgánicas, seguidores' : 'Engagement, organic impressions, followers'],
+                ],
+            ],
+            [
+                'provider' => 'Mailchimp',
+                'description' => $isEs ? 'Campañas de email marketing, automatizaciones y métricas de audiencia.' : 'Email marketing campaigns, automations, and audience telemetry.',
+                'channels' => [
+                    ['name' => 'Campaigns & Audiences', 'badge' => 'Active', 'metrics' => $isEs ? 'Tasa de apertura, clics, rebotes, ingresos atribuidos' : 'Open rates, click rates, bounces, attributed revenue'],
+                ],
+            ],
+        ];
+
+        $testing = [
+            [
+                'provider' => 'Shopify',
+                'status' => $isEs ? 'Fase de Pruebas' : 'Testing Phase',
+                'description' => $isEs ? 'Órdenes de e-commerce, productos, valor medio de pedido (AOV) y clientes.' : 'E-commerce orders, line items, average order value (AOV), and customer segments.',
+            ],
+            [
+                'provider' => 'Klaviyo',
+                'status' => $isEs ? 'Fase de Pruebas' : 'Testing Phase',
+                'description' => $isEs ? 'Métricas de flujo, ingresos atribuidos por email/SMS y conversión de segmentos.' : 'Flow analytics, attributed email/SMS revenue, and segment conversion.',
+            ],
+            [
+                'provider' => 'Meta (Leads)',
+                'status' => $isEs ? 'Fase de Pruebas' : 'Testing Phase',
+                'description' => $isEs ? 'Ingesta instantánea de formularios instantáneos de captación de leads en Meta.' : 'Instant form lead capture telemetry and webhook ingestion.',
+            ],
+        ];
+
+        return view('landing.supported-channels', array_merge($this->baseViewData(), [
+            'supported' => $supported,
+            'testing' => $testing,
+        ]));
+    }
+
+    /**
+     * Show the FAQ page.
+     */
+    public function faq(Request $request, $locale = null)
+    {
+        $this->resolveLocale($request, $locale);
+        $isEs = app()->getLocale() === 'es';
+
+        $faqs = [
+            [
+                'question' => $isEs 
+                    ? '¿Por qué APIs Hub evita los errores de cuota de Looker Studio y conectores directos?' 
+                    : 'Why does APIs Hub eliminate Looker Studio and live connector quota limits?',
+                'answer' => $isEs
+                    ? 'Los conectores tradicionales consultan las APIs de Google o Meta en vivo cada vez que un usuario abre un panel. APIs Hub desacopla la extracción: sincroniza tus datos periódicamente en un cluster local aislado. Looker Studio y tus dashboards consultan el cluster local en 10-20 ms sin consumir la cuota de la plataforma de origen.'
+                    : 'Traditional connectors query Google or Meta APIs on-demand every time a user loads or filters a report. APIs Hub decouples data ingestion: automated background workers sync metrics into an isolated local cluster. Looker Studio and dashboards query this local cluster in 10-20ms with zero origin API consumption.',
+            ],
+            [
+                'question' => $isEs 
+                    ? '¿Qué canales y plataformas publicitarias están soportadas actualmente?' 
+                    : 'Which advertising and marketing channels are currently supported?',
+                'answer' => $isEs
+                    ? 'Actualmente soportamos de forma activa Google (Search Console, Ads, Analytics GA4), Meta (Ads y presencia orgánica en Facebook/Instagram) y Mailchimp. En fase de pruebas avanzada contamos con Shopify, Klaviyo y Meta Leads.'
+                    : 'We actively support Google (Search Console, Ads, Analytics GA4), Meta (Ads and Organic FB/Instagram), and Mailchimp. In active testing phase, we have Shopify, Klaviyo, and Meta Leads.',
+            ],
+            [
+                'question' => $isEs 
+                    ? '¿Cómo funciona el aislamiento de datos por cliente para agencias?' 
+                    : 'How does client data isolation work for marketing agencies?',
+                'answer' => $isEs
+                    ? 'Cada cliente de tu agencia opera dentro de su propio contenedor y base de datos independiente. Las credenciales de acceso, perfiles de facturación y consultas analíticas de una marca están 100% aisladas y nunca se mezclan ni ralentizan los reportes de otros clientes.'
+                    : 'Each agency client portfolio operates inside its own isolated database container. API tokens, billing profiles, and heavy analytical queries for one brand are 100% segregated and never degrade or expose another client\'s data.',
+            ],
+            [
+                'question' => $isEs 
+                    ? '¿Qué es la normalización de métricas cross-channel?' 
+                    : 'What is cross-channel metric normalization?',
+                'answer' => $isEs
+                    ? 'Cada plataforma nombra las métricas de forma distinta (ej: link_clicks vs sessions vs clicks). APIs Hub mapea todas las fuentes a un diccionario canónico unificado, permitiendo calcular métricas reales como Blended ROAS, blended CPA y MER consistente sin hojas de cálculo intermedias.'
+                    : 'Ad networks define metrics inconsistently (e.g. Meta link_clicks vs GA4 sessions vs Google Ads clicks). APIs Hub normalizes all sources into a unified canonical schema, allowing teams to calculate genuine Blended ROAS, blended CPA, and uniform MER without manual spreadsheet gymnastics.',
+            ],
+            [
+                'question' => $isEs 
+                    ? '¿Puedo conectar mis propios asistentes de IA o herramientas externas?' 
+                    : 'Can I connect external AI assistants or custom BI tools?',
+                'answer' => $isEs
+                    ? 'Sí. Disponemos de una API REST documentada bajo estándar OpenAPI 3.1 y conectores nativos de Model Context Protocol (MCP) para que agentes como Cursor, Claude, Antigravity o scripts internos puedan consultar tus datos analíticos con permisos granulares.'
+                    : 'Yes. We provide a fully typed OpenAPI 3.1 REST API along with native Model Context Protocol (MCP) connectors, allowing LLM agents (Cursor, Claude, Antigravity) and custom internal pipelines to query analytical metrics securely.',
+            ],
+            [
+                'question' => $isEs 
+                    ? '¿Se requiere tarjeta de crédito para la versión beta?' 
+                    : 'Is a credit card required during the beta?',
+                'answer' => $isEs
+                    ? 'No. Puedes registrarte y desplegar tu primer cluster de datos de forma gratuita sin ingresar datos de pago durante el período beta.'
+                    : 'No. You can provision your first data cluster for free during our public beta without entering payment information.',
+            ],
+        ];
+
+        return view('landing.faq', array_merge($this->baseViewData(), [
+            'faqs' => $faqs,
+        ]));
+    }
+
+    /**
      * Show the problem-solving guide for Looker Studio quota limits.
      */
     public function fixLookerQuota(Request $request, $locale = null)

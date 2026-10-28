@@ -22,6 +22,9 @@ Allow: /demo/intelligence$
 Allow: /architecture$
 Allow: /solutions/agency-client-reporting$
 Allow: /solutions/cross-channel-normalization$
+Allow: /solutions/supported-channels$
+Allow: /faq$
+Allow: /blog$
 Allow: /blog/fix-gsc-looker-quota-limits$
 Allow: /docs/api$
 Allow: /docs/api/openapi.json$
@@ -42,6 +45,9 @@ Allow: /es/demo/intelligence$
 Allow: /es/arquitectura$
 Allow: /es/soluciones/reportes-agencias-marketing$
 Allow: /es/soluciones/normalizacion-metricas-marketing$
+Allow: /es/soluciones/canales-soportados$
+Allow: /es/faq$
+Allow: /es/blog$
 Allow: /es/blog/solucion-error-cuota-looker-studio-gsc$
 Allow: /es/docs/api$
 Allow: /es/docs/api/openapi.json$

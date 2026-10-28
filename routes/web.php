@@ -30,6 +30,21 @@ Route::get('/solutions/cross-channel-normalization', [\App\Http\Controllers\Land
 Route::get('/es/soluciones/normalizacion-metricas-marketing', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->crossChannelNormalization($r, 'es'))
     ->name('landing.solutions.normalization.es');
 
+// Solutions: Supported Channels & Providers Matrix
+Route::get('/solutions/supported-channels', [\App\Http\Controllers\LandingController::class, 'supportedChannels'])
+    ->name('landing.solutions.channels');
+Route::get('/es/soluciones/canales-soportados', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->supportedChannels($r, 'es'))
+    ->name('landing.solutions.channels.es');
+Route::redirect('/channels', '/solutions/supported-channels', 301);
+Route::redirect('/es/canales', '/es/soluciones/canales-soportados', 301);
+
+// FAQ Page
+Route::get('/faq', [\App\Http\Controllers\LandingController::class, 'faq'])
+    ->name('landing.faq');
+Route::get('/es/faq', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->faq($r, 'es'))
+    ->name('landing.faq.es');
+Route::redirect('/es/preguntas-frecuentes', '/es/faq', 301);
+
 // Blog Index & Technical Articles
 Route::get('/blog', [\App\Http\Controllers\LandingController::class, 'blogIndex'])
     ->name('landing.blog.index');

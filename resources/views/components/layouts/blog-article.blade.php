@@ -150,7 +150,7 @@
         </article>
 
         <!-- Article Tags Footer -->
-        @if(!empty($tags) && count($tags))
+        @unless(empty($tags))
             <div class="w-full mt-10 pt-6 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-2 flex-wrap text-xs text-slate-500">
                 <span class="font-bold text-slate-700 dark:text-slate-300">{{ __('Topics:') }}</span>
                 @foreach($tags as $tag)
@@ -159,7 +159,7 @@
                     </span>
                 @endforeach
             </div>
-        @endif
+        @endunless
 
         <!-- Bottom Return & CTA -->
         <section class="w-full text-center p-8 sm:p-12 rounded-3xl glass-panel bg-gradient-to-b from-white/60 to-white/30 dark:from-slate-900/60 dark:to-slate-900/30 border border-slate-200 dark:border-slate-800 mt-16">

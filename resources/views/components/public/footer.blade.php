@@ -18,10 +18,6 @@
                class="hover:text-brand-blue {{ request()->routeIs('demo.*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
                 {{ __('Interactive Demo') }}
             </a>
-            <a href="{{ app()->getLocale() === 'es' ? route('docs.api.es') : route('docs.api') }}" 
-               class="hover:text-brand-blue {{ request()->routeIs('docs.api*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
-                {{ __('API Docs') }}
-            </a>
         </div>
 
         {{-- Column 2: Solutions & Pricing --}}
@@ -37,9 +33,13 @@
                class="hover:text-brand-blue {{ request()->routeIs('landing.solutions.agency*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
                 {{ __('For Agencies') }}
             </a>
+            <a href="{{ app()->getLocale() === 'es' ? route('landing.solutions.channels.es') : route('landing.solutions.channels') }}" 
+               class="hover:text-brand-blue {{ request()->routeIs('landing.solutions.channels*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
+                {{ app()->getLocale() === 'es' ? 'Canales Soportados' : 'Supported Channels' }}
+            </a>
         </div>
 
-        {{-- Column 3: Resources & Editorial --}}
+        {{-- Column 3: Resources & Knowledge --}}
         <div class="flex flex-col gap-2.5 items-start">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
                 {{ app()->getLocale() === 'es' ? 'Recursos' : 'Resources' }}
@@ -47,6 +47,14 @@
             <a href="{{ app()->getLocale() === 'es' ? route('landing.blog.index.es') : route('landing.blog.index') }}" 
                class="hover:text-brand-blue {{ request()->routeIs('landing.blog*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
                 {{ __('Blog & Articles') }}
+            </a>
+            <a href="{{ app()->getLocale() === 'es' ? route('landing.faq.es') : route('landing.faq') }}" 
+               class="hover:text-brand-blue {{ request()->routeIs('landing.faq*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
+                FAQ
+            </a>
+            <a href="{{ app()->getLocale() === 'es' ? route('docs.api.es') : route('docs.api') }}" 
+               class="hover:text-brand-blue {{ request()->routeIs('docs.api*') ? 'text-brand-blue font-semibold' : '' }} transition-colors">
+                {{ __('API Docs') }}
             </a>
         </div>
 
