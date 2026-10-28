@@ -20,11 +20,6 @@ class SocialAuthController extends Controller
     {
         $callbackUrl = route('auth.google.callback');
 
-        Log::info('[SocialAuth] Initiating Google redirect', [
-            'callback_url' => $callbackUrl,
-            'client_ip' => $request->ip(),
-        ]);
-
         return Socialite::driver('google')
             ->stateless()
             ->redirectUrl($callbackUrl)
@@ -47,12 +42,6 @@ class SocialAuthController extends Controller
         }
 
         try {
-            Log::info('[SocialAuth] Google callback entered', [
-                'has_code' => $request->has('code'),
-                'state' => $request->input('state'),
-                'all' => $request->all(),
-            ]);
-
             $callbackUrl = route('auth.google.callback');
 
             /** @var \Laravel\Socialite\Two\User $googleUser */
@@ -65,12 +54,6 @@ class SocialAuthController extends Controller
             $email = $googleUser->getEmail();
             $name = $googleUser->getName() ?: explode('@', $email)[0];
             $avatar = $googleUser->getAvatar();
-
-            Log::info('[SocialAuth] Google user resolved', [
-                'google_id' => $googleId,
-                'email' => $email,
-                'name' => $name,
-            ]);
 
             if (!$email) {
                 return redirect()->route('filament.app.auth.login')
@@ -94,7 +77,6 @@ class SocialAuthController extends Controller
                         $user->email_verified_at = now();
                     }
                     $user->save();
-                    Log::info("[SocialAuth] Linked Google account to existing user: {$email}");
                 }
             }
 
@@ -109,13 +91,11 @@ class SocialAuthController extends Controller
                     'email_verified_at' => now(),
                     'is_active' => true,
                 ]);
-                Log::info("[SocialAuth] Registered new user via Google auth: {$email}");
             }
 
             // 4. Log the user in with remember me enabled
             Filament::auth()->login($user, remember: true);
             session()->regenerate();
-            Log::info("[SocialAuth] User authenticated via Filament", ['user_id' => $user->id]);
 
             // 5. Determine redirect destination
             $intended = session()->pull('url.intended');
@@ -126,17 +106,14 @@ class SocialAuthController extends Controller
 
             // If an intended URL exists and is not the login or root page, honor it
             if ($intended && !str_contains($intended, '/login') && !str_contains($intended, '/auth/')) {
-                Log::info("[SocialAuth] Redirecting to intended URL: {$intended}");
                 return redirect($intended);
             }
 
-            Log::info("[SocialAuth] Redirecting to dashboard URL: {$redirectUrl}");
             return redirect($redirectUrl);
 
         } catch (\Throwable $e) {
-            Log::error('[SocialAuth] Google Social Auth Error: ' . $e->getMessage(), [
+            Log::error('Google Social Auth Error: ' . $e->getMessage(), [
                 'exception' => $e,
-                'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->route('filament.app.auth.login')
