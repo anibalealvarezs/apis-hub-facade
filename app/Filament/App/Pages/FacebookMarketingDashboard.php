@@ -127,8 +127,8 @@ class FacebookMarketingDashboard extends Page
         $configuredPasses = null;
         if ($tenant instanceof \App\Models\Project) {
             $fbmConfig = $tenant->sync_config['facebook_marketing'] ?? [];
-            if (isset($fbmConfig['breakdown_passes']) && is_array($fbmConfig['breakdown_passes'])) {
-                $configuredPasses = $fbmConfig['breakdown_passes'];
+            if (isset($fbmConfig['breakdown_passes'])) {
+                $configuredPasses = (array) $fbmConfig['breakdown_passes'];
             }
         }
 
@@ -139,7 +139,7 @@ class FacebookMarketingDashboard extends Page
         ];
 
         $hasDemographics = $configuredPasses === null || in_array('demographics', $configuredPasses, true);
-        $hasPlacement = $configuredPasses === null || in_array('placement', $configuredPasses, true);
+        $hasPlacement = $configuredPasses !== null && in_array('placement', $configuredPasses, true);
         $hasGeography = $configuredPasses !== null && in_array('geography', $configuredPasses, true);
 
         if ($hasDemographics) {

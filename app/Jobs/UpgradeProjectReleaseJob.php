@@ -110,7 +110,7 @@ class UpgradeProjectReleaseJob implements ShouldQueue
             $modified = false;
             if (isset($syncConfig['facebook_marketing']) && is_array($syncConfig['facebook_marketing'])) {
                 if (!isset($syncConfig['facebook_marketing']['breakdown_passes'])) {
-                    $syncConfig['facebook_marketing']['breakdown_passes'] = ['demographics'];
+                    $syncConfig['facebook_marketing']['breakdown_passes'] = 'demographics';
                     $modified = true;
                 }
                 if (!isset($syncConfig['facebook_marketing']['metric_set'])) {

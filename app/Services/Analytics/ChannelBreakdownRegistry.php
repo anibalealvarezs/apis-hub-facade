@@ -83,14 +83,14 @@ class ChannelBreakdownRegistry
         $configuredPasses = null;
         if ($tenant instanceof \App\Models\Project) {
             $fbmConfig = $tenant->sync_config['facebook_marketing'] ?? [];
-            if (isset($fbmConfig['breakdown_passes']) && is_array($fbmConfig['breakdown_passes'])) {
-                $configuredPasses = $fbmConfig['breakdown_passes'];
+            if (isset($fbmConfig['breakdown_passes'])) {
+                $configuredPasses = (array) $fbmConfig['breakdown_passes'];
             }
         }
 
-        // If no explicit configuration yet, demographics and placement are default enabled
+        // If no explicit configuration yet, demographics is default enabled
         $hasDemographics = $configuredPasses === null || in_array('demographics', $configuredPasses, true);
-        $hasPlacement = $configuredPasses === null || in_array('placement', $configuredPasses, true);
+        $hasPlacement = $configuredPasses !== null && in_array('placement', $configuredPasses, true);
         $hasGeography = $configuredPasses !== null && in_array('geography', $configuredPasses, true);
 
         if ($hasDemographics) {

@@ -354,7 +354,9 @@
             }
 
             if (!isset($config['facebook_marketing']['breakdown_passes'])) {
-                $config['facebook_marketing']['breakdown_passes'] = ['demographics'];
+                $config['facebook_marketing']['breakdown_passes'] = 'demographics';
+            } elseif (is_array($config['facebook_marketing']['breakdown_passes'])) {
+                $config['facebook_marketing']['breakdown_passes'] = reset($config['facebook_marketing']['breakdown_passes']) ?: 'demographics';
             }
             if (!isset($config['facebook_marketing']['metric_set'])) {
                 $config['facebook_marketing']['metric_set'] = 'full';
@@ -1044,15 +1046,16 @@
                     $secondarySections[] = \Filament\Forms\Components\Section::make(__('Breakdown Passes & Metrics'))
                         ->description(__('Configure independent breakdown passes and metric extraction fidelity.'))
                         ->schema([
-                            \Filament\Forms\Components\CheckboxList::make('facebook_marketing.breakdown_passes')
-                                ->label(__('Breakdown Passes'))
-                                ->helperText(__('Select which dimensions to synchronize in independent passes. Unbroken baseline is always synchronized.'))
+                            \Filament\Forms\Components\Radio::make('facebook_marketing.breakdown_passes')
+                                ->label(__('Breakdown Pass'))
+                                ->helperText(__('Select which dimension to synchronize. Breakdown passes are exclusive; unbroken baseline is always synchronized.'))
                                 ->options([
                                     'demographics' => 'Demographics (Age & Gender)',
                                     'placement' => 'Placement (Platform & Position)',
                                     'geography' => 'Geography (Country)',
                                 ])
-                                ->default(['demographics']),
+                                ->default('demographics')
+                                ->required(),
 
                             \Filament\Forms\Components\Select::make('facebook_marketing.metric_set')
                                 ->label(__('Metric Set'))
@@ -2118,14 +2121,16 @@
 
                 // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (Requires APIs Hub >= v1.18.2)
                 if ($this->activeChannel === 'facebook_marketing' && $tenant->releaseSupportsMetaBreakdowns()) {
-                    $oldPasses = (array) ($dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
-                    $newPasses = (array) ($proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
+                    $rawOldPass = $dbState['facebook_marketing']['breakdown_passes'] ?? 'demographics';
+                    $oldPass = is_array($rawOldPass) ? (reset($rawOldPass) ?: 'demographics') : (string)$rawOldPass;
+
+                    $rawNewPass = $proposedState['facebook_marketing']['breakdown_passes'] ?? 'demographics';
+                    $newPass = is_array($rawNewPass) ? (reset($rawNewPass) ?: 'demographics') : (string)$rawNewPass;
+
                     $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'full';
                     $newMetricSet = !empty($proposedState['facebook_marketing']['metric_set']) ? $proposedState['facebook_marketing']['metric_set'] : 'full';
 
-                    sort($oldPasses);
-                    sort($newPasses);
-                    if ($oldPasses !== $newPasses || $oldMetricSet !== $newMetricSet) {
+                    if ($oldPass !== $newPass || $oldMetricSet !== $newMetricSet) {
                         $hasBreakdownChange = true;
                     }
                 }
