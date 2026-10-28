@@ -105,6 +105,23 @@ class UpgradeProjectReleaseJob implements ShouldQueue
                 'health_status' => $newHealthStatus,
             ]);
 
+            // Ensure default breakdown_passes and metric_set are pre-populated in sync_config so no unintentional nuclear resync occurs
+            $syncConfig = $this->project->sync_config ?? [];
+            $modified = false;
+            if (isset($syncConfig['facebook_marketing']) && is_array($syncConfig['facebook_marketing'])) {
+                if (!isset($syncConfig['facebook_marketing']['breakdown_passes'])) {
+                    $syncConfig['facebook_marketing']['breakdown_passes'] = ['demographics'];
+                    $modified = true;
+                }
+                if (!isset($syncConfig['facebook_marketing']['metric_set'])) {
+                    $syncConfig['facebook_marketing']['metric_set'] = 'full';
+                    $modified = true;
+                }
+            }
+            if ($modified) {
+                $this->project->update(['sync_config' => $syncConfig]);
+            }
+
             \App\Models\ProjectStatusLog::create([
                 'project_id' => $this->project->id,
                 'is_active' => true,

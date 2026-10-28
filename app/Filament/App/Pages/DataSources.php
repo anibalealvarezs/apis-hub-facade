@@ -353,6 +353,12 @@
                 $config[$chan]['cache_history_range'] = $isFreeTier ? '6 months' : ($maxRanges[$chan] ?? '2 years');
             }
 
+            if (!isset($config['facebook_marketing']['breakdown_passes'])) {
+                $config['facebook_marketing']['breakdown_passes'] = ['demographics'];
+            }
+            if (!isset($config['facebook_marketing']['metric_set'])) {
+                $config['facebook_marketing']['metric_set'] = 'full';
+            }
             if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
                 $config['facebook_marketing']['entity_sync_depth'] = 'AD';
             }
@@ -1165,7 +1171,7 @@
                                 'placement' => 'Placement (Platform & Position)',
                                 'geography' => 'Geography (Country)',
                             ])
-                            ->default(['demographics', 'placement']),
+                            ->default(['demographics']),
 
                         \Filament\Forms\Components\Select::make('facebook_marketing.metric_set')
                             ->label(__('Metric Set'))
@@ -1174,7 +1180,7 @@
                                 'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Conversions)',
                                 'full' => 'Full (Comprehensive Meta Marketing Metrics)',
                             ])
-                            ->default('key')
+                            ->default('full')
                             ->helperText(__('Controls the depth of metrics requested from Meta Graph API.')),
                     ])->columns(1);
 
@@ -2230,10 +2236,10 @@
 
                 // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (e.g. facebook_marketing)
                 if ($this->activeChannel === 'facebook_marketing') {
-                    $oldPasses = (array) ($dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement']);
-                    $newPasses = (array) ($proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement']);
-                    $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'key';
-                    $newMetricSet = !empty($proposedState['facebook_marketing']['metric_set']) ? $proposedState['facebook_marketing']['metric_set'] : 'key';
+                    $oldPasses = (array) ($dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
+                    $newPasses = (array) ($proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
+                    $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'full';
+                    $newMetricSet = !empty($proposedState['facebook_marketing']['metric_set']) ? $proposedState['facebook_marketing']['metric_set'] : 'full';
 
                     sort($oldPasses);
                     sort($newPasses);
