@@ -3,10 +3,16 @@
     <!-- Brand Logo Left -->
     <a href="{{ app()->getLocale() === 'es' ? '/es' : '/' }}" class="hover:opacity-85 transition-opacity block">
         <img src="{{ asset('images/branding/apishub-trans-620.webp') }}?v=1.3" 
-             alt="APIs Hub" class="h-9 md:h-11 dark:hidden" 
+             alt="APIs Hub" 
+             width="257"
+             height="63"
+             class="h-9 md:h-11 w-auto dark:hidden" 
              :class="darkMode ? 'hidden' : 'block'">
         <img src="{{ asset('images/branding/apishub-trans-light-620.webp') }}?v=1.3" 
-             alt="APIs Hub" class="h-9 md:h-11 hidden dark:block" 
+             alt="APIs Hub" 
+             width="257"
+             height="63"
+             class="h-9 md:h-11 w-auto hidden dark:block" 
              :class="darkMode ? 'block' : 'hidden'">
     </a>
 

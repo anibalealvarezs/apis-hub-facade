@@ -88,6 +88,9 @@
             ],
         ],
     ];
+
+    $isLookerQuotaPost = str_contains($activeFeaturedImage, 'fix-looker-studio-limits');
+    $preloadImage = $isLookerQuotaPost ? asset('images/seo/blog/fix-looker-studio-limits-800.webp') : $activeFeaturedImage;
 @endphp
 
 <x-layouts.public 
@@ -99,6 +102,12 @@
     :portals="$portals"
     :structured-data="json_encode($blogStructuredData, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)"
 >
+    <x-slot:extra-head>
+        @if($showFeaturedImage && !empty($preloadImage))
+            <link rel="preload" as="image" href="{{ $preloadImage }}" fetchpriority="high">
+        @endif
+    </x-slot:extra-head>
+
     <main class="relative pt-32 sm:pt-40 pb-24 px-4 sm:px-8 max-w-4xl mx-auto flex flex-col items-center">
         
         <!-- Breadcrumbs Navigation -->
@@ -148,16 +157,26 @@
             @endif
         </header>
 
-        <!-- Featured Image Section (Enabled by default, configurable via :show-featured-image) -->
+        <!-- Featured Image Section (Zero CLS container, LCP fetchpriority=high, Responsive Srcset) -->
         @if($showFeaturedImage && !empty($activeFeaturedImage))
+            @php
+                $isLookerQuotaPost = str_contains($activeFeaturedImage, 'fix-looker-studio-limits');
+                $img800 = $isLookerQuotaPost ? asset('images/seo/blog/fix-looker-studio-limits-800.webp') : null;
+                $img1400 = $isLookerQuotaPost ? asset('images/seo/blog/fix-looker-studio-limits-1400.webp') : null;
+            @endphp
             <section class="w-full mb-12" aria-label="{{ __('Featured Image') }}">
-                <figure class="overflow-hidden rounded-2xl glass-panel border border-slate-200/60 dark:border-slate-800/80 shadow-sm">
-                    <img src="{{ $activeFeaturedImage }}" 
+                <figure class="w-full aspect-[16/10] overflow-hidden rounded-2xl glass-panel border border-slate-200/60 dark:border-slate-800/80 shadow-sm bg-slate-100 dark:bg-slate-800/60">
+                    <img src="{{ $img800 ?? $activeFeaturedImage }}" 
+                         @if($img800 && $img1400)
+                             srcset="{{ $img800 }} 800w, {{ $img1400 }} 1400w, {{ $activeFeaturedImage }} 2752w"
+                             sizes="(max-width: 768px) 100vw, 800px"
+                         @endif
                          alt="{{ $articleTitle }}" 
-                         class="w-full h-auto aspect-[16/10] object-cover object-center" 
+                         class="w-full h-full object-cover object-center" 
                          loading="eager"
-                         width="1500" 
-                         height="991">
+                         fetchpriority="high"
+                         width="800" 
+                         height="500">
                     @if(!empty($featuredImageCaption))
                         <figcaption class="px-4 py-2.5 text-xs text-center text-slate-500 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-200/50 dark:border-slate-800/50">
                             {{ $featuredImageCaption }}

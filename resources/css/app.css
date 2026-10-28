@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'jsvectormap/dist/jsvectormap.min.css';
+@import '../../public/css/branding.css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
