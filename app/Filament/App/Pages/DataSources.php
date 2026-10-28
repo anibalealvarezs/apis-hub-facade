@@ -1102,15 +1102,17 @@
 
             $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
 
-            $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
+            $releaseFields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
 
-            // Fallback safeguard: if fields are empty, attempt resolution from ChannelProfileRegistry
-            if (empty($fields)) {
-                try {
-                    $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
-                    $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
-                } catch (\Throwable $e) {}
+            // Always resolve from ChannelProfileRegistry to ensure newly introduced configurable fields (like breakdown_passes) are available
+            try {
+                $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
+                $profileFields = $profile?->getSchemaDefinition()['fields'] ?? [];
+            } catch (\Throwable $e) {
+                $profileFields = [];
             }
+
+            $fields = array_merge($releaseFields, $profileFields);
 
             if (empty($fields)) {
                 return [
@@ -1123,6 +1125,9 @@
             // Remove fields rendered manually in secondary sections (not from schema)
             if ($this->activeChannel === 'google_search_console') {
                 unset($fields['calculate_synthetics']);
+            }
+            if ($this->activeChannel === 'facebook_marketing') {
+                unset($fields['metric_set'], $fields['breakdown_passes']);
             }
 
             $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel.'.');
@@ -1148,6 +1153,31 @@
             }
 
             if ($this->activeChannel === 'facebook_marketing') {
+                // Breakdowns & Metric Set dedicated section
+                $secondarySections[] = \Filament\Forms\Components\Section::make(__('Breakdown Passes & Metrics'))
+                    ->description(__('Configure independent breakdown passes and metric extraction fidelity.'))
+                    ->schema([
+                        \Filament\Forms\Components\CheckboxList::make('facebook_marketing.breakdown_passes')
+                            ->label(__('Breakdown Passes'))
+                            ->helperText(__('Select which dimensions to synchronize in independent passes. Unbroken baseline is always synchronized.'))
+                            ->options([
+                                'demographics' => 'Demographics (Age & Gender)',
+                                'placement' => 'Placement (Platform & Position)',
+                                'geography' => 'Geography (Country)',
+                            ])
+                            ->default(['demographics', 'placement']),
+
+                        \Filament\Forms\Components\Select::make('facebook_marketing.metric_set')
+                            ->label(__('Metric Set'))
+                            ->options([
+                                'basic' => 'Basic (Spend, Impressions, Clicks, CTR, CPC, Actions)',
+                                'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Conversions)',
+                                'full' => 'Full (Comprehensive Meta Marketing Metrics)',
+                            ])
+                            ->default('key')
+                            ->helperText(__('Controls the depth of metrics requested from Meta Graph API.')),
+                    ])->columns(1);
+
                 // Insert custom extraction granularity UI in the secondary column
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Extraction Granularity'))
                     ->schema([
