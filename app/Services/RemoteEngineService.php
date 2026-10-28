@@ -202,10 +202,10 @@
         /**
          * Trigger a historical synchronization resync over SSH.
          */
-        public function triggerHistoricalResync(Project $project, array $channels)
+        public function triggerHistoricalResync(Project $project, array $channels, bool $wipeMetrics = false)
         {
             try {
-                \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channels);
+                \App\Jobs\NuclearResyncProjectJob::dispatch($project, $channels, null, $wipeMetrics);
 
                 return ['status' => 'success', 'message' => 'Nuclear resync initiated via background job.'];
 
@@ -219,10 +219,10 @@
         /**
          * Trigger a single-asset historical synchronization resync over SSH.
          */
-        public function triggerAssetHistoricalResync(Project $project, string $channel, string $assetId)
+        public function triggerAssetHistoricalResync(Project $project, string $channel, string $assetId, bool $wipeMetrics = false)
         {
             try {
-                \App\Jobs\NuclearResyncProjectJob::dispatch($project, [$channel], $assetId);
+                \App\Jobs\NuclearResyncProjectJob::dispatch($project, [$channel], $assetId, $wipeMetrics);
 
                 return ['status' => 'success', 'message' => 'Single asset nuclear resync initiated via background job.'];
 

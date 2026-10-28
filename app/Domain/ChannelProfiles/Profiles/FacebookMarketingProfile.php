@@ -37,6 +37,17 @@ class FacebookMarketingProfile extends AbstractChannelProfile
                 'max_workers' => $this->systemField('integer', 2),
                 'granular_sync' => $this->systemField('boolean', true),
                 
+                'metric_set' => $this->configurableField('string', 'full', [
+                    'basic' => 'Basic (Spend, Impressions, Clicks, CTR, CPC, Frequency, Actions)',
+                    'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Normalized Purchases/Leads)',
+                    'full' => 'Full (Comprehensive Meta Marketing Metrics)',
+                ]),
+                'breakdown_passes' => $this->configurableField('array', ['demographics'], [
+                    'demographics' => 'Demographics (Age, Gender)',
+                    'placement' => 'Placement (Publisher Platform, Platform Position)',
+                    'geography' => 'Geography (Country)',
+                ]),
+                
                 'metrics_strategy' => $this->systemField('string', 'default'),
                 'metrics_config' => $this->systemField('object', []),
                 'CAMPAIGN' => $this->systemField('object', ['cache_include' => '']),

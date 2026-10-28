@@ -353,6 +353,12 @@
                 $config[$chan]['cache_history_range'] = $isFreeTier ? '6 months' : ($maxRanges[$chan] ?? '2 years');
             }
 
+            if (!isset($config['facebook_marketing']['breakdown_passes'])) {
+                $config['facebook_marketing']['breakdown_passes'] = ['demographics'];
+            }
+            if (!isset($config['facebook_marketing']['metric_set'])) {
+                $config['facebook_marketing']['metric_set'] = 'full';
+            }
             if (!isset($config['facebook_marketing']['entity_sync_depth'])) {
                 $config['facebook_marketing']['entity_sync_depth'] = 'AD';
             }
@@ -600,8 +606,11 @@
             return $providers;
         }
 
-        public function getChannelLabel(string $key): string
+        public function getChannelLabel(?string $key): string
         {
+            if (!$key) {
+                return __('Configuration');
+            }
             foreach ($this->getProviders() as $provider) {
                 foreach ($provider['channels'] as $channel) {
                     if ($channel['key'] === $key) {
@@ -613,15 +622,21 @@
             return __('Configuration');
         }
 
-        public function isConnected(string $channel): bool
+        public function isConnected(?string $channel): bool
         {
+            if (!$channel) {
+                return false;
+            }
             $tenant = Filament::getTenant();
 
             return $tenant ? $tenant->isChannelConnected($channel) : false;
         }
 
-        public function isChannelCompatible(string $channel): bool
+        public function isChannelCompatible(?string $channel): bool
         {
+            if (!$channel) {
+                return false;
+            }
             $tenant = Filament::getTenant();
             if (!$tenant) {
                 return false;
@@ -637,8 +652,11 @@
             return in_array($channel, $supportedChannels, true);
         }
 
-        public function getLastSyncTime(string $channel): string
+        public function getLastSyncTime(?string $channel): string
         {
+            if (!$channel) {
+                return 'Never';
+            }
             // To be implemented via SDK or local tenant timestamp
             return 'Never';
         }
@@ -928,128 +946,8 @@
         protected function mergeDiscoveredAssets(array $liveAssets): void
         {
             $tenant = Filament::getTenant();
-            $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
-
-            $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
-
-            // Fallback safeguard: if fields are empty, attempt resolution from ChannelProfileRegistry
-            if (empty($fields)) {
-                try {
-                    $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
-                    $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
-                } catch (\Throwable $e) {}
-            }
-
-            if (empty($fields)) {
-                return;
-            }
-            $assetListKey = null;
-
-            // Find which field is the array of assets (e.g., 'ad_accounts', 'pages')
-            foreach ($fields as $key => $def) {
-                if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
-                    $assetListKey = $key;
-
-                    break;
-                } elseif (($def['type'] ?? '') === 'object' && isset($def['schema'])) {
-                    foreach ($def['schema'] as $subKey => $subDef) {
-                        if (($subDef['type'] ?? '') === 'array' && isset($subDef['item_schema'])) {
-                            $assetListKey = $key.'.'.$subKey;
-
-                            break 2;
-                        }
-                    }
-                }
-            }
-
-            if (!$assetListKey) {
-                return;
-            }
-
-            $currentData = $this->form->getState();
-            $localAssets = \Illuminate\Support\Arr::get($currentData, $this->activeChannel.'.'.$assetListKey, []);
-
-            $mergedAssets = [];
-            $liveMap = [];
-
-            $actualLiveAssets = [];
-            if (!empty($liveAssets)) {
-                // Check if it's an associative array wrapping the list (e.g., ['ad_accounts' => [...]])
-                // If the first key is a string, it's associative. Otherwise, it's already the list.
-                $firstKey = array_key_first($liveAssets);
-                if (is_string($firstKey) && is_array($liveAssets[$firstKey])) {
-                    $actualLiveAssets = $liveAssets[$firstKey];
-                } else {
-                    $actualLiveAssets = $liveAssets;
-                }
-            }
-
-            // Build map of live assets by their ID or URL
-            foreach ($actualLiveAssets as $live) {
-                $identifier = $live['id'] ?? $live['url'] ?? $live['platformId'] ?? null;
-                if ($identifier) {
-                    $liveMap[$identifier] = $live;
-                }
-            }
-
-            // Process existing local assets
-            foreach ($localAssets as $local) {
-                $identifier = $local['id'] ?? $local['url'] ?? $local['platformId'] ?? null;
-                if ($identifier) {
-                    if ($this->activeChannel === 'facebook_organic') {
-                        $local['page_metrics'] = $local['page_metrics'] ?? true;
-                        $local['posts'] = $local['posts'] ?? true;
-                        $local['post_metrics'] = $local['post_metrics'] ?? true;
-                        $local['ig_accounts'] = $local['ig_accounts'] ?? true;
-                        $local['ig_account_metrics'] = $local['ig_account_metrics'] ?? true;
-                        $local['ig_account_media'] = $local['ig_account_media'] ?? true;
-                        $local['ig_account_media_metrics'] = $local['ig_account_media_metrics'] ?? true;
-                    }
-
-                    if (isset($liveMap[$identifier])) {
-                        // Still alive, merge new data over it but keep user settings
-                        $merged = array_merge($local, $liveMap[$identifier]);
-                        $merged['lost_access'] = false;
-                        $mergedAssets[$identifier] = $merged;
-                        unset($liveMap[$identifier]);
-                    } else {
-                        // It was local but not in live anymore -> lost access!
-                        $local['lost_access'] = true;
-                        $mergedAssets[$identifier] = $local;
-                    }
-                }
-            }
-
-            // Add remaining brand new live assets
-            foreach ($liveMap as $identifier => $live) {
-                $live['lost_access'] = false;
-                $live['enabled'] = false; // Default to false so user has to explicitly enable
-
-                if ($this->activeChannel === 'facebook_organic') {
-                    $live['page_metrics'] = true;
-                    $live['posts'] = false;
-                    $live['post_metrics'] = false;
-                    $live['ig_accounts'] = true;
-                    $live['ig_account_metrics'] = true;
-                    $live['ig_account_media'] = true;
-                    $live['ig_account_media_metrics'] = true;
-                }
-
-                $mergedAssets[$identifier] = $live;
-            }
-
-            // Get the entire DB state so we don't accidentally wipe out other channels not currently on the screen
-            $fullDbState = $tenant->sync_config ?? [];
-
-            \Illuminate\Support\Arr::set($currentData, $this->activeChannel.'.'.$assetListKey, array_values($mergedAssets));
-
-            // Merge the active channel's data back into the full DB state
-            $fullDbState[$this->activeChannel] = array_merge(
-                is_array($fullDbState[$this->activeChannel] ?? null) ? $fullDbState[$this->activeChannel] : [],
-                (array) \Illuminate\Support\Arr::get($currentData, $this->activeChannel, [])
-            );
-
-            $tenant->update(['sync_config' => $fullDbState]); // Persist full dataset immediately to preserve unmapped keys
+            $discoveryService = app(LocalAssetDiscoveryService::class);
+            $fullDbState = $discoveryService->mergeChannelAssets($tenant, $this->activeChannel, $liveAssets);
 
             // Fill the form with the updated active channel data
             $this->hydrateFormFromDb($fullDbState);
@@ -1090,15 +988,17 @@
 
             $release = $tenant->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
 
-            $fields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
+            $releaseFields = $release?->config_schemas[$this->activeChannel]['fields'] ?? [];
 
-            // Fallback safeguard: if fields are empty, attempt resolution from ChannelProfileRegistry
-            if (empty($fields)) {
-                try {
-                    $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
-                    $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
-                } catch (\Throwable $e) {}
+            // Always resolve from ChannelProfileRegistry to ensure newly introduced configurable fields (like breakdown_passes) are available
+            try {
+                $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($this->activeChannel);
+                $profileFields = $profile?->getSchemaDefinition()['fields'] ?? [];
+            } catch (\Throwable $e) {
+                $profileFields = [];
             }
+
+            $fields = array_merge($releaseFields, $profileFields);
 
             if (empty($fields)) {
                 return [
@@ -1111,6 +1011,9 @@
             // Remove fields rendered manually in secondary sections (not from schema)
             if ($this->activeChannel === 'google_search_console') {
                 unset($fields['calculate_synthetics']);
+            }
+            if ($this->activeChannel === 'facebook_marketing') {
+                unset($fields['metric_set'], $fields['breakdown_passes']);
             }
 
             $parts = $this->buildComponentsFromSchema($fields, $this->activeChannel.'.');
@@ -1136,6 +1039,33 @@
             }
 
             if ($this->activeChannel === 'facebook_marketing') {
+                // Breakdowns & Metric Set dedicated section (Requires APIs Hub >= v1.18.2)
+                if ($tenant->releaseSupportsMetaBreakdowns()) {
+                    $secondarySections[] = \Filament\Forms\Components\Section::make(__('Breakdown Passes & Metrics'))
+                        ->description(__('Configure independent breakdown passes and metric extraction fidelity.'))
+                        ->schema([
+                            \Filament\Forms\Components\CheckboxList::make('facebook_marketing.breakdown_passes')
+                                ->label(__('Breakdown Passes'))
+                                ->helperText(__('Select which dimensions to synchronize in independent passes. Unbroken baseline is always synchronized.'))
+                                ->options([
+                                    'demographics' => 'Demographics (Age & Gender)',
+                                    'placement' => 'Placement (Platform & Position)',
+                                    'geography' => 'Geography (Country)',
+                                ])
+                                ->default(['demographics']),
+
+                            \Filament\Forms\Components\Select::make('facebook_marketing.metric_set')
+                                ->label(__('Metric Set'))
+                                ->options([
+                                    'basic' => 'Basic (Spend, Impressions, Clicks, CTR, CPC, Actions)',
+                                    'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Conversions)',
+                                    'full' => 'Full (Comprehensive Meta Marketing Metrics)',
+                                ])
+                                ->default('full')
+                                ->helperText(__('Controls the depth of metrics requested from Meta Graph API.')),
+                        ])->columns(1);
+                }
+
                 // Insert custom extraction granularity UI in the secondary column
                 $secondarySections[] = \Filament\Forms\Components\Section::make(__('Extraction Granularity'))
                     ->schema([
@@ -1398,6 +1328,11 @@
                         ->numeric()
                         ->label(Str::headline($key))
                         ->default($definition['default'] ?? null);
+                } elseif ($type === 'array' && isset($definition['options'])) {
+                    $advanced[] = \Filament\Forms\Components\CheckboxList::make($fieldKey)
+                        ->label(Str::headline($key))
+                        ->options($definition['options'])
+                        ->default($definition['default'] ?? []);
                 } elseif ($type === 'array' && isset($definition['item_schema'])) {
                     // This is the Assets array (Repeater)
                     $repeaters[] = $this->buildAssetRepeater($fieldKey, $key, $definition['item_schema']);
@@ -2169,6 +2104,7 @@
 
             // Detect if any channel's enabled state changed
             $hasChannelToggle = false;
+            $hasBreakdownChange = false;
             if ($tenant->last_deployed_at) {
                 foreach ($proposedState as $channel => $config) {
                     if (!is_array($config)) continue;
@@ -2177,6 +2113,20 @@
                     if ($oldEnabled !== $newEnabled) {
                         $hasChannelToggle = true;
                         break;
+                    }
+                }
+
+                // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (Requires APIs Hub >= v1.18.2)
+                if ($this->activeChannel === 'facebook_marketing' && $tenant->releaseSupportsMetaBreakdowns()) {
+                    $oldPasses = (array) ($dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
+                    $newPasses = (array) ($proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics']);
+                    $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'full';
+                    $newMetricSet = !empty($proposedState['facebook_marketing']['metric_set']) ? $proposedState['facebook_marketing']['metric_set'] : 'full';
+
+                    sort($oldPasses);
+                    sort($newPasses);
+                    if ($oldPasses !== $newPasses || $oldMetricSet !== $newMetricSet) {
+                        $hasBreakdownChange = true;
                     }
                 }
             }
@@ -2420,15 +2370,16 @@
 
                 // If we reached here, either it's a first deployment (safe to save offline)
                 // or the remote validation succeeded. We now persist the UI configuration locally.
+                $allowedArrayKeys = ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE', 'breakdown_passes'];
                 foreach ($payload as $k => $v) {
-                    if (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
+                    if (!is_array($v) || in_array($k, $allowedArrayKeys, true)) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
 
                 // Ensure unmapped keys from original channelConfig are also preserved
                 foreach ($channelConfig as $k => $v) {
-                    if (!isset($dbState[$channel][$k]) && (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
+                    if (!isset($dbState[$channel][$k]) && (!is_array($v) || in_array($k, $allowedArrayKeys, true))) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
@@ -2524,6 +2475,24 @@
                     ->body(__('A full infrastructure redeploy is required for channel changes to take effect.'))
                     ->warning()
                     ->send();
+            } elseif ($hasBreakdownChange) {
+                try {
+                    app(\App\Services\RemoteEngineService::class)->triggerHistoricalResync($tenant, [$this->activeChannel], true);
+                    $tenant->update(['last_historical_resync_at' => now()]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Breakdown Configuration Updated'))
+                        ->body(__('A nuclear resync has been automatically initiated with metrics wipe for :channel to prevent data duplication and refresh historical breakdowns.', ['channel' => $this->getChannelLabel($this->activeChannel)]))
+                        ->warning()
+                        ->persistent()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved but Nuclear Resync Failed'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
             } else {
                 if ($tenant->fresh()->health_status !== 'online') {
                     \Filament\Notifications\Notification::make()

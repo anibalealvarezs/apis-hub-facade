@@ -7,11 +7,194 @@ use Anibalealvarezs\FacebookGraphApi\FacebookGraphApi;
 use Anibalealvarezs\GoogleApi\Services\AnalyticsAdmin\AnalyticsAdminApi;
 use Anibalealvarezs\GoogleApi\Services\GoogleAds\GoogleAdsApi;
 use Anibalealvarezs\GoogleApi\Services\SearchConsole\SearchConsoleApi;
+use App\Models\ApisHubRelease;
 use Exception;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class LocalAssetDiscoveryService
 {
+    /**
+     * Map channel names to their asset container key in discovery responses.
+     */
+    public const RESOURCE_KEY_MAP = [
+        'google_search_console' => 'sites',
+        'google_analytics'      => 'properties',
+        'google_ads'            => 'ad_accounts',
+        'facebook_marketing'    => 'ad_accounts',
+        'facebook_organic'      => 'pages',
+        'shopify'               => 'stores',
+        'mailchimp'             => 'audiences',
+    ];
+
+    /**
+     * Synchronize and merge discovered assets for a given channel directly into the project's sync_config.
+     * Flag lost_access on assets no longer available and register new ones.
+     */
+    public function syncChannelAssets(Project $project, string $channel): array
+    {
+        try {
+            $response = $this->fetchAssets($project, $channel);
+
+            if (!isset($response['success']) || !$response['success'] || !isset($response['assets'])) {
+                Log::warning("LocalAssetDiscoveryService: Failed to fetch assets for channel {$channel} on project {$project->id}: " . ($response['message'] ?? 'Unknown error'));
+                return $response;
+            }
+
+            $resourceKey = self::RESOURCE_KEY_MAP[$channel] ?? $channel;
+            $liveAssets = $response['assets'][$resourceKey] ?? [];
+
+            // Fallback to first array found if mapped key is empty
+            if (empty($liveAssets) && !empty($response['assets'])) {
+                foreach ($response['assets'] as $key => $value) {
+                    if (is_array($value)) {
+                        $liveAssets = $value;
+                        $resourceKey = $key;
+                        break;
+                    }
+                }
+            }
+
+            $payload = [$resourceKey => $liveAssets];
+            $updatedConfig = $this->mergeChannelAssets($project, $channel, $payload);
+
+            return [
+                'success' => true,
+                'channel' => $channel,
+                'count' => count($liveAssets),
+                'config' => $updatedConfig,
+            ];
+        } catch (\Throwable $e) {
+            Log::error("LocalAssetDiscoveryService: Exception during syncChannelAssets for channel {$channel} on project {$project->id}: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Merge discovered assets with existing local configuration in project sync_config.
+     */
+    public function mergeChannelAssets(Project $project, string $channel, array $liveAssets): array
+    {
+        $release = $project->apisHubRelease ?? ApisHubRelease::where('is_active', true)->where('is_default', true)->first() ?? ApisHubRelease::where('is_active', true)->first();
+
+        $fields = $release?->config_schemas[$channel]['fields'] ?? [];
+
+        // Fallback safeguard: if fields are empty, attempt resolution from ChannelProfileRegistry
+        if (empty($fields)) {
+            try {
+                $profile = app(\App\Domain\ChannelProfiles\ChannelProfileRegistry::class)->get($channel);
+                $fields = $profile?->getSchemaDefinition()['fields'] ?? [];
+            } catch (\Throwable $e) {}
+        }
+
+        if (empty($fields)) {
+            return $project->sync_config ?? [];
+        }
+
+        $assetListKey = null;
+
+        // Find which field is the array of assets (e.g., 'ad_accounts', 'pages')
+        foreach ($fields as $key => $def) {
+            if (($def['type'] ?? '') === 'array' && isset($def['item_schema'])) {
+                $assetListKey = $key;
+                break;
+            } elseif (($def['type'] ?? '') === 'object' && isset($def['schema'])) {
+                foreach ($def['schema'] as $subKey => $subDef) {
+                    if (($subDef['type'] ?? '') === 'array' && isset($subDef['item_schema'])) {
+                        $assetListKey = $key . '.' . $subKey;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        if (!$assetListKey) {
+            return $project->sync_config ?? [];
+        }
+
+        $fullDbState = $project->sync_config ?? [];
+        $localAssets = Arr::get($fullDbState, $channel . '.' . $assetListKey, []);
+
+        $mergedAssets = [];
+        $liveMap = [];
+
+        $actualLiveAssets = [];
+        if (!empty($liveAssets)) {
+            $firstKey = array_key_first($liveAssets);
+            if (is_string($firstKey) && is_array($liveAssets[$firstKey])) {
+                $actualLiveAssets = $liveAssets[$firstKey];
+            } else {
+                $actualLiveAssets = $liveAssets;
+            }
+        }
+
+        // Build map of live assets by their ID or URL
+        foreach ($actualLiveAssets as $live) {
+            $identifier = $live['id'] ?? $live['url'] ?? $live['platformId'] ?? null;
+            if ($identifier) {
+                $liveMap[$identifier] = $live;
+            }
+        }
+
+        // Process existing local assets
+        foreach ($localAssets as $local) {
+            $identifier = $local['id'] ?? $local['url'] ?? $local['platformId'] ?? null;
+            if ($identifier) {
+                if ($channel === 'facebook_organic') {
+                    $local['page_metrics'] = $local['page_metrics'] ?? true;
+                    $local['posts'] = $local['posts'] ?? true;
+                    $local['post_metrics'] = $local['post_metrics'] ?? true;
+                    $local['ig_accounts'] = $local['ig_accounts'] ?? true;
+                    $local['ig_account_metrics'] = $local['ig_account_metrics'] ?? true;
+                    $local['ig_account_media'] = $local['ig_account_media'] ?? true;
+                    $local['ig_account_media_metrics'] = $local['ig_account_media_metrics'] ?? true;
+                }
+
+                if (isset($liveMap[$identifier])) {
+                    // Still alive, merge new data over it but keep user settings
+                    $merged = array_merge($local, $liveMap[$identifier]);
+                    $merged['lost_access'] = false;
+                    $mergedAssets[$identifier] = $merged;
+                    unset($liveMap[$identifier]);
+                } else {
+                    // It was local but not in live anymore -> lost access!
+                    $local['lost_access'] = true;
+                    $mergedAssets[$identifier] = $local;
+                }
+            }
+        }
+
+        // Add remaining brand new live assets
+        foreach ($liveMap as $identifier => $live) {
+            $live['lost_access'] = false;
+            $live['enabled'] = false; // Default to false so user has to explicitly enable
+
+            if ($channel === 'facebook_organic') {
+                $live['page_metrics'] = true;
+                $live['posts'] = false;
+                $live['post_metrics'] = false;
+                $live['ig_accounts'] = true;
+                $live['ig_account_metrics'] = true;
+                $live['ig_account_media'] = true;
+                $live['ig_account_media_metrics'] = true;
+            }
+
+            $mergedAssets[$identifier] = $live;
+        }
+
+        Arr::set($fullDbState, $channel . '.' . $assetListKey, array_values($mergedAssets));
+
+        $project->update(['sync_config' => $fullDbState]);
+
+        return $fullDbState;
+    }
+
     /**
      * Fetch live assets directly from the Facade without relying on the remote engine.
      */
