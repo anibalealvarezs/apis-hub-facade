@@ -45,7 +45,9 @@ class SocialAuthTest extends TestCase
         $mockGoogleUser->shouldReceive('getAvatar')->andReturn('https://lh3.googleusercontent.com/avatar.jpg');
 
         $mockProvider = Mockery::mock(\Laravel\Socialite\Two\GoogleProvider::class);
-        $mockProvider->shouldReceive('stateless->user')->andReturn($mockGoogleUser);
+        $mockProvider->shouldReceive('stateless')->andReturnSelf();
+        $mockProvider->shouldReceive('redirectUrl')->andReturnSelf();
+        $mockProvider->shouldReceive('user')->andReturn($mockGoogleUser);
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($mockProvider);
 
@@ -74,7 +76,9 @@ class SocialAuthTest extends TestCase
         $mockGoogleUser->shouldReceive('getAvatar')->andReturn(null);
 
         $mockProvider = Mockery::mock(\Laravel\Socialite\Two\GoogleProvider::class);
-        $mockProvider->shouldReceive('stateless->user')->andReturn($mockGoogleUser);
+        $mockProvider->shouldReceive('stateless')->andReturnSelf();
+        $mockProvider->shouldReceive('redirectUrl')->andReturnSelf();
+        $mockProvider->shouldReceive('user')->andReturn($mockGoogleUser);
 
         Socialite::shouldReceive('driver')->with('google')->andReturn($mockProvider);
 

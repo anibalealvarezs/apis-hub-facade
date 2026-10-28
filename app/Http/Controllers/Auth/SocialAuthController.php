@@ -18,8 +18,16 @@ class SocialAuthController extends Controller
      */
     public function redirectToGoogle(Request $request)
     {
+        $callbackUrl = route('auth.google.callback');
+
+        Log::info('[SocialAuth] Initiating Google redirect', [
+            'callback_url' => $callbackUrl,
+            'client_ip' => $request->ip(),
+        ]);
+
         return Socialite::driver('google')
             ->stateless()
+            ->redirectUrl($callbackUrl)
             ->scopes(['openid', 'profile', 'email'])
             ->with([
                 'prompt' => 'select_account',
@@ -45,8 +53,13 @@ class SocialAuthController extends Controller
                 'all' => $request->all(),
             ]);
 
+            $callbackUrl = route('auth.google.callback');
+
             /** @var \Laravel\Socialite\Two\User $googleUser */
-            $googleUser = Socialite::driver('google')->stateless()->user();
+            $googleUser = Socialite::driver('google')
+                ->stateless()
+                ->redirectUrl($callbackUrl)
+                ->user();
 
             $googleId = $googleUser->getId();
             $email = $googleUser->getEmail();
