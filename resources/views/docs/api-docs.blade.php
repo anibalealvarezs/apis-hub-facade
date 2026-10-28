@@ -3,7 +3,6 @@
     :description="app()->getLocale() === 'es' ? 'Referencia pública completa y sandbox interactivo para la API de APIs Hub. Consultas analíticas multidimensionales, agregaciones, pings y métricas normalizadas.' : 'Complete public developer reference and interactive sandbox for the APIs Hub RESTful API. Multi-dimensional analytical queries, aggregations, pings, and normalized channel metrics.'"
     :meta-image="asset(app()->getLocale() === 'es' ? 'images/seo/pages/og-api-docs-es.webp' : 'images/seo/pages/og-api-docs.webp')"
     :og-type="'website'"
-    :body-class="'bg-slate-50 dark:bg-slate-950'"
     :portals="$portals"
 >
     <x-slot:extra-head>
@@ -14,14 +13,14 @@
     <main class="relative pt-28 sm:pt-36 pb-20 px-4 sm:px-8 lg:px-12 w-full flex-grow flex flex-col">
         
         <!-- Hero Header -->
-        <div class="space-y-4 mb-8">
+        <header class="space-y-4 mb-8">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-brand-blue/10 text-brand-blue border border-brand-blue/20">
                 <span class="w-2 h-2 rounded-full bg-brand-blue animate-pulse"></span>
                 <span>{{ __('OpenAPI 3.1 Reference & Interactive Sandbox') }}</span>
             </div>
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
                         {{ __('APIs Hub Developer Reference') }}
                     </h1>
                     <p class="text-slate-600 dark:text-slate-300 text-sm sm:text-base max-w-3xl mt-2 leading-relaxed">
@@ -54,7 +53,7 @@
                 <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('⏱ Rate Limits') }}</span>
                 <span class="px-2.5 py-1 rounded-lg bg-slate-200/60 dark:bg-slate-800/60 hover:text-brand-blue cursor-default">{{ __('⚠️ Error Handling') }}</span>
             </div>
-        </div>
+        </header>
 
         <!-- Scalar UI Interactive Reference Container -->
         <div class="scalar-container border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl">
@@ -65,6 +64,5 @@
             <script src="{{ asset('js/scalar-docs.js') }}"></script>
             <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest"></script>
         </div>
-
     </main>
 </x-layouts.public>

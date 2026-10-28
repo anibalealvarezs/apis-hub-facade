@@ -30,11 +30,37 @@ Route::get('/solutions/cross-channel-normalization', [\App\Http\Controllers\Land
 Route::get('/es/soluciones/normalizacion-metricas-marketing', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->crossChannelNormalization($r, 'es'))
     ->name('landing.solutions.normalization.es');
 
-// Guides: Looker Studio Quota Fix
-Route::get('/guides/fix-gsc-looker-quota-limits', [\App\Http\Controllers\LandingController::class, 'fixLookerQuota'])
-    ->name('landing.guides.looker-quota');
-Route::get('/es/guias/solucion-error-cuota-looker-studio-gsc', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->fixLookerQuota($r, 'es'))
-    ->name('landing.guides.looker-quota.es');
+// Solutions: Supported Channels & Providers Matrix
+Route::get('/solutions/supported-channels', [\App\Http\Controllers\LandingController::class, 'supportedChannels'])
+    ->name('landing.solutions.channels');
+Route::get('/es/soluciones/canales-soportados', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->supportedChannels($r, 'es'))
+    ->name('landing.solutions.channels.es');
+Route::redirect('/channels', '/solutions/supported-channels', 301);
+Route::redirect('/es/canales', '/es/soluciones/canales-soportados', 301);
+
+// FAQ Page
+Route::get('/faq', [\App\Http\Controllers\LandingController::class, 'faq'])
+    ->name('landing.faq');
+Route::get('/es/faq', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->faq($r, 'es'))
+    ->name('landing.faq.es');
+Route::redirect('/es/preguntas-frecuentes', '/es/faq', 301);
+
+// Blog Index & Technical Articles
+Route::get('/blog', [\App\Http\Controllers\LandingController::class, 'blogIndex'])
+    ->name('landing.blog.index');
+Route::get('/es/blog', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->blogIndex($r, 'es'))
+    ->name('landing.blog.index.es');
+
+Route::get('/blog/fix-gsc-looker-quota-limits', [\App\Http\Controllers\LandingController::class, 'fixLookerQuota'])
+    ->name('landing.blog.looker-quota');
+Route::get('/es/blog/solucion-error-cuota-looker-studio-gsc', fn (\Illuminate\Http\Request $r) => app(\App\Http\Controllers\LandingController::class)->fixLookerQuota($r, 'es'))
+    ->name('landing.blog.looker-quota.es');
+
+// 301 Permanent Redirects from legacy /guides/ URLs
+Route::redirect('/guides/fix-gsc-looker-quota-limits', '/blog/fix-gsc-looker-quota-limits', 301);
+Route::redirect('/es/guias/solucion-error-cuota-looker-studio-gsc', '/es/blog/solucion-error-cuota-looker-studio-gsc', 301);
+Route::redirect('/guides', '/blog', 301);
+Route::redirect('/es/guias', '/es/blog', 301);
 
 Route::get('/docs/api', [\App\Http\Controllers\ApiDocsController::class, 'show'])
     ->name('docs.api');
@@ -85,6 +111,12 @@ Route::post('/subscribe', [\App\Http\Controllers\LandingController::class, 'subs
     ->middleware(\App\Http\Middleware\VerifyReCaptcha::class)
     ->name('landing.subscribe');
 Route::get('/unsubscribe', [\App\Http\Controllers\LandingController::class, 'unsubscribe'])->name('landing.unsubscribe')->middleware('signed');
+
+// APIs Hub Authentication: Independent Login with Google
+Route::middleware(['web'])->group(function () {
+    Route::get('auth/google/redirect', [\App\Http\Controllers\Auth\SocialAuthController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('auth/google/callback', [\App\Http\Controllers\Auth\SocialAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+});
 
 // APIs Hub SaaS: OAuth Hub for Tenants
 Route::middleware(['web', 'auth'])->group(function () {

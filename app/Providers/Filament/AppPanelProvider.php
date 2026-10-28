@@ -133,31 +133,60 @@ class AppPanelProvider extends PanelProvider
                     <div id='recaptcha-script-container-login'>
                         <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}' async defer></script>
                         <script>
-                            function injectLoginReCaptcha() {
-                                if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
-                                    grecaptcha.enterprise.ready(function() {
-                                        grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', {action: 'login'}).then(function(token) {
-                                            let forms = document.querySelectorAll('form');
-                                            forms.forEach(form => {
-                                                let input = form.querySelector('input[name=\"recaptcha_token\"]');
-                                                if (!input) {
-                                                    input = document.createElement('input');
-                                                    input.type = 'hidden';
-                                                    input.name = 'recaptcha_token';
-                                                    form.appendChild(input);
-                                                }
-                                                input.value = token;
-                                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            (function() {
+                                const siteKey = '{{ config('services.recaptcha.site_key') }}';
+                                let isFetching = false;
+
+                                function obtainToken(callback) {
+                                    if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+                                        grecaptcha.enterprise.ready(function() {
+                                            grecaptcha.enterprise.execute(siteKey, {action: 'login'}).then(function(token) {
+                                                document.querySelectorAll('form').forEach(form => {
+                                                    let input = form.querySelector('input[name=\"recaptcha_token\"]');
+                                                    if (!input) {
+                                                        input = document.createElement('input');
+                                                        input.type = 'hidden';
+                                                        input.name = 'recaptcha_token';
+                                                        form.appendChild(input);
+                                                    }
+                                                    input.value = token;
+                                                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                                                });
+                                                if (callback) callback(token);
                                             });
                                         });
+                                    }
+                                }
+
+                                function setupSubmitInterceptor() {
+                                    document.querySelectorAll('form').forEach(form => {
+                                        if (form.dataset.recaptchaBound) return;
+                                        form.dataset.recaptchaBound = 'true';
+
+                                        form.addEventListener('submit', function(e) {
+                                            let input = form.querySelector('input[name=\"recaptcha_token\"]');
+                                            if (!input || !input.value) {
+                                                e.preventDefault();
+                                                e.stopImmediatePropagation();
+                                                const submitBtn = form.querySelector('button[type=\"submit\"]');
+                                                if (submitBtn) submitBtn.disabled = true;
+
+                                                obtainToken(function(token) {
+                                                    if (submitBtn) submitBtn.disabled = false;
+                                                    form.requestSubmit ? form.requestSubmit() : form.submit();
+                                                });
+                                            }
+                                        }, true);
                                     });
                                 }
-                            }
-                            document.addEventListener('DOMContentLoaded', injectLoginReCaptcha);
-                            window.addEventListener('livewire:load', injectLoginReCaptcha);
-                            setInterval(injectLoginReCaptcha, 60000);
+
+                                document.addEventListener('DOMContentLoaded', () => { obtainToken(); setupSubmitInterceptor(); });
+                                window.addEventListener('livewire:load', () => { obtainToken(); setupSubmitInterceptor(); });
+                                window.addEventListener('livewire:navigated', () => { obtainToken(); setupSubmitInterceptor(); });
+                                setInterval(obtainToken, 60000);
+                            })();
                         </script>
-                        <p class='text-xs text-gray-400 text-center mt-4'>Protected by Google reCAPTCHA v3</p>
+                        <p class='text-xs text-gray-400 text-center mt-4'>Protected by Google reCAPTCHA Enterprise</p>
                     </div>
                 ")
             )
@@ -167,31 +196,59 @@ class AppPanelProvider extends PanelProvider
                     <div id='recaptcha-script-container-register'>
                         <script src='https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}' async defer></script>
                         <script>
-                            function injectRegisterReCaptcha() {
-                                if (typeof grecaptcha !== 'undefined' && typeof grecaptcha.enterprise !== 'undefined') {
-                                    grecaptcha.enterprise.ready(function() {
-                                        grecaptcha.enterprise.execute('{{ config('services.recaptcha.site_key') }}', {action: 'register'}).then(function(token) {
-                                            let forms = document.querySelectorAll('form');
-                                            forms.forEach(form => {
-                                                let input = form.querySelector('input[name=\"recaptcha_token\"]');
-                                                if (!input) {
-                                                    input = document.createElement('input');
-                                                    input.type = 'hidden';
-                                                    input.name = 'recaptcha_token';
-                                                    form.appendChild(input);
-                                                }
-                                                input.value = token;
-                                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            (function() {
+                                const siteKey = '{{ config('services.recaptcha.site_key') }}';
+
+                                function obtainToken(callback) {
+                                    if (typeof grecaptcha !== 'undefined' && grecaptcha.enterprise) {
+                                        grecaptcha.enterprise.ready(function() {
+                                            grecaptcha.enterprise.execute(siteKey, {action: 'register'}).then(function(token) {
+                                                document.querySelectorAll('form').forEach(form => {
+                                                    let input = form.querySelector('input[name=\"recaptcha_token\"]');
+                                                    if (!input) {
+                                                        input = document.createElement('input');
+                                                        input.type = 'hidden';
+                                                        input.name = 'recaptcha_token';
+                                                        form.appendChild(input);
+                                                    }
+                                                    input.value = token;
+                                                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                                                });
+                                                if (callback) callback(token);
                                             });
                                         });
+                                    }
+                                }
+
+                                function setupSubmitInterceptor() {
+                                    document.querySelectorAll('form').forEach(form => {
+                                        if (form.dataset.recaptchaBound) return;
+                                        form.dataset.recaptchaBound = 'true';
+
+                                        form.addEventListener('submit', function(e) {
+                                            let input = form.querySelector('input[name=\"recaptcha_token\"]');
+                                            if (!input || !input.value) {
+                                                e.preventDefault();
+                                                e.stopImmediatePropagation();
+                                                const submitBtn = form.querySelector('button[type=\"submit\"]');
+                                                if (submitBtn) submitBtn.disabled = true;
+
+                                                obtainToken(function(token) {
+                                                    if (submitBtn) submitBtn.disabled = false;
+                                                    form.requestSubmit ? form.requestSubmit() : form.submit();
+                                                });
+                                            }
+                                        }, true);
                                     });
                                 }
-                            }
-                            document.addEventListener('DOMContentLoaded', injectRegisterReCaptcha);
-                            window.addEventListener('livewire:load', injectRegisterReCaptcha);
-                            setInterval(injectRegisterReCaptcha, 60000);
+
+                                document.addEventListener('DOMContentLoaded', () => { obtainToken(); setupSubmitInterceptor(); });
+                                window.addEventListener('livewire:load', () => { obtainToken(); setupSubmitInterceptor(); });
+                                window.addEventListener('livewire:navigated', () => { obtainToken(); setupSubmitInterceptor(); });
+                                setInterval(obtainToken, 60000);
+                            })();
                         </script>
-                        <p class='text-xs text-gray-400 text-center mt-4'>Protected by Google reCAPTCHA v3</p>
+                        <p class='text-xs text-gray-400 text-center mt-4'>Protected by Google reCAPTCHA Enterprise</p>
                     </div>
                 ")
             )

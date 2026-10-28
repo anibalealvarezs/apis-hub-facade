@@ -9,12 +9,9 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-        <link rel="preconnect" href="https://www.googletagmanager.com">
-        <link rel="preconnect" href="https://www.google.com">
 
-        <!-- Google reCAPTCHA Enterprise -->
+        <!-- Google reCAPTCHA Enterprise Site Key -->
         <meta name="recaptcha-site-key" content="{{ config('services.recaptcha.site_key') }}">
-        <script src="https://www.google.com/recaptcha/enterprise.js?render={{ config('services.recaptcha.site_key') }}" async defer></script>
         
         <!-- Primary Meta Tags -->
         <title>APIs Hub | {{ __('Normalized Marketing Data Engine for Agencies') }}</title>

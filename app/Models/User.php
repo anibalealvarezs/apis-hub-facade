@@ -122,6 +122,9 @@ class User extends Authenticatable implements FilamentUser, HasTenants, HasDefau
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
+        'google_id',
+        'avatar',
         'password',
         'logout_at',
         'is_active',

@@ -33,41 +33,66 @@ class VerifyReCaptcha
             return $next($request);
         }
 
-        // 2. Validate token from request
+        // 2. Rate Limiting Protection (Max 5 attempts per minute per IP + target action)
+        $isAuthRoute = ! $request->routeIs('landing.subscribe');
+        $throttleKey = 'auth_attempt:' . ($isAuthRoute ? 'login:' : 'subscribe:') . $request->ip();
+
+        if ($isAuthRoute && \Illuminate\Support\Facades\RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($throttleKey);
+            return redirect()->back()
+                ->withErrors(['recaptcha_token' => "Too many attempts. Please try again in {$seconds} seconds."])
+                ->withInput();
+        }
+
+        // 3. Validate token from request
         $token = $request->input('recaptcha_token');
 
         if (!$token) {
+            if ($isAuthRoute) {
+                \Illuminate\Support\Facades\RateLimiter::hit($throttleKey, 60);
+            }
             return redirect()->back()
                 ->withErrors(['recaptcha_token' => 'reCAPTCHA verification is required.'])
                 ->withInput();
         }
 
         try {
-            // 3. Initialize SDK via App Container to allow Mocking in tests
+            // 4. Initialize SDK via App Container to allow Mocking in tests
             $api = app(RecaptchaApi::class, [
                 'projectId' => $projectId,
                 'apiKey' => $apiKey
             ]);
 
-            // 4. Determine expected action based on route
+            // 5. Determine expected action and strictness threshold based on route
             $expectedAction = match (true) {
                 $request->routeIs('filament.app.auth.register') => 'register',
                 $request->routeIs('landing.subscribe') => 'subscribe',
                 default => 'login',
             };
 
-            // 5. Verify token with SDK (Enterprise Assessment)
+            // High security threshold for admin & app auth (0.5), normal for newsletter (0.3)
+            $threshold = ($expectedAction === 'subscribe') ? 0.3 : 0.5;
+
+            // 6. Verify token with SDK (Enterprise Assessment)
             $isValid = $api->verifyToken(
                 token: $token,
                 siteKey: $siteKey,
                 expectedAction: $expectedAction,
-                threshold: 0.3
+                threshold: $threshold
             );
 
             if (!$isValid) {
+                if ($isAuthRoute) {
+                    \Illuminate\Support\Facades\RateLimiter::hit($throttleKey, 60);
+                }
                 return redirect()->back()
                     ->withErrors(['recaptcha_token' => 'Security verification failed. Please try again.'])
                     ->withInput();
+            }
+
+            // Clear throttle on successful verification
+            if ($isAuthRoute) {
+                \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
             }
 
         } catch (Exception $e) {

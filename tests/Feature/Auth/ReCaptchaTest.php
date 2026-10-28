@@ -128,4 +128,33 @@ class ReCaptchaTest extends TestCase
         $response->assertRedirect('/admin');
         $this->assertAuthenticatedAs($user);
     }
+
+    /**
+     * Test that rate limiting throttles after too many failed attempts.
+     */
+    public function test_login_is_throttled_after_too_many_failed_attempts(): void
+    {
+        \Illuminate\Support\Facades\RateLimiter::clear('auth_attempt:login:127.0.0.1');
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/test-login', [
+                'email' => 'admin@example.com',
+                'password' => 'wrong-password',
+                // Missing token triggers hit on throttle
+            ]);
+        }
+
+        // 6th attempt should be blocked with throttle message
+        $response = $this->post('/test-login', [
+            'email' => 'admin@example.com',
+            'password' => 'password',
+            'recaptcha_token' => 'valid-token',
+        ]);
+
+        $response->assertSessionHasErrors(['recaptcha_token']);
+        $errors = session('errors')->get('recaptcha_token');
+        $this->assertStringContainsString('Too many attempts', $errors[0]);
+
+        \Illuminate\Support\Facades\RateLimiter::clear('auth_attempt:login:127.0.0.1');
+    }
 }

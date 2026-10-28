@@ -47,18 +47,29 @@
     }
 @endphp
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', $currentLocale) }}" dir="ltr" class="dark">
+<html lang="{{ str_replace('_', '-', $currentLocale) }}" dir="ltr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Anti-Flicker Synchronous Early Theme Init -->
+    <script>
+        (function() {
+            var theme = localStorage.getItem('color-theme');
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (theme === 'dark' || (!theme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
     
     <!-- Preconnect / DNS Prefetch -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    <link rel="preconnect" href="https://www.googletagmanager.com">
-    <link rel="preconnect" href="https://www.google.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- Primary Meta Tags -->
@@ -119,7 +130,13 @@
 
     <!-- Structured Data (JSON-LD) -->
     @if($structuredData)
-        {!! $structuredData !!}
+        @if(str_contains($structuredData, '<script'))
+            {!! $structuredData !!}
+        @else
+            <script type="application/ld+json">
+            {!! $structuredData !!}
+            </script>
+        @endif
     @else
         <script type="application/ld+json">
         {
@@ -144,7 +161,6 @@
 
     <!-- Base App Assets (Vite) -->
     @vite(['resources/js/theme.js', 'resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="{{ asset('css/branding.css') }}"/>
 
     {{ $extraHead ?? '' }}
 </head>
