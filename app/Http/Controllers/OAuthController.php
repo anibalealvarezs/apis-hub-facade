@@ -91,6 +91,13 @@ class OAuthController extends Controller
             $driver = Socialite::driver($provider);
             $state = $request->input('state', '');
 
+            Log::info('[OAuthController] Callback hit', [
+                'provider' => $provider,
+                'state' => $state,
+                'tenant_param' => $tenantId,
+                'all_params' => $request->all(),
+            ]);
+
             // Hand off to SocialAuthController if this was an app login/registration
             if ($state === 'app_auth' && $provider === 'google') {
                 return app(\App\Http\Controllers\Auth\SocialAuthController::class)->handleGoogleCallback($request);
