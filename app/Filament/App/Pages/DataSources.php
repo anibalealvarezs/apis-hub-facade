@@ -2230,10 +2230,10 @@
 
                 // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (e.g. facebook_marketing)
                 if ($this->activeChannel === 'facebook_marketing') {
-                    $oldPasses = $dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement'];
-                    $newPasses = $proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement'];
+                    $oldPasses = (array) ($dbState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement']);
+                    $newPasses = (array) ($proposedState['facebook_marketing']['breakdown_passes'] ?? ['demographics', 'placement']);
                     $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'key';
-                    $newMetricSet = $proposedState['facebook_marketing']['metric_set'] ?? 'key';
+                    $newMetricSet = !empty($proposedState['facebook_marketing']['metric_set']) ? $proposedState['facebook_marketing']['metric_set'] : 'key';
 
                     sort($oldPasses);
                     sort($newPasses);
@@ -2482,15 +2482,16 @@
 
                 // If we reached here, either it's a first deployment (safe to save offline)
                 // or the remote validation succeeded. We now persist the UI configuration locally.
+                $allowedArrayKeys = ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE', 'breakdown_passes'];
                 foreach ($payload as $k => $v) {
-                    if (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE'])) {
+                    if (!is_array($v) || in_array($k, $allowedArrayKeys, true)) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
 
                 // Ensure unmapped keys from original channelConfig are also preserved
                 foreach ($channelConfig as $k => $v) {
-                    if (!isset($dbState[$channel][$k]) && (!is_array($v) || in_array($k, ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE']))) {
+                    if (!isset($dbState[$channel][$k]) && (!is_array($v) || in_array($k, $allowedArrayKeys, true))) {
                         $dbState[$channel][$k] = $v;
                     }
                 }
