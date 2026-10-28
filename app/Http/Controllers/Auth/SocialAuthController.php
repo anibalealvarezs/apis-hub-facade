@@ -90,8 +90,13 @@ class SocialAuthController extends Controller
             Filament::auth()->login($user, remember: true);
             session()->regenerate();
 
-            // 5. Redirect to app home (MustTwoFactor middleware intercepts if 2FA is active)
-            return redirect()->intended(Filament::getHomeUrl());
+            // 5. Determine redirect destination
+            $preferredProject = $user->preferredProject();
+            $redirectUrl = $preferredProject
+                ? route('filament.app.pages.dashboard', ['tenant' => $preferredProject->subdomain])
+                : route('filament.app.tenant.registration');
+
+            return redirect()->intended($redirectUrl);
 
         } catch (\Exception $e) {
             Log::error('Google Social Auth Error: ' . $e->getMessage(), [

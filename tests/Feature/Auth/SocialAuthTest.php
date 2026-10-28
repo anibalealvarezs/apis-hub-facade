@@ -32,6 +32,12 @@ class SocialAuthTest extends TestCase
             'google_id' => null,
         ]);
 
+        $project = \App\Models\Project::factory()->create([
+            'user_id' => $existingUser->id,
+            'subdomain' => 'agency-demo',
+        ]);
+        $existingUser->projects()->attach($project->id);
+
         $mockGoogleUser = Mockery::mock(SocialiteUser::class);
         $mockGoogleUser->shouldReceive('getId')->andReturn('google-unique-id-12345');
         $mockGoogleUser->shouldReceive('getEmail')->andReturn('marketing@agency.com');
@@ -53,9 +59,9 @@ class SocialAuthTest extends TestCase
         $this->assertEquals('google-unique-id-12345', $existingUser->google_id);
         $this->assertEquals('https://lh3.googleusercontent.com/avatar.jpg', $existingUser->avatar);
 
-        // Authenticated as the existing user
+        // Authenticated as the existing user and redirected to their project dashboard
         $this->assertAuthenticatedAs($existingUser);
-        $response->assertRedirect('/app');
+        $response->assertRedirect(route('filament.app.pages.dashboard', ['tenant' => 'agency-demo']));
     }
 
     /** @test */
@@ -80,6 +86,6 @@ class SocialAuthTest extends TestCase
         $this->assertEquals('google-new-id-98765', $newUser->google_id);
         $this->assertNotNull($newUser->email_verified_at);
         $this->assertAuthenticatedAs($newUser);
-        $response->assertRedirect('/app');
+        $response->assertRedirect(route('filament.app.tenant.registration'));
     }
 }

@@ -90,6 +90,12 @@ class OAuthController extends Controller
             /** @var \Laravel\Socialite\Two\AbstractProvider $driver */
             $driver = Socialite::driver($provider);
             $state = $request->input('state', '');
+
+            // Hand off to SocialAuthController if this was an app login/registration
+            if ($state === 'app_auth' && $provider === 'google') {
+                return app(\App\Http\Controllers\Auth\SocialAuthController::class)->handleGoogleCallback($request);
+            }
+
             $stateData = [];
             foreach (explode(':', $state) as $part) {
                 if (str_contains($part, '_')) {
