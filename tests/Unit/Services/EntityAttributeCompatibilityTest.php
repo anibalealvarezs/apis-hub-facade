@@ -20,6 +20,10 @@ class EntityAttributeCompatibilityTest extends TestCase
         ));
         $service = new class($client) extends RemoteEngineService {
             public function __construct(private ApisHubApi $client) {}
+            protected function executeRead(Project $project, string $operation, array $payload, callable $callback, int $timeout): array
+            {
+                return $this->execute($project, $callback, $timeout);
+            }
             public function execute(Project $project, callable $callback, int $timeout = 15)
             {
                 return $callback($this->client);

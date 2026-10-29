@@ -362,7 +362,7 @@ export function mailchimpDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/mailchimp/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/mailchimp/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -393,7 +393,7 @@ export function mailchimpDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/mailchimp/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/mailchimp/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -441,7 +441,7 @@ export function mailchimpDashboard(config = {}) {
                         }
                     };
 
-                    const response = await fetch('/api/mailchimp/trend', {
+                    const response = await this.fetchDashboardResponse('/api/mailchimp/trend', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -484,7 +484,7 @@ export function mailchimpDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/mailchimp/table', this.getFetchOptions(false));
+                const response = await this.fetchDashboardResponse('/api/mailchimp/table', this.getFetchOptions(false));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));

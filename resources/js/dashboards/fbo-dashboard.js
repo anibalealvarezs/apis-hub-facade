@@ -462,7 +462,7 @@ export function fboDashboard(config = {}) {
                     postId: normalizedPostId
                 };
 
-                const response = await fetch('/api/fbo/chart', {
+                const response = await this.fetchDashboardResponse('/api/fbo/chart', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -490,7 +490,7 @@ export function fboDashboard(config = {}) {
                     postId: postId
                 };
 
-                const response = await fetch('/api/fbo/post', {
+                const response = await this.fetchDashboardResponse('/api/fbo/post', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -596,7 +596,7 @@ export function fboDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/fbo/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/fbo/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -648,7 +648,7 @@ export function fboDashboard(config = {}) {
                         activeTab: this.activeTab
                     };
                     
-                    const response = await fetch('/api/fbo/trend', {
+                    const response = await this.fetchDashboardResponse('/api/fbo/trend', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -697,7 +697,7 @@ export function fboDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/fbo/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/fbo/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -728,7 +728,7 @@ export function fboDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/fbo/table', this.getFetchOptions({ tableMode: 'posts' }));
+                const response = await this.fetchDashboardResponse('/api/fbo/table', this.getFetchOptions({ tableMode: 'posts' }));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -754,7 +754,7 @@ export function fboDashboard(config = {}) {
 
             this.isBreakdownTableLoading = true;
             try {
-                const response = await fetch('/api/fbo/table', this.getFetchOptions({ tableMode: 'breakdown' }));
+                const response = await this.fetchDashboardResponse('/api/fbo/table', this.getFetchOptions({ tableMode: 'breakdown' }));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));

@@ -461,7 +461,7 @@ export function ga4Dashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/ga4/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/ga4/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -488,7 +488,7 @@ export function ga4Dashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/ga4/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/ga4/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -514,7 +514,7 @@ export function ga4Dashboard(config = {}) {
 
             this.sl[section] = true;
             try {
-                const response = await fetch('/api/ga4/table', this.getFetchOptions(section));
+                const response = await this.fetchDashboardResponse('/api/ga4/table', this.getFetchOptions(section));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));

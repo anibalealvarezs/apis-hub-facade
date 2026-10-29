@@ -1647,7 +1647,7 @@
                                                                     <template x-for="(flt, fIdx) in (series.filters || [])" :key="fIdx">
                                                                         <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-2xs hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
                                                                             <span class="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0"></span>
-                                                                            <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx)" :title="getFilterDisplayName(flt, fIdx)"></span>
+                                                                            <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx, series.channel)" :title="getFilterDisplayName(flt, fIdx, series.channel)"></span>
                                                                             <button type="button"
                                                                                     @click.stop="removeSeriesFilter(series.filters, fIdx)"
                                                                                     :title="'{{ __('Remove rule') }}'"
@@ -1840,7 +1840,7 @@
                                                             <template x-for="(flt, fIdx) in (widgetControlsForm.series_filters?.dependent || [])" :key="fIdx">
                                                                 <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-2xs hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
                                                                     <span class="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0"></span>
-                                                                    <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx)" :title="getFilterDisplayName(flt, fIdx)"></span>
+                                                                    <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx, widgetKpiConfig.dependent_channel)" :title="getFilterDisplayName(flt, fIdx, widgetKpiConfig.dependent_channel)"></span>
                                                                     <button type="button"
                                                                             @click.stop="removeSeriesFilter(widgetControlsForm.series_filters.dependent, fIdx)"
                                                                             :title="'{{ __('Remove rule') }}'"
@@ -2306,7 +2306,7 @@
                                                                                     <template x-for="(flt, fIdx) in (widgetControlsForm.series_filters?.['independent_' + idx] || [])" :key="fIdx">
                                                                                         <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-2xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 shadow-2xs hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
                                                                                             <span class="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0"></span>
-                                                                                            <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx)" :title="getFilterDisplayName(flt, fIdx)"></span>
+                                                                                            <span class="truncate max-w-[140px]" x-text="getFilterDisplayName(flt, fIdx, varCfg.independent_channel)" :title="getFilterDisplayName(flt, fIdx, varCfg.independent_channel)"></span>
                                                                                             <button type="button"
                                                                                                     @click.stop="removeSeriesFilter(widgetControlsForm.series_filters['independent_' + idx], fIdx)"
                                                                                                     :title="'{{ __('Remove rule') }}'"

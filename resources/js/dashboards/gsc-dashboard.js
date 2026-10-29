@@ -451,7 +451,7 @@ export function gscDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/gsc/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/gsc/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -482,7 +482,7 @@ export function gscDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/gsc/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/gsc/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -531,7 +531,7 @@ export function gscDashboard(config = {}) {
                         }
                     };
                     
-                    const response = await fetch('/api/gsc/trend', {
+                    const response = await this.fetchDashboardResponse('/api/gsc/trend', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -574,7 +574,7 @@ export function gscDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/gsc/table', this.getFetchOptions(true));
+                const response = await this.fetchDashboardResponse('/api/gsc/table', this.getFetchOptions(true));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));

@@ -21,13 +21,19 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
         window.Alpine = Alpine;
         Alpine.data('uiAssetSelector', uiAssetSelector);
         window.demoDashboard = () => withEntityAttributes({ tenantId: 1, accounts: ['42'], activeTab: 'campaigns', csrfToken: 'test',
-            fetchAll() {}, getFetchOptions() { return {body: '{}'}; }, getCacheKey() { return 'test'; }
+            fetchAll() { this.fetchSummary(); this.fetchChart(); this.fetchTable(); },
+            async fetchSummary() { await this.fetchDashboardResponse('/api/filter-refresh/summary'); },
+            async fetchChart() { await this.fetchDashboardResponse('/api/filter-refresh/chart'); },
+            async fetchTable() { await this.fetchDashboardResponse('/api/filter-refresh/table'); },
+            getFetchOptions() { return {body: '{}'}; }, getCacheKey() { return 'test'; }
         }, 'facebook_marketing');
         Alpine.start();
         </script></body></html>`;
     let attributesUnavailable = false;
+    const refreshResponses = [];
     const server = createServer((request, response) => {
         if (request.url === '/') { response.setHeader('Content-Type', 'text/html'); response.end(html); return; }
+        if (request.url.startsWith('/api/filter-refresh/')) { refreshResponses.push(response); return; }
         if (request.url === '/api/entity-attributes') {
             response.setHeader('Content-Type', 'application/json');
             response.end(JSON.stringify(attributesUnavailable
@@ -47,9 +53,9 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
     page.on('pageerror', error => errors.push(error.message));
     try {
         await page.goto(`http://127.0.0.1:${server.address().port}`);
-        await expect(page.getByText('objective', {exact: true})).toBeVisible();
+        await expect(page.getByText('Objective', {exact: true})).toBeVisible();
         await expect(page.getByRole('combobox', {name: 'Entity', exact: true})).toHaveCount(0);
-        await expect(page.getByText('status', {exact: true})).toHaveCount(0);
+        await expect(page.getByText('Status', {exact: true})).toHaveCount(0);
         await page.getByRole('button', {name: 'All values', exact: true}).click();
         await page.getByText('OUTCOME_SALES', {exact: true}).click();
         await page.getByLabel('Minimum', {exact: true}).fill('10');
@@ -57,13 +63,24 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
         const filters = await page.evaluate(() => JSON.parse(Alpine.$data(document.getElementById('root')).getFetchOptions().body).filters);
         expect(filters['attributes.channeledCampaign.objective'].value).toEqual(['OUTCOME_SALES']);
         expect(filters['attributes.channeledCampaign.budget__1000'].value).toBe('10');
+        await expect.poll(() => refreshResponses.length).toBe(2);
+        await expect(page.getByLabel('Minimum', {exact: true})).toBeDisabled();
+        await expect(page.getByRole('button', {name: 'Clear attribute filters', exact: true})).toBeDisabled();
+        await expect(page.locator('[data-testid="entity-attribute-filters"] fieldset')).toHaveJSProperty('inert', true);
+        refreshResponses[0].end('{}');
+        await expect.poll(() => refreshResponses.length).toBe(3);
+        await expect.poll(() => page.evaluate(() => Alpine.$data(document.getElementById('root')).entityAttributeActiveRequests)).toBe(2);
+        await expect(page.getByLabel('Minimum', {exact: true})).toBeDisabled();
+        refreshResponses[1].end('{}');
+        refreshResponses[2].end('{}');
+        await expect(page.getByLabel('Minimum', {exact: true})).toBeEnabled();
         await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'ads'; });
-        await expect(page.getByText('status', {exact: true})).toBeVisible();
-        await expect(page.getByText('objective', {exact: true})).toHaveCount(0);
+        await expect(page.getByText('Status', {exact: true})).toBeVisible();
+        await expect(page.getByText('Objective', {exact: true})).toHaveCount(0);
         await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'age'; });
         await expect(page.getByTestId('entity-attribute-filters')).toBeHidden();
         await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'campaigns'; });
-        await expect(page.getByText('objective', {exact: true})).toBeVisible();
+        await expect(page.getByText('Objective', {exact: true})).toBeVisible();
         attributesUnavailable = true;
         await page.evaluate(async () => {
             const state = Alpine.$data(document.getElementById('root'));
@@ -76,6 +93,7 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
         await expect(page.getByRole('alert')).toBeHidden();
         expect(errors).toEqual([]);
     } finally {
+        for (const response of refreshResponses) if (!response.writableEnded) response.end('{}');
         await new Promise(done => server.close(done));
     }
 });

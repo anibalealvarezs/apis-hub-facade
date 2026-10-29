@@ -31,15 +31,78 @@ export function compileEntityAttributes(selections, ranges) {
 
 /** Adds the same attribute UI/request semantics to every explorer. */
 export function withEntityAttributes(dashboard, channel) {
+    let refreshTimer = null;
+    let refreshReady = false;
+    let disposed = false;
+    let activeHttpRequests = 0;
+    const queuedHttpRequests = [];
+    const pumpHttpRequests = () => {
+        while (!disposed && activeHttpRequests < 2 && queuedHttpRequests.length) {
+            const task = queuedHttpRequests.shift();
+            activeHttpRequests++;
+            Promise.resolve().then(task.run).then(task.resolve, task.reject).finally(() => {
+                activeHttpRequests--;
+                pumpHttpRequests();
+            });
+        }
+    };
     Object.assign(dashboard, {
         entityAttributeCatalog: {}, entityAttributeSelections: {}, entityAttributeRanges: {},
-        entityAttributeLoading: false, entityAttributeError: '',
+        entityAttributeLoading: false, entityAttributeError: '', entityAttributeDataError: false,
         entityAttributeOptionsKeys: {}, entityAttributeRequest: {}, entityAttributeInitPromise: null, entityAttributeScope: null,
+        entityAttributeActiveRequests: 0, entityAttributeRefreshing: false, entityAttributeRefreshScheduled: false,
+
+        fetchDashboardResponse(url, options) {
+            return new Promise((resolve, reject) => {
+                if (disposed || queuedHttpRequests.length >= 32) {
+                    reject(new Error(disposed ? 'Filter view closed' : 'Too many pending requests. Please retry shortly.'));
+                    return;
+                }
+                queuedHttpRequests.push({ resolve, reject, run: async () => {
+                    const response = await fetch(url, options);
+                    if ([429, 503].includes(response.status)) {
+                        const body = await response.clone().json().catch(() => ({}));
+                        this.entityAttributeDataError = !url.includes('/entity-attributes');
+                        this.entityAttributeError = body.message || body.error || 'This tenant is busy. Please retry shortly.';
+                        throw new Error(this.entityAttributeError);
+                    }
+                    return response;
+                } });
+                pumpHttpRequests();
+            });
+        },
+
+        areEntityAttributeFiltersBusy() {
+            return this.entityAttributeRefreshing || this.entityAttributeActiveRequests > 0;
+        },
+        cancelEntityAttributeRefresh() {
+            clearTimeout(refreshTimer);
+            refreshTimer = null;
+            refreshReady = false;
+            this.entityAttributeRefreshScheduled = false;
+        },
+        async flushEntityAttributeChanges() {
+            if (disposed || !refreshReady || this.areEntityAttributeFiltersBusy()) return;
+            refreshReady = false;
+            this.entityAttributeRefreshScheduled = false;
+            this.entityAttributeRefreshing = true;
+            this.entityAttributeError = '';
+            this.entityAttributeDataError = false;
+            try {
+                await this.fetchAll();
+            } catch (error) {
+                this.entityAttributeError = error.message || 'Unable to refresh attribute filters';
+            } finally {
+                this.entityAttributeRefreshing = false;
+                if (refreshReady) this.flushEntityAttributeChanges();
+            }
+        },
 
         getEntityAttributeFilters() {
             const scope = JSON.stringify([this.accounts !== undefined ? this.accounts : this.account,
                 channel === 'facebook_organic' ? this.activeTab : null]);
             if (this.entityAttributeScope !== null && this.entityAttributeScope !== scope) {
+                this.cancelEntityAttributeRefresh();
                 for (const path of Object.keys(this.entityAttributeCatalog)) {
                     this.entityAttributeSelections[path] = [];
                     this.entityAttributeRanges[path] = { min: '', max: '' };
@@ -67,6 +130,7 @@ export function withEntityAttributes(dashboard, channel) {
                 });
             }
             this.$watch(this.accounts !== undefined ? 'accounts' : 'account', () => {
+                this.cancelEntityAttributeRefresh();
                 this.entityAttributeSelections = {};
                 this.entityAttributeRanges = {};
                 this.entityAttributeOptionsKeys = {};
@@ -95,7 +159,7 @@ export function withEntityAttributes(dashboard, channel) {
                 // the asset, then resolves its current account context.
                 const values = !!relation && selected.length > 0 && selected.every(id => /^\d+$/.test(id)
                     || (channel === 'facebook_organic' && id.includes('|')));
-                const response = await fetch('/api/entity-attributes', {
+                const response = await this.fetchDashboardResponse('/api/entity-attributes', {
                     method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
                     body: JSON.stringify({ tenant: this.tenantId, channel, account: selected, relation: relation || null, values, assetContext: this.activeTab || '' }),
                 });
@@ -119,9 +183,24 @@ export function withEntityAttributes(dashboard, channel) {
         },
         entityAttributesChanged() {
             if (this.tableState) this.tableState.currentPage = 1;
-            this.fetchAll();
+            clearTimeout(refreshTimer);
+            refreshReady = false;
+            this.entityAttributeRefreshScheduled = true;
+            refreshTimer = setTimeout(() => {
+                refreshTimer = null;
+                refreshReady = true;
+                this.flushEntityAttributeChanges();
+            }, 1000);
+        },
+        retryEntityAttributeFilters(relation) {
+            if (this.entityAttributeDataError) {
+                this.entityAttributesChanged();
+            } else {
+                this.loadEntityAttributeOptions(relation);
+            }
         },
         clearEntityAttributes() {
+            if (this.areEntityAttributeFiltersBusy()) return;
             this.entityAttributeSelections = {};
             this.entityAttributeRanges = {};
             for (const path of Object.keys(this.entityAttributeCatalog)) {
@@ -131,6 +210,28 @@ export function withEntityAttributes(dashboard, channel) {
             this.entityAttributesChanged();
         },
     });
+    // Several dashboards start their requests without awaiting them in
+    // fetchAll(). Track each promise so controls unlock only after all finish.
+    for (const method of ['fetchSummary', 'fetchChart', 'fetchTable', 'fetchBreakdownTable', 'fetchSection', 'loadEntityAttributeOptions']) {
+        if (!dashboard[method]) continue;
+        const original = dashboard[method];
+        dashboard[method] = async function (...args) {
+            this.entityAttributeActiveRequests++;
+            try {
+                return await original.apply(this, args);
+            } finally {
+                this.entityAttributeActiveRequests--;
+                if (this.entityAttributeActiveRequests === 0 && refreshReady) this.flushEntityAttributeChanges();
+            }
+        };
+    }
+    const originalDestroy = dashboard.destroy;
+    dashboard.destroy = function () {
+        disposed = true;
+        for (const task of queuedHttpRequests.splice(0)) task.reject(new Error('Filter view closed'));
+        this.cancelEntityAttributeRefresh();
+        originalDestroy?.call(this);
+    };
     const originalOptions = dashboard.getFetchOptions;
     dashboard.getFetchOptions = function (...args) {
         const options = originalOptions.apply(this, args);

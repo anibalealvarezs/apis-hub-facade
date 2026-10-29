@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $middleware->web(append: [
             \App\Http\Middleware\SetUserLocale::class,
+            \App\Http\Middleware\RemoteRequestBackpressure::class,
         ]);
 
         $middleware->alias([

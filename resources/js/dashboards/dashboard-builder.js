@@ -1113,14 +1113,16 @@ export function dashboardBuilder(config = {}) {
             return [];
         },
 
-        getFilterDisplayName(flt, index) {
+        getFilterDisplayName(flt, index, channel = this.filterModalChannel) {
             if (flt?.name && String(flt.name).trim() !== '') {
                 return flt.name.trim();
             }
             if (flt?.dimension) {
                 const op = flt.operator || 'eq';
                 const val = (flt.value !== undefined && flt.value !== null && flt.value !== '') ? ` (${flt.value})` : '';
-                return `${flt.dimension} ${op}${val}`;
+                const definition = channel ? this.getFilterFieldsForSeries(channel, null)[flt.dimension] : null;
+                const label = definition?.label || flt.dimension;
+                return `${label} ${op}${val}`;
             }
             return `Rule #${index + 1}`;
         },

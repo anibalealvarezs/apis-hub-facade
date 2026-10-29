@@ -450,7 +450,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/google-ads/summary', this.getFetchOptions('all'));
+                const response = await this.fetchDashboardResponse('/api/google-ads/summary', this.getFetchOptions('all'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -477,7 +477,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/google-ads/chart', this.getFetchOptions('all'));
+                const response = await this.fetchDashboardResponse('/api/google-ads/chart', this.getFetchOptions('all'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -503,7 +503,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/google-ads/table', this.getFetchOptions('table'));
+                const response = await this.fetchDashboardResponse('/api/google-ads/table', this.getFetchOptions('table'));
                 const data = await response.json();
                 if (!data.error) {
                     const rows = (data.data || []).map(r => {

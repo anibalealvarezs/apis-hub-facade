@@ -337,7 +337,7 @@ export function fbDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/fbm/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/fbm/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -391,7 +391,7 @@ export function fbDashboard(config = {}) {
                         activeTab: this.activeTab
                     };
                     
-                    const response = await fetch('/api/fbm/trend', {
+                    const response = await this.fetchDashboardResponse('/api/fbm/trend', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -439,7 +439,7 @@ export function fbDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/fbm/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/fbm/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -469,7 +469,7 @@ export function fbDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/fbm/table', this.getFetchOptions('table'));
+                const response = await this.fetchDashboardResponse('/api/fbm/table', this.getFetchOptions('table'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
