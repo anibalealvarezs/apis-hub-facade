@@ -1,7 +1,8 @@
+import { withEntityAttributes } from './entity-attributes';
 import { dataTable } from './data-table';
 
 export function fbDashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         accounts: config.accounts || [],
         accountNames: config.accountNames || {},
@@ -1083,7 +1084,7 @@ export function fbDashboard(config = {}) {
             if (num === undefined || num === null) return '0%';
             return (num * 100).toFixed(2) + '%';
         }
-    };
+    }, 'facebook_marketing');
 }
 
 if (typeof window !== 'undefined') {

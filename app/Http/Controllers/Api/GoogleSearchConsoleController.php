@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class GoogleSearchConsoleController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     private function validateRequest(Request $request): array
     {
         return $request->validate([
@@ -141,7 +143,7 @@ class GoogleSearchConsoleController extends Controller
             ];
 
             \Illuminate\Support\Facades\Log::info("GSC Summary Payload: ", $payloads);
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             \Illuminate\Support\Facades\Log::info("GSC Summary Results: ", $results);
 
             if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
@@ -199,7 +201,7 @@ class GoogleSearchConsoleController extends Controller
                 'payloads' => $payloads
             ]);
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             \Illuminate\Support\Facades\Log::info("[GSC_DEBUG] Chart received from aggregateChanneledPool", [
                 'status' => $results['chart']['status'] ?? null,
@@ -265,7 +267,7 @@ class GoogleSearchConsoleController extends Controller
             }
 
             $payloads = ['table' => $tabPayload];
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             if (isset($results['table']['status']) && $results['table']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("GSC Table APIs Hub Error: " . json_encode($results['table']));

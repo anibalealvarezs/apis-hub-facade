@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class GoogleAdsController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     private function validateRequest(Request $request): array
     {
         return $request->validate([
@@ -124,7 +126,7 @@ class GoogleAdsController extends Controller
                 ],
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             $summaryData = $results['summary']['data'][0] ?? [];
             $previousData = $results['previous']['data'][0] ?? [];
@@ -229,7 +231,7 @@ class GoogleAdsController extends Controller
                 ]
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             return response()->json([
                 'chart' => $results['chart']['data'] ?? [],
@@ -298,7 +300,7 @@ class GoogleAdsController extends Controller
                 ]
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_ads', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             $tableData = $results['table']['data'] ?? [];
 

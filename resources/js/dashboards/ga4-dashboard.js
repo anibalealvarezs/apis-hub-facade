@@ -1,3 +1,4 @@
+import { withEntityAttributes } from './entity-attributes';
 import { dataTable } from './data-table';
 
 const COUNTRY_NAME_TO_CODE = {
@@ -60,7 +61,7 @@ const COUNTRY_NAME_TO_CODE = {
 };
 
 export function ga4Dashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         account: config.account || '',
         selectedAccount: config.selectedAccount || '',
@@ -923,7 +924,7 @@ export function ga4Dashboard(config = {}) {
             if (num === undefined || num === null) return '0.00';
             return Number(num).toFixed(2);
         }
-    };
+    }, 'google_analytics');
 }
 
 if (typeof window !== 'undefined') {

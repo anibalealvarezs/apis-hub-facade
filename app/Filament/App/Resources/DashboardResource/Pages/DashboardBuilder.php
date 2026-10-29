@@ -306,6 +306,17 @@ class DashboardBuilder extends Page
         return \App\Services\Analytics\ChannelBreakdownRegistry::getBreakdownsForChannel($channel, $dependency);
     }
 
+    public function getEntityAttributeFieldsForChannel(string $channel): array
+    {
+        $tenant = \Filament\Facades\Filament::getTenant();
+        abort_unless($tenant instanceof \App\Models\Project, 403);
+        $response = app(\App\Services\RemoteEngineService::class)->getEntityAttributes($tenant, $channel);
+        if (($response['status'] ?? null) === 'error') {
+            throw new \RuntimeException($response['error'] ?? 'Unable to discover entity attributes');
+        }
+        return $response['data'] ?? [];
+    }
+
     public static function parseLocalizedValue(mixed $value, ?string $locale = null): string
     {
         if (empty($value)) return '';

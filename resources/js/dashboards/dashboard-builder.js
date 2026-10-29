@@ -936,6 +936,24 @@ export function dashboardBuilder(config = {}) {
         availableLanguages: config.availableLanguages || {},
 
         // ─── Breakdown & Filter Helpers ───
+        entityAttributeFields: {},
+        entityAttributeFieldsLoading: {},
+        entityAttributeFieldsError: '',
+
+        getFilterFieldsForSeries(channel, dependency) {
+            if (channel && !this.entityAttributeFields[channel] && !this.entityAttributeFieldsLoading[channel] && this.$wire) {
+                this.entityAttributeFieldsLoading[channel] = true;
+                this.entityAttributeFieldsError = '';
+                this.$wire.getEntityAttributeFieldsForChannel(channel).then(fields => {
+                    this.entityAttributeFields[channel] = fields || {};
+                }).catch(error => {
+                    this.entityAttributeFieldsError = error.message || 'Unable to load entity attributes';
+                    this.entityAttributeFields[channel] = {};
+                }).finally(() => { this.entityAttributeFieldsLoading[channel] = false; });
+            }
+            return { ...this.getBreakdownsForSeries(channel, dependency), ...(this.entityAttributeFields[channel] || {}) };
+        },
+
         fetchBreakdownsForChannel(ch, dep) {
             if (!ch || !this.$wire) return;
             const cacheKey = ch + (dep ? ('_' + dep) : '');

@@ -207,6 +207,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <div class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''"
                          @click="setTab('appearances')">{{ __('SEARCH APPEARANCE') }}</div>
                 </div>
+                <x-entity-attribute-filters />
             </x-slot:header>
 
             <x-slot:actions>

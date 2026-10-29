@@ -128,6 +128,7 @@
                     <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"
                         x-text="((availableBreakdownTabs.find(tab => tab.value === activeBreakdownTab) || {}).label || '').toUpperCase()"></h3>
                 </div>
+                <x-entity-attribute-filters tab="activeBreakdownTab" />
             </x-slot:header>
 
             <table class="fb-table dash-table-wide">
@@ -165,6 +166,7 @@
         <x-data-table variant="fb" state="postsTable" loading="isTableLoading"
                       search searchPlaceholder="{{ __('Filter rows...') }}">
             <x-slot:header>
+                <x-entity-attribute-filters tab="'posts'" />
                 <div
                     class="p-4 border-b border-gray-200 dark:border-white/5 bg-white dark:bg-transparent flex justify-between items-center">
                     <h3 class="font-bold text-gray-800 dark:text-gray-100 uppercase"

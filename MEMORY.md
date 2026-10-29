@@ -9,6 +9,7 @@
 - Use `D:\laragon\www\_shared\AGENTS.md` and `D:\laragon\www\_shared\MEMORY.md` for cross-repository protocols and workspace-wide learnings.
 - Keep secrets, credentials, tokens, and private endpoints out of this file.
 ## Current notes
+- Entity attribute filtering (2026-10-29): six Data Explorer dashboards share `withEntityAttributes` and `<x-entity-attribute-filters>`; controls consume tenant metadata, offer categorical multiselects and numeric/date bounds, and include filters in chart/summary/table requests and browser cache keys. `AppliesEntityAttributeFilters` forwards only the `attributes.*` bag without replacing account/channel scope. Custom widget filter fields load the same catalog via `DashboardBuilder::getEntityAttributeFieldsForChannel`; rules preserve range operators, lists, and repeated bounds. `/api/entity-attributes` applies `ScopeChannelAssetAccess`. Requires the new tenant attributes endpoint and `apis-hub-api::getEntityAttributes` release first. Stored scalar model fields only; provider JSON is not automatically a typed attribute.
 - Laravel business layer for SaaS management and operational workflows.
 
 ### Interactive Public Demo Dashboard (2026-10-26)

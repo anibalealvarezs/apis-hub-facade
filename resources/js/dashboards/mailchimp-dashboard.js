@@ -1,3 +1,4 @@
+import { withEntityAttributes } from './entity-attributes';
 import { dataTable } from './data-table';
 
 /**
@@ -84,7 +85,7 @@ const EMPTY_SUMMARY = {
 };
 
 export function mailchimpDashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         account: config.account || '',
         selectedAccount: config.selectedAccount || '',
@@ -852,7 +853,7 @@ export function mailchimpDashboard(config = {}) {
                     return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30';
             }
         }
-    };
+    }, 'mailchimp');
 }
 
 if (typeof window !== 'undefined') {

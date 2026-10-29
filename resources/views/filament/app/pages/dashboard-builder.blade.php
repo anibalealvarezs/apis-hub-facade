@@ -2486,6 +2486,7 @@
                 <div class="flex items-center justify-between">
                     <p class="text-xs text-gray-500 dark:text-gray-400 font-medium"
                        x-text="filterModalSeriesTitle ? ('{{ __('Target: ') }}' + filterModalSeriesTitle) : '{{ __('Configure criteria for this series') }}'"></p>
+                    <p x-show="entityAttributeFieldsError" x-text="entityAttributeFieldsError" role="alert" class="text-sm text-red-600"></p>
                     <x-filament::button
                         color="primary"
                         icon="heroicon-o-plus"
@@ -2549,11 +2550,11 @@
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Dimension') }}</label>
                                     <select
                                         x-model="flt.dimension"
-                                        @change="markWidgetControlsDirty()"
+                                        @change="if (!flt.dimension.startsWith('attributes.') && ['gt', 'gte', 'lt', 'lte', 'between'].includes(flt.operator)) flt.operator = 'eq'; markWidgetControlsDirty()"
                                         class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
                                     >
                                         <option value="" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Select Dimension...') }}</option>
-                                        <template x-for="(bDef, bKey) in getBreakdownsForSeries(filterModalChannel, filterModalDependency)" :key="bKey">
+                                        <template x-for="(bDef, bKey) in getFilterFieldsForSeries(filterModalChannel, filterModalDependency)" :key="bKey">
                                             <option :value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" :selected="flt.dimension === bKey" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></option>
                                         </template>
                                     </select>
@@ -2572,6 +2573,11 @@
                                         <option value="not_in" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not In List (Exact match)') }}</option>
                                         <option value="eq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Equals (=)') }}</option>
                                         <option value="neq" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Not Equals (!=)') }}</option>
+                                        <option value="gt" x-show="flt.dimension.startsWith('attributes.')">{{ __('Greater than (>)') }}</option>
+                                        <option value="gte" x-show="flt.dimension.startsWith('attributes.')">{{ __('At least (>=)') }}</option>
+                                        <option value="lt" x-show="flt.dimension.startsWith('attributes.')">{{ __('Less than (<)') }}</option>
+                                        <option value="lte" x-show="flt.dimension.startsWith('attributes.')">{{ __('At most (<=)') }}</option>
+                                        <option value="between" x-show="flt.dimension.startsWith('attributes.')">{{ __('Between (two comma-separated bounds)') }}</option>
                                         <option value="is_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Empty / Null') }}</option>
                                         <option value="is_not_null" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Is Not Empty / Not Null') }}</option>
                                     </select>

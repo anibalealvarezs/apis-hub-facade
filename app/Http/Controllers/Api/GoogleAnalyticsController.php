@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class GoogleAnalyticsController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     private function validateRequest(Request $request): array
     {
         return $request->validate([
@@ -400,7 +402,7 @@ class GoogleAnalyticsController extends Controller
             }
 
             \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Payloads]:", $payloads);
-            $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Engine Results]:", $results);
 
             $summary = [];
@@ -534,7 +536,7 @@ class GoogleAnalyticsController extends Controller
             }
 
             \Illuminate\Support\Facades\Log::error("GA4 Chart Payload:", $payloads);
-            $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             \Illuminate\Support\Facades\Log::error("GA4 Chart Results:", $results);
 
             if ($breakdownDim) {
@@ -710,7 +712,7 @@ class GoogleAnalyticsController extends Controller
             }
 
             \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Engine Payloads]:", ['payloads' => $payloads]);
-            $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Engine Raw Response]:", ['results' => $results]);
 
             $dataSets = [];

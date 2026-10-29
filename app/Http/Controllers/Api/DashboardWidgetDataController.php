@@ -3857,7 +3857,7 @@
                         $filterPayload = ['operator' => 'is_null'];
                     } elseif ($op === 'is_not_null') {
                         $filterPayload = ['operator' => 'is_not_null'];
-                    } elseif ($op === 'in' || $op === 'not_in') {
+                    } elseif ($op === 'in' || $op === 'not_in' || $op === 'between') {
                         if (is_string($val) && str_contains($val, ',')) {
                             $rawParts = explode(',', $val);
                         } elseif (is_array($val)) {

@@ -242,3 +242,5 @@ Route::get('/pv/{token}/embed.js', [\App\Http\Controllers\PublicViewEmbedControl
     ->middleware(['throttle:60,1', \App\Http\Middleware\VerifyBrowserUserAgent::class])
     ->where('token', '[A-Za-z0-9._-]+');
 
+
+Route::post('/api/entity-attributes', \App\Http\Controllers\Api\EntityAttributeController::class)->middleware(['web', 'auth']);

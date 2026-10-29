@@ -255,6 +255,7 @@
                              @click="setTab('{{ $tabKey }}')">{{ $tabLabel }}</div>
                     @endforeach
                 </div>
+                <x-entity-attribute-filters />
             </x-slot:header>
 
             <table class="fb-table">

@@ -9,6 +9,11 @@
 
     class RemoteEngineService
     {
+        public function getEntityAttributes(Project $project, string $channel, array $payload = []): array
+        {
+            return $this->execute($project, fn(ApisHubApi $client) => $client->getEntityAttributes($channel, $payload), 60);
+        }
+
         /**
          * Get an instance of the ApisHubApi client for a project.
          */

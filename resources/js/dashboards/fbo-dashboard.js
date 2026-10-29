@@ -1,7 +1,8 @@
+import { withEntityAttributes } from './entity-attributes';
 import { dataTable } from './data-table';
 
 export function fboDashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         accounts: config.accounts || [],
         accountNames: config.accountNames || {},
@@ -1098,7 +1099,7 @@ export function fboDashboard(config = {}) {
 
             return `${paddedMinutes}:${paddedSeconds}`;
         }
-    };
+    }, 'facebook_organic');
 }
 
 if (typeof window !== 'undefined') {
