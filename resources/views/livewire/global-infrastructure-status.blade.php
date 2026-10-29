@@ -1,10 +1,10 @@
 @php
     $isProcessing = $latestLog && in_array($latestLog->status, ['running', 'pending']);
 
-    $statusKey = $isProcessing ? 'provisioning' : ($tenant?->health_status ?? 'undeployed');
+    $statusKey = $tenant?->health_status === 'upgrading' ? 'upgrading' : ($isProcessing ? 'provisioning' : ($tenant?->health_status ?? 'undeployed'));
 
     $statusColorRGB = match($statusKey) {
-        'provisioning' => '59, 130, 246',
+        'provisioning', 'upgrading' => '59, 130, 246',
         'online', 'active', 'healthy' => '34, 197, 94',
         'offline', 'failed', 'error' => '239, 68, 68',
         'suspended', 'stopping_workers', 'ready_for_auth', 'disputed' => '234, 179, 8',
@@ -13,6 +13,7 @@
 
     $statusTextArray = [
         'provisioning' => __('Provisioning...'),
+        'upgrading' => __('Upgrading...'),
         'online' => __('Active and Online'),
         'active' => __('Active and Online'),
         'healthy' => __('Active and Online'),

@@ -1,4 +1,6 @@
 {
+    "Upgrading...": "Actualizando...",
+    "The tenant is being upgraded. Requests will resume when the upgrade finishes.": "El tenant se está actualizando. Las solicitudes se reanudarán cuando termine la actualización.",
     "Billing Event": "Evento de facturación",
     "Budget": "Presupuesto",
     "Buying Type": "Tipo de compra",

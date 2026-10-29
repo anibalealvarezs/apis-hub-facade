@@ -103,6 +103,18 @@
          */
         public function execute(Project $project, callable $callback, int $timeout = 15)
         {
+            // Queue workers and Livewire can hold a stale Project instance. Read
+            // current local state before constructing any tenant HTTP client.
+            $healthStatus = $project->exists
+                ? $project->newQuery()->whereKey($project->getKey())->value('health_status')
+                : $project->health_status;
+            if ($healthStatus === 'upgrading') {
+                return [
+                    'status' => 'error', 'error_code' => 'tenant_upgrading',
+                    'http_status' => 503, 'retryable' => false, 'retry_after' => 30,
+                    'message' => __('The tenant is being upgraded. Requests will resume when the upgrade finishes.'),
+                ];
+            }
             if (!$project->hasBeenDeployed()) {
                 Log::debug("Remote Engine Action skipped: Project '{$project->name}' has not been deployed yet.");
 
