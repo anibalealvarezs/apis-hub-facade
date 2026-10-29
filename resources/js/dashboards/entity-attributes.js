@@ -50,7 +50,8 @@ export function withEntityAttributes(dashboard, channel) {
         },
         getEntityAttributeFields(relation) {
             return Object.entries(this.entityAttributeCatalog).filter(([, field]) => field.relation === relation
-                && !['id', 'createdAt', 'updatedAt', 'platformId', 'canonicalId'].includes(field.field));
+                && !['id', 'createdAt', 'updatedAt', 'platformId', 'canonicalId',
+                    'version', 'platformCreatedAt', 'platform_created_at', 'startDate', 'start_date', 'endDate', 'end_date'].includes(field.field));
         },
         isEntityAttributeRange(field) {
             return ['integer', 'smallint', 'bigint', 'float', 'decimal', 'date', 'datetime', 'datetime_immutable', 'date_immutable'].includes(field.type);
