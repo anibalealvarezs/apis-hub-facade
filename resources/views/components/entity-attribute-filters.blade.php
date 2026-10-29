@@ -1,16 +1,10 @@
 @props(['tab' => 'activeTab'])
 <div x-data="{ attributeRelation: '' }"
-     x-init="await initEntityAttributes(); attributeRelation = entityAttributeRelationForTab({{ $tab }}); loadEntityAttributeOptions(attributeRelation); $watch(@js($tab), value => { attributeRelation = entityAttributeRelationForTab(value); loadEntityAttributeOptions(attributeRelation); }); $watch(typeof accounts !== 'undefined' ? 'accounts' : 'account', () => loadEntityAttributeOptions(attributeRelation));"
+     x-init="await initEntityAttributes(); attributeRelation = entityAttributeRelationForTab({{ $tab }}); if (attributeRelation) loadEntityAttributeOptions(attributeRelation); $watch(@js($tab), value => { attributeRelation = entityAttributeRelationForTab(value); if (attributeRelation) loadEntityAttributeOptions(attributeRelation); }); $watch(typeof accounts !== 'undefined' ? 'accounts' : 'account', () => { if (attributeRelation) loadEntityAttributeOptions(attributeRelation); });"
+     x-show="attributeRelation !== ''" x-cloak data-testid="entity-attribute-filters"
      class="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
     <div class="flex items-center flex-wrap gap-3">
         <span class="text-sm font-semibold">{{ __('Entity attributes') }}</span>
-        <select x-model="attributeRelation" @change="loadEntityAttributeOptions(attributeRelation)" aria-label="{{ __('Entity') }}"
-                class="text-sm rounded-lg border-gray-300 dark:bg-gray-800 dark:border-gray-600">
-            <option value="">{{ __('Select an entity') }}</option>
-            <template x-for="relation in getEntityAttributeRelations()" :key="relation">
-                <option :value="relation" x-text="relation.replace(/([A-Z])/g, ' $1')"></option>
-            </template>
-        </select>
         <span x-show="entityAttributeLoading" class="text-xs text-gray-500">{{ __('Loading attributes…') }}</span>
         <button type="button" @click="clearEntityAttributes()" class="text-sm text-primary-600">{{ __('Clear attribute filters') }}</button>
         <span class="text-xs text-gray-500" x-text="Object.keys(getEntityAttributeFilters()).length + ' {{ __('active') }}'"></span>

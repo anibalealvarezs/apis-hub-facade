@@ -41,6 +41,8 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
     try {
         await page.goto(`http://127.0.0.1:${server.address().port}`);
         await expect(page.getByText('objective', {exact: true})).toBeVisible();
+        await expect(page.getByRole('combobox', {name: 'Entity', exact: true})).toHaveCount(0);
+        await expect(page.getByText('status', {exact: true})).toHaveCount(0);
         await page.getByRole('button', {name: 'All values', exact: true}).click();
         await page.getByText('OUTCOME_SALES', {exact: true}).click();
         await page.getByLabel('Minimum', {exact: true}).fill('10');
@@ -50,6 +52,11 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
         expect(filters['attributes.channeledCampaign.budget__1000'].value).toBe('10');
         await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'ads'; });
         await expect(page.getByText('status', {exact: true})).toBeVisible();
+        await expect(page.getByText('objective', {exact: true})).toHaveCount(0);
+        await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'age'; });
+        await expect(page.getByTestId('entity-attribute-filters')).toBeHidden();
+        await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'campaigns'; });
+        await expect(page.getByText('objective', {exact: true})).toBeVisible();
         expect(errors).toEqual([]);
     } finally {
         await new Promise(done => server.close(done));

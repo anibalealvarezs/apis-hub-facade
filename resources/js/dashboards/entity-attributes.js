@@ -1,11 +1,20 @@
 const TAB_RELATIONS = {
-    campaigns: 'channeledCampaign', automations: 'channeledCampaign',
-    adsets: 'channeledAdGroup', adgroups: 'channeledAdGroup', ads: 'channeledAd',
-    audiences: 'channeledAccount', pages: 'page', posts: 'post', events: 'channeledEvent',
-    queries: 'query', countries: 'country', devices: 'device',
-    traffic_pages: 'page', traffic_countries: 'country', traffic_devices: 'device',
-    adtouchpoints_adgroups: 'channeledAdGroup', adtouchpoints_content: 'creative',
-    fb_pages: 'page', ig_accounts: 'channeledAccount',
+    facebook_marketing: {
+        campaigns: 'channeledCampaign', adsets: 'channeledAdGroup', ads: 'channeledAd',
+    },
+    google_ads: {
+        campaigns: 'channeledCampaign', adgroups: 'channeledAdGroup', ads: 'channeledAd',
+        devices: 'device', search_terms: 'query', queries: 'query',
+    },
+    google_search_console: { queries: 'query', countries: 'country', devices: 'device' },
+    google_analytics: {
+        campaigns: 'channeledCampaign', adgroups: 'channeledAdGroup', events: 'event',
+        traffic_countries: 'country', traffic_devices: 'device',
+        adtouchpoints_adgroups: 'channeledAdGroup', adtouchpoints_terms: 'channeledAdGroup',
+        adtouchpoints_content: 'channeledAd',
+    },
+    facebook_organic: { posts: 'post' },
+    mailchimp: { campaigns: 'channeledCampaign', automations: 'channeledCampaign', audiences: 'channeledAccount' },
 };
 
 export function compileEntityAttributes(selections, ranges) {
@@ -24,7 +33,7 @@ export function compileEntityAttributes(selections, ranges) {
 export function withEntityAttributes(dashboard, channel) {
     Object.assign(dashboard, {
         entityAttributeCatalog: {}, entityAttributeSelections: {}, entityAttributeRanges: {},
-        entityAttributeLoading: false, entityAttributeError: '', entityAttributeRelation: '',
+        entityAttributeLoading: false, entityAttributeError: '',
         entityAttributeOptionsKeys: {}, entityAttributeRequest: {}, entityAttributeInitPromise: null, entityAttributeScope: null,
 
         getEntityAttributeFilters() {
@@ -39,10 +48,7 @@ export function withEntityAttributes(dashboard, channel) {
             this.entityAttributeScope = scope;
             return compileEntityAttributes(this.entityAttributeSelections, this.entityAttributeRanges);
         },
-        getEntityAttributeRelations() {
-            return [...new Set(Object.values(this.entityAttributeCatalog).map(field => field.relation))];
-        },
-        getEntityAttributeFields(relation = this.entityAttributeRelation) {
+        getEntityAttributeFields(relation) {
             return Object.entries(this.entityAttributeCatalog).filter(([, field]) => field.relation === relation
                 && !['id', 'createdAt', 'updatedAt', 'platformId', 'canonicalId'].includes(field.field));
         },
@@ -72,9 +78,9 @@ export function withEntityAttributes(dashboard, channel) {
             return this.entityAttributeInitPromise;
         },
         entityAttributeRelationForTab(tab) {
-            return TAB_RELATIONS[tab] || '';
+            return TAB_RELATIONS[channel]?.[tab] || '';
         },
-        async loadEntityAttributeOptions(relation = this.entityAttributeRelation) {
+        async loadEntityAttributeOptions(relation = '') {
             const accounts = (this.accounts !== undefined ? this.accounts : this.account) || [];
             const selected = (Array.isArray(accounts) ? accounts : [accounts]).map(String);
             const key = JSON.stringify([selected, relation, this.activeTab]);
