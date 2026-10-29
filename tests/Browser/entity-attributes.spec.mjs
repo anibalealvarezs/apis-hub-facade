@@ -25,9 +25,16 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
         }, 'facebook_marketing');
         Alpine.start();
         </script></body></html>`;
+    let attributesUnavailable = false;
     const server = createServer((request, response) => {
         if (request.url === '/') { response.setHeader('Content-Type', 'text/html'); response.end(html); return; }
-        if (request.url === '/api/entity-attributes') { response.setHeader('Content-Type', 'application/json'); response.end(JSON.stringify({status: 'success', data: catalog})); return; }
+        if (request.url === '/api/entity-attributes') {
+            response.setHeader('Content-Type', 'application/json');
+            response.end(JSON.stringify(attributesUnavailable
+                ? {status: 'error', message: 'Attribute filters are unavailable on this tenant. Update the tenant and reload this page.'}
+                : {status: 'success', data: catalog}));
+            return;
+        }
         const path = request.url.split('?')[0];
         if (!path.startsWith('/resources/js/') && !path.startsWith('/node_modules/alpinejs/')) { response.writeHead(404).end(); return; }
         try {
@@ -57,6 +64,16 @@ test('real Blade controls initialize, submit multiselects and bounds, and follow
         await expect(page.getByTestId('entity-attribute-filters')).toBeHidden();
         await page.evaluate(() => { Alpine.$data(document.getElementById('root')).activeTab = 'campaigns'; });
         await expect(page.getByText('objective', {exact: true})).toBeVisible();
+        attributesUnavailable = true;
+        await page.evaluate(async () => {
+            const state = Alpine.$data(document.getElementById('root'));
+            state.entityAttributeOptionsKeys = {};
+            await state.loadEntityAttributeOptions('channeledCampaign');
+        });
+        await expect(page.getByRole('alert')).toContainText('Update the tenant');
+        attributesUnavailable = false;
+        await page.getByRole('button', {name: 'Retry attribute filters', exact: true}).click();
+        await expect(page.getByRole('alert')).toBeHidden();
         expect(errors).toEqual([]);
     } finally {
         await new Promise(done => server.close(done));

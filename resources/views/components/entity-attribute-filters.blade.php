@@ -10,6 +10,8 @@
         <span class="text-xs text-gray-500" x-text="Object.keys(getEntityAttributeFilters()).length + ' {{ __('active') }}'"></span>
     </div>
     <p x-show="entityAttributeError" x-text="entityAttributeError" role="alert" class="text-sm text-red-600"></p>
+    <button type="button" x-show="entityAttributeError && !entityAttributeLoading"
+            @click="loadEntityAttributeOptions(attributeRelation)" class="text-sm text-primary-600">{{ __('Retry attribute filters') }}</button>
     <div class="flex flex-wrap gap-4">
         <template x-for="([path, field]) in getEntityAttributeFields(attributeRelation)" :key="path">
             <div class="space-y-1">

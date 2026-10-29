@@ -11,7 +11,19 @@
     {
         public function getEntityAttributes(Project $project, string $channel, array $payload = []): array
         {
-            return $this->execute($project, fn(ApisHubApi $client) => $client->getEntityAttributes($channel, $payload), 60);
+            return $this->execute($project, function (ApisHubApi $client) use ($channel, $payload): array {
+                try {
+                    return $client->getEntityAttributes($channel, $payload);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    if ($error->getResponse()->getStatusCode() !== 405) throw $error;
+
+                    return [
+                        'status' => 'error',
+                        'error_code' => 'entity_attributes_unavailable',
+                        'message' => 'Attribute filters are unavailable on this tenant. Update the tenant and reload this page.',
+                    ];
+                }
+            }, 60);
         }
 
         /**

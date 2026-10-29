@@ -312,7 +312,7 @@ class DashboardBuilder extends Page
         abort_unless($tenant instanceof \App\Models\Project, 403);
         $response = app(\App\Services\RemoteEngineService::class)->getEntityAttributes($tenant, $channel);
         if (($response['status'] ?? null) === 'error') {
-            throw new \RuntimeException($response['error'] ?? 'Unable to discover entity attributes');
+            throw new \RuntimeException($response['error'] ?? $response['message'] ?? 'Unable to discover entity attributes');
         }
         return $response['data'] ?? [];
     }
