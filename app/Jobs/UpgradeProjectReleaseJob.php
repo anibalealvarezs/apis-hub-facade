@@ -134,13 +134,13 @@ class UpgradeProjectReleaseJob implements ShouldQueue
         } catch (\Throwable $e) {
             $deploymentLog->update([
                 'status' => 'failed',
-                'output' => $deploymentLog->output . "\n\n=== EXCEPTION ===\n" . $e->getMessage() . "\n" . $e->getTraceAsString(),
+                'output' => $deploymentLog->output . "\n\n=== EXCEPTION ===\nUnexpected upgrade error (" . get_class($e) . "). Remote state is unknown; inspect before retrying.",
                 'completed_at' => now(),
             ]);
 
             $this->project->update(['health_status' => 'error']);
 
-            Log::error("Upgrade exception for project {$this->project->id}", ['exception' => $e]);
+            Log::error("Upgrade exception for project {$this->project->id}", ['exception_class' => get_class($e)]);
         }
     }
 
@@ -157,10 +157,10 @@ class UpgradeProjectReleaseJob implements ShouldQueue
             ->first()
             ?->update([
                 'status' => 'failed',
-                'output' => "FATAL ERROR / TIMEOUT: The upgrade process exceeded the queue execution limit or was terminated by the worker.\n\n" . ($exception?->getMessage() ?? 'Unknown error'),
+                'output' => "FATAL ERROR / TIMEOUT: The upgrade process exceeded the queue execution limit or was terminated by the worker.\n\n" . ($exception ? get_class($exception) : 'Unknown error'),
                 'completed_at' => now(),
             ]);
 
-        Log::error("UpgradeProjectReleaseJob permanently failed for project {$this->project->id}: " . ($exception?->getMessage() ?? 'Unknown error'));
+        Log::error("UpgradeProjectReleaseJob permanently failed for project {$this->project->id}", ['exception_class' => $exception ? get_class($exception) : null]);
     }
 }

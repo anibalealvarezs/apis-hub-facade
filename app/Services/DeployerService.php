@@ -561,7 +561,8 @@ EOT;
         try {
             $remoteEscapedDir = escapeshellarg($dir);
             $remoteEscapedPath = escapeshellarg($remotePath);
-            $remoteCmd = "mkdir -p {$remoteEscapedDir} && cat > {$remoteEscapedPath} && chmod {$chmodOctal} {$remoteEscapedPath}";
+            $temporaryPath = escapeshellarg($remotePath.'.tmp.'.bin2hex(random_bytes(8)));
+            $remoteCmd = "mkdir -p {$remoteEscapedDir} && (umask 077; cat > {$temporaryPath}) && chmod {$chmodOctal} {$temporaryPath} && mv {$temporaryPath} {$remoteEscapedPath}";
 
             $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} " . escapeshellarg($remoteCmd);
 
@@ -576,6 +577,10 @@ EOT;
             }
 
             return ['status' => 'success', 'output' => $result->output()];
+        } catch (\Throwable $error) {
+            // Process exceptions can embed commands or stdin containing credentials.
+            return ['status' => 'error', 'code' => 'ssh_write_failed',
+                'output' => 'Remote file write failed ('.get_class($error).'). Inspect the remote file before retrying.'];
         } finally {
             if (file_exists($tmpKeyPath)) {
                 unlink($tmpKeyPath);
@@ -606,7 +611,9 @@ EOT;
 
         try {
             // 2. Ejecutar con la identity explicitamente - Aumentamos timeout a 600s (10 min)
-            $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} \"{$allCommands}\"";
+            // Pass the remote script as one argument; a local shell must not expand
+            // its variables or consume its nested quotes before SSH receives it.
+            $sshCmd = ['ssh', '-i', $tmpKeyPath, '-o', 'StrictHostKeyChecking=no', "{$server->ssh_user}@{$server->ip_address}", $allCommands];
             $result = Process::timeout($timeout)->run($sshCmd);
 
             if ($result->failed()) {
@@ -617,6 +624,13 @@ EOT;
             }
 
             return ['status' => 'success', 'output' => $result->output()];
+        } catch (\Illuminate\Process\Exceptions\ProcessTimedOutException $error) {
+            // The exception message contains the full command, including .env secrets.
+            return ['status' => 'error', 'code' => 'ssh_timeout',
+                'output' => "Remote command exceeded {$timeout} seconds. The remote process may still be running.\nSTDOUT:\n".$error->result->output()."\nSTDERR:\n".$error->result->errorOutput()];
+        } catch (\Throwable $error) {
+            return ['status' => 'error', 'code' => 'ssh_execution_failed',
+                'output' => 'SSH execution failed ('.get_class($error).'). Remote state is unknown; inspect before retrying.'];
         } finally {
             // 3. Limpiar la llave temporal siempre
             if (file_exists($tmpKeyPath)) {
@@ -813,6 +827,11 @@ EOT;
             ];
         }
 
+        // Secrets travel over stdin, never as part of a process command/exception.
+        // Atomically prepare .env before stopping the currently serving containers.
+        $envWrite = $this->writeRemoteFile($project->server, "{$path}/.env", $this->generateEnvContent($project, $targetRelease), 0600, 120);
+        if (($envWrite['status'] ?? 'error') !== 'success') return $envWrite;
+
         $commands = [
             "cd {$path}",
             // 1. Fetch and checkout new version
@@ -823,9 +842,6 @@ EOT;
             // 2. Kill current active workers instantly
             "docker compose stop",
             
-            // 2.5. Update .env with fresh variables (including TYPESAFE_API_KEY)
-            "echo '{$this->generateEnvContent($project, $targetRelease)}' > {$path}/.env",
-
             // 3. Build the new images based on the target version
             "docker compose build",
             
@@ -836,17 +852,18 @@ EOT;
             // __MIGRATION_FAILED__ marks the point of no return: migrations may already be
             // partially applied, so a code rollback is no longer safe. Past this point
             // failures are escalated instead of auto-reverted.
-            "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo '__MIGRATION_FAILED__'; echo 'CRITICAL: Upgrade failed! Initiating Git rollback to {$oldTag}...'; git checkout {$oldTag}; bash bin/full-deploy.sh; exit 1; fi",
+            "echo '__MIGRATIONS_STARTED__'",
+            "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo '__MIGRATION_FAILED__'; exit 1; fi",
             "echo '__MIGRATIONS_APPLIED__'",
             
-            // 4.5. Run non-blocking historical query semantic classification backfill
-            "docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true",
-
             // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
             "bash bin/full-deploy.sh",
 
             // 6. Force-recreate master to ensure the new code and build are running immediately
-            "docker compose up -d --force-recreate --remove-orphans master"
+            "docker compose up -d --force-recreate --remove-orphans master",
+            // Optional classification must never delay the API restart. Group the
+            // failure handler so it cannot mask failures earlier in the && chain.
+            "(docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true)"
         ];
 
         $result = $this->runSshCommands($project->server, $commands, timeout: 1100);
@@ -860,7 +877,7 @@ EOT;
         // Anything that happened before the Migration Sequencer started is reversible:
         // the schema is untouched, so returning to the previous tag cannot desynchronise
         // code from database. Once either sentinel is present we stop and escalate.
-        if (str_contains($output, self::MIGRATION_FAILED_MARKER) || str_contains($output, self::MIGRATIONS_APPLIED_MARKER)) {
+        if (str_contains($output, self::MIGRATIONS_STARTED_MARKER) || str_contains($output, self::MIGRATION_FAILED_MARKER) || str_contains($output, self::MIGRATIONS_APPLIED_MARKER)) {
             Log::error("Upgrade of {$project->name} to {$targetRelease->version_tag} failed after migrations started. Automatic rollback skipped; manual intervention required.\n{$output}");
 
             $result['code'] = 'upgrade_failed_after_migration';
@@ -885,6 +902,7 @@ EOT;
      * single-call timeout budget the Docker build relies on).
      */
     public const MIGRATION_FAILED_MARKER = '__MIGRATION_FAILED__';
+    public const MIGRATIONS_STARTED_MARKER = '__MIGRATIONS_STARTED__';
     public const MIGRATIONS_APPLIED_MARKER = '__MIGRATIONS_APPLIED__';
 
     /**

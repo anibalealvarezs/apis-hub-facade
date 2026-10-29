@@ -57,12 +57,11 @@
             $handlerStack->push(\GuzzleHttp\Middleware::mapRequest(function (\Psr\Http\Message\RequestInterface $request) use ($actor) {
                 $request = $request->withHeader('X-Request-Actor', $actor);
                 $body = (string)$request->getBody();
-                $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000).'...[truncated]' : $body;
                 \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Outgoing request', [
                     'method'  => $request->getMethod(),
                     'uri'     => (string)$request->getUri(),
-                    'headers' => $request->getHeaders(),
-                    'body'    => $truncated,
+                    'headers' => array_filter($request->getHeaders(), static fn ($name) => in_array(strtolower($name), ['accept', 'content-type', 'user-agent'], true), ARRAY_FILTER_USE_KEY),
+                    'body_bytes' => strlen($body),
                 ]);
                 if ($request->getBody()->isSeekable()) {
                     $request->getBody()->rewind();
@@ -72,10 +71,9 @@
             }));
             $handlerStack->push(\GuzzleHttp\Middleware::mapResponse(function (\Psr\Http\Message\ResponseInterface $response) {
                 $body = (string)$response->getBody();
-                $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000).'...[truncated]' : $body;
                 \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Incoming response', [
                     'status' => $response->getStatusCode(),
-                    'body'   => $truncated,
+                    'body_bytes' => strlen($body),
                 ]);
                 if ($response->getBody()->isSeekable()) {
                     $response->getBody()->rewind();
