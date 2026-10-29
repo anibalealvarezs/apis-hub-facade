@@ -14,11 +14,14 @@ class ProjectDeploymentLog extends Model
         'output',
         'started_at',
         'completed_at',
+        'progress_stage',
+        'progress_updated_at',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'progress_updated_at' => 'datetime',
     ];
 
     public function project()
@@ -29,6 +32,9 @@ class ProjectDeploymentLog extends Model
     public function getSummaryMessage(): string
     {
         $output = trim($this->output ?? '');
+        if ($this->status === 'running' && isset(\App\Services\UpgradeProgress::LABELS[$this->progress_stage])) {
+            return __(\App\Services\UpgradeProgress::LABELS[$this->progress_stage]);
+        }
 
         if ($this->status === 'rolled_back') {
             return __('The upgrade was rolled back automatically. The project is running its previous version again.');

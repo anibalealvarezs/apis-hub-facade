@@ -737,7 +737,8 @@ class ProjectSettings extends Page
                     if (is_null($project->last_deployed_at)) {
                         return __('This project has not been deployed yet. The upgrade will only update the target version — the initial deployment will use the new version.');
                     }
-                    return __('Are you sure you want to upgrade your project to the newer version? This will deploy the new version to your infrastructure.');
+                    $target = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
+                    return app(\App\Services\UpgradeAdvisory::class)->describe($project, $target);
                 })
                 ->form([
                     TextInput::make('confirmation')

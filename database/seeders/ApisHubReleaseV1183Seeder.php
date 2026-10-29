@@ -16,7 +16,9 @@ class ApisHubReleaseV1183Seeder extends Seeder
             $schema[$profile->getChannelKey()] = $profile->getSchemaDefinition();
         }
 
-        DB::transaction(function () use ($schema) {
+        $impact = \Illuminate\Support\Facades\Schema::hasColumn('apis_hub_releases', 'upgrade_impact')
+            ? ['upgrade_impact' => [['introduced_in' => '1.18.3', 'channel' => 'google_search_console', 'label' => 'Google Search Console']]] : [];
+        DB::transaction(function () use ($schema, $impact) {
             $previous = ApisHubRelease::where('version_tag', 'v1.18.2')->first();
             $release = ApisHubRelease::updateOrCreate(
                 ['version_tag' => 'v1.18.3'],
@@ -41,6 +43,7 @@ MARKDOWN,
                     // Tenant version migrations run through the standard upgrade process.
                     // Registration must not trigger a resync or dispatch tenant upgrades.
                     'upgrade_commands' => [],
+                    ...$impact,
                 ]
             );
 

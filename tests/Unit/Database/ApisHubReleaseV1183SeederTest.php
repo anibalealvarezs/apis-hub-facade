@@ -29,6 +29,7 @@ class ApisHubReleaseV1183SeederTest extends TestCase
             $table->json('supported_channels')->nullable();
             $table->json('config_schemas')->nullable();
             $table->json('upgrade_commands')->nullable();
+            $table->json('upgrade_impact')->nullable();
             $table->timestamps();
         });
     }
@@ -67,5 +68,20 @@ class ApisHubReleaseV1183SeederTest extends TestCase
         self::assertSame(array_keys(app(ChannelProfileRegistry::class)->all()), $release->supported_channels);
         self::assertTrue($release->is_active);
         self::assertTrue($release->is_default);
+    }
+
+    public function testReleaseRegistrationBeforeProgressMigrationAndMetadataBackfill(): void
+    {
+        $schema = DB::connection()->getSchemaBuilder();
+        $schema->table('apis_hub_releases', fn (Blueprint $table) => $table->dropColumn('upgrade_impact'));
+        (new ApisHubReleaseV1183Seeder())->run();
+        $schema->create('project_deployment_logs', fn (Blueprint $table) => $table->id());
+        $migration = require database_path('migrations/2026_10_29_230000_add_upgrade_progress.php');
+        $migration->up();
+        self::assertTrue($schema->hasColumn('project_deployment_logs', 'progress_stage'));
+        self::assertTrue($schema->hasColumn('project_deployment_logs', 'progress_updated_at'));
+        self::assertSame('google_search_console', ApisHubRelease::where('version_tag', 'v1.18.3')->sole()->upgrade_impact[0]['channel']);
+        $migration->down();
+        self::assertFalse($schema->hasColumn('project_deployment_logs', 'progress_stage'));
     }
 }

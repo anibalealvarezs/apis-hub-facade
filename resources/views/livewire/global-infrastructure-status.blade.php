@@ -28,12 +28,19 @@
     ];
 
     $statusText = $statusTextArray[$statusKey] ?? __('Unknown');
+    if ($statusKey === 'upgrading' && $latestLog?->status === 'running' && $latestLog->progress_stage) {
+        $statusText = $latestLog->getSummaryMessage();
+    }
+    $statusTitle = $statusText;
+    if ($statusKey === 'upgrading' && $latestLog?->progress_updated_at) {
+        $statusTitle .= ' — '.__('Last progress update :time', ['time' => $latestLog->progress_updated_at->diffForHumans()]);
+    }
 
     $showSync = $syncPercentage !== null;
 @endphp
 
 <div class="flex-1 flex items-center justify-center gap-4 px-2" wire:poll.30s>
-    <div class="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-white/5 rounded-lg" title="{{ $statusText }}">
+    <div class="flex items-center gap-1.5 px-2 py-1 bg-gray-50 dark:bg-white/5 rounded-lg" title="{{ $statusTitle }}">
         <div class="relative flex h-3 w-3 shrink-0">
             @if($isProcessing)
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
@@ -42,7 +49,7 @@
             <span class="relative inline-flex rounded-full h-3 w-3 {{ $isProcessing ? 'animate-pulse' : '' }}"
                   style="background-color: rgb({{ $statusColorRGB }});"></span>
         </div>
-        <span class="topbar-status-text hidden lg:inline text-xs font-medium text-gray-600 dark:text-gray-200 max-w-[120px] truncate">
+        <span class="topbar-status-text hidden lg:inline text-xs font-medium text-gray-600 dark:text-gray-200 max-w-[240px] truncate">
             {{ $statusText }}
         </span>
     </div>

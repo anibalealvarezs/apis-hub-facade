@@ -599,7 +599,7 @@ EOT;
     /**
      * Run commands over SSH on the remote server using the provided identity.
      */
-    public function runSshCommands(Server $server, array $commands, ?int $timeout = null)
+    public function runSshCommands(Server $server, array $commands, ?int $timeout = null, ?callable $onOutput = null)
     {
         $allCommands = implode(" && ", $commands);
         $timeout = $timeout ?? 600;
@@ -614,7 +614,7 @@ EOT;
             // Pass the remote script as one argument; a local shell must not expand
             // its variables or consume its nested quotes before SSH receives it.
             $sshCmd = ['ssh', '-i', $tmpKeyPath, '-o', 'StrictHostKeyChecking=no', "{$server->ssh_user}@{$server->ip_address}", $allCommands];
-            $result = Process::timeout($timeout)->run($sshCmd);
+            $result = Process::timeout($timeout)->run($sshCmd, $onOutput);
 
             if ($result->failed()) {
                 $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
@@ -784,7 +784,7 @@ EOT;
      * Note: Containers are replaced immediately (no graceful drain). APIs Hub handles
      * job re-scheduling on restart via its own resilient queue logic.
      */
-    public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease): array
+    public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease, ?callable $onProgress = null): array
     {
         // If the project has never been deployed, do not attempt to run remote Docker/migration commands.
         // The target version is simply recorded in the database, and full deployment & migrations will execute on initial deployment.
@@ -843,6 +843,7 @@ EOT;
             "docker compose stop",
             
             // 3. Build the new images based on the target version
+            "echo '__UPGRADE_STAGE__:building'",
             "docker compose build",
             
             // 3.5. Ensure the host's vendor directory matches the new composer.lock before mounting it in the isolated container
@@ -853,20 +854,25 @@ EOT;
             // partially applied, so a code rollback is no longer safe. Past this point
             // failures are escalated instead of auto-reverted.
             "echo '__MIGRATIONS_STARTED__'",
+            "echo '__UPGRADE_STAGE__:database'",
             "if ! docker compose run --rm --entrypoint \"php\" master bin/cli.php app:upgrade-version --current-version={$currentVersionArg}; then echo '__MIGRATION_FAILED__'; exit 1; fi",
             "echo '__MIGRATIONS_APPLIED__'",
             
             // 5. If successful, use the robust full-deploy.sh to properly clean, boot, and register everything
+            "echo '__UPGRADE_STAGE__:restarting'",
             "bash bin/full-deploy.sh",
 
             // 6. Force-recreate master to ensure the new code and build are running immediately
             "docker compose up -d --force-recreate --remove-orphans master",
             // Optional classification must never delay the API restart. Group the
             // failure handler so it cannot mask failures earlier in the && chain.
+            "echo '__UPGRADE_STAGE__:insights'",
             "(docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true)"
         ];
 
-        $result = $this->runSshCommands($project->server, $commands, timeout: 3600);
+        $progress = new UpgradeProgress();
+        $result = $this->runSshCommands($project->server, $commands, timeout: 3600,
+            onOutput: $onProgress ? fn ($type, $chunk) => $progress->consume($chunk, $onProgress) : null);
 
         if (($result['status'] ?? 'error') === 'success') {
             return $result;

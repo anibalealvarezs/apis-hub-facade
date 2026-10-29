@@ -55,11 +55,24 @@ class UpgradeProjectReleaseJob implements ShouldQueue
             'project_id' => $this->project->id,
             'status' => 'running',
             'started_at' => now(),
+            'progress_stage' => 'preparing',
+            'progress_updated_at' => now(),
             'output' => "Starting upgrade to release {$this->targetRelease->version_tag}...",
         ]);
 
         try {
-            $result = $deployer->upgradeRelease($this->project, $this->targetRelease);
+            $lastWrite = 0.0;
+            $stage = 'preparing';
+            $result = $deployer->upgradeRelease($this->project, $this->targetRelease, function (string $next) use ($deploymentLog, &$lastWrite, &$stage) {
+                if ($next === $stage && microtime(true) - $lastWrite < 5) return;
+                $lastWrite = microtime(true);
+                $stage = $next;
+                try {
+                    $deploymentLog->update(['progress_stage' => $next, 'progress_updated_at' => now()]);
+                } catch (\Throwable $error) {
+                    Log::warning('Upgrade progress could not be saved', ['project_id' => $this->project->id, 'exception_class' => get_class($error)]);
+                }
+            });
 
             $deploymentLog->update([
                 'status' => match ($result['status'] ?? 'error') {
