@@ -26,7 +26,8 @@ class UpgradeDowntimeTest extends TestCase
         $deployer->method('assertComposerRepositoryReachable')->willReturn(true);
         $deployer->method('generateEnvContent')->willReturn('TEST=value');
         $deployer->expects($this->once())->method('writeRemoteFile')->with($server, '/var/www/apis-hub/tenants/test/.env', 'TEST=value', 0600, 120)->willReturn(['status' => 'success']);
-        $deployer->expects($this->once())->method('runSshCommands')->willReturnCallback(function ($server, $commands) {
+        $deployer->expects($this->once())->method('runSshCommands')->willReturnCallback(function ($server, $commands, $timeout) {
+            $this->assertSame(3600, $timeout);
             $script = implode(' && ', $commands);
             $this->assertStringNotContainsString('TEST=value', $script);
             $this->assertLessThan(strpos($script, 'app:classify-queries'), strpos($script, 'up -d --force-recreate --remove-orphans master'));
@@ -83,5 +84,13 @@ class UpgradeDowntimeTest extends TestCase
         $result = $deployer->writeRemoteFile($server, '/tmp/test.env', 'TEST_SECRET=do-not-log');
         $this->assertSame('ssh_write_failed', $result['code']);
         $this->assertStringNotContainsString('do-not-log', $result['output']);
+    }
+
+    public function testQueueVisibilityExceedsTheWholeUpgradeJobBudget(): void
+    {
+        $job = new \App\Jobs\UpgradeProjectReleaseJob(new Project(), new ApisHubRelease());
+        foreach (['database', 'redis', 'beanstalkd'] as $connection) {
+            $this->assertGreaterThan($job->timeout, config("queue.connections.{$connection}.retry_after"));
+        }
     }
 }

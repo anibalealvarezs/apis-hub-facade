@@ -19,9 +19,10 @@ class UpgradeProjectReleaseJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 1;
-    // Covers the Composer pre-flight probe (60s) + the upgrade chain (1100s) + a full
-    // automatic rollback (checkout, .env restore, container restart ~1020s).
-    public int $timeout = 2400; // 40 minutes maximum
+    public const TIMEOUT_SECONDS = 5400;
+    public const RESERVATION_SECONDS = 5700;
+    // Covers pre-flight/env transfer + the 3600s upgrade + recovery/cleanup.
+    public int $timeout = self::TIMEOUT_SECONDS;
 
     public function __construct(
         protected Project $project,
@@ -41,8 +42,8 @@ class UpgradeProjectReleaseJob implements ShouldQueue
 
         return [
             (new WithoutOverlapping("server-deploy:{$serverId}"))
-                ->releaseAfter(2400)
-                ->expireAfter(2700),
+                ->releaseAfter(self::TIMEOUT_SECONDS)
+                ->expireAfter(self::RESERVATION_SECONDS),
         ];
     }
 

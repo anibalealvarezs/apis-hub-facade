@@ -866,7 +866,7 @@ EOT;
             "(docker compose run --rm --entrypoint \"php\" master bin/cli.php app:classify-queries --on-upgrade || true)"
         ];
 
-        $result = $this->runSshCommands($project->server, $commands, timeout: 1100);
+        $result = $this->runSshCommands($project->server, $commands, timeout: 3600);
 
         if (($result['status'] ?? 'error') === 'success') {
             return $result;

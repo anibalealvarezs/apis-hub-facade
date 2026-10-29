@@ -30,7 +30,7 @@ class ApisHubReleaseV1183Seeder extends Seeder
 - Google Search Console: Synchronizes Web, Image, Video, News, Discover, and Google News separately. The optional `search_types` configuration limits synchronization to selected types.
 - Metric identity: Stores `search_type` as a dimension so each type has distinct configuration signatures and metric hashes. Existing reports continue to default to Web.
 - Feed compatibility: Discover and Google News collect page/country clicks, impressions, and CTR without fabricating unsupported query, device, or position data.
-- Tenant upgrade: Labels existing untyped GSC metrics as `web` and atomically updates configuration signatures, metric dimension hashes, and channeled dimension links. Existing values, other channels, and already typed records are preserved; collisions abort safely.
+- Tenant upgrade: Labels existing untyped GSC metrics as `web` and atomically updates configuration signatures, metric dimension hashes, and channeled dimension links. Duplicate identities follow the existing signature-recalculation policy without summing observations; unique dates and channel links are preserved. Other channels and non-colliding typed records are unchanged.
 - Historical coverage: Additional search types require a GSC-only historical replay. Use `app:nuclear-resync --channel=google_search_console` without `--wipe-metrics` during rollout with workers stopped; no global resync is required.
 - Dependencies: Updates `anibalealvarezs/google-hub-driver` to `^1.3.0`.
 
