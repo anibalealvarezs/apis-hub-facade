@@ -2,7 +2,7 @@
 
 return [
     'store' => env('REMOTE_REQUEST_CACHE_STORE', 'redis'),
-    'max_concurrent' => (int) env('REMOTE_MAX_CONCURRENT_REQUESTS', 3),
+    'max_concurrent' => (int) env('REMOTE_MAX_CONCURRENT_REQUESTS', 4),
     'lease_seconds' => (int) env('REMOTE_REQUEST_LEASE_SECONDS', 120),
     'queue_wait_ms' => (int) env('REMOTE_REQUEST_QUEUE_WAIT_MS', 750),
     'coalesce_wait_ms' => (int) env('REMOTE_REQUEST_COALESCE_WAIT_MS', 1500),

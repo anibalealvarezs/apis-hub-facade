@@ -364,7 +364,7 @@ window.dashboardRenderer = {
 
         return "";
     },
-    _concurrencyLimit: 2,
+    _concurrencyLimit: 4,
     _activeRequests: 0,
     _queue: [],
 
@@ -536,7 +536,7 @@ window.dashboardRenderer = {
                 return;
             }
 
-            // Enqueue request (max 2 concurrent) with bounded, jittered backoff.
+            // Enqueue request (max 4 concurrent) with bounded, jittered backoff.
             const json = await this._enqueue(async () => {
                 const maxAttempts = 3;
                 let lastError = null;
