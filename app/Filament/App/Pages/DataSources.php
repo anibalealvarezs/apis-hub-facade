@@ -700,20 +700,19 @@
                 ->label(__('Apply Infrastructure Changes'))
                 ->color('warning')
                 ->icon('heroicon-o-cloud-arrow-up')
-                ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
+                ->disabled(fn() => Filament::getTenant()->isInfrastructureBusy() || Filament::getTenant()->fresh()->health_status === 'syncing')
+                ->tooltip(fn () => Filament::getTenant()->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
                 ->visible(fn() => Filament::getTenant()->fresh()->redeploy_pending)
                 ->requiresConfirmation()
                 ->modalHeading(__('Redeploy Infrastructure'))
                 ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
                 ->action(function () {
                     $tenant = Filament::getTenant();
-                    $tenant->update([
-                        'health_status' => 'redeploying',
-                        'deploy_started_at' => now(),
-                        'last_sync_started_at' => now(),
-                    ]);
-
-                    \App\Jobs\DeployProjectJob::dispatch($tenant);
+                    if (!\App\Services\InfrastructureActionGuard::allows($tenant)) return;
+                    if (!\App\Services\InfrastructureActionGuard::queue($tenant, 'redeploying', function () use ($tenant) {
+                        $tenant->update(['last_sync_started_at' => now()]);
+                        \App\Jobs\DeployProjectJob::dispatch($tenant);
+                    })) return;
 
                     Notification::make()
                         ->title(__('Redeployment Initiated'))

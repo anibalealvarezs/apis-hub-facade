@@ -856,6 +856,14 @@ class Project extends Model
         return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
     }
 
+    public const INFRASTRUCTURE_BUSY_STATES = ['upgrading', 'redeploying', 'deploying', 'provisioning'];
+
+    public function isInfrastructureBusy(): bool
+    {
+        $status = $this->exists ? $this->newQuery()->whereKey($this->getKey())->value('health_status') : $this->health_status;
+        return in_array($status, self::INFRASTRUCTURE_BUSY_STATES, true);
+    }
+
     /**
      * Get all users who have editor or owner permissions on this project.
      * Includes the project owner and collaborators assigned project_owner or project_editor roles.

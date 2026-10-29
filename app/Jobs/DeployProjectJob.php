@@ -35,6 +35,7 @@ class DeployProjectJob implements ShouldQueue
 
         return [
             (new WithoutOverlapping("server-deploy:{$serverId}"))
+                ->shared()
                 ->releaseAfter(600)
                 ->expireAfter(900),
         ];

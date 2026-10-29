@@ -42,6 +42,7 @@ class UpgradeProjectReleaseJob implements ShouldQueue
 
         return [
             (new WithoutOverlapping("server-deploy:{$serverId}"))
+                ->shared()
                 ->releaseAfter(self::TIMEOUT_SECONDS)
                 ->expireAfter(self::RESERVATION_SECONDS),
         ];

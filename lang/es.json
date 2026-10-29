@@ -1,4 +1,6 @@
 {
+    "Infrastructure changes in progress": "Cambios de infraestructura en curso",
+    "Please wait for the current deployment or upgrade to finish.": "Espera a que termine el despliegue o la actualización en curso.",
     "Preparing the upgrade": "Preparando la actualización",
     "Preparing the new version": "Preparando la nueva versión",
     "Upgrading the metrics database": "Actualizando la base de datos de métricas",
