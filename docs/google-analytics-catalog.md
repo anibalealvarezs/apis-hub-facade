@@ -3,6 +3,36 @@
 Audited 2026-10-30. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('google_analytics')`.
 The tree uses raw cached metric names, with canonical aliases separately recorded.
 
+## Planned expansion and current event caveat
+
+The [scoped expansion plan](../../apis-hub/docs/google-analytics-expansion-plan.md)
+extends the current purpose-driven matrices under the nine-dimension API limit.
+It explicitly separates user/session/event/item measurement scopes, attribution,
+grain and additivity. Do not sum overlapping recipes or assume displayed breakdown
+rows must add up to a unique-user total. Catalog updates are required in every phase.
+
+The updated driver discovers observed event names with `eventCount`, independently
+of key-event designation, through paginated reports with metadata/compatibility
+preflight. Raw names remain identities; marketing classification is enrichment.
+The tenant resolves channeled events by property/account and resolves discovery
+accounts by channel. Existing Explorer and custom-widget event breakdowns consume
+these stored event identities; no separate custom-event metric is required.
+
+This requires the updated SDK, driver and tenant; it is not a claim about already
+installed releases or historical cache coverage. New syncs discover events in their
+requested window. Historical missing/wrong links require a controlled audit and
+replay; this increment does not migrate historical observations or launch a replay.
+Registered custom parameters/dimensions/metrics are not automatically cached.
+
+Driver report recipes now declare exact source dimensions, metric allowlists,
+measurement context and attribution. The event recipe uses all nine dimension
+slots, including date. Property recipe metadata reports source availability while
+explicitly leaving compatibility unchecked and cache coverage unknown; it does not
+yet provide a persisted per-property catalog or a new UI capability endpoint.
+Offline fixtures cover discovery, conversion, pagination, cancellation and account
+isolation. Authenticated source reconciliation and PostgreSQL/performance acceptance
+remain rollout gates.
+
 ## Correctness implementation update
 
 The accompanying GA4 contract v1 implementation removes revenue-as-cost, enforces

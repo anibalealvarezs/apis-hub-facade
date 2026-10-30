@@ -60,6 +60,10 @@ class ChannelAnalyticsCatalogTest extends TestCase
     public function testGa4AvailabilityIsScopedAndRevenueIsNotCost(): void
     {
         $tree = ChannelCapabilityRegistry::getAnalyticsTree('google_analytics');
+        $this->assertFalse($tree['event_discovery']['key_event_required']);
+        $this->assertSame('observed_events_in_synced_window', $tree['event_discovery']['coverage']);
+        $this->assertSame('not_automatically_cached', $tree['event_discovery']['custom_parameters']);
+        $this->assertSame(9, $tree['report_constraints']['max_requested_dimensions']);
         $this->assertNotContains('totalRevenue', $tree['scopes']['acquisition_matrix']['metrics']);
         $this->assertSame([], $tree['metrics']['spend']['scopes']);
         $this->assertArrayNotHasKey('spend', $tree['canonical_aliases']);

@@ -2,6 +2,10 @@
 
 Created: 2026-10-30. Status: GA4 corrections implemented locally; rollout pending.
 Other channel remediation remains proposed.
+
+Further GA4 coverage is planned in the [scoped analytics expansion plan](../../../apis-hub/docs/google-analytics-expansion-plan.md).
+It retains purpose-driven scopes, explicitly accounts for the nine-dimension source
+limit and makes catalog updates mandatory with every expansion increment.
 Baseline: [four-channel availability audit](../analytics-availability-audit.md).
 
 ## GA4 execution update — 2026-10-30

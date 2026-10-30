@@ -32,3 +32,8 @@ for confirmed converter findings, source verification limits, repair tests and b
 
 Implementation sequence: [Progressive analytics correctness plan](plans/analytics-correctness-remediation-plan.md),
 with release boundaries, acceptance gates and historical repair safeguards.
+
+GA4 coverage expansion: [Scoped analytics expansion plan](../../apis-hub/docs/google-analytics-expansion-plan.md).
+Extends purpose-driven caching under the nine-dimension limit, with measurement-scope
+and additivity rules to avoid duplicated totals. Every implementation phase must update
+the GA4 catalog and consumer capabilities together.
