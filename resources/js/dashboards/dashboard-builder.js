@@ -920,6 +920,22 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Channels & Assets ───
         channels: config.channels || {},
+        gscSearchTypeOptions: config.gscSearchTypeOptions || {},
+        gscAnalyticsCatalog: config.gscAnalyticsCatalog || {},
+        gscTypesForSeries(series) {
+            const rule = (series.filters || []).find(filter => filter.dimension === 'dimensions.search_type');
+            if (!rule || !rule.value || !rule.value.length) return series.breakdown?.dimension === 'dimensions.search_type' ? Object.keys(this.gscAnalyticsCatalog.search_types || {}) : ['web'];
+            return Array.isArray(rule.value) ? rule.value : String(rule.value).split(',').map(value => value.trim());
+        },
+        getRawSeriesMetricOptions(index, series) {
+            const options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
+            if (series.channel !== 'google_search_console') return options;
+            const types = this.gscTypesForSeries(series);
+            return Object.fromEntries(Object.entries(options).filter(([metric]) => types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.metrics.includes(metric))));
+        },
+        isGscSearchTypeFilter(filter) {
+            return this.filterModalChannel === 'google_search_console' && filter.dimension === 'dimensions.search_type';
+        },
         allChannelAssets: {},
         allChannelAssetGroups: {},
         allChannelMetrics: {},

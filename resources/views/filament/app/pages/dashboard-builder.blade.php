@@ -8,6 +8,8 @@
         widgetDescriptions: @js(\App\Services\WidgetTypeRegistry::getWidgetDescriptions()),
         widgetSvgs: @js(\App\Services\WidgetTypeRegistry::getWidgetSvgs()),
         channels: @js($this->getActiveChannels()),
+        gscSearchTypeOptions: @js(\Filament\Facades\Filament::getTenant()?->supportsGscSearchTypes() ? \App\Services\Analytics\GscAnalyticsCatalog::searchTypes() : []),
+        gscAnalyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree()),
         dashboardControls: @js($this->getDashboardControls()),
         assetGroups: @js($this->getAllAssetGroups()),
         isPublic: {{ $this->dashboard->is_public ? 'true' : 'false' }},
@@ -1318,7 +1320,7 @@
                                                                          <template x-if="!isSeriesMetricsLoading(index)">
                                                                              <div class="flex flex-col gap-1 w-full">
                                                                                  <template
-                                                                                     x-for="(label, key) in ((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})"
+                                                                                     x-for="(label, key) in getRawSeriesMetricOptions(index, series)"
                                                                                      :key="key">
                                                                                      <div
                                                                                          class="flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors border border-transparent"
@@ -1398,7 +1400,7 @@
                                                                                      </div>
                                                                                  </template>
                                                                                  <template
-                                                                                     x-if="!series.channel || Object.keys(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})).length === 0">
+                                                                                     x-if="!series.channel || Object.keys(getRawSeriesMetricOptions(index, series)).length === 0">
                                                                                      <p class="text-xs text-gray-400 dark:text-gray-500 mt-2 mx-2"
                                                                                         x-text="series.channel ? '{{ __('No metrics available for this channel.') }}' : '{{ __('Select a channel first.') }}'"></p>
                                                                                  </template>
@@ -1597,7 +1599,7 @@
                                                                                     x-on:change="if (!$event.target.value) { series.breakdown.rank_by = null; } else { series.breakdown = series.breakdown || {}; series.breakdown.rank_by = $event.target.value; } markWidgetControlsDirty()"
                                                                                     class="w-full">
                                                                                     <template x-for="mKey in (series.metrics || [])" :key="mKey">
-                                                                                        <x-ui.select-option x-bind:value="mKey" x-text="(((widgetControlsForm.series_metrics_map && widgetControlsForm.series_metrics_map[index]) || allChannelMetrics[series.channel] || {})[mKey] || mKey)" x-bind:selected="series.breakdown && series.breakdown.rank_by === mKey"></x-ui.select-option>
+                                                                                        <x-ui.select-option x-bind:value="mKey" x-text="(getRawSeriesMetricOptions(index, series)[mKey] || mKey)" x-bind:selected="series.breakdown && series.breakdown.rank_by === mKey"></x-ui.select-option>
                                                                                     </template>
                                                                                 </x-ui.select-input>
                                                                                 <p class="text-2xs text-gray-400 dark:text-gray-500 mt-1">{{ __('Determines which metric ranks the top items when sorting by value.') }}</p>
@@ -2550,7 +2552,7 @@
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Dimension') }}</label>
                                     <select
                                         x-model="flt.dimension"
-                                        @change="if (!flt.dimension.startsWith('attributes.') && ['gt', 'gte', 'lt', 'lte', 'between'].includes(flt.operator)) flt.operator = 'eq'; markWidgetControlsDirty()"
+                                        @change="if (isGscSearchTypeFilter(flt)) { flt.operator = 'in'; flt.value = []; } else if (!flt.dimension.startsWith('attributes.') && ['gt', 'gte', 'lt', 'lte', 'between'].includes(flt.operator)) flt.operator = 'eq'; markWidgetControlsDirty()"
                                         class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
                                     >
                                         <option value="" class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">{{ __('Select Dimension...') }}</option>
@@ -2564,6 +2566,7 @@
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Operator') }}</label>
                                     <select
                                         x-model="flt.operator"
+                                        :disabled="isGscSearchTypeFilter(flt)"
                                         @change="markWidgetControlsDirty()"
                                         class="bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-950 dark:text-white dark:[color-scheme:dark] text-sm p-2.5 rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full cursor-pointer"
                                     >
@@ -2585,7 +2588,12 @@
 
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Value') }}</label>
-                                    <template x-if="flt.operator !== 'is_null' && flt.operator !== 'is_not_null'">
+                                    <template x-if="isGscSearchTypeFilter(flt)">
+                                        <div x-init="flt.value = Array.isArray(flt.value) ? flt.value : String(flt.value || '').split(',').filter(Boolean); flt.operator = 'in'">
+                                            <x-ui.asset-selector model="flt.value" options="gscSearchTypeOptions" placeholder="{{ __('Select search types') }}" :multiple="true" size="sm" changeEvent="markWidgetControlsDirty()" />
+                                        </div>
+                                    </template>
+                                    <template x-if="!isGscSearchTypeFilter(flt) && flt.operator !== 'is_null' && flt.operator !== 'is_not_null'">
                                         <input
                                             type="text"
                                             x-model="flt.value"

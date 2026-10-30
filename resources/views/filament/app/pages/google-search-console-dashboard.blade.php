@@ -10,6 +10,8 @@
         dateStart: @entangle('dateStart'),
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
+        searchTypesEnabled: @js(\Filament\Facades\Filament::getTenant()?->supportsGscSearchTypes() ?? false),
+        analyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree()),
         csrfToken: @js(csrf_token()),
         intentOptions: {
             'transactional': @js(__('Transactional')),
@@ -89,7 +91,16 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         </div>
                     </div>
                 </div>
-                <x-ui.asset-selector model="activeFilters.intents" options="intentOptions" placeholder="{{ __('All Search Intents') }}" :multiple="true" size="sm" changeEvent="filterDropdownChanged()" />
+                <label x-show="searchTypesEnabled" class="text-sm text-gray-700 dark:text-gray-200">
+                    {{ __('Search type') }}
+                    <select aria-label="{{ __('Search type') }}" :value="searchType" @change="setSearchType($event.target.value)" :disabled="areEntityAttributeFiltersBusy()"
+                        class="rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+                        <template x-for="(definition, type) in analyticsCatalog.search_types" :key="type">
+                            <option :value="type" x-text="definition.label"></option>
+                        </template>
+                    </select>
+                </label>
+                <div x-show="supportsGscTab('queries')"><x-ui.asset-selector model="activeFilters.intents" options="intentOptions" placeholder="{{ __('All Search Intents') }}" :multiple="true" size="sm" changeEvent="filterDropdownChanged()" /></div>
                 <x-ui.date-input x-model.lazy="dateStart" class="w-40" />
                 <x-ui.date-input x-model.lazy="dateEnd" max="{{ date('Y-m-d', strtotime('-1 day')) }}" class="w-40" />
                 <button type="button" @click="forceRefresh()"
@@ -104,6 +115,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
         </div>
 
         <div class="dash-overview-section">
+            <p x-show="searchType === 'discover' || searchType === 'googleNews'" x-cloak class="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                {{ __('Cached feed reports include pages and countries. Device and appearance breakdowns are not yet available.') }}
+            </p>
             <div class="metrics-grid-gsc relative">
                 <div x-show="isSummaryLoading"
                      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
@@ -143,7 +157,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <span x-text="formatVariance(variance.ctr)"></span>
                     </div>
                 </div>
-                <div class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')"
+                <div x-show="supportsGscMetric('position')" class="card-stat-gsc" :class="activeMetrics.position ? 'active' : ''" @click="toggleMetric('position')"
                      data-metric="position">
                     <div class="gsc-label">{{ __('Average Position') }}</div>
                     <div class="card-metric-value" x-text="formatDecimals(summary.position)"></div>
@@ -196,15 +210,15 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
         <x-data-table variant="gsc" state="tableState" loading="isTableLoading" search>
             <x-slot:header>
                 <div class="tab-nav-gsc">
-                    <div class="tab-gsc" :class="activeTab === 'queries' ? 'active' : ''"
+                    <div x-show="supportsGscTab('queries')" class="tab-gsc" :class="activeTab === 'queries' ? 'active' : ''"
                          @click="setTab('queries')">{{ __('QUERIES') }}</div>
                     <div class="tab-gsc" :class="activeTab === 'pages' ? 'active' : ''"
                          @click="setTab('pages')">{{ __('PAGES') }}</div>
                     <div class="tab-gsc" :class="activeTab === 'countries' ? 'active' : ''"
                          @click="setTab('countries')">{{ __('COUNTRIES') }}</div>
-                    <div class="tab-gsc" :class="activeTab === 'devices' ? 'active' : ''"
+                    <div x-show="supportsGscTab('devices')" class="tab-gsc" :class="activeTab === 'devices' ? 'active' : ''"
                          @click="setTab('devices')">{{ __('DEVICES') }}</div>
-                    <div class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''"
+                    <div x-show="supportsGscTab('appearances')" class="tab-gsc" :class="activeTab === 'appearances' ? 'active' : ''"
                          @click="setTab('appearances')">{{ __('SEARCH APPEARANCE') }}</div>
                 </div>
                 <x-entity-attribute-filters />
@@ -292,7 +306,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <x-data-table.column state="tableState" key="clicks" label="{{ __('Clicks') }}"/>
                     <x-data-table.column state="tableState" key="impressions" label="{{ __('Impressions') }}"/>
                     <x-data-table.column state="tableState" key="ctr" label="{{ __('CTR') }}"/>
-                    <x-data-table.column state="tableState" key="position" label="{{ __('Position') }}"/>
+                    <x-data-table.column x-show="supportsGscMetric('position')" state="tableState" key="position" label="{{ __('Position') }}"/>
                 </tr>
                 </thead>
                 <tbody>
@@ -335,7 +349,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
 :style="`width: ${row.ctr * 100}%`"></div>
                             </div>
                         </td>
-                        <td class="metric-cell">
+                        <td class="metric-cell" x-show="supportsGscMetric('position')">
                             <div class="metric-val-main" x-text="formatDecimals(row.position)"></div>
                         </td>
                     </x-data-table.row>

@@ -2415,5 +2415,21 @@
     "Waiting for other infrastructure changes to finish": "Esperando a que terminen otros cambios de infraestructura",
     "Checking the updated application": "Comprobando la aplicación actualizada",
     "The upgrade needs attention before it can continue": "La actualización necesita atención antes de continuar",
-    "Reconnecting to check upgrade progress": "Reconectando para comprobar el progreso de la actualización"
+    "Reconnecting to check upgrade progress": "Reconectando para comprobar el progreso de la actualización",
+    "Search type": "Tipo de búsqueda",
+    "Web": "Web",
+    "Images": "Imágenes",
+    "Videos": "Vídeos",
+    "News (Google Search tab)": "Noticias (pestaña de Google Search)",
+    "Discover": "Discover",
+    "Google News (site and app)": "Google News (sitio y aplicación)",
+    "Select search types": "Seleccionar tipos de búsqueda",
+    "Google Search Console performance": "Rendimiento en Google Search Console",
+    "Cached feed reports include pages and countries. Device and appearance breakdowns are not yet available.": "Los informes almacenados de estos feeds incluyen páginas y países. Los desgloses por dispositivo y apariencia aún no están disponibles.",
+    "Select a supported search type.": "Selecciona un tipo de búsqueda compatible.",
+    "This metric is not available for the selected search type.": "Esta métrica no está disponible para el tipo de búsqueda seleccionado.",
+    "This breakdown is not cached for the selected search type.": "Este desglose no está almacenado para el tipo de búsqueda seleccionado.",
+    "Search intent filters require search queries.": "Los filtros de intención requieren consultas de búsqueda.",
+    "Upgrade this tenant to use search type filters.": "Actualiza este tenant para utilizar filtros por tipo de búsqueda.",
+    "Standard and appearance scopes must be queried separately.": "Los ámbitos estándar y de apariencia deben consultarse por separado."
 }

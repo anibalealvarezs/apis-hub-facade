@@ -39,6 +39,10 @@ class ChannelGranularityRegistry
             default => [],
         };
 
+        if ($channel === 'google_search_console') {
+            $tenant = \Filament\Facades\Filament::getTenant();
+            if (!$tenant instanceof \App\Models\Project || $tenant->supportsGscSearchTypes()) $dimensions['dimensions.search_type'] = __('Search type');
+        }
         return array_merge($commonTimely, $dimensions);
     }
 
@@ -57,10 +61,7 @@ class ChannelGranularityRegistry
     public static function getDependenciesForChannel(string $channel): array
     {
         return match ($channel) {
-            'google_search_console' => [
-                'non-searchAppearance' => __('Standard Search (Non-Appearance)'),
-                'searchAppearance' => __('Search Appearance'),
-            ],
+            'google_search_console' => array_map(fn ($scope) => $scope['label'], GscAnalyticsCatalog::tree()['scopes']),
             'facebook_organic' => [
                 'instagram_account' => __('Instagram Account'),
                 'facebook_page' => __('Facebook Page'),
@@ -91,19 +92,9 @@ class ChannelGranularityRegistry
     private static function getGscDimensions(?string $dependency): array
     {
         $dependency = $dependency ?? self::getDefaultDependencyForChannel('google_search_console');
-
-        return match ($dependency) {
-            'searchAppearance' => [
-                'dimensions.searchAppearance' => __('Search Appearance'),
-            ],
-            'non-searchAppearance' => [
-                'query' => __('Query / Keyword'),
-                'dimensions.page' => __('Page / URL'),
-                'country' => __('Country / Geo'),
-                'device' => __('Device'),
-            ],
-            default => [],
-        };
+        if (!in_array($dependency, ['searchAppearance', 'non-searchAppearance'], true)) return [];
+        $definitions = array_filter(GscAnalyticsCatalog::dimensionDefinitions(), fn ($definition) => ($definition['tab'] === 'appearances') === ($dependency === 'searchAppearance'));
+        return array_map(fn ($definition) => $definition['label'], $definitions);
     }
 
     private static function getFbOrganicDimensions(?string $dependency): array

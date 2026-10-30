@@ -33,7 +33,7 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Performance on Google Search results');
+        return __('Google Search Console performance');
     }
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
     {

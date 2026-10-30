@@ -4,6 +4,14 @@ namespace App\Services\Analytics;
 
 class ChannelCapabilityRegistry
 {
+    public static function getAnalyticsTree(string $channel): ?array
+    {
+        return match ($channel) {
+            'google_search_console' => GscAnalyticsCatalog::tree(),
+            default => null,
+        };
+    }
+
     /**
      * Define the capabilities/tags for each channel.
      *

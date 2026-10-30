@@ -1687,6 +1687,8 @@
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
                 ], 200, [], JSON_UNESCAPED_UNICODE);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                return response()->json(['success' => false, 'error' => $e->getMessage(), 'errors' => $e->errors(), 'retryable' => false], 422);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('[STEP show] Exception', [
                     'widget_id' => $widget->id,
@@ -4958,6 +4960,9 @@
             }
 
             $controller = app($controllerClass);
+            if ($channel === 'google_search_console' && ($payload['breakdown'] ?? '') === 'dimensions.search_type' && !isset($payload['filters']['dimensions.search_type'])) {
+                $payload['filters']['dimensions.search_type'] = ['operator' => 'in', 'value' => \App\Services\Analytics\GscAnalyticsCatalog::SEARCH_TYPES];
+            }
 
             if (!method_exists($controller, $action)) {
                 throw new \RuntimeException("Channel {$channel} controller ({$controllerClass}) does not support action {$action}");
@@ -5156,6 +5161,9 @@
 
             if ($response instanceof \Illuminate\Http\JsonResponse) {
                 $data = $response->getData(true);
+                if ($channel === 'google_search_console' && $response->getStatusCode() === 422) {
+                    throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['searchType' => $data['error'] ?? 'Invalid GSC report']);
+                }
 
                 return $data['data'] ?? $data;
             }

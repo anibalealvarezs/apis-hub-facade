@@ -15,7 +15,7 @@ class ChannelBreakdownRegistry
     {
         $defaultOperators = ['in', 'not_in', 'eq', 'neq', 'like', 'not_like', 'is_null', 'is_not_null'];
 
-        return match ($channel) {
+        $definitions = match ($channel) {
             'facebook_marketing' => self::getFacebookMarketingBreakdowns($defaultOperators),
 
             'google_ads' => self::getGoogleAdsBreakdowns($defaultOperators),
@@ -57,6 +57,13 @@ class ChannelBreakdownRegistry
 
             default => [],
         };
+        if ($channel === 'google_search_console') {
+            $tenant = \Filament\Facades\Filament::getTenant();
+            if (!$tenant instanceof \App\Models\Project || $tenant->supportsGscSearchTypes()) {
+                $definitions['dimensions.search_type'] = ['label' => __('Search type'), 'type' => 'dimension', 'operators' => ['in', 'eq'], 'options' => GscAnalyticsCatalog::searchTypes()];
+            }
+        }
+        return $definitions;
     }
 
     private static function getFacebookMarketingBreakdowns(array $defaultOperators): array
@@ -193,39 +200,10 @@ class ChannelBreakdownRegistry
     {
         $dep = $dependency ?? 'non-searchAppearance';
 
-        if ($dep === 'searchAppearance' || $dep === 'search_appearance') {
-            return [
-                'dimensions.searchAppearance' => [
-                    'label' => __('Search Appearance'),
-                    'type' => 'dimension',
-                    'operators' => $defaultOperators,
-                ],
-            ];
-        }
-
-        $breakdowns = [
-            'query' => [
-                'label' => __('Query / Keyword'),
-                'type' => 'dimension',
-                'operators' => $defaultOperators,
-            ],
-            'dimensions.page' => [
-                'label' => __('Landing Page'),
-                'type' => 'dimension',
-                'operators' => $defaultOperators,
-            ],
-            'country' => [
-                'label' => __('Country'),
-                'type' => 'dimension',
-                'operators' => $defaultOperators,
-            ],
-            'device' => [
-                'label' => __('Device'),
-                'type' => 'dimension',
-                'operators' => $defaultOperators,
-            ],
-        ];
-
+        $appearance = in_array($dep, ['searchAppearance', 'search_appearance'], true);
+        $definitions = array_filter(GscAnalyticsCatalog::dimensionDefinitions(), fn ($definition) => ($definition['tab'] === 'appearances') === $appearance);
+        $breakdowns = array_map(fn ($definition) => ['label' => $definition['label'], 'type' => 'dimension', 'operators' => $defaultOperators], $definitions);
+        if ($appearance) return $breakdowns;
         // Guard: Only expose semantic dimensions if the active project tenant is on v1.16.0+
         $tenant = \Filament\Facades\Filament::getTenant();
         if ($tenant instanceof \App\Models\Project && !$tenant->supportsAiClassification()) {

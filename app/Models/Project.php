@@ -305,6 +305,11 @@ class Project extends Model
         return version_compare($version, '1.18.2', '>=');
     }
 
+    public function supportsGscSearchTypes(): bool
+    {
+        return version_compare(ltrim($this->apisHubRelease?->version_tag ?? '0', 'v'), '1.18.3', '>=');
+    }
+
     public function supportsAiClassification(): bool
     {
         if (!$this->releaseSupportsAiClassification()) {
