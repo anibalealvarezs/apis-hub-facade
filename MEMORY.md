@@ -1059,3 +1059,5 @@
   - `app/Models/Dashboard.php` & `app/Models/DashboardWidget.php`: Added model-level safeguards in the `creating` event to automatically strip any `*_count` attributes from `$dashboard->attributes` and `$widget->attributes` before the SQL insert query is compiled.
 
 
+
+- 2026-10-30: GA4 catalog records observed-window raw event discovery, rollout dependency requirements, no automatic custom-parameter caching, and nine requested dimensions including date. No historical coverage claim.

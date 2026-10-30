@@ -132,6 +132,17 @@ class ChannelAnalyticsCatalog
         $tree['metrics']['spend']['status'] = 'unsupported';
         $tree['metrics']['conversions']['sources'] = ['conversions', 'keyEvents'];
         $tree['metrics']['conversions']['cache_name'] = 'conversions';
+        $tree['event_discovery'] = [
+            'source_dimension' => 'eventName',
+            'source_metric' => 'eventCount',
+            'includes' => ['automatic', 'enhanced_measurement', 'recommended', 'custom'],
+            'identity' => 'raw_event_name',
+            'key_event_required' => false,
+            'coverage' => 'observed_events_in_synced_window',
+            'custom_parameters' => 'not_automatically_cached',
+            'rollout' => 'requires_updated_google_driver_and_tenant; historical_links_not_repaired_automatically',
+        ];
+        $tree['report_constraints'] = ['max_requested_dimensions' => 9, 'date_uses_dimension_slot' => true, 'overlapping_scopes' => 'never_sum_together'];
         foreach (['newUsers', 'activeUsers', 'totalUsers'] as $metric) {
             $tree['metrics'][$metric]['cached_reducer'] = 'sum_of_reported_user_counts_not_window_unique';
         }
