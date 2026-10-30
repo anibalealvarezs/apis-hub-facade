@@ -16,12 +16,17 @@ class ProjectDeploymentLog extends Model
         'completed_at',
         'progress_stage',
         'progress_updated_at',
+        'upgrade_operation_id',
+        'target_release_id',
+        'remote_prepared_at',
+        'remote_output_hash',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'progress_updated_at' => 'datetime',
+        'remote_prepared_at' => 'datetime',
     ];
 
     public function project()

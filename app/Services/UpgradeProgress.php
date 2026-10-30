@@ -9,6 +9,8 @@ class UpgradeProgress
 
     public const LABELS = [
         'preparing' => 'Preparing the upgrade',
+        'launching' => 'Starting the upgrade',
+        'waiting' => 'Waiting for other infrastructure changes to finish',
         'building' => 'Preparing the new version',
         'database' => 'Upgrading the metrics database',
         'staging' => 'Preparing cached metrics',
@@ -17,6 +19,9 @@ class UpgradeProgress
         'finalizing' => 'Finalizing the metrics database',
         'restarting' => 'Starting updated services',
         'insights' => 'Updating insights',
+        'verifying' => 'Checking the updated application',
+        'interrupted' => 'The upgrade needs attention before it can continue',
+        'reconnecting' => 'Reconnecting to check upgrade progress',
     ];
 
     public function consume(string $chunk, callable $update): void

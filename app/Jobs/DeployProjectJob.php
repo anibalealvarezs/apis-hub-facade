@@ -18,6 +18,10 @@ class DeployProjectJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 600; // 10 minutes maximum
+    // Waiting for an infrastructure lock is not a failed deployment attempt.
+    public int $tries = 0;
+    public int $maxExceptions = 1;
+    public bool $failOnTimeout = true;
 
     public function __construct(
         public Project $project
@@ -43,6 +47,13 @@ class DeployProjectJob implements ShouldQueue
 
     public function handle(DeployerService $deployer): void
     {
+        // The SSH launcher releases its queue lock while the durable host runner works.
+        // Keep deployments off that server until its operation is reconciled.
+        if (ProjectDeploymentLog::where('status', 'running')->whereNotNull('upgrade_operation_id')
+            ->whereHas('project', fn ($query) => $query->where('server_id', $this->project->server_id))->exists()) {
+            $this->release(60);
+            return;
+        }
         // Mark the project as redeploying immediately so the UI can reflect this state
         // even before the detached background script begins execution on the node.
         $this->project->update([

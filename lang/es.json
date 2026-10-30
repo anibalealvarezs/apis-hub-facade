@@ -2410,5 +2410,10 @@
     "Configure Breakdown": "Configurar Desglose",
     "Distribution": "Distribución",
     "Regions": "Regiones",
-    "No geographic breakdown available": "No hay desglose geográfico disponible"
+    "No geographic breakdown available": "No hay desglose geográfico disponible",
+    "Starting the upgrade": "Iniciando la actualización",
+    "Waiting for other infrastructure changes to finish": "Esperando a que terminen otros cambios de infraestructura",
+    "Checking the updated application": "Comprobando la aplicación actualizada",
+    "The upgrade needs attention before it can continue": "La actualización necesita atención antes de continuar",
+    "Reconnecting to check upgrade progress": "Reconectando para comprobar el progreso de la actualización"
 }

@@ -559,19 +559,19 @@ EOT;
         chmod($tmpKeyPath, 0600);
 
         try {
-            $remoteEscapedDir = escapeshellarg($dir);
-            $remoteEscapedPath = escapeshellarg($remotePath);
-            $temporaryPath = escapeshellarg($remotePath.'.tmp.'.bin2hex(random_bytes(8)));
+            $remoteEscapedDir = DurableUpgradeRunner::quote($dir);
+            $remoteEscapedPath = DurableUpgradeRunner::quote($remotePath);
+            $temporaryPath = DurableUpgradeRunner::quote($remotePath.'.tmp.'.bin2hex(random_bytes(8)));
             $remoteCmd = "mkdir -p {$remoteEscapedDir} && (umask 077; cat > {$temporaryPath}) && chmod {$chmodOctal} {$temporaryPath} && mv {$temporaryPath} {$remoteEscapedPath}";
 
-            $sshCmd = "ssh -i {$tmpKeyPath} -o StrictHostKeyChecking=no {$server->ssh_user}@{$server->ip_address} " . escapeshellarg($remoteCmd);
+            $sshCmd = ['ssh', '-i', $tmpKeyPath, '-o', 'StrictHostKeyChecking=no', "{$server->ssh_user}@{$server->ip_address}", $remoteCmd];
 
             $process = Process::timeout($timeout)->input($content);
             $result = $process->run($sshCmd);
 
             if ($result->failed()) {
                 $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
-                Log::error("writeRemoteFile failed on {$server->ip_address} for {$remotePath}:\n" . $combinedOutput);
+                Log::error('Remote file transfer failed', ['exit_code' => $result->exitCode()]);
 
                 return ['status' => 'error', 'output' => trim($combinedOutput)];
             }
@@ -618,7 +618,7 @@ EOT;
 
             if ($result->failed()) {
                 $combinedOutput = "STDOUT:\n" . $result->output() . "\n\nSTDERR:\n" . $result->errorOutput();
-                Log::error("Deployment failed on {$server->ip_address}:\n" . $combinedOutput);
+                Log::error('Remote command failed', ['exit_code' => $result->exitCode()]);
 
                 return ['status' => 'error', 'output' => trim($combinedOutput)];
             }
@@ -784,7 +784,7 @@ EOT;
      * Note: Containers are replaced immediately (no graceful drain). APIs Hub handles
      * job re-scheduling on restart via its own resilient queue logic.
      */
-    public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease, ?callable $onProgress = null): array
+    public function upgradeRelease(Project $project, \App\Models\ApisHubRelease $targetRelease, ?callable $onProgress = null, ?string $operationId = null, bool $remotePrepared = false): array
     {
         // If the project has never been deployed, do not attempt to run remote Docker/migration commands.
         // The target version is simply recorded in the database, and full deployment & migrations will execute on initial deployment.
@@ -798,6 +798,30 @@ EOT;
         }
 
         $path = "/var/www/apis-hub/tenants/{$project->subdomain}";
+        $operationDirectory = $operationId ? DurableUpgradeRunner::directory($operationId) : null;
+        if ($operationDirectory) {
+            $probe = $this->runSshCommands($project->server, [DurableUpgradeRunner::probe($operationDirectory)], timeout: 30);
+            if (($probe['status'] ?? '') !== 'success') return ['status' => 'running', 'remote_state' => 'reconnecting', 'output' => 'Waiting to reconnect to the upgrade.'];
+            $state = DurableUpgradeRunner::decode($probe['output']);
+            if ($remotePrepared && ($state['remote_state'] ?? '') === 'missing') {
+                return ['status' => 'running', 'remote_state' => 'interrupted', 'output' => 'The remote operation record is missing. Inspect the server before taking further action.'];
+            }
+            if (($state['remote_state'] ?? '') !== 'missing') {
+                if (($state['remote_state'] ?? '') === 'pending') {
+                    // A directory is ready only once runner.sh was atomically installed.
+                    if ($onProgress) $onProgress('launching');
+                    $this->runSshCommands($project->server, [DurableUpgradeRunner::launch($operationDirectory)], timeout: 30);
+                }
+                $state['progress_fingerprint'] = hash('sha256', $state['output']);
+                (new UpgradeProgress())->consume($state['output']."\n", function ($stage) use (&$state) { $state['progress_stage'] = $stage; });
+                if ($state['status'] === 'success') return $this->verifyUpgradedTenant($project);
+                // Never copy build output (which may include legacy ENV dumps) into Facade.
+                $state['output'] = $state['status'] === 'error'
+                    ? 'The remote upgrade stopped with an error. Inspect its protected operation log before retrying.'
+                    : 'The remote upgrade is still being monitored.';
+                return $state;
+            }
+        }
         $targetTag = escapeshellarg($targetRelease->version_tag);
         
         // Clean version tags to bare semantic numbers for the API
@@ -827,9 +851,14 @@ EOT;
             ];
         }
 
+        if ($operationDirectory) {
+            $tools = $this->runSshCommands($project->server, ['command -v bash >/dev/null && command -v flock >/dev/null && command -v nohup >/dev/null'], timeout: 30);
+            if (($tools['status'] ?? '') !== 'success') return ['status' => 'error', 'output' => 'The server could not confirm the tools required for a durable upgrade. No tenant changes were made.'];
+        }
+
         // Secrets travel over stdin, never as part of a process command/exception.
         // Atomically prepare .env before stopping the currently serving containers.
-        $envWrite = $this->writeRemoteFile($project->server, "{$path}/.env", $this->generateEnvContent($project, $targetRelease), 0600, 120);
+        $envWrite = $this->writeRemoteFile($project->server, $operationDirectory ? "{$operationDirectory}/target.env" : "{$path}/.env", $this->generateEnvContent($project, $targetRelease), 0600, 120);
         if (($envWrite['status'] ?? 'error') !== 'success') return $envWrite;
 
         $commands = [
@@ -871,6 +900,16 @@ EOT;
         ];
 
         $progress = new UpgradeProgress();
+        if ($operationDirectory) {
+            // Install last: retries can repair an incomplete upload without replaying a started runner.
+            $commands[0] = 'cp '.escapeshellarg($operationDirectory.'/target.env').' '.escapeshellarg($path.'/.env').' && chmod 600 '.escapeshellarg($path.'/.env').' && cd '.escapeshellarg($path);
+            $script = DurableUpgradeRunner::script($operationDirectory, implode(" &&\n", $commands));
+            $write = $this->writeRemoteFile($project->server, $operationDirectory.'/runner.sh', $script, 0700, 60);
+            if (($write['status'] ?? '') !== 'success') return ['status' => 'running', 'output' => 'Preparing the remote upgrade; reconnecting shortly.'];
+            if ($onProgress) $onProgress('launching');
+            $this->runSshCommands($project->server, [DurableUpgradeRunner::launch($operationDirectory)], timeout: 30);
+            return ['status' => 'running', 'output' => 'Upgrade started independently on the tenant server.'];
+        }
         $result = $this->runSshCommands($project->server, $commands, timeout: 3600,
             onOutput: $onProgress ? fn ($type, $chunk) => $progress->consume($chunk, $onProgress) : null);
 
@@ -900,6 +939,18 @@ EOT;
             $targetRelease,
             $output
         );
+    }
+
+    protected function verifyUpgradedTenant(Project $project): array
+    {
+        // Probe the actual API inside master without putting its key in SSH arguments.
+        $php = <<<'PHP'
+require 'vendor/autoload.php'; \Helpers\Helpers::getProjectConfig(); $key=getenv('ADMIN_API_KEY'); if (!$key) exit(1); $c=curl_init('http://127.0.0.1:8080/api/sync/status'); curl_setopt_array($c,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>10,CURLOPT_HTTPHEADER=>['X-Admin-API-Key: '.$key]]); $body=curl_exec($c); $status=curl_getinfo($c,CURLINFO_HTTP_CODE); exit($status===200 && is_array(json_decode($body,true)) ? 0 : 1);
+PHP;
+        $result = $this->runSshCommands($project->server, ['cd '.DurableUpgradeRunner::quote('/var/www/apis-hub/tenants/'.$project->subdomain).' && docker compose exec -T master php -r '.DurableUpgradeRunner::quote($php)], timeout: 20);
+        return ($result['status'] ?? '') === 'success'
+            ? ['status' => 'success', 'output' => 'Remote upgrade completed and the updated API passed its readiness check.']
+            : ['status' => 'running', 'remote_state' => 'verifying', 'output' => 'The upgrade completed; waiting for the updated application to become ready.'];
     }
 
     /**

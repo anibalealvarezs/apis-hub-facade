@@ -1,4 +1,6 @@
 # APIs Hub Facade Memory
+
+- Durable upgrades (2026-10-29): UpgradeProjectReleaseJob now launches or reconciles a persisted UUID on ProjectDeploymentLog. A private host runner outside the tenant checkout survives SSH/Facade worker loss, uses flock and a started/result record, and never replays uncertain migrations. `upgrades:reconcile` runs every minute; deploy jobs defer while a durable operation is active on the same server. Release pin and terminal log finalize transactionally only after remote exit zero and authenticated API readiness. Missing prepared records or interrupted host processes require operator reconciliation, not another migration. Raw legacy build output stays in protected host logs; only allowlisted stages/sanitized results reach Facade. Apply the durable-operation migration and restart workers/Octane before rollout. See docs/durable-tenant-upgrades.md. Linux process-disconnect and PostgreSQL volume tests require their corresponding staging runtimes.
 ## Scope
 - Package role: Business (Facade)
 - Purpose: This package operates within the Business (Facade) layer of the APIs Hub SaaS hierarchy, managing the SaaS application, users, projects, server configuration, and access workflows.

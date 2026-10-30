@@ -216,6 +216,13 @@
             }
 
             try {
+                if ($project->isInfrastructureBusy()) {
+                    return response()->json([
+                        'success' => false, 'error_code' => 'tenant_maintenance', 'retryable' => false,
+                        'error' => __('Please wait for the current deployment or upgrade to finish.'),
+                        'message' => __('Please wait for the current deployment or upgrade to finish.'),
+                    ], 503, ['Retry-After' => '60'], JSON_UNESCAPED_UNICODE);
+                }
                 \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} BEFORE match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
                 $tMatch = microtime(true);
                 $data = match ($widget->source_type) {
