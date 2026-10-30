@@ -8,7 +8,7 @@ class ChannelCapabilityRegistry
     {
         return match ($channel) {
             'google_search_console' => GscAnalyticsCatalog::tree(),
-            default => null,
+            default => ChannelAnalyticsCatalog::tree($channel),
         };
     }
 
