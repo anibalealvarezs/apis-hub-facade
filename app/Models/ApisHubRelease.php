@@ -109,13 +109,14 @@ class ApisHubRelease extends Model
     }
 
     /**
-     * Get the available upgrades for a given version tag.
+     * Get the available upgrades for a given version tag, newest first.
      */
     public static function availableUpgradesFor(string $versionTag): \Illuminate\Support\Collection
     {
         return static::where('is_active', true)
             ->get()
             ->filter(fn (ApisHubRelease $release) => static::isNewerThan($release->version_tag, $versionTag))
+            ->sort(fn (ApisHubRelease $a, ApisHubRelease $b) => version_compare(ltrim($b->version_tag, 'v'), ltrim($a->version_tag, 'v')))
             ->values();
     }
 }
