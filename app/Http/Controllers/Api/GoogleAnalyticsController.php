@@ -14,7 +14,7 @@ class GoogleAnalyticsController extends Controller
 
     private function validateRequest(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'tenant' => 'required|integer',
             'account' => 'required',
             'dateStart' => 'required|date',
@@ -27,8 +27,13 @@ class GoogleAnalyticsController extends Controller
             'groupBy' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string',
-            'dependency' => 'nullable|string',
+            'dependency' => 'nullable|string|in:traffic_matrix,acquisition_matrix,event_matrix,ad_touchpoint_matrix',
         ]);
+        $blocked = ['spend', 'cost', 'cpc', 'cpm', 'cost_per_conversion', 'cost_per_result', 'roas', 'roas_purchase', 'purchase_roas'];
+        if (array_intersect(array_map('strtolower', $validated['metrics'] ?? []), $blocked)) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['metrics' => __('GA4 does not provide advertising spend in this data source. Select an advertising channel for cost metrics.')]);
+        }
+        return $validated;
     }
 
     private function scopeForTab(string $tab): ?string
@@ -43,17 +48,8 @@ class GoogleAnalyticsController extends Controller
 
     private function metricsForScope(string $scope, bool $includeBounceRate = false): array
     {
-        $base = match ($scope) {
-            'traffic_matrix' => ['sessions', 'screenPageViews', 'conversions', 'averageSessionDuration', 'totalRevenue'],
-            'acquisition_matrix' => ['newUsers', 'activeUsers', 'totalUsers', 'totalRevenue'],
-            'event_matrix' => ['eventCount', 'conversions'],
-            'ad_touchpoint_matrix' => ['sessions', 'conversions', 'totalRevenue'],
-            default => ['sessions', 'activeUsers'],
-        };
-        if ($scope === 'traffic_matrix' && $includeBounceRate) {
-            $base[] = 'bounceRate';
-        }
-        return $base;
+        $base = \App\Services\Analytics\Ga4ReportingSemantics::metricsForScope($scope);
+        return $includeBounceRate ? $base : array_values(array_diff($base, ['bounceRate']));
     }
 
     private function mapToGa4(string $metric): string
@@ -67,6 +63,7 @@ class GoogleAnalyticsController extends Controller
             'events', 'event_count' => 'eventCount',
             'active_users', 'reach' => 'activeUsers',
             'total_users' => 'totalUsers',
+            'keyEvents' => 'conversions',
             default => $metric,
         };
     }
@@ -222,12 +219,8 @@ class GoogleAnalyticsController extends Controller
                     $num = is_numeric($v) ? (float) $v : $v;
                     if (is_float($num)) {
                         if (in_array($kLower, ['bouncerate', 'bounce_rate', 'averagesessionduration', 'average_session_duration'], true)) {
-                            $cntKey = '_cnt_' . $k;
-                            $currentSum = ($existing[$k] ?? 0) * ($existing[$cntKey] ?? (isset($existing[$k]) ? 1 : 0));
-                            $newCount = ($existing[$cntKey] ?? (isset($existing[$k]) ? 1 : 0)) + 1;
-                            $avg = ($currentSum + $num) / $newCount;
-                            $existing[$k] = in_array($kLower, ['bouncerate', 'bounce_rate'], true) ? min(1.0, $avg) : $avg;
-                            $existing[$cntKey] = $newCount;
+                            // A weighted engine result cannot be averaged again without its weights.
+                            $existing[$k] = array_key_exists($k, $existing) ? null : $num;
                         } else {
                             $existing[$k] = ($existing[$k] ?? 0) + $num;
                         }
@@ -403,6 +396,7 @@ class GoogleAnalyticsController extends Controller
 
             \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Payloads]:", $payloads);
             $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
+            \App\Services\Analytics\Ga4ReportingSemantics::assertSuccessfulResults($results);
             \Illuminate\Support\Facades\Log::error("GA4 Summary TRACE [Engine Results]:", $results);
 
             $summary = [];
@@ -433,6 +427,8 @@ class GoogleAnalyticsController extends Controller
                 'previous' => $previous,
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GA4 Summary Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -537,6 +533,7 @@ class GoogleAnalyticsController extends Controller
 
             \Illuminate\Support\Facades\Log::error("GA4 Chart Payload:", $payloads);
             $results = empty($payloads) ? [] : $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
+            \App\Services\Analytics\Ga4ReportingSemantics::assertSuccessfulResults($results);
             \Illuminate\Support\Facades\Log::error("GA4 Chart Results:", $results);
 
             if ($breakdownDim) {
@@ -571,7 +568,7 @@ class GoogleAnalyticsController extends Controller
                     foreach ($row as $k => $v) {
                         if (!in_array($k, ['daily', 'date', 'metric_date'])) {
                             $mappedKey = $this->mapFromGa4($k);
-                            $mergedByDate[$dateKey][$mappedKey] = ($mergedByDate[$dateKey][$mappedKey] ?? 0) + (float) $v;
+                            $mergedByDate[$dateKey][$mappedKey] = $v === null ? null : ($mergedByDate[$dateKey][$mappedKey] ?? 0) + (float) $v;
                         }
                     }
                 }
@@ -583,6 +580,8 @@ class GoogleAnalyticsController extends Controller
                 'chart' => array_values($mergedByDate),
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GA4 Chart Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -713,6 +712,7 @@ class GoogleAnalyticsController extends Controller
 
             \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Engine Payloads]:", ['payloads' => $payloads]);
             $results = $service->aggregateChanneledPool($tenant, 'google_analytics', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
+            \App\Services\Analytics\Ga4ReportingSemantics::assertSuccessfulResults($results);
             \Illuminate\Support\Facades\Log::error("GA4 Table TRACE [Engine Raw Response]:", ['results' => $results]);
 
             $dataSets = [];
@@ -743,6 +743,8 @@ class GoogleAnalyticsController extends Controller
                 'table' => $mappedTableData,
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GA4 Table Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);

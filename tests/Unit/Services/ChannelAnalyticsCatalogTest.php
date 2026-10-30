@@ -19,7 +19,7 @@ class ChannelAnalyticsCatalogTest extends TestCase
                 $this->assertNotEmpty($metric['label'], "$channel.$name");
                 $this->assertNotEmpty($metric['unit']);
                 $this->assertNotEmpty($metric['reducer']);
-                $this->assertContains($metric['status'], ['cached', 'conditional', 'known_issue', 'derived', 'source_only', 'preaggregated']);
+                $this->assertContains($metric['status'], ['cached', 'conditional', 'known_issue', 'derived', 'source_only', 'preaggregated', 'unsupported']);
                 foreach ($metric['caveats'] as $id) $this->assertArrayHasKey($id, $tree['caveats']);
                 foreach ($metric['scopes'] as $scope) {
                     $this->assertArrayHasKey($scope, $tree['scopes']);

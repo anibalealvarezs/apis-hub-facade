@@ -405,7 +405,7 @@ window.dashboardRenderer = {
 
     _getStorageCache(widgetId, effectiveTenant, body, lang) {
         try {
-            const keySuffix = this._hashString(JSON.stringify(body) + "|" + (lang || ""));
+            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v1|" + (lang || ""));
             const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
             const item = localStorage.getItem(cacheKey);
             if (!item) return null;
@@ -423,7 +423,7 @@ window.dashboardRenderer = {
 
     _setStorageCache(widgetId, effectiveTenant, body, lang, data) {
         try {
-            const keySuffix = this._hashString(JSON.stringify(body) + "|" + (lang || ""));
+            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v1|" + (lang || ""));
             const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
             localStorage.setItem(
                 cacheKey,
@@ -726,6 +726,13 @@ window.dashboardRenderer = {
         this._widgetData.set(containerEl, json);
         containerEl.innerHTML = "";
         this._renderWidget(widget_type, containerEl, data, controls);
+        for (const message of json.analytics_warnings || []) {
+            const note = document.createElement('div');
+            note.setAttribute('role', 'note');
+            note.className = 'text-xs text-amber-700 dark:text-amber-300 px-3 py-2';
+            note.textContent = message;
+            containerEl.appendChild(note);
+        }
     },
 
     // ─── Loading / Error States ───

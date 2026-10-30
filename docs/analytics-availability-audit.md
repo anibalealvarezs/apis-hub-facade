@@ -6,6 +6,14 @@ inventory reachable through `ChannelCapabilityRegistry::getAnalyticsTree`.
 Existing GSC behavior is preserved. These new entries are metadata: Explorer/widget
 pickers and tenant query execution are not switched over or repaired by this change.
 
+Subsequent GA4 implementation (2026-10-30): cost rejection, contract-based aggregation,
+weighted rates, explicitly labeled reported user sums, virtual Source / Medium,
+source compatibility/metadata and consumer corrections are now implemented locally.
+The findings below retain the original audit baseline; see the
+[progressive plan](plans/analytics-correctness-remediation-plan.md) and
+[GA4 rollout](../../apis-hub/docs/ga4-correctness-rollout.md) for status and limitations.
+Other channel defects are still proposals. Production rollout remains pending.
+
 ## Method and confidence
 
 Traced provider SDK calls → driver defaults → conversion whitelist → cached keys /

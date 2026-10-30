@@ -85,7 +85,7 @@ class ChannelAnalyticsCatalog
             'screenPageViews' => ['Page and screen views', 'count', 'sum'], 'sessions' => ['Sessions', 'count', 'sum_within_one_scope'],
             'bounceRate' => ['Bounce rate', 'ratio', 'session_weighted_average'], 'totalRevenue' => ['Total revenue', 'property_currency', 'sum'],
             'averageSessionDuration' => ['Average session duration', 'seconds', 'session_weighted_average'],
-            'conversions' => ['Conversions (legacy source name)', 'count', 'sum'], 'eventCount' => ['Event count', 'count', 'sum'],
+            'conversions' => ['Key Events', 'count', 'sum'], 'eventCount' => ['Event count', 'count', 'sum'],
             'newUsers' => ['New users', 'users', 'source_distinct_for_requested_window'],
             'activeUsers' => ['Active users', 'users', 'source_distinct_for_requested_window'], 'totalUsers' => ['Total users', 'users', 'source_distinct_for_requested_window'],
         ];
@@ -122,6 +122,26 @@ class ChannelAnalyticsCatalog
             'ad_touchpoint_matrix' => ['date', 'sessionCampaignName', 'sessionGoogleAdsAdGroupName', 'sessionManualTerm', 'sessionManualAdContent'],
         ];
         $tree['alias_warning'] = 'Reach means active users and impressions means page/screen views here; they are not advertising measurements. spend is deliberately excluded from valid aliases (GA-01).';
+        $tree['query_contract_version'] = 1;
+        $tree['caveats']['GA-01'] = 'Cost metrics are unsupported; revenue is not advertising spend.';
+        $tree['caveats']['GA-02'] = 'Reported user-count sums are not window uniques. Rates require complete same-grain session weights.';
+        $tree['caveats']['GA-03'] = 'Combined session source/medium is virtual and requires tenant query contract v1.';
+        $tree['caveats']['GA-04'] = 'Source key-event names are property-validated; cache identity remains conversions.';
+        $tree['caveats']['GA-05'] = 'Quality metadata is retained on new observations; historical quality and report-level badges are not reconstructed.';
+        $tree['virtual_dimensions'] = ['dimensions.sessionSourceMedium' => ['parts' => ['dimensions.source', 'dimensions.medium'], 'separator' => ' / ', 'scopes' => ['traffic_matrix', 'event_matrix']]];
+        $tree['metrics']['spend']['status'] = 'unsupported';
+        $tree['metrics']['conversions']['sources'] = ['conversions', 'keyEvents'];
+        $tree['metrics']['conversions']['cache_name'] = 'conversions';
+        foreach (['newUsers', 'activeUsers', 'totalUsers'] as $metric) {
+            $tree['metrics'][$metric]['cached_reducer'] = 'sum_of_reported_user_counts_not_window_unique';
+        }
+        $tree['implementation'] = [
+            'GA-01' => 'Cost rejected by driver query contract and Facade; revenue alias removed.',
+            'GA-02' => 'Same-grain session-weighted rates; user counts explicitly labeled reported sums, not exact window uniques.',
+            'GA-03' => 'Virtual combined source/medium supports existing grouping and filter operators without changing cache grain.',
+            'GA-04' => 'Property metadata selects source key-event name; compatibility preflight before reports.',
+            'GA-05' => 'Quality/currency/timezone metadata retained on new observations. Multi-account revenue requires matching known currencies.',
+        ];
         return $tree;
     }
 
