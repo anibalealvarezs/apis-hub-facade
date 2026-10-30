@@ -2431,5 +2431,12 @@
     "This breakdown is not cached for the selected search type.": "Este desglose no está almacenado para el tipo de búsqueda seleccionado.",
     "Search intent filters require search queries.": "Los filtros de intención requieren consultas de búsqueda.",
     "Upgrade this tenant to use search type filters.": "Actualiza este tenant para utilizar filtros por tipo de búsqueda.",
-    "Standard and appearance scopes must be queried separately.": "Los ámbitos estándar y de apariencia deben consultarse por separado."
+    "Standard and appearance scopes must be queried separately.": "Los ámbitos estándar y de apariencia deben consultarse por separado.",
+    "No breakdown (totals only)": "Sin desglose (solo totales)",
+    "Temporary breakdown limitation": "Limitación temporal de los desgloses",
+    "Breakdowns are temporarily unavailable for campaigns targeting people in the United States. Select \"No breakdown (totals only)\" to collect data for these campaigns.": "Temporalmente no están disponibles los desgloses para campañas dirigidas a personas en Estados Unidos. Selecciona \"Sin desglose (solo totales)\" para recopilar los datos de estas campañas.",
+    "Select a breakdown, or choose no breakdown to synchronize totals only. The unbroken baseline is always synchronized.": "Selecciona un desglose o elige sincronizar solo los totales. Los datos base sin desglose siempre se sincronizan.",
+    "Demographics (Age & Gender)": "Datos demográficos (edad y género)",
+    "Placement (Platform & Position)": "Ubicación del anuncio (plataforma y posición)",
+    "Geography (Country)": "Geografía (país)"
 }
