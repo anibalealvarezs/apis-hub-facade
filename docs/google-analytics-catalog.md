@@ -3,6 +3,26 @@
 Audited 2026-10-30. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('google_analytics')`.
 The tree uses raw cached metric names, with canonical aliases separately recorded.
 
+## Correctness implementation update
+
+The accompanying GA4 contract v1 implementation removes revenue-as-cost, enforces
+one scope, uses cached same-grain session weights for rates, composes Source / Medium
+virtually, validates source fields and retains new response-quality metadata.
+Explorer and KPI options now consume the catalog's scope metric lists. Acquisition
+does not advertise revenue. User metrics remain **reported count sums**, with visible
+notices; exact window uniques require a separate source-window cache. Unsupported
+cost requests fail, and old pooled errors cannot masquerade as empty totals.
+
+Historical observations do not require a dimension/signature rewrite. Missing weights
+produce unavailable rates; KPI/raw widgets reject unavailable inputs rather than
+coercing them to zero. Multi-property revenue needs matching known currencies;
+old windows may need metadata replay or single-property reporting. Calendar grains
+are supported by the new contract; rolling windows are currently rejected.
+These changes require the matching SDK/driver/tenant deployment, not Facade alone.
+See [rollout and remaining acceptance checks](../../apis-hub/docs/ga4-correctness-rollout.md).
+
+Runtime `implementation` entries distinguish corrections from remaining semantic limits.
+
 ## Property → matrix → entities / dimensions → metrics
 
 | Scope | Default requested metrics | Cached breakdowns |
@@ -23,7 +43,7 @@ different questions; do not merge them to fill apparent gaps.
 | screenPageViews | Page/screen views; canonical impressions alias | Sum within one compatible matrix |
 | sessions | Sessions | Sum only within one compatible matrix/grain |
 | eventCount | Event occurrences | Sum |
-| conversions | Legacy requested source name | Sum; validate current property compatibility before changing to keyEvents |
+| conversions | Stable cached identity; source keyEvents/legacy conversions selected from property metadata | Sum within one compatible matrix |
 | totalRevenue | Property currency; canonical revenue | Sum within one currency |
 | bounceRate | Ratio | Session-weighted average, not sum or unweighted average |
 | averageSessionDuration | Seconds | Session-weighted average |
@@ -33,13 +53,13 @@ Canonical aliases: `reach → activeUsers`, `impressions → screenPageViews`,
 `new_users → newUsers`, `revenue → totalRevenue`, `bounce_rate → bounceRate`,
 `average_session_duration → averageSessionDuration`, `total_users → totalUsers`,
 `event_count → eventCount`. These aliases must retain their GA4 meaning in cross-channel
-widgets. **The current `spend → totalRevenue` dictionary mapping is a defect, GA-01.**
-It is deliberately not declared a valid cost capability in this catalog.
+widgets. **The former `spend → totalRevenue` mapping was removed (GA-01).**
+Spend is unsupported and is not declared a valid cost capability.
 
 Landing pages are correctly normalized from `landingPagePlusQueryString` to
 `dimensions.landing_page`. Session source/medium is split into `dimensions.source`
-and `dimensions.medium`; the existing UI `dimensions.sessionSourceMedium` path is
-not emitted by the converter (GA-03). First-user source/medium is retained combined.
+and `dimensions.medium`; `dimensions.sessionSourceMedium` is now composed virtually
+for grouping/filtering (GA-03), without adding a cached dimension. First-user source/medium is retained combined.
 Do not infer missing revenue in acquisition means zero: that matrix does not request it.
 Mapped campaign names/manual terms are not stable provider campaign/ad identifiers.
 

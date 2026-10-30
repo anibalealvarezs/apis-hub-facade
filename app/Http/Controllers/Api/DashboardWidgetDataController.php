@@ -13,6 +13,8 @@
 
     class DashboardWidgetDataController extends Controller
     {
+        private bool $usesGa4Reporting = false;
+
         public function __construct(
             protected WidgetDataService   $widgetDataService,
             protected RemoteEngineService $remoteEngineService,
@@ -22,6 +24,7 @@
 
         public function show(Request $request, DashboardWidget $widget): JsonResponse
         {
+            $this->usesGa4Reporting = false;
             $user = $request->user();
             $locale = $request->query('lang')
                 ?? $request->input('lang')
@@ -106,6 +109,12 @@
                 'granularity'     => $resolvedControls['granularity'] ?? '__NOT_SET__',
                 'series_assets'   => $resolvedControls['series_assets'] ?? '__NOT_SET__',
             ]);
+
+            $reportingConfig = [$resolvedControls, $widget->source_config ?? []];
+            if ($widget->source_type === 'kpi') $reportingConfig[] = $widget->customKpi?->filters ?? [];
+            if ($widget->source_type === 'derived_metric') $reportingConfig[] = $widget->derivedMetric?->source_series ?? [];
+            $this->usesGa4Reporting = \App\Services\Analytics\Ga4ReportingSemantics::containsGa4($reportingConfig);
+            if ($this->usesGa4Reporting) $resolvedControls['_analytics_semantics_version'] = 1;
 
             if (!$dashboard->is_public && $user && (!empty($resolvedControls['channel']) || !empty($widget->source_config['channel']))) {
                 $assetAccess = app(\App\Services\CollaboratorAssetAccessService::class);
@@ -1686,6 +1695,8 @@
                     'data'           => $data,
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
+                    'analytics_warnings' => $this->usesGa4Reporting
+                        ? [\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()] : [],
                 ], 200, [], JSON_UNESCAPED_UNICODE);
             } catch (\Illuminate\Validation\ValidationException $e) {
                 return response()->json(['success' => false, 'error' => $e->getMessage(), 'errors' => $e->errors(), 'retryable' => false], 422);
@@ -4932,6 +4943,7 @@
 
         public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
         {
+            if ($channel === 'google_analytics') $this->usesGa4Reporting = true;
             $t0 = microtime(true);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint ENTER", ['channel' => $channel, 'action' => $action, 'tenant' => $payload['tenant'] ?? '?']);
 
@@ -5161,6 +5173,10 @@
 
             if ($response instanceof \Illuminate\Http\JsonResponse) {
                 $data = $response->getData(true);
+                if ($channel === 'google_analytics' && $response->getStatusCode() >= 400) {
+                    throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['analytics' => $data['error'] ?? __('The GA4 report is unavailable.')]);
+                }
+                if ($channel === 'google_analytics') \App\Services\Analytics\Ga4ReportingSemantics::assertWidgetRatesAvailable($data);
                 if ($channel === 'google_search_console' && $response->getStatusCode() === 422) {
                     throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['searchType' => $data['error'] ?? 'Invalid GSC report']);
                 }

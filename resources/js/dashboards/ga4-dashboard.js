@@ -1,5 +1,5 @@
-import { withEntityAttributes } from './entity-attributes';
-import { dataTable } from './data-table';
+import { withEntityAttributes } from './entity-attributes.js';
+import { dataTable } from './data-table.js';
 
 const COUNTRY_NAME_TO_CODE = {
     'Aruba':'ABW','Afghanistan':'AFG','Angola':'AGO','Anguilla':'AIA','Åland Islands':'ALA','Albania':'ALB',
@@ -369,7 +369,7 @@ export function ga4Dashboard(config = {}) {
         },
 
         clearCache() {
-            const prefix = `ga4_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}`;
+            const prefix = `ga4_v2_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}`;
             Object.keys(sessionStorage).forEach(key => {
                 if (key.startsWith(prefix)) {
                     sessionStorage.removeItem(key);
@@ -379,7 +379,7 @@ export function ga4Dashboard(config = {}) {
 
         getCacheKey(endpoint, section = null) {
             const tab = section ? this.ss[section] : '';
-            return `ga4_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${tab}`;
+            return `ga4_v2_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${tab}`;
         },
 
         safeCacheSet(key, value) {
@@ -441,9 +441,9 @@ export function ga4Dashboard(config = {}) {
                 new_users: obj.new_users ?? 0,
                 conversions: obj.conversions ?? 0,
                 pageviews: obj.pageviews ?? 0,
-                average_session_duration: obj.average_session_duration ?? 0,
+                average_session_duration: obj.average_session_duration ?? null,
                 total_users: obj.total_users ?? 0,
-                bounce_rate: obj.bounce_rate ?? 0,
+                bounce_rate: obj.bounce_rate ?? null,
                 revenue: obj.revenue ?? 0,
             };
         },
@@ -530,6 +530,7 @@ export function ga4Dashboard(config = {}) {
 
         get variance() {
             const calc = (current, prev) => {
+                if (current === null || prev === null) return null;
                 if (!prev || Number(prev) === 0) return 0;
                 return ((Number(current) - Number(prev)) / Number(prev)) * 100;
             };
@@ -698,8 +699,8 @@ export function ga4Dashboard(config = {}) {
                 return {
                     daily: dateStr,
                     sessions: 0, reach: 0, new_users: 0,
-                    conversions: 0, pageviews: 0, bounce_rate: 0,
-                    average_session_duration: 0, total_users: 0, revenue: 0
+                    conversions: 0, pageviews: 0, bounce_rate: null,
+                    average_session_duration: null, total_users: 0, revenue: 0
                 };
             });
 
@@ -902,6 +903,7 @@ export function ga4Dashboard(config = {}) {
         },
 
         formatDuration(seconds) {
+            if (seconds === undefined || seconds === null) return '—';
             if (!seconds || seconds < 0) return '00:00';
             const totalSeconds = Math.floor(seconds);
             const hours = Math.floor(totalSeconds / 3600);
@@ -916,7 +918,7 @@ export function ga4Dashboard(config = {}) {
         },
 
         formatPercent(num) {
-            if (num === undefined || num === null) return '0%';
+            if (num === undefined || num === null) return '—';
             return (num * 100).toFixed(2) + '%';
         },
 

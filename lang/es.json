@@ -1,4 +1,10 @@
 {
+    "This GA4 rate is unavailable because matching session weights are missing for part of the selected period.": "Esta tasa de GA4 no está disponible porque faltan los recuentos de sesiones necesarios para ponderar parte del período seleccionado.",
+    "GA4 user figures are sums of the reported daily and breakdown counts. The same person can be counted more than once; these are not unique users for the selected period.": "Las cifras de usuarios de GA4 son sumas de los recuentos diarios y de los desgloses reportados. Una misma persona puede contarse más de una vez; no son usuarios únicos del período seleccionado.",
+    "(Reported Sum)": "(suma reportada)",
+    "Key Events": "Eventos clave",
+    "GA4 does not provide advertising spend in this data source. Select an advertising channel for cost metrics.": "Esta fuente de GA4 no proporciona inversión publicitaria. Selecciona un canal publicitario para consultar métricas de costes.",
+    "The GA4 report could not be completed. Partial results have not been displayed. Please review the selected metrics or try again.": "No se pudo completar el informe de GA4. No se han mostrado resultados parciales. Revisa las métricas seleccionadas o vuelve a intentarlo.",
     "Infrastructure changes in progress": "Cambios de infraestructura en curso",
     "Please wait for the current deployment or upgrade to finish.": "Espera a que termine el despliegue o la actualización en curso.",
     "Preparing the upgrade": "Preparando la actualización",

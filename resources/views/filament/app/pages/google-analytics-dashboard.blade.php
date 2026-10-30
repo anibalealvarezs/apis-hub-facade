@@ -1,4 +1,7 @@
 <x-filament-panels::page>
+    <div role="note" class="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
+        {{ \App\Services\Analytics\Ga4ReportingSemantics::userCountNotice() }}
+    </div>
     <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time() }}">
 
     <div x-data="ga4Dashboard({

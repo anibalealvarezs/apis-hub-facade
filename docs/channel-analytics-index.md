@@ -21,9 +21,14 @@ Source-supported and currently cached capabilities must be distinguished.
 The four new trees are maintained in `ChannelAnalyticsCatalog`, exposed by
 `ChannelCapabilityRegistry`, and distinguish cached, derived, conditional,
 source-only and known-issue metrics. They document required reducers and scope
-isolation; they do not automatically expand ingestion or replace existing selectors.
+isolation; catalog membership does not itself expand ingestion. GA4 scope metrics now
+feed its Explorer/controller and KPI choices; the other three new trees remain an
+inventory. Driver query contracts remain authoritative for tenant execution.
 Temporal granularities reuse the existing registry. Entity attributes remain tenant
 metadata, so no provider-specific attribute list is hardcoded into aggregation.
 
 See the [availability audit and prioritized proposals](analytics-availability-audit.md)
 for confirmed converter findings, source verification limits, repair tests and backfills.
+
+Implementation sequence: [Progressive analytics correctness plan](plans/analytics-correctness-remediation-plan.md),
+with release boundaries, acceptance gates and historical repair safeguards.
