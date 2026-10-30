@@ -2438,5 +2438,8 @@
     "Select a breakdown, or choose no breakdown to synchronize totals only. The unbroken baseline is always synchronized.": "Selecciona un desglose o elige sincronizar solo los totales. Los datos base sin desglose siempre se sincronizan.",
     "Demographics (Age & Gender)": "Datos demográficos (edad y género)",
     "Placement (Platform & Position)": "Ubicación del anuncio (plataforma y posición)",
-    "Geography (Country)": "Geografía (país)"
+    "Geography (Country)": "Geografía (país)",
+    "United States": "Estados Unidos",
+    "Breakdowns are temporarily unavailable for campaigns targeting people in :country.": "Temporalmente no están disponibles los desgloses para campañas dirigidas a personas en :country.",
+    "Select :option to collect data for these campaigns.": "Selecciona :option para recopilar los datos de estas campañas."
 }
