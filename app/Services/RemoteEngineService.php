@@ -9,6 +9,27 @@
 
     class RemoteEngineService
     {
+        public function getEntityAttributes(Project $project, string $channel, array $payload = []): array
+        {
+            $response = $this->executeRead($project, 'entity_attributes:'.$channel, $payload, function (ApisHubApi $client) use ($channel, $payload): array {
+                try {
+                    return $client->getEntityAttributes($channel, $payload);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    if ($error->getResponse()->getStatusCode() !== 405) throw $error;
+
+                    return [
+                        'status' => 'error',
+                        'error_code' => 'entity_attributes_unavailable',
+                        'message' => 'Attribute filters are unavailable on this tenant. Update the tenant and reload this page.',
+                    ];
+                }
+            }, 60);
+            if (($response['status'] ?? null) !== 'error' && is_array($response['data'] ?? null)) {
+                $response['data'] = \App\Services\Analytics\EntityAttributeLabels::decorate($response['data'], $channel);
+            }
+            return $response;
+        }
+
         /**
          * Get an instance of the ApisHubApi client for a project.
          */
@@ -32,14 +53,15 @@
             }
 
             $handlerStack = \GuzzleHttp\HandlerStack::create();
-            $handlerStack->push(\GuzzleHttp\Middleware::mapRequest(function (\Psr\Http\Message\RequestInterface $request) {
+            $actor = $this->requestActor($project);
+            $handlerStack->push(\GuzzleHttp\Middleware::mapRequest(function (\Psr\Http\Message\RequestInterface $request) use ($actor) {
+                $request = $request->withHeader('X-Request-Actor', $actor);
                 $body = (string)$request->getBody();
-                $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000).'...[truncated]' : $body;
                 \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Outgoing request', [
                     'method'  => $request->getMethod(),
                     'uri'     => (string)$request->getUri(),
-                    'headers' => $request->getHeaders(),
-                    'body'    => $truncated,
+                    'headers' => array_filter($request->getHeaders(), static fn ($name) => in_array(strtolower($name), ['accept', 'content-type', 'user-agent'], true), ARRAY_FILTER_USE_KEY),
+                    'body_bytes' => strlen($body),
                 ]);
                 if ($request->getBody()->isSeekable()) {
                     $request->getBody()->rewind();
@@ -49,10 +71,9 @@
             }));
             $handlerStack->push(\GuzzleHttp\Middleware::mapResponse(function (\Psr\Http\Message\ResponseInterface $response) {
                 $body = (string)$response->getBody();
-                $truncated = mb_strlen($body) > 5000 ? mb_substr($body, 0, 5000).'...[truncated]' : $body;
                 \Illuminate\Support\Facades\Log::info('[STEP Guzzle] Incoming response', [
                     'status' => $response->getStatusCode(),
-                    'body'   => $truncated,
+                    'body_bytes' => strlen($body),
                 ]);
                 if ($response->getBody()->isSeekable()) {
                     $response->getBody()->rewind();
@@ -82,6 +103,18 @@
          */
         public function execute(Project $project, callable $callback, int $timeout = 15)
         {
+            // Queue workers and Livewire can hold a stale Project instance. Read
+            // current local state before constructing any tenant HTTP client.
+            $healthStatus = $project->exists
+                ? $project->newQuery()->whereKey($project->getKey())->value('health_status')
+                : $project->health_status;
+            if ($healthStatus === 'upgrading') {
+                return [
+                    'status' => 'error', 'error_code' => 'tenant_upgrading',
+                    'http_status' => 503, 'retryable' => false, 'retry_after' => 30,
+                    'message' => __('The tenant is being upgraded. Requests will resume when the upgrade finishes.'),
+                ];
+            }
             if (!$project->hasBeenDeployed()) {
                 Log::debug("Remote Engine Action skipped: Project '{$project->name}' has not been deployed yet.");
 
@@ -102,6 +135,13 @@
 
                 return $result;
             } catch (Exception $e) {
+                if ($e instanceof \GuzzleHttp\Exception\RequestException && $e->getResponse()
+                    && in_array($e->getResponse()->getStatusCode(), [429, 503], true)) {
+                    return ['status' => 'error', 'http_status' => $e->getResponse()->getStatusCode(),
+                        'error_code' => 'upstream_capacity_exhausted', 'retryable' => true,
+                        'retry_after' => max(1, (int)ceil(RemoteCapacityRetry::retryAfterMilliseconds($e->getResponse()->getHeaderLine('Retry-After')) / 1000)),
+                        'message' => 'This tenant is processing other requests. Please retry shortly.'];
+                }
                 $message = $e->getMessage();
                 $retryable = self::isCloudflareInterruption($message);
                 if (preg_match('/500|502|503|Connection refused|Could not resolve host|cURL error/i', $message)) {
@@ -125,6 +165,35 @@
 
                 return $result;
             }
+        }
+
+        protected function requestActor(Project $project): string
+        {
+            $userId = auth()->id();
+            $scope = $userId !== null ? 'user:'.$userId : (app()->runningInConsole() ? 'system' : 'anonymous:'.request()->ip());
+            return hash_hmac('sha256', $project->getKey().':'.$scope, (string)config('app.key'));
+        }
+
+        protected function executeRead(Project $project, string $operation, array $payload, callable $callback, int $timeout): array
+        {
+            $request = app()->bound('request') ? request() : null;
+            // Console workers reuse their container/request binding between
+            // jobs. Only attach response state to actual API/JSON requests.
+            if ($request && !$request->is('api/*') && !$request->expectsJson()) $request = null;
+            $blocked = $request?->attributes->get('remote_request_backpressure');
+            if ($blocked && ($blocked['project_id'] ?? null) === (int)$project->getKey()) return $blocked;
+            $settings = config('remote_requests');
+            $retries = min(2, max(0, (int)$settings['max_retries']));
+            $totalTimeout = $timeout * ($retries + 1) + (int)ceil($retries * (int)$settings['max_retry_delay_ms'] / 1000);
+            $result = app(RemoteRequestCoordinator::class)->run((int)$project->getKey(), $this->requestActor($project),
+                ['operation' => $operation, 'payload' => $payload],
+                fn () => $this->execute($project, fn (ApisHubApi $client) => (new RemoteCapacityRetry())->run(
+                    fn () => $callback($client), $retries, (int)$settings['max_retry_delay_ms']
+                ), $timeout), $totalTimeout);
+            if (in_array($result['http_status'] ?? null, [429, 503], true)) {
+                $request?->attributes->set('remote_request_backpressure', $result + ['project_id' => (int)$project->getKey()]);
+            }
+            return $result;
         }
 
         /**
@@ -347,7 +416,7 @@
          */
         public function aggregateChanneled(Project $project, string $channel, string $entity, array $payload, int $timeout = 60)
         {
-            return $this->execute($project, fn(ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload), $timeout);
+            return $this->executeRead($project, 'aggregate:'.$channel.':'.$entity, $payload, fn(ApisHubApi $client) => $client->aggregateChanneled($channel, $entity, $payload), $timeout);
         }
 
         /**
@@ -364,7 +433,7 @@
             unset($logPayload['admin_api_key']);
             \Illuminate\Support\Facades\Log::info('RemoteEngine KPI payload', $logPayload);
 
-            $result = $this->execute($project, fn(ApisHubApi $client) => $client->computeKpi($payload), 30);
+            $result = $this->executeRead($project, 'compute_kpi', $payload, fn(ApisHubApi $client) => $client->computeKpi($payload), 30);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] computeKpi AFTER execute", ['project_id' => $project->id, 'ms' => round((microtime(true) - $t0) * 1000, 1)]);
 
             \Illuminate\Support\Facades\Log::info('RemoteEngine KPI raw result', is_array($result) ? ['has_result' => true, 'keys' => array_keys($result), 'data_keys' => is_array($result['data'] ?? null) ? array_keys($result['data']) : null] : ['has_result' => false, 'raw' => substr(json_encode($result), 0, 500)]);
@@ -435,7 +504,7 @@
          */
         public function listChanneled(Project $project, string $channel, string $entity, array $params = [], int $timeout = 60)
         {
-            return $this->execute($project, fn(ApisHubApi $client) => $client->listChanneled($channel, $entity, $params), $timeout);
+            return $this->executeRead($project, 'list:'.$channel.':'.$entity, $params, fn(ApisHubApi $client) => $client->listChanneled($channel, $entity, $params), $timeout);
         }
 
         /**

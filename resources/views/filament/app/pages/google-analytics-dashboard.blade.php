@@ -195,6 +195,8 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                              @click="setSectionSubTab('campaigns', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                     </template>
                 </div>
+
+                <x-entity-attribute-filters tab="ss.campaigns" />
             </x-slot:header>
 
             <table class="ga4-table">
@@ -246,6 +248,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                              @click="setSectionSubTab('channels', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                     </template>
                 </div>
+                <x-entity-attribute-filters tab="ss.channels" />
             </x-slot:header>
 
             <table class="ga4-table">
@@ -297,6 +300,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                              @click="setSectionSubTab('traffic', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                     </template>
                 </div>
+                <x-entity-attribute-filters tab="ss.traffic" />
             </x-slot:header>
 
             <x-slot:actions>
@@ -420,6 +424,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                              @click="setSectionSubTab('acquisition', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                     </template>
                 </div>
+                <x-entity-attribute-filters tab="ss.acquisition" />
             </x-slot:header>
 
             <table class="ga4-table">
@@ -471,6 +476,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                              @click="setSectionSubTab('events', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                     </template>
                 </div>
+                <x-entity-attribute-filters tab="ss.events" />
             </x-slot:header>
 
             <table class="ga4-table">
@@ -522,6 +528,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                              @click="setSectionSubTab('adtouchpoints', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
                     </template>
                 </div>
+                <x-entity-attribute-filters tab="ss.adtouchpoints" />
             </x-slot:header>
 
             <table class="ga4-table">

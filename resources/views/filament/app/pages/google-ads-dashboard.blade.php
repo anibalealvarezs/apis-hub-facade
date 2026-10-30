@@ -191,6 +191,7 @@
                     <div class="tab-fb" :class="activeTab === 'search_terms' ? 'active' : ''"
                          @click="setTab('search_terms')">{{ __('SEARCH TERMS') }}</div>
                 </div>
+                <x-entity-attribute-filters />
             </x-slot:header>
 
             <table class="fb-table">

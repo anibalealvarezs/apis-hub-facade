@@ -19,6 +19,7 @@ class ApisHubRelease extends Model
         'supported_channels',
         'config_schemas',
         'upgrade_commands',
+        'upgrade_impact',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class ApisHubRelease extends Model
         'supported_channels' => 'array',
         'config_schemas' => 'array',
         'upgrade_commands' => 'array',
+        'upgrade_impact' => 'array',
     ];
 
     /**

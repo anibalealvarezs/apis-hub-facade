@@ -353,11 +353,7 @@
                 $config[$chan]['cache_history_range'] = $isFreeTier ? '6 months' : ($maxRanges[$chan] ?? '2 years');
             }
 
-            if (!isset($config['facebook_marketing']['breakdown_passes'])) {
-                $config['facebook_marketing']['breakdown_passes'] = 'demographics';
-            } elseif (is_array($config['facebook_marketing']['breakdown_passes'])) {
-                $config['facebook_marketing']['breakdown_passes'] = reset($config['facebook_marketing']['breakdown_passes']) ?: 'demographics';
-            }
+            $config['facebook_marketing']['breakdown_passes'] = \App\Services\Analytics\MetaAdsBreakdownOptions::normalize($config['facebook_marketing']['breakdown_passes'] ?? null);
             if (!isset($config['facebook_marketing']['metric_set'])) {
                 $config['facebook_marketing']['metric_set'] = 'full';
             }
@@ -700,20 +696,19 @@
                 ->label(__('Apply Infrastructure Changes'))
                 ->color('warning')
                 ->icon('heroicon-o-cloud-arrow-up')
-                ->disabled(fn() => in_array(Filament::getTenant()->fresh()->health_status, ['redeploying', 'syncing']))
+                ->disabled(fn() => Filament::getTenant()->isInfrastructureBusy() || Filament::getTenant()->fresh()->health_status === 'syncing')
+                ->tooltip(fn () => Filament::getTenant()->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
                 ->visible(fn() => Filament::getTenant()->fresh()->redeploy_pending)
                 ->requiresConfirmation()
                 ->modalHeading(__('Redeploy Infrastructure'))
                 ->modalDescription(__('This will rebuild the remote containers to apply your channel changes. Continue?'))
                 ->action(function () {
                     $tenant = Filament::getTenant();
-                    $tenant->update([
-                        'health_status' => 'redeploying',
-                        'deploy_started_at' => now(),
-                        'last_sync_started_at' => now(),
-                    ]);
-
-                    \App\Jobs\DeployProjectJob::dispatch($tenant);
+                    if (!\App\Services\InfrastructureActionGuard::allows($tenant)) return;
+                    if (!\App\Services\InfrastructureActionGuard::queue($tenant, 'redeploying', function () use ($tenant) {
+                        $tenant->update(['last_sync_started_at' => now()]);
+                        \App\Jobs\DeployProjectJob::dispatch($tenant);
+                    })) return;
 
                     Notification::make()
                         ->title(__('Redeployment Initiated'))
@@ -1046,14 +1041,13 @@
                     $secondarySections[] = \Filament\Forms\Components\Section::make(__('Breakdown Passes & Metrics'))
                         ->description(__('Configure independent breakdown passes and metric extraction fidelity.'))
                         ->schema([
+                            \Filament\Forms\Components\Placeholder::make('meta_breakdown_warning')
+                                ->label('')
+                                ->content(view('filament.app.components.data-sources.meta-breakdown-warning')),
                             \Filament\Forms\Components\Radio::make('facebook_marketing.breakdown_passes')
                                 ->label(__('Breakdown Pass'))
-                                ->helperText(__('Select which dimension to synchronize. Breakdown passes are exclusive; unbroken baseline is always synchronized.'))
-                                ->options([
-                                    'demographics' => 'Demographics (Age & Gender)',
-                                    'placement' => 'Placement (Platform & Position)',
-                                    'geography' => 'Geography (Country)',
-                                ])
+                                ->helperText(__('Select a breakdown, or choose no breakdown to synchronize totals only. The unbroken baseline is always synchronized.'))
+                                ->options(array_map(fn ($label) => __($label), \App\Services\Analytics\MetaAdsBreakdownOptions::options()))
                                 ->default('demographics')
                                 ->required(),
 
@@ -2121,11 +2115,8 @@
 
                 // Specifically detect if breakdown_passes or metric_set changed for channels supporting dynamic passes (Requires APIs Hub >= v1.18.2)
                 if ($this->activeChannel === 'facebook_marketing' && $tenant->releaseSupportsMetaBreakdowns()) {
-                    $rawOldPass = $dbState['facebook_marketing']['breakdown_passes'] ?? 'demographics';
-                    $oldPass = is_array($rawOldPass) ? (reset($rawOldPass) ?: 'demographics') : (string)$rawOldPass;
-
-                    $rawNewPass = $proposedState['facebook_marketing']['breakdown_passes'] ?? 'demographics';
-                    $newPass = is_array($rawNewPass) ? (reset($rawNewPass) ?: 'demographics') : (string)$rawNewPass;
+                    $oldPass = \App\Services\Analytics\MetaAdsBreakdownOptions::normalize($dbState['facebook_marketing']['breakdown_passes'] ?? null);
+                    $newPass = \App\Services\Analytics\MetaAdsBreakdownOptions::normalize($proposedState['facebook_marketing']['breakdown_passes'] ?? null);
 
                     $oldMetricSet = $dbState['facebook_marketing']['metric_set'] ?? 'full';
                     $newMetricSet = !empty($proposedState['facebook_marketing']['metric_set']) ? $proposedState['facebook_marketing']['metric_set'] : 'full';

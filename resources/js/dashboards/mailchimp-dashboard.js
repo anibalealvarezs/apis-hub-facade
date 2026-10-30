@@ -1,3 +1,4 @@
+import { withEntityAttributes } from './entity-attributes';
 import { dataTable } from './data-table';
 
 /**
@@ -84,7 +85,7 @@ const EMPTY_SUMMARY = {
 };
 
 export function mailchimpDashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         account: config.account || '',
         selectedAccount: config.selectedAccount || '',
@@ -361,7 +362,7 @@ export function mailchimpDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/mailchimp/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/mailchimp/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -392,7 +393,7 @@ export function mailchimpDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/mailchimp/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/mailchimp/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -440,7 +441,7 @@ export function mailchimpDashboard(config = {}) {
                         }
                     };
 
-                    const response = await fetch('/api/mailchimp/trend', {
+                    const response = await this.fetchDashboardResponse('/api/mailchimp/trend', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -483,7 +484,7 @@ export function mailchimpDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/mailchimp/table', this.getFetchOptions(false));
+                const response = await this.fetchDashboardResponse('/api/mailchimp/table', this.getFetchOptions(false));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -852,7 +853,7 @@ export function mailchimpDashboard(config = {}) {
                     return 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30';
             }
         }
-    };
+    }, 'mailchimp');
 }
 
 if (typeof window !== 'undefined') {

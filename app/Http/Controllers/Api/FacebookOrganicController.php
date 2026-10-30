@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class FacebookOrganicController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     private function validateRequest(Request $request): array
     {
         return $request->validate([
@@ -540,7 +542,7 @@ class FacebookOrganicController extends Controller
                 'summary_payload' => $payloads['summary'],
             ]);
 
-            $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             $metricKeys = array_keys($config['aggregations']);
             $summaryData = $results['summary']['data'] ?? [];
@@ -573,7 +575,7 @@ class FacebookOrganicController extends Controller
                     ],
                 ];
 
-                $fallbackResults = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $fallbackPayloads);
+                $fallbackResults = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $this->withEntityAttributeFilters($fallbackPayloads, $validated));
                 $summaryRow = $this->collapseGroupedMetrics($fallbackResults['summary']['data'] ?? [], $metricKeys);
                 $previousRow = $this->collapseGroupedMetrics($fallbackResults['previous']['data'] ?? [], $metricKeys);
             }
@@ -696,7 +698,7 @@ class FacebookOrganicController extends Controller
                 'postId' => $validated['postId'] ?? null,
             ], $payloads);
 
-            $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             \Illuminate\Support\Facades\Log::error('[FACADE FBO DEBUG] chart method results:', [
                 'status' => $results['chart']['status'] ?? null,
@@ -817,7 +819,7 @@ class FacebookOrganicController extends Controller
                     'breakdownTab' => $validated['breakdownTab'] ?? null,
                 ], $payloads);
 
-                $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+                $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
                 $tableData = $results['table']['data'] ?? [];
 
                 foreach ($tableData as &$row) {
@@ -865,7 +867,7 @@ class FacebookOrganicController extends Controller
                 'account' => $validated['account'] ?? [],
             ], $payloads);
 
-            $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_organic', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             $tableData = $results['table']['data'] ?? [];
 
             if ($validated['activeTab'] === 'facebook') {

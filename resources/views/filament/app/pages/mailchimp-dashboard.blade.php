@@ -302,6 +302,7 @@
                         </button>
                     </div>
                 </div>
+                <x-entity-attribute-filters />
             </x-slot:header>
 
             <table class="mailchimp-table">

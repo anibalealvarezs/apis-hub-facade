@@ -1,4 +1,5 @@
-import { dataTable } from './data-table';
+import { withEntityAttributes } from './entity-attributes.js';
+import { dataTable } from './data-table.js';
 
 const COUNTRY_NAME_TO_CODE = {
     'Aruba':'ABW','Afghanistan':'AFG','Angola':'AGO','Anguilla':'AIA','Åland Islands':'ALA','Albania':'ALB',
@@ -60,7 +61,7 @@ const COUNTRY_NAME_TO_CODE = {
 };
 
 export function gscDashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         account: config.account || '',
         selectedAccount: config.selectedAccount || '',
@@ -68,6 +69,36 @@ export function gscDashboard(config = {}) {
         dateStart: config.dateStart || '',
         dateEnd: config.dateEnd || '',
         activeTab: config.activeTab || 'queries',
+        searchType: 'web',
+        searchTypesEnabled: config.searchTypesEnabled ?? false,
+        analyticsCatalog: config.analyticsCatalog || {},
+        supportsGscTab(tab) {
+            return (this.analyticsCatalog.search_types?.[this.searchType]?.tabs || ['queries', 'pages', 'countries', 'devices', 'appearances']).includes(tab);
+        },
+        supportsGscMetric(metric) {
+            return (this.analyticsCatalog.search_types?.[this.searchType]?.metrics || ['clicks', 'impressions', 'ctr', 'position']).includes(metric);
+        },
+        normalizeSearchTypeContext() {
+            if (!this.supportsGscTab(this.activeTab)) this.activeTab = 'pages';
+            for (const tab of ['queries', 'devices', 'appearances']) {
+                if (!this.supportsGscTab(tab)) this.activeFilters[tab] = [];
+            }
+            if (!this.supportsGscTab('queries')) this.activeFilters.intents = [];
+            if (!this.supportsGscMetric('position')) {
+                this.activeMetrics.position = false;
+                if (this.tableState.sortCol === 'position') this.tableState.sortCol = 'clicks';
+            }
+        },
+        setSearchType(type) {
+            if (!this.searchTypesEnabled || !this.analyticsCatalog.search_types?.[type] || this.areEntityAttributeFiltersBusy() || type === this.searchType) return;
+            this.searchType = type;
+            this.normalizeSearchTypeContext();
+            this.summary = {}; this.previous = {}; this.tableState.rows = []; this.chartDataRaw = []; this.trendData = {};
+            this.entityAttributeSelections = {}; this.entityAttributeRanges = {};
+            this.syncToUrl();
+            this.saveFilters();
+            this.entityAttributesChanged(); // Shared one-second debounce and request lock.
+        },
         csrfToken: config.csrfToken || '',
 
         isSummaryLoading: false,
@@ -208,6 +239,8 @@ export function gscDashboard(config = {}) {
             if (de && /^\d{4}-\d{2}-\d{2}$/.test(de)) this.dateEnd = de;
             const tab = params.get('tab');
             if (tab && ['queries', 'pages', 'countries', 'devices', 'appearances'].includes(tab)) this.activeTab = tab;
+            const type = params.get('searchType');
+            if (this.searchTypesEnabled && this.analyticsCatalog.search_types?.[type]) this.searchType = type;
             const metricsParam = params.get('metrics');
             if (metricsParam) {
                 const enabledMetrics = metricsParam.split(',');
@@ -215,6 +248,7 @@ export function gscDashboard(config = {}) {
                     this.activeMetrics[key] = enabledMetrics.includes(key);
                 });
             }
+            this.normalizeSearchTypeContext();
         },
 
         syncToUrl() {
@@ -223,6 +257,7 @@ export function gscDashboard(config = {}) {
             if (this.dateStart) params.set('dateStart', this.dateStart);
             if (this.dateEnd) params.set('dateEnd', this.dateEnd);
             if (this.activeTab) params.set('tab', this.activeTab);
+            if (this.searchTypesEnabled) params.set('searchType', this.searchType);
             const enabledMetrics = Object.entries(this.activeMetrics).filter(([k, v]) => v).map(([k]) => k);
             if (enabledMetrics.length > 0) params.set('metrics', enabledMetrics.join(','));
             const qs = params.toString();
@@ -281,11 +316,18 @@ export function gscDashboard(config = {}) {
         },
 
         setTab(tab) {
+            if (!this.supportsGscTab(tab) || this.areEntityAttributeFiltersBusy()) return;
+            if (tab === 'appearances') {
+                this.clearFiltersLocal();
+                this.entityAttributeSelections = {}; this.entityAttributeRanges = {};
+                this.saveFilters();
+            }
             this.activeTab = tab;
             this.tableState.currentPage = 1;
             this.tableState.searchQuery = '';
             this.syncToUrl();
-            this.fetchTable();
+            if (tab === 'appearances') this.fetchAll();
+            else this.fetchTable();
             if (this.$wire && typeof this.$wire.setActiveTab === 'function') {
                 this.$wire.setActiveTab(tab);
             }
@@ -303,6 +345,7 @@ export function gscDashboard(config = {}) {
             } else {
                 this.clearFiltersLocal();
             }
+            this.normalizeSearchTypeContext();
         },
 
         saveFilters() {
@@ -427,7 +470,7 @@ export function gscDashboard(config = {}) {
 
         getCacheKey(endpoint, includeFilters = true) {
             const filterHash = includeFilters ? JSON.stringify(this.activeFilters) : 'no_filters';
-            return `gsc_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${filterHash}`;
+            return `gsc_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${this.searchType}_${endpoint}_${this.activeTab}_${filterHash}`;
         },
 
         async fetchAll() {
@@ -450,7 +493,7 @@ export function gscDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/gsc/summary', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/gsc/summary', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -481,7 +524,7 @@ export function gscDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/gsc/chart', this.getFetchOptions());
+                const response = await this.fetchDashboardResponse('/api/gsc/chart', this.getFetchOptions());
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -530,7 +573,7 @@ export function gscDashboard(config = {}) {
                         }
                     };
                     
-                    const response = await fetch('/api/gsc/trend', {
+                    const response = await this.fetchDashboardResponse('/api/gsc/trend', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -573,7 +616,7 @@ export function gscDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/gsc/table', this.getFetchOptions(true));
+                const response = await this.fetchDashboardResponse('/api/gsc/table', this.getFetchOptions(true));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -595,6 +638,7 @@ export function gscDashboard(config = {}) {
                 dateEnd: this.dateEnd,
                 activeTab: this.activeTab
             };
+            if (this.searchTypesEnabled) payload.searchType = this.searchType;
 
             if (includeFilters && this.activeFilters) {
                 const translated = { ...this.activeFilters };
@@ -942,7 +986,7 @@ export function gscDashboard(config = {}) {
             if (num === undefined || num === null) return '0.00';
             return Number(num).toFixed(2);
         }
-    };
+    }, 'google_search_console');
 }
 
 if (typeof window !== 'undefined') {

@@ -8,6 +8,7 @@ window.dashboardRenderer = {
     _widgetData: new Map(),
     _pinnedTooltips: new Map(),
     _retryTimers: new Map(),
+    _autoRetryCounts: new Map(),
     METRIC_FORMATS: {
         spend: { label: "Spend", format: "currency", prefix: "$" },
         cpc: {
@@ -369,6 +370,10 @@ window.dashboardRenderer = {
 
     _enqueue(fn) {
         return new Promise((resolve, reject) => {
+            if (this._queue.length >= 100) {
+                reject(new Error('Too many pending widget requests. Please retry shortly.'));
+                return;
+            }
             this._queue.push({ fn, resolve, reject });
             this._dequeue();
         });
@@ -531,7 +536,7 @@ window.dashboardRenderer = {
                 return;
             }
 
-            // Enqueue request (max 4 concurrent) with exponential backoff
+            // Enqueue request (max 4 concurrent) with bounded, jittered backoff.
             const json = await this._enqueue(async () => {
                 const maxAttempts = 3;
                 let lastError = null;
@@ -559,12 +564,14 @@ window.dashboardRenderer = {
                         if (!response.ok) {
                             const err = await response.json().catch(() => ({}));
                             const status = response.status;
-                            const errMsg = err.error || "HTTP " + status;
-                            // Retry on server errors or gateway timeouts
-                            if (attempt < maxAttempts && (status >= 500 || status === 429)) {
-                                throw new Error(errMsg);
+                            const failure = new Error(err.message || err.error || "HTTP " + status);
+                            failure.retryable = status >= 500 || status === 429;
+                            const retryAfter = response.headers.get('Retry-After');
+                            if (retryAfter) {
+                                failure.retryAfterMs = /^\d+$/.test(retryAfter) ? Number(retryAfter) * 1000
+                                    : Math.max(0, Date.parse(retryAfter) - Date.now());
                             }
-                            throw new Error(errMsg);
+                            throw failure;
                         }
 
                         const resJson = await response.json();
@@ -580,9 +587,10 @@ window.dashboardRenderer = {
                         return resJson;
                     } catch (err) {
                         lastError = err;
+                        if (err.retryable === false || err.retryAfterMs > 15000) throw err;
                         if (attempt < maxAttempts) {
                             // Exponential backoff: 1000ms, then 2500ms
-                            const delayMs = attempt === 1 ? 1000 : 2500;
+                            const delayMs = Math.max(attempt === 1 ? 1000 : 2500, err.retryAfterMs || 0) + Math.floor(Math.random() * 250);
                             await new Promise((r) => setTimeout(r, delayMs));
                         }
                     }
@@ -608,6 +616,7 @@ window.dashboardRenderer = {
 
             // Success — cancel any pending auto-reload for this widget
             this._cancelRetry(widgetId);
+            this._autoRetryCounts.delete(widgetId);
 
             // Save to localStorage cache
             this._setStorageCache(
@@ -832,21 +841,26 @@ window.dashboardRenderer = {
 
     _scheduleRetry(widgetId, containerEl, controls, tenant) {
         this._cancelRetry(widgetId);
+        if ((this._autoRetryCounts.get(widgetId) || 0) >= 2) {
+            containerEl.innerHTML = this.errorState('Automatic retries stopped after repeated failures. Please retry manually.');
+            return;
+        }
 
-        const fire = () => {
+        const fire = (manual = false) => {
             const pending = this._retryTimers.get(widgetId);
             if (!pending) return;
             // Only reload if the container is still in the DOM
             if (!containerEl.isConnected) {
-                this._retryTimers.delete(widgetId);
+                this._cancelRetry(widgetId);
                 return;
             }
-            this._retryTimers.delete(widgetId);
+            this._cancelRetry(widgetId);
+            this._autoRetryCounts.set(widgetId, manual ? 0 : (this._autoRetryCounts.get(widgetId) || 0) + 1);
             containerEl.innerHTML = this.loadingSkeleton();
             this.renderWidget(widgetId, containerEl, controls, tenant);
         };
 
-        const onManualRetry = () => fire();
+        const onManualRetry = () => fire(true);
 
         containerEl.addEventListener("widget-reload-now", onManualRetry);
 
@@ -855,7 +869,7 @@ window.dashboardRenderer = {
             containerEl,
             controls,
             tenant,
-            timer: setTimeout(fire, 2 * 60 * 1000), // 2 minutes
+            timer: setTimeout(fire, 2 * 60 * 1000 + Math.floor(Math.random() * 5000)),
             onManualRetry,
         };
         this._retryTimers.set(widgetId, token);

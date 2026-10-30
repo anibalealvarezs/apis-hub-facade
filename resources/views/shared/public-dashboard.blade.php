@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $dashboard->name }} — {{ $project->name }}</title>
-    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}" />
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/js/app.js'])

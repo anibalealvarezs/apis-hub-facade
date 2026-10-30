@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class MailchimpController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     /**
      * Canonical Mailchimp metrics exposed by the worker's metric store.
      * Keys are the canonical metric names resolved by
@@ -184,7 +186,7 @@ class MailchimpController extends Controller
                 ],
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             $retryable = false;
             foreach (['summary', 'previous'] as $key) {
@@ -245,7 +247,7 @@ class MailchimpController extends Controller
                 'aggregations' => array_keys($aggs),
             ]);
 
-            $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             \Illuminate\Support\Facades\Log::info('[MAILCHIMP_DEBUG] Chart received from aggregateChanneledPool', [
                 'status' => $results['chart']['status'] ?? null,
@@ -316,7 +318,7 @@ class MailchimpController extends Controller
             }
 
             $payloads = ['table' => $tabPayload];
-            $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             if (($results['table']['status'] ?? null) === 'error') {
                 \Illuminate\Support\Facades\Log::error("Mailchimp Table APIs Hub Error: " . json_encode($results['table']));

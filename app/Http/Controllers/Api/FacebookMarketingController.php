@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 
 class FacebookMarketingController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     private function validateRequest(Request $request): array
     {
         \Illuminate\Support\Facades\Log::info("FBM Raw Request: ", $request->all());
@@ -128,7 +130,7 @@ class FacebookMarketingController extends Controller
                 ],
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             \Illuminate\Support\Facades\Log::info("FBM Summary Results: ", $results);
             
             if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
@@ -255,7 +257,7 @@ class FacebookMarketingController extends Controller
                 ]
             ];
 
-            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             \Illuminate\Support\Facades\Log::error('[FACADE FBM DEBUG] chart method results:', [
                 'status' => $results['chart']['status'] ?? null,
@@ -381,7 +383,7 @@ class FacebookMarketingController extends Controller
             }
 
             $payloads = ['table' => $tabPayload];
-            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'facebook_marketing', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             if (isset($results['table']['status']) && $results['table']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("FBM Table APIs Hub Error: " . json_encode($results['table']));

@@ -1,7 +1,8 @@
+import { withEntityAttributes } from './entity-attributes';
 import { dataTable } from './data-table';
 
 export function googleAdsDashboard(config = {}) {
-    return {
+    return withEntityAttributes({
         tenantId: config.tenantId || '',
         accounts: config.accounts || [],
         accountNames: config.accountNames || {},
@@ -449,7 +450,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isSummaryLoading = true;
             try {
-                const response = await fetch('/api/google-ads/summary', this.getFetchOptions('all'));
+                const response = await this.fetchDashboardResponse('/api/google-ads/summary', this.getFetchOptions('all'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -476,7 +477,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isChartLoading = true;
             try {
-                const response = await fetch('/api/google-ads/chart', this.getFetchOptions('all'));
+                const response = await this.fetchDashboardResponse('/api/google-ads/chart', this.getFetchOptions('all'));
                 const data = await response.json();
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
@@ -502,7 +503,7 @@ export function googleAdsDashboard(config = {}) {
 
             this.isTableLoading = true;
             try {
-                const response = await fetch('/api/google-ads/table', this.getFetchOptions('table'));
+                const response = await this.fetchDashboardResponse('/api/google-ads/table', this.getFetchOptions('table'));
                 const data = await response.json();
                 if (!data.error) {
                     const rows = (data.data || []).map(r => {
@@ -874,7 +875,7 @@ export function googleAdsDashboard(config = {}) {
             if (num === undefined || num === null) return '0%';
             return (num * 100).toFixed(2) + '%';
         }
-    };
+    }, 'google_ads');
 }
 
 if (typeof window !== 'undefined') {

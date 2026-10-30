@@ -920,6 +920,22 @@ export function dashboardBuilder(config = {}) {
 
         // ─── Channels & Assets ───
         channels: config.channels || {},
+        gscSearchTypeOptions: config.gscSearchTypeOptions || {},
+        gscAnalyticsCatalog: config.gscAnalyticsCatalog || {},
+        gscTypesForSeries(series) {
+            const rule = (series.filters || []).find(filter => filter.dimension === 'dimensions.search_type');
+            if (!rule || !rule.value || !rule.value.length) return series.breakdown?.dimension === 'dimensions.search_type' ? Object.keys(this.gscAnalyticsCatalog.search_types || {}) : ['web'];
+            return Array.isArray(rule.value) ? rule.value : String(rule.value).split(',').map(value => value.trim());
+        },
+        getRawSeriesMetricOptions(index, series) {
+            const options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
+            if (series.channel !== 'google_search_console') return options;
+            const types = this.gscTypesForSeries(series);
+            return Object.fromEntries(Object.entries(options).filter(([metric]) => types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.metrics.includes(metric))));
+        },
+        isGscSearchTypeFilter(filter) {
+            return this.filterModalChannel === 'google_search_console' && filter.dimension === 'dimensions.search_type';
+        },
         allChannelAssets: {},
         allChannelAssetGroups: {},
         allChannelMetrics: {},
@@ -936,6 +952,24 @@ export function dashboardBuilder(config = {}) {
         availableLanguages: config.availableLanguages || {},
 
         // ─── Breakdown & Filter Helpers ───
+        entityAttributeFields: {},
+        entityAttributeFieldsLoading: {},
+        entityAttributeFieldsError: '',
+
+        getFilterFieldsForSeries(channel, dependency) {
+            if (channel && !this.entityAttributeFields[channel] && !this.entityAttributeFieldsLoading[channel] && this.$wire) {
+                this.entityAttributeFieldsLoading[channel] = true;
+                this.entityAttributeFieldsError = '';
+                this.$wire.getEntityAttributeFieldsForChannel(channel).then(fields => {
+                    this.entityAttributeFields[channel] = fields || {};
+                }).catch(error => {
+                    this.entityAttributeFieldsError = error.message || 'Unable to load entity attributes';
+                    this.entityAttributeFields[channel] = {};
+                }).finally(() => { this.entityAttributeFieldsLoading[channel] = false; });
+            }
+            return { ...this.getBreakdownsForSeries(channel, dependency), ...(this.entityAttributeFields[channel] || {}) };
+        },
+
         fetchBreakdownsForChannel(ch, dep) {
             if (!ch || !this.$wire) return;
             const cacheKey = ch + (dep ? ('_' + dep) : '');
@@ -1095,14 +1129,16 @@ export function dashboardBuilder(config = {}) {
             return [];
         },
 
-        getFilterDisplayName(flt, index) {
+        getFilterDisplayName(flt, index, channel = this.filterModalChannel) {
             if (flt?.name && String(flt.name).trim() !== '') {
                 return flt.name.trim();
             }
             if (flt?.dimension) {
                 const op = flt.operator || 'eq';
                 const val = (flt.value !== undefined && flt.value !== null && flt.value !== '') ? ` (${flt.value})` : '';
-                return `${flt.dimension} ${op}${val}`;
+                const definition = channel ? this.getFilterFieldsForSeries(channel, null)[flt.dimension] : null;
+                const label = definition?.label || flt.dimension;
+                return `${label} ${op}${val}`;
             }
             return `Rule #${index + 1}`;
         },

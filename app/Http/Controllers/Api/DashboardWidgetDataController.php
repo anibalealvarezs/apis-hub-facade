@@ -216,6 +216,13 @@
             }
 
             try {
+                if ($project->isInfrastructureBusy()) {
+                    return response()->json([
+                        'success' => false, 'error_code' => 'tenant_maintenance', 'retryable' => false,
+                        'error' => __('Please wait for the current deployment or upgrade to finish.'),
+                        'message' => __('Please wait for the current deployment or upgrade to finish.'),
+                    ], 503, ['Retry-After' => '60'], JSON_UNESCAPED_UNICODE);
+                }
                 \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} BEFORE match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
                 $tMatch = microtime(true);
                 $data = match ($widget->source_type) {
@@ -1680,6 +1687,8 @@
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
                 ], 200, [], JSON_UNESCAPED_UNICODE);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                return response()->json(['success' => false, 'error' => $e->getMessage(), 'errors' => $e->errors(), 'retryable' => false], 422);
             } catch (\Throwable $e) {
                 \Illuminate\Support\Facades\Log::error('[STEP show] Exception', [
                     'widget_id' => $widget->id,
@@ -3857,7 +3866,7 @@
                         $filterPayload = ['operator' => 'is_null'];
                     } elseif ($op === 'is_not_null') {
                         $filterPayload = ['operator' => 'is_not_null'];
-                    } elseif ($op === 'in' || $op === 'not_in') {
+                    } elseif ($op === 'in' || $op === 'not_in' || $op === 'between') {
                         if (is_string($val) && str_contains($val, ',')) {
                             $rawParts = explode(',', $val);
                         } elseif (is_array($val)) {
@@ -4951,6 +4960,9 @@
             }
 
             $controller = app($controllerClass);
+            if ($channel === 'google_search_console' && ($payload['breakdown'] ?? '') === 'dimensions.search_type' && !isset($payload['filters']['dimensions.search_type'])) {
+                $payload['filters']['dimensions.search_type'] = ['operator' => 'in', 'value' => \App\Services\Analytics\GscAnalyticsCatalog::SEARCH_TYPES];
+            }
 
             if (!method_exists($controller, $action)) {
                 throw new \RuntimeException("Channel {$channel} controller ({$controllerClass}) does not support action {$action}");
@@ -5149,6 +5161,9 @@
 
             if ($response instanceof \Illuminate\Http\JsonResponse) {
                 $data = $response->getData(true);
+                if ($channel === 'google_search_console' && $response->getStatusCode() === 422) {
+                    throw \Illuminate\Validation\ValidationException::withMessages($data['errors'] ?? ['searchType' => $data['error'] ?? 'Invalid GSC report']);
+                }
 
                 return $data['data'] ?? $data;
             }

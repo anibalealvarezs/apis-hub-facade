@@ -6,14 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Services\RemoteEngineService;
 use Carbon\Carbon;
+use App\Services\Analytics\GscAnalyticsCatalog;
 use Illuminate\Http\Request;
 
 class GoogleSearchConsoleController extends Controller
 {
+    use Concerns\AppliesEntityAttributeFilters;
+
     private function validateRequest(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'tenant' => 'required|integer',
+            'searchType' => 'nullable|string|in:'.implode(',', GscAnalyticsCatalog::SEARCH_TYPES),
             'account' => 'required',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
@@ -23,9 +27,13 @@ class GoogleSearchConsoleController extends Controller
             'filters' => 'nullable|array',
             'breakdown' => 'nullable|string',
             'groupBy' => 'nullable|array',
+            'groupBy.*' => 'string',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string'
         ]);
+        $validated['searchTypes'] = GscAnalyticsCatalog::selectedTypes($validated['filters'] ?? [], $validated['searchType'] ?? null);
+        if (isset($validated['searchType'])) $validated['filters']['dimensions.search_type'] = $validated['searchType'];
+        return $validated;
     }
 
     private function buildChanneledAccountFilter(mixed $account): array|string
@@ -39,10 +47,21 @@ class GoogleSearchConsoleController extends Controller
         return (string) $account;
     }
 
+    private function assertSearchTypeSupport(Project $tenant, array $validated): void
+    {
+        if ((isset($validated['searchType']) || isset($validated['filters']['dimensions.search_type'])) && !$tenant->supportsGscSearchTypes()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['searchType' => __('Upgrade this tenant to use search type filters.')]);
+        }
+    }
+
     private function getRequestedAggregations(Request $request): array
     {
-        $availableAggs = ['clicks' => 'clicks', 'impressions' => 'impressions', 'ctr' => 'ctr', 'position' => 'position'];
+        $metrics = array_keys(GscAnalyticsCatalog::tree()['metrics']);
+        $availableAggs = array_combine($metrics, $metrics);
         $requestedMetrics = $request->input('metrics');
+        $types = GscAnalyticsCatalog::selectedTypes($request->input('filters', []), $request->input('searchType'));
+        if (!GscAnalyticsCatalog::supports($types, 'metrics', 'position') && empty($requestedMetrics)) unset($availableAggs['position']);
+        GscAnalyticsCatalog::validateQuery($types, (array)($requestedMetrics ?: array_keys($availableAggs)), [], []);
         
         $aggregations = [];
         if (empty($requestedMetrics)) {
@@ -70,6 +89,7 @@ class GoogleSearchConsoleController extends Controller
 
         if (!empty($explicitFilters)) {
             foreach ($explicitFilters as $k => $v) {
+                if (in_array($k, ['channeledAccount', 'channel', 'asset_platform_id', 'account'], true)) continue;
                 if ($v !== null && $v !== '') {
                     $filters[$k] = $v;
                 }
@@ -108,6 +128,7 @@ class GoogleSearchConsoleController extends Controller
         try {
             $validated = $this->validateRequest($request);
             $tenant = Project::findOrFail($validated['tenant']);
+            $this->assertSearchTypeSupport($tenant, $validated);
             $service = app(RemoteEngineService::class);
 
             $start = Carbon::parse($validated['dateStart']);
@@ -119,9 +140,10 @@ class GoogleSearchConsoleController extends Controller
 
             // The dashboard account selector sends channeled_account IDs, not page IDs.
             $baseFilters = ['channeledAccount' => $this->buildChanneledAccountFilter($validated['account'])];
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $aggs = $this->getRequestedAggregations($request);
+            GscAnalyticsCatalog::validateQuery($validated['searchTypes'], array_keys($aggs), [], $baseFilters);
 
             $payloads = [
                 'summary' => [
@@ -141,7 +163,7 @@ class GoogleSearchConsoleController extends Controller
             ];
 
             \Illuminate\Support\Facades\Log::info("GSC Summary Payload: ", $payloads);
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
             \Illuminate\Support\Facades\Log::info("GSC Summary Results: ", $results);
 
             if (isset($results['summary']['status']) && $results['summary']['status'] === 'error') {
@@ -157,6 +179,8 @@ class GoogleSearchConsoleController extends Controller
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => $retryable,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Summary Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -168,6 +192,7 @@ class GoogleSearchConsoleController extends Controller
         try {
             $validated = $this->validateRequest($request);
             $tenant = Project::findOrFail($validated['tenant']);
+            $this->assertSearchTypeSupport($tenant, $validated);
             $service = app(RemoteEngineService::class);
 
             // The dashboard account selector sends channeled_account IDs, not page IDs.
@@ -182,6 +207,10 @@ class GoogleSearchConsoleController extends Controller
             } elseif (!empty($validated['breakdown'])) {
                 $groupBy = ['daily', $validated['breakdown']];
             }
+            if (in_array('dimensions.searchAppearance', $groupBy, true) && !isset($validated['filters']['dimensions.searchAppearance'])) {
+                $baseFilters['dimensions.searchAppearance'] = ['operator' => 'neq', 'value' => 'standard'];
+            }
+            GscAnalyticsCatalog::validateQuery($validated['searchTypes'], array_keys($aggs), $groupBy, $baseFilters);
 
             $payloads = [
                 'chart' => [
@@ -199,7 +228,7 @@ class GoogleSearchConsoleController extends Controller
                 'payloads' => $payloads
             ]);
 
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             \Illuminate\Support\Facades\Log::info("[GSC_DEBUG] Chart received from aggregateChanneledPool", [
                 'status' => $results['chart']['status'] ?? null,
@@ -218,6 +247,8 @@ class GoogleSearchConsoleController extends Controller
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['chart']['retryable']),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Chart Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -229,6 +260,7 @@ class GoogleSearchConsoleController extends Controller
         try {
             $validated = $this->validateRequest($request);
             $tenant = Project::findOrFail($validated['tenant']);
+            $this->assertSearchTypeSupport($tenant, $validated);
             $service = app(RemoteEngineService::class);
 
             $tab = $validated['activeTab'] ?? 'queries';
@@ -246,7 +278,7 @@ class GoogleSearchConsoleController extends Controller
                 'limit' => 5000 // reasonable limit for frontend rendering
             ];
 
-            $this->applyDynamicFilters($tabPayload['filters'], $validated['activeFilters'] ?? null);
+            $this->applyDynamicFilters($tabPayload['filters'], $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             if ($tab === 'queries') {
                 $tabPayload['groupBy'] = ['query', 'dimensions.intent'];
@@ -264,8 +296,9 @@ class GoogleSearchConsoleController extends Controller
                 }
             }
 
+            GscAnalyticsCatalog::validateQuery($validated['searchTypes'], array_keys($tabPayload['aggregations']), $tabPayload['groupBy'], $tabPayload['filters']);
             $payloads = ['table' => $tabPayload];
-            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $payloads);
+            $results = $service->aggregateChanneledPool($tenant, 'google_search_console', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
             if (isset($results['table']['status']) && $results['table']['status'] === 'error') {
                 \Illuminate\Support\Facades\Log::error("GSC Table APIs Hub Error: " . json_encode($results['table']));
@@ -295,6 +328,8 @@ class GoogleSearchConsoleController extends Controller
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['table']['retryable']),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Table Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -312,6 +347,7 @@ class GoogleSearchConsoleController extends Controller
             ]);
 
             $tenant = Project::findOrFail($validated['tenant']);
+            $this->assertSearchTypeSupport($tenant, $validated);
             $service = app(RemoteEngineService::class);
 
             $payload = [
@@ -340,6 +376,8 @@ class GoogleSearchConsoleController extends Controller
             }
 
             return response()->json(['trend' => array_merge(['success' => true], $trendData)]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GSC Trend Proxy Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);

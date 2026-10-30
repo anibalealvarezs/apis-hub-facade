@@ -42,11 +42,7 @@ class FacebookMarketingProfile extends AbstractChannelProfile
                     'key' => 'Key (Basic + Reach, CPM, CPR, Results, ROAS, Normalized Purchases/Leads)',
                     'full' => 'Full (Comprehensive Meta Marketing Metrics)',
                 ]),
-                'breakdown_passes' => $this->configurableField('string', 'demographics', [
-                    'demographics' => 'Demographics (Age, Gender)',
-                    'placement' => 'Placement (Publisher Platform, Platform Position)',
-                    'geography' => 'Geography (Country)',
-                ]),
+                'breakdown_passes' => $this->configurableField('string', 'demographics', \App\Services\Analytics\MetaAdsBreakdownOptions::options()),
                 
                 'metrics_strategy' => $this->systemField('string', 'default'),
                 'metrics_config' => $this->systemField('object', []),

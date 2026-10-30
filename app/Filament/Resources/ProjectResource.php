@@ -1031,13 +1031,21 @@ class ProjectResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('triggerNodeRedeploy')
+                    ->disabled(fn (Project $record) => $record->isInfrastructureBusy())
+                    ->tooltip(fn (Project $record) => $record->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
                     ->label(__('API Redeploy'))
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
                     ->requiresConfirmation()
                     ->modalDescription(__('This will trigger a background redeployment via the Node\'s internal API. Continue?'))
                     ->action(function (Project $record, RemoteEngineService $service) {
-                        $response = $service->triggerRedeploy($record);
+                        if (!\App\Services\InfrastructureActionGuard::allows($record)) return;
+                        $response = null;
+                        \App\Services\InfrastructureActionGuard::queue($record, 'redeploying', function () use ($record, $service, &$response) {
+                            $response = $service->triggerRedeploy($record);
+                            return (bool)($response['success'] ?? false);
+                        });
+                        if ($response === null) return;
                         
                         Notification::make()
                             ->title(($response['success'] ?? false) ? 'Redeploy Triggered' : 'Trigger Failed')
@@ -1046,13 +1054,16 @@ class ProjectResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('deploy')
+                    ->disabled(fn (Project $record) => $record->isInfrastructureBusy())
+                    ->tooltip(fn (Project $record) => $record->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
                     ->label(__('Force Async Deploy'))
                     ->icon('heroicon-o-cloud-arrow-up')
                     ->color('success')
                     ->requiresConfirmation()
                     ->modalDescription(__('This will dispatch a background SSH-based deployment job for the remote server. You can monitor the progress in the Edit view below. Continue?'))
                     ->action(function (Project $record) {
-                        \App\Jobs\DeployProjectJob::dispatch($record);
+                        if (!\App\Services\InfrastructureActionGuard::allows($record)) return;
+                        if (!\App\Services\InfrastructureActionGuard::queue($record, 'deploying', fn () => \App\Jobs\DeployProjectJob::dispatch($record))) return;
                         
                         Notification::make()
                             ->title(__('Deployment Job Queued'))
@@ -1062,6 +1073,8 @@ class ProjectResource extends Resource
                     }),
 
                 Tables\Actions\Action::make('upgradeRelease')
+                    ->disabled(fn (Project $record) => $record->isInfrastructureBusy())
+                    ->tooltip(fn (Project $record) => $record->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
                     ->label(__('Upgrade Release'))
                     ->icon('heroicon-o-arrow-up-circle')
                     ->color('info')
@@ -1086,6 +1099,7 @@ class ProjectResource extends Resource
                             ->helperText(__('Newer releases only.')),
                     ])
                     ->action(function (Project $record, array $data) {
+                        if (!\App\Services\InfrastructureActionGuard::allows($record)) return;
                         $target = \App\Models\ApisHubRelease::find($data['target_release_id']);
                         if (!$target) {
                             Notification::make()
@@ -1118,7 +1132,7 @@ class ProjectResource extends Resource
                         }
 
                         // Already deployed: trigger full upgrade deployment
-                        \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target);
+                        if (!\App\Services\InfrastructureActionGuard::queue($record, 'upgrading', fn () => \App\Jobs\UpgradeProjectReleaseJob::dispatch($record, $target))) return;
 
                         Notification::make()
                             ->title(__('Upgrade Queued'))

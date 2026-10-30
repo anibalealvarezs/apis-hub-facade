@@ -1,4 +1,14 @@
 import './bootstrap';
+import { installLivewireResilience } from './livewire-resilience';
+
+let resilienceInstalled = false;
+const registerLivewireResilience = () => {
+    if (resilienceInstalled || !window.Livewire) return;
+    resilienceInstalled = true;
+    installLivewireResilience(window.Livewire, document);
+};
+document.addEventListener('livewire:init', registerLivewireResilience);
+registerLivewireResilience();
 import { uiAssetSelector } from './components/ui-asset-selector';
 import { uiDropdown } from './components/ui-dropdown';
 import { assetSelector } from './components/asset-selector';

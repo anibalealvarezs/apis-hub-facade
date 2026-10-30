@@ -191,6 +191,18 @@
                                         <div class="truncate max-w-lg" title="{{ $summary }}">
                                             {{ $summary }}
                                         </div>
+                                        @if($log->status === 'running' && $log->progress_stage)
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                {{ __('Started :time', ['time' => $log->started_at?->diffForHumans()]) }}.
+                                                @if($log->progress_updated_at)
+                                                    {{ __('Last progress update :time', ['time' => $log->progress_updated_at->diffForHumans()]) }}.
+                                                    @if($log->progress_updated_at->lt(now()->subMinutes(2)))
+                                                        {{ __('This step has not reported recent progress. It may still be working; completion is not yet confirmed.') }}
+                                                    @endif
+                                                @endif
+                                                {{ __('You can leave this page and return to check progress.') }}
+                                            </div>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

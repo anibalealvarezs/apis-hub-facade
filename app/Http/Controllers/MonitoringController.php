@@ -30,8 +30,12 @@ class MonitoringController extends Controller
         $project->update([
             'health_metrics'        => $request->only(['channels', 'catalog', 'db', 'redis', 'system', 'status_summary']),
             'last_heartbeat_at'     => now(),
-            'health_status'         => 'online',
         ]);
+        // Late heartbeats from a worker must not clear an active upgrade. Keep
+        // this conditional in SQL so an upgrade starting concurrently also wins.
+        Project::whereKey($project->getKey())
+            ->where(fn ($query) => $query->whereNull('health_status')->orWhere('health_status', '!=', 'upgrading'))
+            ->update(['health_status' => 'online']);
 
         return response()->json([
             'status' => 'success',

@@ -375,12 +375,14 @@ class ProjectSettings extends Page
             ->label(__('Deploy Initial Infrastructure'))
             ->color('success')
             ->icon('heroicon-o-rocket-launch')
-            ->disabled($isSuspended)
+            ->disabled(fn () => $isSuspended || $project->isInfrastructureBusy())
+            ->tooltip(fn () => $project->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
             ->visible(fn () => $user->can('deploy_project') && is_null($project->last_deployed_at))
             ->requiresConfirmation()
             ->modalHeading(__('Deploy Infrastructure'))
             ->modalDescription(__('This will provision the container and database on the remote server. Are you sure you want to continue?'))
             ->action(function () use ($project) {
+                if (!\App\Services\InfrastructureActionGuard::allows($project)) return;
                 if (is_null($project->apis_hub_release_id)) {
                     $activeReleases = \App\Models\ApisHubRelease::where('is_active', true)->get();
                     if ($activeReleases->isNotEmpty()) {
@@ -405,7 +407,7 @@ class ProjectSettings extends Page
                     return redirect(request()->header('Referer'));
                 }
 
-                \App\Jobs\DeployProjectJob::dispatch($project);
+                if (!\App\Services\InfrastructureActionGuard::queue($project, 'deploying', fn () => \App\Jobs\DeployProjectJob::dispatch($project))) return;
 
                 Notification::make()
                     ->title(__('Deployment Initiated'))
@@ -420,12 +422,14 @@ class ProjectSettings extends Page
             ->label(__('Apply Changes (Redeploy)'))
             ->color('success')
             ->icon('heroicon-o-cloud-arrow-up')
-            ->disabled($isSuspended)
+            ->disabled(fn () => $isSuspended || $project->isInfrastructureBusy())
+            ->tooltip(fn () => $project->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
             ->visible(fn () => $user->can('deploy_project') && ! is_null($project->last_deployed_at))
             ->requiresConfirmation()
             ->modalHeading(__('Redeploy Infrastructure'))
             ->modalDescription(__('This will rebuild the remote containers to apply any environment changes. Continue?'))
             ->action(function () use ($project) {
+                if (!\App\Services\InfrastructureActionGuard::allows($project)) return;
                 if (is_null($project->apis_hub_release_id)) {
                     $activeReleases = \App\Models\ApisHubRelease::where('is_active', true)->get();
                     if ($activeReleases->isNotEmpty()) {
@@ -450,13 +454,7 @@ class ProjectSettings extends Page
                     return redirect(request()->header('Referer'));
                 }
 
-                // Mark as redeploying immediately (before the queued job picks up)
-                $project->update([
-                    'health_status' => 'redeploying',
-                    'deploy_started_at' => now(),
-                ]);
-
-                \App\Jobs\DeployProjectJob::dispatch($project);
+                if (!\App\Services\InfrastructureActionGuard::queue($project, 'redeploying', fn () => \App\Jobs\DeployProjectJob::dispatch($project))) return;
 
                 Notification::make()
                     ->title(__('Redeployment Initiated'))
@@ -713,7 +711,8 @@ class ProjectSettings extends Page
                 ->label(__('Upgrade Project'))
                 ->color('primary')
                 ->icon('heroicon-o-arrow-up-circle')
-                ->disabled($isSuspended)
+                ->disabled(fn () => $isSuspended || $project->isInfrastructureBusy())
+                ->tooltip(fn () => $project->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)
                 ->visible(function () use ($user, $project) {
                     if ($user->id !== $project->user_id) {
                         return false;
@@ -737,7 +736,8 @@ class ProjectSettings extends Page
                     if (is_null($project->last_deployed_at)) {
                         return __('This project has not been deployed yet. The upgrade will only update the target version — the initial deployment will use the new version.');
                     }
-                    return __('Are you sure you want to upgrade your project to the newer version? This will deploy the new version to your infrastructure.');
+                    $target = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
+                    return app(\App\Services\UpgradeAdvisory::class)->describe($project, $target);
                 })
                 ->form([
                     TextInput::make('confirmation')
@@ -752,6 +752,7 @@ class ProjectSettings extends Page
                         }),
                 ])
                 ->action(function () use ($project) {
+                    if (!\App\Services\InfrastructureActionGuard::allows($project)) return;
                     $defaultRelease = \App\Models\ApisHubRelease::where('is_default', true)->where('is_active', true)->first();
                     if (! $defaultRelease) {
                         return;
@@ -780,7 +781,7 @@ class ProjectSettings extends Page
                     }
 
                     // Already deployed: trigger full upgrade deployment
-                    \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease);
+                    if (!\App\Services\InfrastructureActionGuard::queue($project, 'upgrading', fn () => \App\Jobs\UpgradeProjectReleaseJob::dispatch($project, $defaultRelease))) return;
 
                     Notification::make()
                         ->title(__('Upgrade Initiated'))

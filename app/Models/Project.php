@@ -305,6 +305,11 @@ class Project extends Model
         return version_compare($version, '1.18.2', '>=');
     }
 
+    public function supportsGscSearchTypes(): bool
+    {
+        return version_compare(ltrim($this->apisHubRelease?->version_tag ?? '0', 'v'), '1.18.3', '>=');
+    }
+
     public function supportsAiClassification(): bool
     {
         if (!$this->releaseSupportsAiClassification()) {
@@ -854,6 +859,14 @@ class Project extends Model
     public function hasBeenDeployed(): bool
     {
         return $this->last_deployed_at !== null || $this->subdomain === 'alpha';
+    }
+
+    public const INFRASTRUCTURE_BUSY_STATES = ['upgrading', 'redeploying', 'deploying', 'provisioning'];
+
+    public function isInfrastructureBusy(): bool
+    {
+        $status = $this->exists ? $this->newQuery()->whereKey($this->getKey())->value('health_status') : $this->health_status;
+        return in_array($status, self::INFRASTRUCTURE_BUSY_STATES, true);
     }
 
     /**

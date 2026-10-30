@@ -8,8 +8,8 @@
     <title>{{ $dashboard->name }}</title>
     <script>window.demoThemeStorageKey = 'pv_theme';</script>
     <link rel="stylesheet" href="{{ asset('css/demo-theme.css') }}"/>
-    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ asset('js/demo-tailwind-config.js') }}"></script>
     <link rel="stylesheet" href="{{ asset('css/dashboard-builder.css') }}?v={{ file_exists(public_path('css/dashboard-builder.css')) ? filemtime(public_path('css/dashboard-builder.css')) : time() }}" />
     <link rel="stylesheet" href="{{ asset('css/branding.css') }}" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])

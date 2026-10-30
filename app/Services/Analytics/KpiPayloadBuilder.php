@@ -14,6 +14,7 @@ class KpiPayloadBuilder
      */
     public static function build(string $calculationType, array $state, array $runtimeOverrides = []): array
     {
+        if (!empty($runtimeOverrides['granularity'])) $state['granularity'] = $runtimeOverrides['granularity'];
         $ast = self::buildAstFromState($calculationType, $state);
 
         $groupColumn = self::resolveGroupColumn($state);
@@ -162,6 +163,7 @@ class KpiPayloadBuilder
         }
 
         // For Univariate, AST is just the dependent node
+        self::validateGscNode($dependentNode, $depChannel, $depMetric, $granularity);
         if (in_array($calculationType, [
             'calculate_autocorrelation', 'calculate_anomaly', 'calculate_macd',
             'calculate_trend_linear', 'calculate_trend_sma',
@@ -339,7 +341,21 @@ class KpiPayloadBuilder
             $node['filters']['dimensions.searchAppearance'] = 'standard';
         }
         
+        self::validateGscNode($node, $indChannel, $indMetric, $granularity);
         return $node;
+    }
+
+    private static function validateGscNode(array &$node, string $channel, string $metric, string $granularity): void
+    {
+        if ($channel !== 'google_search_console') return;
+        if (in_array($granularity, ['search_appearance', 'dimensions.searchAppearance'], true) && !isset($node['filters']['dimensions.searchAppearance'])) {
+            $node['filters']['dimensions.searchAppearance'] = ['operator' => 'neq', 'value' => 'standard'];
+        }
+        if ($granularity === 'dimensions.search_type' && !isset($node['filters']['dimensions.search_type'])) {
+            $node['filters']['dimensions.search_type'] = ['operator' => 'in', 'value' => GscAnalyticsCatalog::SEARCH_TYPES];
+        }
+        $filters = $node['filters'] ?? [];
+        GscAnalyticsCatalog::validateQuery(GscAnalyticsCatalog::selectedTypes($filters), [$metric], [$granularity], $filters);
     }
 
     /**
