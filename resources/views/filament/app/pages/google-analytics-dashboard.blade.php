@@ -1,7 +1,4 @@
 <x-filament-panels::page>
-    <div role="note" class="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
-        {{ \App\Services\Analytics\Ga4ReportingSemantics::userCountNotice() }}
-    </div>
     <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time() }}">
 
     <div x-data="ga4Dashboard({
@@ -103,7 +100,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.reach ? 'active' : ''" @click="toggleMetric('reach')"
                      data-metric="reach">
-                    <div class="ga4-label">{{ __('Active Users') }}</div>
+                    <div class="ga4-label inline-flex items-center gap-1">{{ __('Active Users') }} <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" /></div>
                     <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
                         <span x-text="getVarianceIcon(variance.reach)"></span>
@@ -112,7 +109,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.new_users ? 'active' : ''" @click="toggleMetric('new_users')"
                      data-metric="new_users">
-                    <div class="ga4-label">{{ __('New Users') }}</div>
+                    <div class="ga4-label inline-flex items-center gap-1">{{ __('New Users') }} <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" /></div>
                     <div class="card-metric-value" x-text="formatNumber(summary.new_users)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.new_users)">
                         <span x-text="getVarianceIcon(variance.new_users)"></span>
@@ -157,7 +154,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.total_users ? 'active' : ''" @click="toggleMetric('total_users')"
                      data-metric="total_users">
-                    <div class="ga4-label">{{ __('Total Users') }}</div>
+                    <div class="ga4-label inline-flex items-center gap-1">{{ __('Total Users') }} <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" /></div>
                     <div class="card-metric-value" x-text="formatNumber(summary.total_users)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.total_users)">
                         <span x-text="getVarianceIcon(variance.total_users)"></span>
@@ -175,6 +172,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </div>
 
+            <div class="flex justify-end" x-show="activeMetrics.reach || activeMetrics.new_users || activeMetrics.total_users">
+                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+            </div>
             <div class="chart-container-ga4 relative w-full" wire:ignore>
                 <div x-show="isChartLoading"
                      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
@@ -209,6 +209,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.campaigns] && tabConfig[ss.campaigns].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.campaigns" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -261,6 +264,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.channels] && tabConfig[ss.channels].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.channels" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -385,6 +391,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.traffic] && tabConfig[ss.traffic].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.traffic" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -437,6 +446,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.acquisition] && tabConfig[ss.acquisition].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.acquisition" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -489,6 +501,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.events] && tabConfig[ss.events].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.events" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -541,6 +556,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.adtouchpoints" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>

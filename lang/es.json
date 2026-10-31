@@ -1,5 +1,6 @@
 {
-    "This GA4 rate is unavailable because matching session weights are missing for part of the selected period.": "Esta tasa de GA4 no está disponible porque faltan los recuentos de sesiones necesarios para ponderar parte del período seleccionado.",
+    "GA4 user count information": "Información sobre los recuentos de usuarios de GA4",
+    "This GA4 rate could not be calculated for part of the selected period. Session weights may be missing, duplicated, invalid, or total zero.": "No se pudo calcular esta tasa de GA4 para parte del período seleccionado. Los recuentos de sesiones pueden faltar, estar duplicados, no ser válidos o sumar cero.",
     "GA4 user figures are sums of the reported daily and breakdown counts. The same person can be counted more than once; these are not unique users for the selected period.": "Las cifras de usuarios de GA4 son sumas de los recuentos diarios y de los desgloses reportados. Una misma persona puede contarse más de una vez; no son usuarios únicos del período seleccionado.",
     "(Reported Sum)": "(suma reportada)",
     "Key Events": "Eventos clave",

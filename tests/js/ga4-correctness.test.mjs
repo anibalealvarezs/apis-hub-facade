@@ -18,16 +18,19 @@ test('unavailable rates stay unavailable while measured zero remains zero', () =
     dashboard.destroy();
 });
 
-test('custom/public widget quality notice uses text and cannot inject markup', () => {
+test('widget warnings update the heading and never append to the canvas', () => {
     const window = {};
-    const document = { createElement: () => ({ setAttribute(name, value) { this[name] = value; } }) };
-    runInNewContext(readFileSync(new URL('../../public/js/dashboard-renderer.js', import.meta.url), 'utf8'), { window, document, console, setTimeout, clearTimeout });
+    const events = [];
+    const heading = { dispatchEvent: event => events.push(event) };
+    const shell = { querySelector: selector => selector === '[data-analytics-warnings]' ? heading : null };
+    const container = { innerHTML: '', closest: () => shell, appendChild: () => assert.fail('Warning inserted into canvas') };
+    class CustomEvent { constructor(type, options) { this.type = type; this.detail = options.detail; } }
+    runInNewContext(readFileSync(new URL('../../public/js/dashboard-renderer.js', import.meta.url), 'utf8'), { window, document: {}, CustomEvent, console, setTimeout, clearTimeout });
     const renderer = window.dashboardRenderer;
     renderer._renderWidget = () => {};
-    const children = [];
-    renderer.render({ innerHTML: '', appendChild: node => children.push(node) }, { widget_type: 'tile', data: {}, controls: {}, analytics_warnings: ['<script>ignored()</script> counts are not unique'] });
-    assert.equal(children.length, 1);
-    assert.equal(children[0].role, 'note');
-    assert.equal(children[0].textContent, '<script>ignored()</script> counts are not unique');
-    assert.equal(children[0].innerHTML, undefined);
+    renderer.render(container, { widget_type: 'tile', data: {}, controls: {}, analytics_warnings: ['<script>ignored()</script> counts are not unique'] });
+    assert.equal(events[0].type, 'analytics-warnings');
+    assert.equal(events[0].detail[0], '<script>ignored()</script> counts are not unique');
+    renderer.render(container, { widget_type: 'tile', data: {}, controls: {}, analytics_warnings: [] });
+    assert.equal(events[1].detail.length, 0);
 });

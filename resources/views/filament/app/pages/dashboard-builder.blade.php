@@ -147,6 +147,7 @@
                                                   x-text="getWidgetTitleText(widget)"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
+                                            <x-analytics-warning />
                                             <template x-if="getWidgetDescriptionText(widget)">
                                                 <div class="group relative flex items-center justify-center p-1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"

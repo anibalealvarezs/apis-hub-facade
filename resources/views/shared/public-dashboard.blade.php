@@ -60,6 +60,7 @@
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget->title ?? $widget->name }}</h3>
                             </div>
                                 <div class="flex items-center gap-2">
+                                            <x-analytics-warning />
                                     @if (!empty($widget->series_assets_options))
                                         <div class="relative">
                                             <button @click="openFilters = !openFilters; $el.closest('.grid-stack-item').style.zIndex = openFilters ? 50 : ''" @click.away="openFilters = false; $el.closest('.grid-stack-item').style.zIndex = ''" class="text-xs rounded border border-gray-300 bg-white text-gray-700 py-1 px-2 hover:bg-gray-50 flex items-center gap-1 shadow-sm">

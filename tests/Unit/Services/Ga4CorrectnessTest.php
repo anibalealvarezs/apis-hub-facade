@@ -10,6 +10,28 @@ use Tests\TestCase;
 
 final class Ga4CorrectnessTest extends TestCase
 {
+    public function testUserNoticesFollowSelectedMetricsAndTheirOwnChannels(): void
+    {
+        foreach (['reach', 'activeUsers', 'active_users', 'newUsers', 'new_users', 'totalUsers', 'total_users', 'trend_total_total_users'] as $metric) {
+            self::assertTrue(Ga4ReportingSemantics::usesGa4UserMetrics(['channel' => 'google_analytics', 'metrics' => [$metric]]));
+        }
+        foreach (['sessions', 'average_session_duration', 'bounce_rate', 'event_count', 'revenue', 'conversions', 'pageviews'] as $metric) {
+            self::assertFalse(Ga4ReportingSemantics::usesGa4UserMetrics(['channel' => 'google_analytics', 'metrics' => [$metric], 'allowed_metrics' => ['reach']]));
+        }
+        $mixed = ['raw_series' => [
+            ['channel' => 'google_analytics', 'metrics' => ['sessions']],
+            ['channel' => 'facebook_marketing', 'metrics' => ['reach']],
+        ]];
+        self::assertFalse(Ga4ReportingSemantics::usesGa4UserMetrics($mixed));
+        $mixed['series_metrics'] = [['total_users'], ['reach']];
+        self::assertTrue(Ga4ReportingSemantics::usesGa4UserMetrics($mixed));
+        $mixed['series_metrics'] = [['sessions'], ['reach']];
+        $mixed['raw_series'][0]['metrics'] = ['total_users'];
+        self::assertFalse(Ga4ReportingSemantics::usesGa4UserMetrics($mixed), 'Runtime selection replaces saved user metrics.');
+        self::assertTrue(Ga4ReportingSemantics::usesGa4UserMetrics(['dependent_channel' => 'google_analytics', 'dependent_metric' => 'new_users']));
+        self::assertTrue(Ga4ReportingSemantics::usesGa4UserMetrics(['independent_variables' => [['independent_channel' => 'google_analytics', 'independent_metric' => 'totalUsers']]]));
+    }
+
     public function testAcquisitionAvailabilityAndWarningsAreConsistent(): void
     {
         $controller = new GoogleAnalyticsController();

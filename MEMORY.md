@@ -1061,3 +1061,5 @@
 
 
 - 2026-10-30: GA4 catalog records observed-window raw event discovery, rollout dependency requirements, no automatic custom-parameter caching, and nine requested dimensions including date. No historical coverage claim.
+
+- 2026-10-30 GA4 user-count presentation: permanent page/canvas notices replaced by shared click-toggle analytics-warning component in widget heading actions (private/shared/public/builder/fullscreen), Explorer user stat labels, user-column headings and chart heading only when user metrics are selected. Warning selection pairs actual GA4 metric/channel selections, honors runtime series overrides, excludes metric-option lists and non-user sessions/duration/revenue metrics, and tracks derived inputs. Renderer updates header via local events without canvas notes; browser cache uses analytics-contract-v2. Tooltip is text-only, teleported outside clipped containers, bounded to viewport, keyboard/outside-click dismissible. Offline PHPUnit/JS/browser checks and build/view compilation pass.

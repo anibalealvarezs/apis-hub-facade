@@ -14,6 +14,7 @@
     class DashboardWidgetDataController extends Controller
     {
         private bool $usesGa4Reporting = false;
+        private bool $usesGa4UserMetricReporting = false;
 
         public function __construct(
             protected WidgetDataService   $widgetDataService,
@@ -25,6 +26,7 @@
         public function show(Request $request, DashboardWidget $widget): JsonResponse
         {
             $this->usesGa4Reporting = false;
+            $this->usesGa4UserMetricReporting = false;
             $user = $request->user();
             $locale = $request->query('lang')
                 ?? $request->input('lang')
@@ -114,7 +116,11 @@
             if ($widget->source_type === 'kpi') $reportingConfig[] = $widget->customKpi?->filters ?? [];
             if ($widget->source_type === 'derived_metric') $reportingConfig[] = $widget->derivedMetric?->source_series ?? [];
             $this->usesGa4Reporting = \App\Services\Analytics\Ga4ReportingSemantics::containsGa4($reportingConfig);
-            if ($this->usesGa4Reporting) $resolvedControls['_analytics_semantics_version'] = 1;
+            if ($this->usesGa4Reporting) $resolvedControls['_analytics_semantics_version'] = 2;
+            $userMetricConfiguration = [array_replace($widget->source_config ?? [], $resolvedControls)];
+            if ($widget->source_type === 'kpi') $userMetricConfiguration[] = $widget->customKpi?->filters ?? [];
+            if ($widget->source_type === 'derived_metric') $userMetricConfiguration[] = $widget->derivedMetric?->source_series ?? [];
+            $usesGa4UserMetrics = \App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics($userMetricConfiguration);
 
             if (!$dashboard->is_public && $user && (!empty($resolvedControls['channel']) || !empty($widget->source_config['channel']))) {
                 $assetAccess = app(\App\Services\CollaboratorAssetAccessService::class);
@@ -1695,7 +1701,7 @@
                     'data'           => $data,
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
-                    'analytics_warnings' => $this->usesGa4Reporting
+                    'analytics_warnings' => ($usesGa4UserMetrics || $this->usesGa4UserMetricReporting)
                         ? [\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()] : [],
                 ], 200, [], JSON_UNESCAPED_UNICODE);
             } catch (\Illuminate\Validation\ValidationException $e) {
@@ -3116,6 +3122,7 @@
                 }
 
                 $sourceSeries = $derivedMetric->source_series ?? [];
+            if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics($sourceSeries)) $this->usesGa4UserMetricReporting = true;
                 $ast = $derivedMetric->ast ?? [];
                 if (empty($sourceSeries) || empty($ast)) {
                     continue;
@@ -4944,6 +4951,9 @@
         public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
         {
             if ($channel === 'google_analytics') $this->usesGa4Reporting = true;
+            if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics(array_replace($payload, ['channel' => $channel]))) {
+                $this->usesGa4UserMetricReporting = true;
+            }
             $t0 = microtime(true);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint ENTER", ['channel' => $channel, 'action' => $action, 'tenant' => $payload['tenant'] ?? '?']);
 
@@ -5201,6 +5211,7 @@
             }
 
             $sourceSeries = $derivedMetric->source_series ?? [];
+            if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics($sourceSeries)) $this->usesGa4UserMetricReporting = true;
             $ast = $derivedMetric->ast ?? [];
 
             if (empty($sourceSeries) || empty($ast)) {

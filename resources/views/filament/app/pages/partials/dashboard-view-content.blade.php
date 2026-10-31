@@ -217,6 +217,7 @@
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
                             </div>
                             <div class="flex items-center gap-2">
+                                            <x-analytics-warning />
                                 @if (!empty($widget['kpi_theory']))
                                     {{-- KPI Theory info button (rich HTML tooltip) --}}
                                     <div x-data="floatingTooltip({ width: 384 })"
@@ -426,7 +427,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click.self="closePopOut()">
-        <div x-ref="popOutCard"
+        <div data-widget-shell x-ref="popOutCard"
              class="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden dvc-popout-panel">
             <div
                 class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-800">
@@ -434,6 +435,7 @@
                     <h3 class="text-base font-bold text-gray-900 dark:text-white truncate" x-text="popOutTitle"></h3>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
+                    <x-analytics-warning />
                     <button @click="openModalSettings()"
                             class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                             title="Widget Settings">

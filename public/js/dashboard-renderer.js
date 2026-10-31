@@ -405,7 +405,7 @@ window.dashboardRenderer = {
 
     _getStorageCache(widgetId, effectiveTenant, body, lang) {
         try {
-            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v1|" + (lang || ""));
+            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v2|" + (lang || ""));
             const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
             const item = localStorage.getItem(cacheKey);
             if (!item) return null;
@@ -423,7 +423,7 @@ window.dashboardRenderer = {
 
     _setStorageCache(widgetId, effectiveTenant, body, lang, data) {
         try {
-            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v1|" + (lang || ""));
+            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v2|" + (lang || ""));
             const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
             localStorage.setItem(
                 cacheKey,
@@ -469,6 +469,8 @@ window.dashboardRenderer = {
      */
     async renderWidget(widgetId, containerEl, controls, tenant) {
         if (!containerEl) return;
+
+        this.updateAnalyticsWarnings(containerEl, []);
 
         // Show loading
         containerEl.innerHTML = this.loadingSkeleton();
@@ -726,12 +728,16 @@ window.dashboardRenderer = {
         this._widgetData.set(containerEl, json);
         containerEl.innerHTML = "";
         this._renderWidget(widget_type, containerEl, data, controls);
-        for (const message of json.analytics_warnings || []) {
-            const note = document.createElement('div');
-            note.setAttribute('role', 'note');
-            note.className = 'text-xs text-amber-700 dark:text-amber-300 px-3 py-2';
-            note.textContent = message;
-            containerEl.appendChild(note);
+        this.updateAnalyticsWarnings(containerEl, json.analytics_warnings || []);
+    },
+
+    updateAnalyticsWarnings(containerEl, messages) {
+        const shell = containerEl.closest?.('.grid-stack-item-content, [data-widget-shell]');
+        const heading = shell?.querySelector('[data-analytics-warnings]');
+        if (heading) {
+            heading.dispatchEvent(new CustomEvent('analytics-warnings', {
+                detail: Array.isArray(messages) ? messages.filter(message => typeof message === 'string') : [],
+            }));
         }
     },
 
@@ -3779,6 +3785,7 @@ window.dashboardRenderer = {
         // Transfer widget data and pinned tooltip to the modal container
         if (json) {
             this._widgetData.set(targetEl, json);
+            this.updateAnalyticsWarnings(targetEl, json.analytics_warnings || []);
         }
         if (this._pinnedTooltips.has(containerEl)) {
             this._pinnedTooltips.set(

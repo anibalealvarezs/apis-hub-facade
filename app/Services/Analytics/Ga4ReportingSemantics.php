@@ -38,6 +38,45 @@ final class Ga4ReportingSemantics
         return false;
     }
 
+    public static function isUserMetric(string $metric): bool
+    {
+        $metric = preg_replace('/^trend_(?:total|average)_/i', '', $metric);
+        return in_array(strtolower(str_replace('_', '', $metric)), ['reach', 'activeusers', 'newusers', 'totalusers'], true);
+    }
+
+    /** Inspect selected metrics with their own channel, not unrelated series/options. */
+    public static function usesGa4UserMetrics(array $configuration, ?string $inheritedChannel = null): bool
+    {
+        $channel = $configuration['channel'] ?? $inheritedChannel;
+        $isGa4 = in_array($channel, ['google_analytics', 'google_analytics_4'], true);
+        foreach (['dependent', 'independent'] as $side) {
+            if (in_array($configuration[$side.'_channel'] ?? null, ['google_analytics', 'google_analytics_4'], true)
+                && self::isUserMetric((string)($configuration[$side.'_metric'] ?? ''))) return true;
+        }
+        $series = $configuration['raw_series'] ?? $configuration['series'] ?? null;
+        if (is_array($series)) {
+            foreach ($series as $index => $item) {
+                if (!is_array($item)) continue;
+                $item['channel'] = $configuration['series_channels'][$index] ?? $item['channel'] ?? $channel;
+                $item['metrics'] = $configuration['series_metrics'][$index] ?? $item['metrics'] ?? [];
+                if (self::usesGa4UserMetrics($item, $channel)) return true;
+            }
+        } elseif (isset($configuration['series_metrics'])) {
+            foreach ($configuration['series_metrics'] as $index => $metrics) {
+                if (self::usesGa4UserMetrics(['channel' => $configuration['series_channels'][$index] ?? $channel, 'metrics' => $metrics])) return true;
+            }
+        } elseif ($isGa4) {
+            foreach (array_merge((array)($configuration['metrics'] ?? []), (array)($configuration['metric'] ?? [])) as $metric) {
+                if (is_string($metric) && self::isUserMetric($metric)) return true;
+            }
+        }
+        foreach ($configuration as $key => $value) {
+            if (in_array($key, ['raw_series', 'series', 'series_metrics', 'allowed_metrics', 'metric_options', 'metrics', 'metric', 'filters'], true)) continue;
+            if (is_array($value) && self::usesGa4UserMetrics($value, $channel)) return true;
+        }
+        return false;
+    }
+
     public static function assertSuccessfulResults(array $results): void
     {
         foreach ($results as $response) {
@@ -52,7 +91,7 @@ final class Ga4ReportingSemantics
         foreach ($data as $key => $value) {
             if ($key === 'previous') continue;
             if ($value === null && in_array(strtolower((string)$key), ['bouncerate', 'bounce_rate', 'averagesessionduration', 'average_session_duration'], true)) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['analytics' => __('This GA4 rate is unavailable because matching session weights are missing for part of the selected period.')]);
+                throw \Illuminate\Validation\ValidationException::withMessages(['analytics' => __('This GA4 rate could not be calculated for part of the selected period. Session weights may be missing, duplicated, invalid, or total zero.')]);
             }
             if (is_array($value)) self::assertWidgetRatesAvailable($value);
         }
