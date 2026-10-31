@@ -9,19 +9,25 @@ class GscAnalyticsCatalog
 {
     public const SEARCH_TYPES = ['web', 'image', 'video', 'news', 'discover', 'googleNews'];
 
-    public static function searchTypes(): array
+    public static function searchTypes(?array $allowed = null): array
     {
-        return array_combine(self::SEARCH_TYPES, array_map(fn ($label) => __($label), [
+        $all = array_combine(self::SEARCH_TYPES, array_map(fn ($label) => __($label), [
             'Web', 'Images', 'Videos', 'News (Google Search tab)', 'Discover', 'Google News (site and app)',
         ]));
+
+        if ($allowed !== null) {
+            return array_intersect_key($all, array_flip($allowed));
+        }
+
+        return $all;
     }
 
-    public static function tree(): array
+    public static function tree(?array $allowedTypes = null): array
     {
         $search = ['queries', 'pages', 'countries', 'devices', 'appearances'];
         $feed = ['pages', 'countries'];
         $types = [];
-        foreach (self::searchTypes() as $type => $label) {
+        foreach (self::searchTypes($allowedTypes) as $type => $label) {
             $isFeed = in_array($type, ['discover', 'googleNews'], true);
             $types[$type] = [
                 'label' => $label,

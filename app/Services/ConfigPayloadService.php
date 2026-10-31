@@ -100,6 +100,10 @@ class ConfigPayloadService
             if (isset($channelConfig['calculate_synthetics'])) {
                 $payload['feature_toggles']['calculate_synthetics'] = filter_var($channelConfig['calculate_synthetics'], FILTER_VALIDATE_BOOLEAN);
             }
+
+            $additionalTypes = (array)($channelConfig['additional_search_types'] ?? []);
+            $payload['search_types'] = array_values(array_unique(array_merge(['web'], array_intersect($additionalTypes, ['image', 'video', 'news', 'discover', 'googleNews']))));
+            unset($payload['additional_search_types']);
         } elseif ($channel === 'google_analytics') {
             $payload['max_workers'] = 3;
 

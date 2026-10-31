@@ -60,7 +60,8 @@ class ChannelBreakdownRegistry
         if ($channel === 'google_search_console') {
             $tenant = \Filament\Facades\Filament::getTenant();
             if (!$tenant instanceof \App\Models\Project || $tenant->supportsGscSearchTypes()) {
-                $definitions['dimensions.search_type'] = ['label' => __('Search type'), 'type' => 'dimension', 'operators' => ['in', 'eq'], 'options' => GscAnalyticsCatalog::searchTypes()];
+                $configuredTypes = $tenant instanceof \App\Models\Project ? $tenant->getGscConfiguredSearchTypes() : null;
+                $definitions['dimensions.search_type'] = ['label' => __('Search type'), 'type' => 'dimension', 'operators' => ['in', 'eq'], 'options' => GscAnalyticsCatalog::searchTypes($configuredTypes)];
             }
         }
         return $definitions;

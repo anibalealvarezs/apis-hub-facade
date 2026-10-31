@@ -11,7 +11,7 @@
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
         searchTypesEnabled: @js(\Filament\Facades\Filament::getTenant()?->supportsGscSearchTypes() ?? false),
-        analyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree()),
+        analyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree(\Filament\Facades\Filament::getTenant()?->getGscConfiguredSearchTypes())),
         csrfToken: @js(csrf_token()),
         intentOptions: {
             'transactional': @js(__('Transactional')),
