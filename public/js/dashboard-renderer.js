@@ -23,6 +23,14 @@ window.dashboardRenderer = {
             prefix: "$",
             lower_is_better: true,
         },
+        engagement_rate: { label: "Engagement Rate", format: "percentage" },
+        user_engagement_duration: { label: "User Engagement Duration", format: "number", suffix: "s" },
+        purchase_revenue: { label: "Purchase Revenue", format: "currency" },
+        gross_purchase_revenue: { label: "Gross Purchase Revenue", format: "currency" },
+        refund_amount: { label: "Refund Amount", format: "currency" },
+        item_revenue: { label: "Item Revenue", format: "currency" },
+        gross_item_revenue: { label: "Gross Item Revenue", format: "currency" },
+        item_refund_amount: { label: "Item Refund Amount", format: "currency" },
         revenue: { label: "Revenue", format: "currency", prefix: "$" },
         purchase_roas: { label: "ROAS", format: "currency", prefix: "$" },
         aov: { label: "AOV", format: "currency", prefix: "$" },
@@ -405,7 +413,7 @@ window.dashboardRenderer = {
 
     _getStorageCache(widgetId, effectiveTenant, body, lang) {
         try {
-            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v2|" + (lang || ""));
+            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v3|" + (lang || ""));
             const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
             const item = localStorage.getItem(cacheKey);
             if (!item) return null;
@@ -423,7 +431,7 @@ window.dashboardRenderer = {
 
     _setStorageCache(widgetId, effectiveTenant, body, lang, data) {
         try {
-            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v2|" + (lang || ""));
+            const keySuffix = this._hashString(JSON.stringify(body) + "|analytics-contract-v3|" + (lang || ""));
             const cacheKey = `db_widget_${effectiveTenant}_${widgetId}_${keySuffix}`;
             localStorage.setItem(
                 cacheKey,
@@ -621,7 +629,7 @@ window.dashboardRenderer = {
             this._autoRetryCounts.delete(widgetId);
 
             // Save to localStorage cache
-            this._setStorageCache(
+            if (!json.data?.scoped_report || json.data.scoped_report.state === 'ready') this._setStorageCache(
                 widgetId,
                 effectiveTenant,
                 body,
@@ -727,8 +735,78 @@ window.dashboardRenderer = {
         }
         this._widgetData.set(containerEl, json);
         containerEl.innerHTML = "";
-        this._renderWidget(widget_type, containerEl, data, controls);
+        if (data?.scoped_report) this.renderScopedReport(containerEl, data.scoped_report, widget_type);
+        else this._renderWidget(widget_type, containerEl, data, controls);
         this.updateAnalyticsWarnings(containerEl, json.analytics_warnings || []);
+    },
+
+    renderScopedReport(containerEl, report, type = 'table') {
+        const text = (tag, value, parent, className = '') => {
+            const node = document.createElement(tag);
+            node.textContent = String(value ?? '—'); node.className = className;
+            parent.appendChild(node); return node;
+        };
+        if (report.state !== 'ready' || !report.result?.response) {
+            text('p', report.error || (report.state === 'failed' ? 'The source report could not be completed.' : 'Report queued. Refresh after background processing completes.'), containerEl, 'p-4 text-sm text-gray-500');
+            return;
+        }
+        const response = report.result.response;
+        const labels = report.definition?.field_definitions || {};
+        const headers = [...(response.dimensionHeaders || []), ...(response.metricHeaders || [])];
+        const format = (value, header) => {
+            if (value == null || value === '' || !Number.isFinite(Number(value))) return value ?? '—';
+            const field = labels.metrics?.[header?.name];
+            if (!field) return value;
+            const unit = field.unit || field.type || header.type;
+            if (unit === 'ratio') return new Intl.NumberFormat(undefined, { style: 'percent', maximumFractionDigits: 2 }).format(Number(value));
+            const currency = response.metadata?.currencyCode || report.definition.context?.currency;
+            if ((unit === 'property_currency' || unit === 'TYPE_CURRENCY') && currency) return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(Number(value));
+            const number = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(Number(value));
+            return unit === 'seconds' || unit === 'TYPE_SECONDS' ? `${number} s` : number;
+        };
+        if (type === 'tile' && !(response.dimensionHeaders || []).length && (response.rows || []).length === 1) {
+            const cards = document.createElement('div'); cards.className = 'flex flex-wrap justify-center gap-6 p-4';
+            for (const [index, header] of (response.metricHeaders || []).entries()) {
+                const card = document.createElement('div'); card.className = 'text-center';
+                text('p', labels.metrics?.[header.name]?.uiName || header.name, card, 'text-sm');
+                text('p', format(response.rows[0].metricValues?.[index]?.value, header), card, 'text-3xl font-bold');
+                cards.appendChild(card);
+            }
+            containerEl.appendChild(cards);
+        }
+        const table = document.createElement('table'); table.className = 'w-full text-sm';
+        if (type === 'tile' && !(response.dimensionHeaders || []).length && (response.rows || []).length === 1) table.hidden = true;
+        const heading = document.createElement('tr');
+        for (const header of headers) text('th', labels.metrics?.[header.name]?.uiName || labels.dimensions?.[header.name]?.uiName || header.name, heading, 'p-2 text-left');
+        const head = document.createElement('thead'); head.appendChild(heading); table.appendChild(head);
+        const body = document.createElement('tbody');
+        for (const row of response.rows || []) {
+            const tr = document.createElement('tr');
+            for (const [index, cell] of [...(row.dimensionValues || []), ...(row.metricValues || [])].entries()) text('td', format(cell.value, headers[index]), tr, 'p-2 border-t border-gray-200 dark:border-gray-700');
+            body.appendChild(tr);
+        }
+        table.appendChild(body); containerEl.appendChild(table);
+        if (response.totals?.length) {
+            const totals = document.createElement('details'); totals.className = 'mt-3 text-sm';
+            text('summary', 'Source-reported totals', totals);
+            for (const total of response.totals) {
+                for (const [index, header] of (response.metricHeaders || []).entries()) text('p', `${labels.metrics?.[header.name]?.uiName || header.name}: ${format(total.metricValues?.[index]?.value, header)}`, totals);
+            }
+            containerEl.appendChild(totals);
+        }
+        if (!(response.rows || []).length) text('p', 'No observations were returned for this report.', containerEl, 'p-3 text-sm');
+        const details = document.createElement('details'); details.className = 'mt-3 text-xs text-gray-500';
+        text('summary', 'Source report quality and coverage', details);
+        if (report.definition.kind === 'window') text('p', 'Users were reported for this whole window; daily unique counts were not summed.', details);
+        const quality = report.result.quality?.details || {};
+        if (quality.subjectToThresholding) text('p', 'Google applied reporting thresholds.', details);
+        if (quality.samplingMetadatas?.length) text('p', 'Google reports sampling for this result.', details);
+        if (quality.dataLossFromOtherRow) text('p', 'Some detailed rows were grouped by Google.', details);
+        if (report.result.quality?.state === 'unknown') text('p', 'Reporting quality is unknown for this cached result.', details);
+        if (quality.timeZone) text('p', `Property timezone: ${quality.timeZone}`, details);
+        if (quality.schemaRestrictionResponse) text('p', 'Some fields may be restricted by property access permissions.', details);
+        if (quality.currencyCode) text('p', `Reporting currency: ${quality.currencyCode}`, details);
+        containerEl.appendChild(details);
     },
 
     updateAnalyticsWarnings(containerEl, messages) {

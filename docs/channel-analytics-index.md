@@ -37,3 +37,5 @@ GA4 coverage expansion: [Scoped analytics expansion plan](../../apis-hub/docs/go
 Extends purpose-driven caching under the nine-dimension limit, with measurement-scope
 and additivity rules to avoid duplicated totals. Every implementation phase must update
 the GA4 catalog and consumer capabilities together.
+
+GA4 expansion implementation and release gates: [Property reports and widget integration](ga4-scoped-reports.md).

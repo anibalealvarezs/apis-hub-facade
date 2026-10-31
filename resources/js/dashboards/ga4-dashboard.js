@@ -229,7 +229,7 @@ export function ga4Dashboard(config = {}) {
             traffic_pages: { label: 'Landing Page', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
             traffic_countries: { label: 'Country', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
             traffic_devices: { label: 'Device', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
-            acquisition_channels: { label: 'Acq. Channel', metrics: ['new_users', 'reach', 'total_users', 'revenue'] },
+            acquisition_channels: { label: 'Acq. Channel', metrics: ['new_users', 'reach', 'total_users'] },
             events: { label: 'Event Name', metrics: ['event_count', 'conversions'] },
             adtouchpoints_adgroups: { label: 'Ad Group', metrics: ['sessions', 'conversions', 'revenue'] },
             adtouchpoints_terms: { label: 'Manual Term', metrics: ['sessions', 'conversions', 'revenue'] },

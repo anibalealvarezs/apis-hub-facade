@@ -80,6 +80,9 @@ class ChannelAnalyticsCatalog
             'event_matrix' => ['eventCount', 'conversions'],
             'acquisition_matrix' => ['newUsers', 'activeUsers', 'totalUsers'],
             'ad_touchpoint_matrix' => ['sessions', 'conversions', 'totalRevenue'],
+            'engagement_matrix' => ['sessions', 'engagedSessions', 'userEngagementDuration', 'engagementRate'],
+            'ecommerce_matrix' => ['ecommercePurchases', 'purchaseRevenue', 'grossPurchaseRevenue', 'refundAmount', 'transactions'],
+            'product_matrix' => ['itemsViewed', 'itemsAddedToCart', 'itemsPurchased', 'itemsRefunded', 'itemRevenue', 'grossItemRevenue', 'itemRefundAmount'],
         ];
         $definitions = [
             'screenPageViews' => ['Page and screen views', 'count', 'sum'], 'sessions' => ['Sessions', 'count', 'sum_within_one_scope'],
@@ -89,6 +92,11 @@ class ChannelAnalyticsCatalog
             'newUsers' => ['New users', 'users', 'source_distinct_for_requested_window'],
             'activeUsers' => ['Active users', 'users', 'source_distinct_for_requested_window'], 'totalUsers' => ['Total users', 'users', 'source_distinct_for_requested_window'],
         ];
+        foreach (['engagedSessions' => 'Engaged sessions', 'userEngagementDuration' => 'User engagement duration', 'ecommercePurchases' => 'Purchases', 'transactions' => 'Transactions', 'itemsViewed' => 'Items viewed', 'itemsAddedToCart' => 'Items added to cart', 'itemsPurchased' => 'Items purchased', 'itemsRefunded' => 'Items refunded'] as $name => $label) {
+            $definitions[$name] = [$label, $name === 'userEngagementDuration' ? 'seconds' : 'count', 'sum'];
+        }
+        foreach (['purchaseRevenue' => 'Purchase revenue', 'grossPurchaseRevenue' => 'Gross purchase revenue', 'refundAmount' => 'Refund amount', 'itemRevenue' => 'Item revenue', 'grossItemRevenue' => 'Gross item revenue', 'itemRefundAmount' => 'Item refund amount'] as $name => $label) $definitions[$name] = [$label, 'property_currency', 'sum'];
+        $definitions['engagementRate'] = ['Engagement rate', 'ratio', 'session_weighted_average'];
         $metrics = [];
         foreach ($definitions as $key => [$label, $unit, $reducer]) {
             $scopes = array_keys(array_filter($scopeMetrics, fn ($list) => in_array($key, $list, true)));
@@ -103,6 +111,9 @@ class ChannelAnalyticsCatalog
             'event_matrix' => ['daily', 'event', 'dimensions.page', 'dimensions.sessionDefaultChannelGroup', 'dimensions.source', 'dimensions.medium', 'channeledCampaign', 'adGroup', 'ad'],
             'acquisition_matrix' => ['daily', 'dimensions.firstUserDefaultChannelGroup', 'dimensions.firstUserSourceMedium', 'channeledCampaign', 'adGroup', 'ad'],
             'ad_touchpoint_matrix' => ['daily', 'channeledCampaign', 'adGroup', 'ad'],
+            'engagement_matrix' => ['daily', 'dimensions.sessionDefaultChannelGroup', 'dimensions.sessionSourceMedium', 'dimensions.landingPagePlusQueryString', 'dimensions.deviceCategory', 'dimensions.countryId'],
+            'ecommerce_matrix' => ['daily', 'dimensions.sessionDefaultChannelGroup', 'dimensions.sessionSourceMedium', 'dimensions.sessionCampaignName', 'dimensions.deviceCategory', 'dimensions.countryId'],
+            'product_matrix' => ['daily', 'dimensions.itemId', 'dimensions.itemName', 'dimensions.itemBrand', 'dimensions.itemCategory', 'dimensions.itemVariant'],
         ];
         $scopes = []; $dimensions = [];
         foreach ($scopeMetrics as $key => $list) {
@@ -153,6 +164,24 @@ class ChannelAnalyticsCatalog
             'GA-04' => 'Property metadata selects source key-event name; compatibility preflight before reports.',
             'GA-05' => 'Quality/currency/timezone metadata retained on new observations. Multi-account revenue requires matching known currencies.',
         ];
+        $tree['scoped_reports'] = [
+            'catalog' => '/api/analytics/catalog', 'query' => '/api/analytics/reports/query',
+            'families' => ['report', 'window', 'cohort', 'funnel'],
+            'source_calls' => 'bounded_background_queue', 'rollup' => 'forbidden',
+            'custom_fields' => 'property_metadata_and_frozen_compatible_definition',
+            'exact_users' => 'source_reported_whole_window; thresholding_and_sampling_still_apply',
+            'funnel' => 'alpha_endpoint; explicit_tenant_enablement_required',
+            'warehouse' => 'separate_connector_not_implemented',
+        ];
+        foreach (['engagement_matrix', 'ecommerce_matrix', 'product_matrix'] as $scope) {
+            $tree['scopes'][$scope]['requires_opt_in'] = true;
+            foreach ($scopeMetrics[$scope] as $name) $tree['canonical_aliases'][strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name))] = $name;
+            $tree['source_dimensions_by_scope'][$scope] = array_map(fn ($dimension) => $dimension === 'daily' ? 'date' : str_replace('dimensions.', '', $dimension), $grains[$scope]);
+            $tree['scopes'][$scope]['filter']['dimensions.recipe_revision'] = '1';
+            foreach ($scopeMetrics[$scope] as $metric) {
+                if (array_diff($tree['metrics'][$metric]['scopes'], ['engagement_matrix', 'ecommerce_matrix', 'product_matrix']) === []) $tree['metrics'][$metric]['status'] = 'conditional';
+            }
+        }
         return $tree;
     }
 

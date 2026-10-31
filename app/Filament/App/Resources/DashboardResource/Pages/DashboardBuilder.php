@@ -138,6 +138,14 @@ class DashboardBuilder extends Page
         $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
             ->findOrFail($widgetId);
 
+        if (!empty($widget->source_config['analytics_report'])) {
+            $definition = $widget->source_config['analytics_report']['frozen'];
+            if (!in_array($widgetType, ['table', 'tile'], true) || ($widgetType === 'tile' && (!empty($definition['payload']['dimensions']) || !in_array($definition['kind'], ['window', 'report'], true)))) {
+                Notification::make()->title(__('Source reports support tables, or metric cards without breakdowns.'))->danger()->send();
+                return;
+            }
+        }
+
         if (!WidgetTypeRegistry::isWidgetTypeCompatible($widget->source_type, $widgetType)) {
             Notification::make()
                 ->title(__('Invalid widget type for this source type'))
@@ -163,6 +171,11 @@ class DashboardBuilder extends Page
         $widget = DashboardWidget::where('dashboard_id', $this->dashboard->id)
             ->findOrFail($widgetId);
 
+        if (!empty($widget->source_config['analytics_report'])) {
+            // Source fields/predicates are frozen; ordinary metric controls must not
+            // silently replace them. Dates remain selectable without daily rollups.
+            $controls = array_replace($widget->controls ?? [], array_intersect_key($controls, array_flip(['date_start', 'date_end', 'zero_handling'])));
+        }
         $widget->controls = $controls;
         if (! empty($titles)) {
             $widget->setTranslations('title', array_filter($titles, fn ($v) => $v !== null && $v !== ''));

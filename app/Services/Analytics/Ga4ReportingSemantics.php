@@ -4,6 +4,16 @@ namespace App\Services\Analytics;
 
 final class Ga4ReportingSemantics
 {
+    public static function rawMetric(string $name): string
+    {
+        return ChannelCapabilityRegistry::getAnalyticsTree('google_analytics')['canonical_aliases'][$name] ?? $name;
+    }
+
+    public static function displayMetric(string $name): string
+    {
+        $aliases = ChannelCapabilityRegistry::getAnalyticsTree('google_analytics')['canonical_aliases'];
+        return array_search($name, $aliases, true) ?: $name;
+    }
     public static function metricsForScope(string $scope): array
     {
         return ChannelCapabilityRegistry::getAnalyticsTree('google_analytics')['scopes'][$scope]['metrics'] ?? [];
@@ -19,7 +29,7 @@ final class Ga4ReportingSemantics
             $definition = $tree['metrics'][$metric];
             $label = __($definition['label']);
             if (in_array($metric, ['newUsers', 'activeUsers', 'totalUsers'], true)) $label .= ' '.__('(Reported Sum)');
-            $options[$aliases[$metric] ?? $metric] = $label;
+            $options[$aliases[$metric] ?? self::displayMetric($metric)] = $label;
         }
         return $options;
     }

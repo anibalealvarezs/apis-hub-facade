@@ -1285,7 +1285,12 @@
                     continue; // Feature removed: we always send the max range
                 }
 
-                if ($type === 'boolean') {
+                if ($type === 'array' && isset($definition['options'])) {
+                    $advanced[] = Select::make($fieldKey)->multiple()
+                        ->label($key === 'additional_recipes' ? __('Additional GA4 reports') : Str::headline($key))
+                        ->options($definition['options'])->default($definition['default'] ?? [])
+                        ->helperText(__('New report families require their own history to be collected. Existing scopes are kept separate.'));
+                } elseif ($type === 'boolean') {
                     $advanced[] = Toggle::make($fieldKey)
                         ->label(Str::headline($key))
                         ->default($definition['default'] ?? false);

@@ -324,6 +324,7 @@ class ChannelBreakdownRegistry
             'acquisition_matrix' => $acquisition,
             'event_matrix' => $event,
             'ad_touchpoint_matrix' => $touchpoint,
+            'engagement_matrix', 'ecommerce_matrix', 'product_matrix' => array_map(fn ($label) => ['label' => $label, 'type' => 'dimension', 'operators' => $defaultOperators], ChannelGranularityRegistry::getBreakdownDimensions('google_analytics', $dep)),
             default => $traffic,
         };
     }

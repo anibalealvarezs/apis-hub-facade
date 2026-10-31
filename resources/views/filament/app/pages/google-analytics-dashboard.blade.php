@@ -588,6 +588,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </tbody>
             </table>
         </x-data-table>
+        <x-ga4-report-workspace :report-dashboards="$reportDashboards" />
     </div>
 </x-filament-panels::page>
 

@@ -47,6 +47,7 @@ class GoogleAnalyticsDashboard extends Page
     public ?string $dateEnd = null;
 
     public array $accounts = [];
+    public array $reportDashboards = [];
     public string $activeTab = 'campaigns';
 
     protected static function getChannelConfigKey(): string
@@ -66,6 +67,9 @@ class GoogleAnalyticsDashboard extends Page
         $this->dateStart = Carbon::now()->subDays(31)->format('Y-m-d');
 
         $this->loadAccounts();
+        $this->reportDashboards = \App\Models\Dashboard::where('project_id', Filament::getTenant()->id)->get()
+            ->filter(fn ($dashboard) => auth()->user()->can('view', $dashboard) && auth()->user()->can('update', $dashboard))
+            ->pluck('name', 'id')->all();
     }
 
     public function loadAccounts(): void

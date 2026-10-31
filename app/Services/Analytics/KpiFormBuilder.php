@@ -1288,6 +1288,9 @@ class KpiFormBuilder
                 $options[$key] = $label;
             }
         }
+        foreach (['engagement_matrix', 'ecommerce_matrix', 'product_matrix'] as $scope) {
+            $options += Ga4ReportingSemantics::metricOptions($scope);
+        }
         return $options;
     }
 

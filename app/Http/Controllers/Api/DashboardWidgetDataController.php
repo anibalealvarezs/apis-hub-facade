@@ -351,8 +351,8 @@
                                 ?? ($widget->customKpi->filters['_ui_state']['dependent_metric'] ?? null);
                             $anomalyCleanMetric = preg_replace('/^trend_(?:total|average)_/', '', (string)$anomalyMetric);
                             $anomalyMetricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                            $anomalyRatioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                            $anomalyCurrencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $anomalyRatioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
+                            $anomalyCurrencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
                             $isAnomalyRatio = in_array($anomalyCleanMetric, $anomalyRatioMetrics, true);
                             $isAnomalyCurrency = in_array($anomalyCleanMetric, $anomalyCurrencyMetrics, true);
 
@@ -835,7 +835,7 @@
                     $metrics = $resolvedControls['metrics'] ?? array_keys($summary);
 
                     $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                    $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
 
                     $rows = [];
                     foreach ($metrics as $metric) {
@@ -851,7 +851,7 @@
                         }
 
                         $isRatio = in_array($metric, $ratioMetrics);
-                        $isTime = in_array($metric, ['average_session_duration', 'post_video_avg_time_watched']);
+                        $isTime = in_array($metric, ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched']);
                         if ($isRatio) {
                             $current = is_numeric($current) ? round((float)$current * 100, 4) : $current;
                             $prev = ($prev !== null && is_numeric($prev)) ? round((float)$prev * 100, 4) : $prev;
@@ -909,7 +909,7 @@
                             'purchase_roas'         => 'ROAS',
                         ];
 
-                        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                        $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
                         $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas'];
                         $granularity = $resolvedControls['granularity'] ?? 'daily';
 
@@ -951,7 +951,7 @@
 
                             $isRatio = in_array($cleanKey, $ratioMetrics);
                             $isCurrency = in_array($cleanKey, $currencyMetrics);
-                            $isTime = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
+                            $isTime = in_array($cleanKey, ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched']);
                             $label = $metricLabels[$cleanKey] ?? ucwords(str_replace('_', ' ', $cleanKey));
 
                             $format = 'number';
@@ -970,7 +970,7 @@
                             ];
                         }
 
-                        $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                        $timeMetrics = ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched'];
 
                         $rawRows = [];
                         foreach ($chartData as $row) {
@@ -1027,8 +1027,8 @@
                         ];
                     } else {
                         $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                        $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                        $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
+                        $timeMetrics = ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched'];
                         $columns = [];
                         foreach (array_keys($tableData[0]) as $key) {
                             $label = $metricLabels[$key] ?? ucfirst(str_replace('_', ' ', $key));
@@ -1157,7 +1157,7 @@
                         }
                     } else {
                         $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                        $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
                         $granularity = $resolvedControls['granularity'] ?? 'daily';
                         $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
@@ -1275,7 +1275,7 @@
 
                                 $color = !empty($customMetricColor) ? $customMetricColor : $palette[$idx % count($palette)];
 
-                                $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                                $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
                                 $isCurrency = in_array($cleanKey, $currencyMetrics);
 
                                 $metricNaming = $resolvedControls['series_metric_namings'][0][$key]
@@ -1701,7 +1701,7 @@
                     'data'           => $data,
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
-                    'analytics_warnings' => ($usesGa4UserMetrics || $this->usesGa4UserMetricReporting)
+                    'analytics_warnings' => empty($widget->source_config['analytics_report']) && ($usesGa4UserMetrics || $this->usesGa4UserMetricReporting)
                         ? [\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()] : [],
                 ], 200, [], JSON_UNESCAPED_UNICODE);
             } catch (\Illuminate\Validation\ValidationException $e) {
@@ -2530,6 +2530,28 @@
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
             $config = $widget->source_config ?? [];
+            if (!empty($config['analytics_report'])) {
+                $saved = $config['analytics_report'];
+                $account = (string)$saved['account'];
+                $user = request()->user();
+                if ($user && !$widget->dashboard->is_public) {
+                    $access = app(\App\Services\CollaboratorAssetAccessService::class);
+                    if (!$access->isProjectMember($project, (int)$user->id)) abort(403);
+                    if (!$access->isUnrestricted($project, (int)$user->id) && !$access->filterRequestedChannelAssets($project, (int)$user->id, 'google_analytics', [$account])) abort(403);
+                }
+                $definition = $saved['definition'];
+                $definition['start_date'] = $controls['date_start'] ?? $definition['start_date'];
+                $definition['end_date'] = $controls['date_end'] ?? $definition['end_date'];
+                $response = $this->remoteEngineService->scopedAnalytics($project, 'reports/query', ['account' => (int)$account, 'definition' => $definition], 'saved-widget:'.$widget->id);
+                $report = $response['data'] ?? null;
+                if (!$report) throw new \RuntimeException('The source report cache is unavailable.');
+                if (isset($report['definition']) && (
+                    $report['definition']['field_definitions'] !== $saved['frozen']['field_definitions'] ||
+                    $report['definition']['context']['time_zone'] !== $saved['frozen']['context']['time_zone'] ||
+                    $report['definition']['context']['currency'] !== $saved['frozen']['context']['currency']
+                )) throw new \InvalidArgumentException('The source report definition changed. Review and save a new revision in Data Explorer.');
+                return ['scoped_report' => $report];
+            }
 
             // Check if widget has multiple series or breakdown/filters configured via raw_series
             $rawSeries = $controls['raw_series'] ?? $config['raw_series'] ?? null;
@@ -2653,7 +2675,7 @@
                 : ($granularity === 'lifetime' ? '2010-01-01' : now()->subDays(30)->format('Y-m-d'));
             $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-            $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+            $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
             $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
 
             $seriesCurves = [];
@@ -2847,8 +2869,8 @@
 
                             // Build table columns
                             $cleanDimName = ucwords(str_replace(['_', 'dimensions.'], [' ', ''], $breakdownDim));
-                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
-                            $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
+                            $timeMetrics = ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched'];
 
                             $columns = [
                                 [
@@ -3059,13 +3081,13 @@
                             $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
                             $isRatio = in_array($cleanMetric, $ratioMetrics);
 
-                            if ($granularity !== 'daily' && !empty($timeSeries)) {
+                            if ($granularity !== 'daily' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $granularity && !empty($timeSeries)) {
                                 $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                                 $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
                             }
 
                             $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
-                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
                             $isCurrency = in_array($cleanMetric, $currencyMetrics);
 
                             $metricNaming = $seriesMetricNamings[$metric]
@@ -3246,7 +3268,7 @@
                         'account'     => $assetFilter,
                         'dateStart'   => $dateStart,
                         'dateEnd'     => $dateEnd,
-                        'granularity' => 'daily',
+                        'granularity' => $ssChannel === 'google_analytics' ? $effectiveGranularity : 'daily',
                         'metrics'     => [$ssMetric],
                     ];
 
@@ -3356,7 +3378,7 @@
                             $totals[$dimVal] += (float)$val;
                         }
 
-                        if ($effectiveGranularity !== 'daily' && $effectiveGranularity !== 'lifetime') {
+                        if ($effectiveGranularity !== 'daily' && $effectiveGranularity !== 'lifetime' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $effectiveGranularity) {
                             foreach ($groupedData as $dv => $ts) {
                                 $groupedData[$dv] = $aggregator->aggregateFlatMap($ts, $effectiveGranularity);
                             }
@@ -3377,7 +3399,7 @@
                             'sample' => array_slice($seriesData, 0, 3, true),
                         ]);
 
-                        if ($effectiveGranularity !== 'daily' && !empty($seriesData)) {
+                        if ($effectiveGranularity !== 'daily' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $effectiveGranularity && !empty($seriesData)) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                             $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
                         }
@@ -4134,7 +4156,7 @@
         {
             $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
             $isRatio = in_array($cleanMetric, $ratioMetrics);
-            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
             $isCurrency = in_array($cleanMetric, $currencyMetrics);
             $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
 
@@ -4245,7 +4267,7 @@
             foreach ($selectedDimValues as $dimVal) {
                 $timeSeries = $groupedData[$dimVal];
 
-                if ($granularity !== 'daily' && $granularity !== 'lifetime' && !empty($timeSeries)) {
+                if ($granularity !== 'daily' && $granularity !== 'lifetime' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $granularity && !empty($timeSeries)) {
                     $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
                 }
 
@@ -4951,6 +4973,13 @@
         public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
         {
             if ($channel === 'google_analytics') $this->usesGa4Reporting = true;
+            if ($channel === 'google_analytics' && $action === 'chart' && isset($payload['groupBy'])) {
+                $temporal = $payload['granularity'] ?? 'daily';
+                $payload['groupBy'] = array_values(array_filter(array_map(
+                    static fn ($field) => $field === 'daily' ? ($temporal === 'lifetime' ? null : $temporal) : $field,
+                    $payload['groupBy']
+                )));
+            }
             if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics(array_replace($payload, ['channel' => $channel]))) {
                 $this->usesGa4UserMetricReporting = true;
             }
@@ -5339,7 +5368,7 @@
                     'account'     => $assetFilter,
                     'dateStart'   => $dateStart,
                     'dateEnd'     => $dateEnd,
-                    'granularity' => 'daily',
+                    'granularity' => $channel === 'google_analytics' ? $effectiveGranularity : 'daily',
                     'metrics'     => [$metric],
                 ];
 
@@ -5365,7 +5394,7 @@
                 \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] extracted seriesData for {$key}", ['count' => count($seriesData), 'sample' => array_slice($seriesData, 0, 3, true)]);
 
                 // Aggregate daily series data to target granularity before passing to compute engine
-                if ($effectiveGranularity !== 'daily' && !empty($seriesData)) {
+                if ($effectiveGranularity !== 'daily' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $effectiveGranularity && !empty($seriesData)) {
                     $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                     $aggregated = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
                     \Illuminate\Support\Facades\Log::info('[DM_GRAN] Aggregated series data', [
@@ -6019,8 +6048,8 @@
             $pieStyle = $controls['pie_style'] ?? 'donut';
             $pieMode = $controls['pie_mode'] ?? 'dimension';
 
-            $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+            $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
+            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
 
             $slices = []; // [ ['label' => ..., 'value' => float, 'currency' => bool, 'percentage' => bool] ]

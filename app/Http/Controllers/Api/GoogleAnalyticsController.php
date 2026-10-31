@@ -12,6 +12,46 @@ class GoogleAnalyticsController extends Controller
 {
     use Concerns\AppliesEntityAttributeFilters;
 
+    public function scopedCatalog(Request $request)
+    {
+        $input = $request->validate(['tenant' => 'required|integer', 'account' => 'required|integer|min:1', 'refresh' => 'sometimes|boolean']);
+        $project = Project::findOrFail($input['tenant']);
+        abort_unless($request->user()?->can('view_data'), 403);
+        return response()->json(app(RemoteEngineService::class)->scopedAnalytics($project, 'catalog', ['account' => $input['account'], 'refresh' => $input['refresh'] ?? false]));
+    }
+
+    public function scopedReport(Request $request)
+    {
+        $input = $request->validate(['tenant' => 'required|integer', 'account' => 'required|integer|min:1', 'definition' => 'required|array']);
+        $project = Project::findOrFail($input['tenant']);
+        abort_unless($request->user()?->can('view_data'), 403);
+        return response()->json(app(RemoteEngineService::class)->scopedAnalytics($project, 'reports/query', ['account' => $input['account'], 'definition' => $input['definition']]));
+    }
+
+    public function addReportWidget(Request $request)
+    {
+        $input = $request->validate([
+            'tenant' => 'required|integer', 'account' => 'required|integer|min:1', 'definition' => 'required|array',
+            'dashboard_id' => 'required|integer', 'title' => 'required|string|max:120', 'widget_type' => 'sometimes|in:table,tile',
+        ]);
+        $project = Project::findOrFail($input['tenant']);
+        $dashboard = \App\Models\Dashboard::where('project_id', $project->id)->findOrFail($input['dashboard_id']);
+        $this->authorize('view', $dashboard);
+        $this->authorize('update', $dashboard);
+        $result = app(RemoteEngineService::class)->scopedAnalytics($project, 'reports/query', ['account' => $input['account'], 'definition' => $input['definition']]);
+        $report = $result['data'] ?? [];
+        abort_unless(isset($report['definition']['hash']), 422, 'Validate the report definition first.');
+        $widgetType = $input['widget_type'] ?? 'table';
+        abort_if($widgetType === 'tile' && (!empty($report['definition']['payload']['dimensions']) || !in_array($report['definition']['kind'], ['window', 'report'], true)), 422, 'Tiles require a report without breakdowns.');
+        $widget = $dashboard->widgets()->create([
+            'name' => $input['title'], 'title' => $input['title'], 'source_type' => 'metric', 'widget_type' => $widgetType,
+            'source_config' => ['channel' => 'google_analytics', 'analytics_report' => ['account' => $input['account'], 'definition' => $input['definition'], 'frozen' => $report['definition']]],
+            'controls' => ['channel' => 'google_analytics', 'metrics' => $input['definition']['metrics'] ?? [], 'date_start' => $input['definition']['start_date'], 'date_end' => $input['definition']['end_date']],
+            'grid_x' => 0, 'grid_y' => (int)$dashboard->widgets()->max('grid_y') + 5, 'grid_w' => 8, 'grid_h' => 5,
+        ]);
+        return response()->json(['success' => true, 'widget_id' => $widget->id]);
+    }
+
     private function validateRequest(Request $request): array
     {
         $validated = $request->validate([
@@ -19,6 +59,7 @@ class GoogleAnalyticsController extends Controller
             'account' => 'required',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
+            'granularity' => 'nullable|string|in:daily,weekly,monthly,quarterly,semiannual,annually,lifetime,trailing_weekly,trailing_monthly,trailing_quarterly,trailing_semiannual,trailing_annually',
             'activeTab' => 'nullable|string|in:campaigns,adgroups,channels,sources,traffic_pages,traffic_countries,traffic_devices,acquisition_channels,events,adtouchpoints_adgroups,adtouchpoints_terms,adtouchpoints_content',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
@@ -27,7 +68,7 @@ class GoogleAnalyticsController extends Controller
             'groupBy' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string',
-            'dependency' => 'nullable|string|in:traffic_matrix,acquisition_matrix,event_matrix,ad_touchpoint_matrix',
+            'dependency' => 'nullable|string|in:traffic_matrix,acquisition_matrix,event_matrix,ad_touchpoint_matrix,engagement_matrix,ecommerce_matrix,product_matrix',
         ]);
         $blocked = ['spend', 'cost', 'cpc', 'cpm', 'cost_per_conversion', 'cost_per_result', 'roas', 'roas_purchase', 'purchase_roas'];
         if (array_intersect(array_map('strtolower', $validated['metrics'] ?? []), $blocked)) {
@@ -64,7 +105,7 @@ class GoogleAnalyticsController extends Controller
             'active_users', 'reach' => 'activeUsers',
             'total_users' => 'totalUsers',
             'keyEvents' => 'conversions',
-            default => $metric,
+            default => \App\Services\Analytics\Ga4ReportingSemantics::rawMetric($metric),
         };
     }
 
@@ -79,7 +120,7 @@ class GoogleAnalyticsController extends Controller
             'eventCount' => 'event_count',
             'activeUsers' => 'reach',
             'totalUsers' => 'total_users',
-            default => $metric,
+            default => \App\Services\Analytics\Ga4ReportingSemantics::displayMetric($metric),
         };
     }
 
@@ -501,7 +542,9 @@ class GoogleAnalyticsController extends Controller
             ));
 
             $breakdownDim = $validated['breakdown'] ?? null;
-            $customGroupBy = $validated['groupBy'] ?? ($breakdownDim ? ['daily', $breakdownDim] : ['daily']);
+            $temporal = $validated['granularity'] ?? 'daily';
+            $timeGroups = $temporal === 'lifetime' ? [] : [$temporal];
+            $customGroupBy = $validated['groupBy'] ?? array_merge($timeGroups, $breakdownDim ? [$breakdownDim] : []);
 
             foreach ($scopesToQuery as $scope) {
                 if (empty($unassignedMetrics)) break;
@@ -544,14 +587,15 @@ class GoogleAnalyticsController extends Controller
                     foreach ($rows as $row) {
                         $mappedRow = [];
                         foreach ($row as $k => $v) {
-                            $mappedKey = $this->mapFromGa4($k);
-                            $mappedRow[$mappedKey] = is_numeric($v) && !in_array($k, ['daily', 'date', 'metric_date', $breakdownDim]) ? (float) $v : $v;
+                            $mappedKey = $k === $temporal ? 'daily' : $this->mapFromGa4($k);
+                            $mappedRow[$mappedKey] = is_numeric($v) && !in_array($k, ['daily', 'date', 'metric_date', $temporal, $breakdownDim]) ? (float) $v : $v;
                         }
                         $flatRows[] = $mappedRow;
                     }
                 }
                 return response()->json([
                     'chart' => $flatRows,
+                    'aggregation_granularity' => $temporal,
                     'debug_results' => config('app.debug') ? $results : null,
                 ]);
             }
@@ -560,13 +604,13 @@ class GoogleAnalyticsController extends Controller
             foreach ($scopesToQuery as $scope) {
                 $rows = $results["chart_{$scope}"]['data'] ?? [];
                 foreach ($rows as $row) {
-                    $dateKey = $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? null;
+                    $dateKey = $row[$temporal] ?? $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? ($temporal === 'lifetime' ? 'Lifetime' : null);
                     if (!$dateKey) continue;
                     if (!isset($mergedByDate[$dateKey])) {
                         $mergedByDate[$dateKey] = ['daily' => $dateKey];
                     }
                     foreach ($row as $k => $v) {
-                        if (!in_array($k, ['daily', 'date', 'metric_date'])) {
+                        if (!in_array($k, ['daily', 'date', 'metric_date', $temporal])) {
                             $mappedKey = $this->mapFromGa4($k);
                             $mergedByDate[$dateKey][$mappedKey] = $v === null ? null : ($mergedByDate[$dateKey][$mappedKey] ?? 0) + (float) $v;
                         }
@@ -578,6 +622,7 @@ class GoogleAnalyticsController extends Controller
 
             return response()->json([
                 'chart' => array_values($mergedByDate),
+                'aggregation_granularity' => $temporal,
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
