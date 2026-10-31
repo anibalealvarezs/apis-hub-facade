@@ -1,6 +1,6 @@
 @props(['message' => null])
 <div data-analytics-warnings
-     x-data="{ ...floatingTooltip({ width: 320 }), messages: @js($message ? [$message] : []) }"
+     x-data="{ show: false, pos: '', ts: {}, width: 320, messages: @js($message ? [$message] : []), ...((typeof floatingTooltip === 'function') ? floatingTooltip({ width: 320 }) : (window.floatingTooltip ? window.floatingTooltip({ width: 320 }) : {})) }"
      x-id="['analytics-warning']"
      x-show="messages.length > 0" x-cloak
      @analytics-warnings="messages = $event.detail; show = false"

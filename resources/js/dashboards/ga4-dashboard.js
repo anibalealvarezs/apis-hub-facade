@@ -267,13 +267,13 @@ export function ga4Dashboard(config = {}) {
             if (accParam && this.accountNames[accParam]) {
                 this.account = accParam;
                 this.selectedAccount = accParam;
-                if (this.$wire) this.$wire.set('selectedAccount', accParam);
+                try { if (this.$wire && typeof this.$wire.set === 'function') this.$wire.set('selectedAccount', accParam); } catch (e) {}
             }
             if (!this.selectedAccount && Object.keys(this.accountNames).length > 0) {
                 const firstAcc = Object.keys(this.accountNames)[0];
                 this.account = firstAcc;
                 this.selectedAccount = firstAcc;
-                if (this.$wire) this.$wire.set('selectedAccount', firstAcc);
+                try { if (this.$wire && typeof this.$wire.set === 'function') this.$wire.set('selectedAccount', firstAcc); } catch (e) {}
             }
             const ds = params.get('dateStart');
             if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;
