@@ -82,7 +82,7 @@ class ChannelAnalyticsCatalog
             'ad_touchpoint_matrix' => ['sessions', 'conversions', 'totalRevenue'],
             'engagement_matrix' => ['sessions', 'engagedSessions', 'userEngagementDuration', 'engagementRate'],
             'ecommerce_matrix' => ['ecommercePurchases', 'purchaseRevenue', 'grossPurchaseRevenue', 'refundAmount', 'transactions'],
-            'product_matrix' => ['itemsViewed', 'itemsAddedToCart', 'itemsPurchased', 'itemsRefunded', 'itemRevenue', 'grossItemRevenue', 'itemRefundAmount'],
+            'product_matrix' => ['itemsViewed', 'itemsAddedToCart', 'itemsPurchased', 'itemRevenue', 'grossItemRevenue', 'itemRefundAmount'],
         ];
         $definitions = [
             'screenPageViews' => ['Page and screen views', 'count', 'sum'], 'sessions' => ['Sessions', 'count', 'sum_within_one_scope'],
