@@ -373,7 +373,9 @@ export function ga4Dashboard(config = {}) {
             this.activeTab = tab;
             this.syncToUrl();
             this.fetchSection(section);
-            if (this.$wire) this.$wire.setActiveTab(tab);
+            this.$nextTick(() => {
+                window.dispatchEvent(new Event('resize'));
+            });
         },
 
         forceRefresh() {

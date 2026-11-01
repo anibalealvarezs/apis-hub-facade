@@ -203,7 +203,7 @@ class ChannelGranularityRegistry
             'engagement_matrix', 'ecommerce_matrix' => [
                 'dimensions.sessionDefaultChannelGroup' => __('Session channel group'),
                 'dimensions.sessionSourceMedium' => __('Session source / medium'),
-                'dimensions.countryId' => __('Country'), 'dimensions.deviceCategory' => __('Device'),
+                'country' => __('Country'), 'device' => __('Device'),
             ],
             'product_matrix' => [
                 'dimensions.itemId' => __('Product ID'), 'dimensions.itemName' => __('Product'),

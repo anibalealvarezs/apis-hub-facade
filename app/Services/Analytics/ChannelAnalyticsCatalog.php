@@ -111,8 +111,8 @@ class ChannelAnalyticsCatalog
             'event_matrix' => ['daily', 'event', 'dimensions.page', 'dimensions.sessionDefaultChannelGroup', 'dimensions.source', 'dimensions.medium', 'channeledCampaign', 'adGroup', 'ad'],
             'acquisition_matrix' => ['daily', 'dimensions.firstUserDefaultChannelGroup', 'dimensions.firstUserSourceMedium', 'channeledCampaign', 'adGroup', 'ad'],
             'ad_touchpoint_matrix' => ['daily', 'channeledCampaign', 'adGroup', 'ad'],
-            'engagement_matrix' => ['daily', 'dimensions.sessionDefaultChannelGroup', 'dimensions.sessionSourceMedium', 'dimensions.landingPagePlusQueryString', 'dimensions.deviceCategory', 'dimensions.countryId'],
-            'ecommerce_matrix' => ['daily', 'dimensions.sessionDefaultChannelGroup', 'dimensions.sessionSourceMedium', 'dimensions.sessionCampaignName', 'dimensions.deviceCategory', 'dimensions.countryId'],
+            'engagement_matrix' => ['daily', 'dimensions.sessionDefaultChannelGroup', 'dimensions.sessionSourceMedium', 'dimensions.landingPagePlusQueryString', 'device', 'country'],
+            'ecommerce_matrix' => ['daily', 'dimensions.sessionDefaultChannelGroup', 'dimensions.sessionSourceMedium', 'dimensions.sessionCampaignName', 'device', 'country'],
             'product_matrix' => ['daily', 'dimensions.itemId', 'dimensions.itemName', 'dimensions.itemBrand', 'dimensions.itemCategory', 'dimensions.itemVariant'],
         ];
         $scopes = []; $dimensions = [];
