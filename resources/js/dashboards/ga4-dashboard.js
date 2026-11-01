@@ -55,6 +55,11 @@ export function ga4Dashboard(config = {}) {
             acquisition: false, engagement: false, ecommerce: false, products: false,
             events: false, adtouchpoints: false,
         },
+        sectionErrors: {
+            campaigns: null, channels: null, traffic: null,
+            acquisition: null, engagement: null, ecommerce: null, products: null,
+            events: null, adtouchpoints: null,
+        },
         ss: {
             campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
             acquisition: 'acquisition_channels',
@@ -529,10 +534,15 @@ export function ga4Dashboard(config = {}) {
             }
 
             this.sl[section] = true;
+            this.sectionErrors[section] = null;
             try {
                 const response = await this.fetchDashboardResponse('/api/ga4/table', this.getFetchOptions(section));
                 const data = await response.json();
-                if (!data.error) {
+                if (data.error) {
+                    this.sectionErrors[section] = data.error;
+                    this.sections[section].rows = [];
+                } else {
+                    this.sectionErrors[section] = null;
                     const rows = data.table || [];
                     const countryTabs = ['traffic_countries', 'engagement_countries', 'ecommerce_countries'];
                     const currentTab = this.ss[section];
@@ -549,6 +559,7 @@ export function ga4Dashboard(config = {}) {
                 }
             } catch (error) {
                 console.error('Error fetching section ' + section + ':', error);
+                this.sectionErrors[section] = error.message || 'Error loading data';
             } finally {
                 this.sl[section] = false;
             }
