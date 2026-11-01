@@ -81,6 +81,48 @@ export function ga4Dashboard(config = {}) {
             ecommerce: 'map'
         },
 
+        summary: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
+        previous: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
+        chartDataRaw: [],
+
+        activeMetrics: {
+            sessions: true,
+            reach: true,
+            new_users: false,
+            conversions: false,
+            pageviews: false,
+            average_session_duration: false,
+            bounce_rate: false,
+            total_users: false,
+            revenue: false,
+        },
+
+        sections: {
+            campaigns: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            channels: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            traffic: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            acquisition: dataTable({ sortCol: 'new_users', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            engagement: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            ecommerce: dataTable({ sortCol: 'purchase_revenue', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            products: dataTable({ sortCol: 'items_viewed', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            events: dataTable({ sortCol: 'event_count', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            adtouchpoints: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+        },
+        sl: {
+            campaigns: false, channels: false, traffic: false,
+            acquisition: false, engagement: false, ecommerce: false, products: false,
+            events: false, adtouchpoints: false,
+        },
+        ss: {
+            campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
+            acquisition: 'acquisition_channels',
+            engagement: 'engagement_channels',
+            ecommerce: 'ecommerce_campaigns',
+            products: 'product_items',
+            events: 'events',
+            adtouchpoints: 'adtouchpoints_adgroups',
+        },
+
         getCountryMapData(section) {
             const countryTabs = {
                 traffic: 'traffic_countries',

@@ -423,10 +423,7 @@ class GoogleAnalyticsController extends Controller
                         $this->metricsForScope('traffic_matrix', true),
                         $this->metricsForScope('acquisition_matrix'),
                         $this->metricsForScope('event_matrix'),
-                        $this->metricsForScope('ad_touchpoint_matrix'),
-                        $this->metricsForScope('engagement_matrix'),
-                        $this->metricsForScope('ecommerce_matrix'),
-                        $this->metricsForScope('product_matrix')
+                        $this->metricsForScope('ad_touchpoint_matrix')
                     )));
                 }
             } else {
@@ -581,10 +578,7 @@ class GoogleAnalyticsController extends Controller
                         $this->metricsForScope('traffic_matrix', true),
                         $this->metricsForScope('acquisition_matrix'),
                         $this->metricsForScope('event_matrix'),
-                        $this->metricsForScope('ad_touchpoint_matrix'),
-                        $this->metricsForScope('engagement_matrix'),
-                        $this->metricsForScope('ecommerce_matrix'),
-                        $this->metricsForScope('product_matrix')
+                        $this->metricsForScope('ad_touchpoint_matrix')
                     )));
                 }
             } else {
