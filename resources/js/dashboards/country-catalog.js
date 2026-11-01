@@ -61,6 +61,10 @@ export const COUNTRY_NAME_TO_CODE = {
     'Zimbabwe':'ZWE','Others':'OTH','Unknown':'UNK',
 };
 
+const LOWER_COUNTRY_NAME_TO_CODE = Object.fromEntries(
+    Object.entries(COUNTRY_NAME_TO_CODE).map(([name, code]) => [name.trim().toLowerCase(), code])
+);
+
 export const ISO3_TO_ISO2 = {
     'AFG':'AF','ALA':'AX','ALB':'AL','DZA':'DZ','ASM':'AS','AND':'AD','AGO':'AO','AIA':'AI','ATA':'AQ','ATG':'AG','ARG':'AR','ARM':'AM','ABW':'AW','AUS':'AU','AUT':'AT','AZE':'AZ',
     'BHS':'BS','BHR':'BH','BGD':'BD','BRB':'BB','BLR':'BY','BEL':'BE','BLZ':'BZ','BEN':'BJ','BMU':'BM','BTN':'BT','BOL':'BO','BES':'BQ','BIH':'BA','BWA':'BW','BVT':'BV','BRA':'BR',
@@ -86,6 +90,31 @@ export const ISO3_TO_ISO2 = {
 export function convertIso3ToIso2(iso3) {
     if (!iso3) return null;
     return ISO3_TO_ISO2[iso3.toUpperCase()] || null;
+}
+
+/**
+ * Converts a country identifier (code or name in any casing) to an ISO alpha-2 uppercase code.
+ */
+export function resolveCountryToIso2(identifier) {
+    if (!identifier) return null;
+    const clean = String(identifier).trim();
+    if (!clean || clean.toLowerCase() === 'unknown' || clean.toLowerCase() === '(not set)') return null;
+
+    if (clean.length === 2 && /^[a-zA-Z]{2}$/.test(clean)) {
+        return clean.toUpperCase();
+    }
+
+    if (clean.length === 3 && /^[a-zA-Z]{3}$/.test(clean)) {
+        const directIso2 = convertIso3ToIso2(clean);
+        if (directIso2) return directIso2;
+    }
+
+    const iso3 = COUNTRY_NAME_TO_CODE[clean] || LOWER_COUNTRY_NAME_TO_CODE[clean.toLowerCase()];
+    if (iso3) {
+        return convertIso3ToIso2(iso3) || (iso3.length === 2 ? iso3.toUpperCase() : null);
+    }
+
+    return null;
 }
 
 /**

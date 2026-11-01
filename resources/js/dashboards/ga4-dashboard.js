@@ -1,6 +1,6 @@
 import { withEntityAttributes } from './entity-attributes.js';
 import { dataTable } from './data-table.js';
-import { COUNTRY_NAME_TO_CODE, convertIso3ToIso2, countryCodeToName } from './country-catalog.js';
+import { COUNTRY_NAME_TO_CODE, convertIso3ToIso2, countryCodeToName, resolveCountryToIso2 } from './country-catalog.js';
 
 export function ga4Dashboard(config = {}) {
     return withEntityAttributes({
@@ -83,16 +83,9 @@ export function ga4Dashboard(config = {}) {
             const metric = this.sections[section].sortCol || defaultMetric;
 
             (this.sections[section].rows || []).forEach(row => {
-                const name = row.name || row.id;
-                if (!name) return;
-                const isoCode = COUNTRY_NAME_TO_CODE[name] || name;
-                if (isoCode && isoCode.length === 3) {
-                    const alpha2 = this.convertIso3ToIso2(isoCode);
-                    if (alpha2) {
-                        mapData[alpha2] = Number(row[metric]) || 0;
-                    }
-                } else if (isoCode && isoCode.length === 2) {
-                    mapData[isoCode.toUpperCase()] = Number(row[metric]) || 0;
+                const alpha2 = resolveCountryToIso2(row.id) || resolveCountryToIso2(row.name);
+                if (alpha2) {
+                    mapData[alpha2] = Number(row[metric]) || 0;
                 }
             });
             return mapData;
@@ -110,6 +103,10 @@ export function ga4Dashboard(config = {}) {
             return countryCodeToName(alpha2);
         },
 
+        resolveCountryToIso2(identifier) {
+            return resolveCountryToIso2(identifier);
+        },
+
         getSelectedCountryCodes(section) {
             const countryTabs = {
                 traffic: 'traffic_countries',
@@ -119,8 +116,7 @@ export function ga4Dashboard(config = {}) {
             const expectedTab = countryTabs[section];
             const query = (this.sections[section]?.searchQuery || '').trim();
             if (!query || this.ss[section] !== expectedTab) return [];
-            const iso3 = COUNTRY_NAME_TO_CODE[query] || query;
-            const code2 = (iso3 && iso3.length === 3) ? (this.convertIso3ToIso2(iso3) || iso3) : (iso3 ? iso3.toUpperCase() : null);
+            const code2 = resolveCountryToIso2(query);
             return code2 ? [code2] : [];
         },
 
@@ -133,12 +129,8 @@ export function ga4Dashboard(config = {}) {
             const code2 = code.toUpperCase();
             const rows = this.sections[section]?.rows || [];
             let matchingRow = rows.find(r => {
-                const name = ((r.name || r.id) || '').trim();
-                if (!name) return false;
-                if (name.toUpperCase() === code2) return true;
-                const iso3 = COUNTRY_NAME_TO_CODE[name] || name;
-                if (iso3 && (iso3.toUpperCase() === code2 || this.convertIso3ToIso2(iso3) === code2)) return true;
-                return false;
+                const rCode = resolveCountryToIso2(r.id) || resolveCountryToIso2(r.name);
+                return rCode === code2;
             });
 
             const filterVal = matchingRow ? (matchingRow.name || matchingRow.id) : (this.countryCodeToName(code2) || code2);
