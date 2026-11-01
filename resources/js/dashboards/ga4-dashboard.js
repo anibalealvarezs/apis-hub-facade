@@ -74,56 +74,26 @@ export function ga4Dashboard(config = {}) {
         isSummaryLoading: false,
         isChartLoading: false,
 
-        countryViewMode: 'map', // 'map' or 'table'
-
-        summary: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
-        previous: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
-        chartDataRaw: [],
-
-        activeMetrics: {
-            sessions: true,
-            reach: true,
-            new_users: false,
-            conversions: false,
-            pageviews: false,
-            average_session_duration: false,
-            bounce_rate: false,
-            total_users: false,
-            revenue: false,
+        countryViewMode: 'map', // 'map' or 'table' for traffic
+        countryViewModes: {
+            traffic: 'map',
+            engagement: 'map',
+            ecommerce: 'map'
         },
 
-        sections: {
-            campaigns: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            channels: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            traffic: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            acquisition: dataTable({ sortCol: 'new_users', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            engagement: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            ecommerce: dataTable({ sortCol: 'purchase_revenue', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            products: dataTable({ sortCol: 'items_viewed', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            events: dataTable({ sortCol: 'event_count', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-            adtouchpoints: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
-        },
-        sl: {
-            campaigns: false, channels: false, traffic: false,
-            acquisition: false, engagement: false, ecommerce: false, products: false,
-            events: false, adtouchpoints: false,
-        },
-        ss: {
-            campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
-            acquisition: 'acquisition_channels',
-            engagement: 'engagement_channels',
-            ecommerce: 'ecommerce_campaigns',
-            products: 'product_items',
-            events: 'events',
-            adtouchpoints: 'adtouchpoints_adgroups',
-        },
-
-        get countryMapData() {
-            if (this.ss.traffic !== 'traffic_countries') return {};
+        getCountryMapData(section) {
+            const countryTabs = {
+                traffic: 'traffic_countries',
+                engagement: 'engagement_countries',
+                ecommerce: 'ecommerce_countries'
+            };
+            const expectedTab = countryTabs[section];
+            if (!expectedTab || this.ss[section] !== expectedTab) return {};
             const mapData = {};
-            const metric = this.sections.traffic.sortCol || 'sessions';
+            const defaultMetric = section === 'ecommerce' ? 'purchase_revenue' : 'sessions';
+            const metric = this.sections[section].sortCol || defaultMetric;
 
-            (this.sections.traffic.rows || []).forEach(row => {
+            (this.sections[section].rows || []).forEach(row => {
                 const name = row.name || row.id;
                 if (!name) return;
                 const isoCode = COUNTRY_NAME_TO_CODE[name] || name;
@@ -137,6 +107,10 @@ export function ga4Dashboard(config = {}) {
                 }
             });
             return mapData;
+        },
+
+        get countryMapData() {
+            return this.getCountryMapData('traffic');
         },
 
         convertIso3ToIso2(iso3) {
@@ -172,18 +146,28 @@ export function ga4Dashboard(config = {}) {
             return alpha2;
         },
 
-        get selectedCountryCodes() {
-            const query = (this.sections.traffic.searchQuery || '').trim();
-            if (!query || this.ss.traffic !== 'traffic_countries') return [];
+        getSelectedCountryCodes(section) {
+            const countryTabs = {
+                traffic: 'traffic_countries',
+                engagement: 'engagement_countries',
+                ecommerce: 'ecommerce_countries'
+            };
+            const expectedTab = countryTabs[section];
+            const query = (this.sections[section]?.searchQuery || '').trim();
+            if (!query || this.ss[section] !== expectedTab) return [];
             const iso3 = COUNTRY_NAME_TO_CODE[query] || query;
             const code2 = (iso3 && iso3.length === 3) ? (this.convertIso3ToIso2(iso3) || iso3) : (iso3 ? iso3.toUpperCase() : null);
             return code2 ? [code2] : [];
         },
 
-        handleMapCountrySelected(code) {
+        get selectedCountryCodes() {
+            return this.getSelectedCountryCodes('traffic');
+        },
+
+        handleSectionMapCountrySelected(section, code) {
             if (!code) return;
             const code2 = code.toUpperCase();
-            const rows = this.sections.traffic.rows || [];
+            const rows = this.sections[section]?.rows || [];
             let matchingRow = rows.find(r => {
                 const name = ((r.name || r.id) || '').trim();
                 if (!name) return false;
@@ -194,30 +178,48 @@ export function ga4Dashboard(config = {}) {
             });
 
             const filterVal = matchingRow ? (matchingRow.name || matchingRow.id) : (this.countryCodeToName(code2) || code2);
-            this.toggleCountryFilter(filterVal);
+            this.toggleSectionCountryFilter(section, filterVal);
+        },
+
+        handleMapCountrySelected(code) {
+            this.handleSectionMapCountrySelected('traffic', code);
+        },
+
+        toggleSectionCountryFilter(section, countryName) {
+            if (!countryName || !this.sections[section]) return;
+            const current = (this.sections[section].searchQuery || '').trim().toLowerCase();
+            const target = countryName.trim().toLowerCase();
+            if (current === target) {
+                this.sections[section].searchQuery = '';
+            } else {
+                this.sections[section].searchQuery = countryName.trim();
+            }
+            this.sections[section].currentPage = 1;
         },
 
         toggleCountryFilter(countryName) {
-            if (!countryName) return;
-            const current = (this.sections.traffic.searchQuery || '').trim().toLowerCase();
-            const target = countryName.trim().toLowerCase();
-            if (current === target) {
-                this.sections.traffic.searchQuery = '';
-            } else {
-                this.sections.traffic.searchQuery = countryName.trim();
-            }
-            this.sections.traffic.currentPage = 1;
+            this.toggleSectionCountryFilter('traffic', countryName);
         },
 
-        isCountrySelected(countryName) {
-            if (!countryName) return false;
-            const current = (this.sections.traffic.searchQuery || '').trim().toLowerCase();
+        isSectionCountrySelected(section, countryName) {
+            if (!countryName || !this.sections[section]) return false;
+            const current = (this.sections[section].searchQuery || '').trim().toLowerCase();
             return current === countryName.trim().toLowerCase();
         },
 
+        isCountrySelected(countryName) {
+            return this.isSectionCountrySelected('traffic', countryName);
+        },
+
+        resetSectionCountryFilters(section) {
+            if (this.sections[section]) {
+                this.sections[section].searchQuery = '';
+                this.sections[section].currentPage = 1;
+            }
+        },
+
         resetCountryFilters() {
-            this.sections.traffic.searchQuery = '';
-            this.sections.traffic.currentPage = 1;
+            this.resetSectionCountryFilters('traffic');
         },
 
         sectionConfig: {

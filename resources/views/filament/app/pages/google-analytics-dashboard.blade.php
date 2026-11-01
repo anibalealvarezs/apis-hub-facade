@@ -494,7 +494,79 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 <x-entity-attribute-filters tab="ss.engagement" />
             </x-slot:header>
 
-            <table class="ga4-table">
+            <x-slot:actions>
+                <div x-cloak x-show="ss.engagement === 'engagement_countries'" class="dash-view-toggle">
+                    <button type="button" @click="countryViewModes.engagement = 'map'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.engagement === 'map' ? 'is-active' : ''">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewModes.engagement = 'table'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.engagement === 'table' ? 'is-active' : ''">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <x-slot:top>
+                <div wire:ignore x-show="ss.engagement === 'engagement_countries' && countryViewModes.engagement === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        {{-- Left Column: Map --}}
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'ga4-engagement-world-map', data: getCountryMapData('engagement'), metricLabel: metricLabels[sections.engagement.sortCol] || 'Sessions', selectedRegions: getSelectedCountryCodes('engagement') })"
+                             x-effect="updateData(getCountryMapData('engagement'), metricLabels[sections.engagement.sortCol] || 'Sessions', getSelectedCountryCodes('engagement'))"
+                             @country-selected.window="handleSectionMapCountrySelected('engagement', $event.detail.code)">
+                            <div class="dash-map-header" style="justify-content: flex-end;">
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            x-show="(sections.engagement.searchQuery || '').trim().length > 0"
+                                            @click="resetSectionCountryFilters('engagement')"
+                                            class="dash-map-reset-btn"
+                                            title="{{ __('Clear country filter') }}">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                        <span>{{ __('Reset Selection') }}</span>
+                                    </button>
+                                    <span class="dash-map-badge" x-text="metricLabels[sections.engagement.sortCol] || 'Sessions'"></span>
+                                </div>
+                            </div>
+                            <div id="ga4-engagement-world-map" class="dash-map-canvas"></div>
+                        </div>
+
+                        {{-- Right Column: Leaderboard --}}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-4 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (sections.engagement.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb_eng'">
+                                        <div class="dash-leaderboard-item"
+                                             @click="toggleSectionCountryFilter('engagement', row.name || row.id)"
+                                             :class="isSectionCountrySelected('engagement', row.name || row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatMetricValue(sections.engagement.sortCol || 'sessions', row[sections.engagement.sortCol || 'sessions'])"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </x-slot:top>
+
+            <table class="ga4-table" x-show="ss.engagement !== 'engagement_countries' || countryViewModes.engagement === 'table'">
                 <thead>
                 <tr>
                     <th><span x-text="(tabConfig[ss.engagement] && tabConfig[ss.engagement].label) || 'Name'"></span></th>
@@ -546,7 +618,79 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 <x-entity-attribute-filters tab="ss.ecommerce" />
             </x-slot:header>
 
-            <table class="ga4-table">
+            <x-slot:actions>
+                <div x-cloak x-show="ss.ecommerce === 'ecommerce_countries'" class="dash-view-toggle">
+                    <button type="button" @click="countryViewModes.ecommerce = 'map'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.ecommerce === 'map' ? 'is-active' : ''">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewModes.ecommerce = 'table'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.ecommerce === 'table' ? 'is-active' : ''">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <x-slot:top>
+                <div wire:ignore x-show="ss.ecommerce === 'ecommerce_countries' && countryViewModes.ecommerce === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        {{-- Left Column: Map --}}
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'ga4-ecommerce-world-map', data: getCountryMapData('ecommerce'), metricLabel: metricLabels[sections.ecommerce.sortCol] || 'Purchase Revenue', selectedRegions: getSelectedCountryCodes('ecommerce') })"
+                             x-effect="updateData(getCountryMapData('ecommerce'), metricLabels[sections.ecommerce.sortCol] || 'Purchase Revenue', getSelectedCountryCodes('ecommerce'))"
+                             @country-selected.window="handleSectionMapCountrySelected('ecommerce', $event.detail.code)">
+                            <div class="dash-map-header" style="justify-content: flex-end;">
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            x-show="(sections.ecommerce.searchQuery || '').trim().length > 0"
+                                            @click="resetSectionCountryFilters('ecommerce')"
+                                            class="dash-map-reset-btn"
+                                            title="{{ __('Clear country filter') }}">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                        <span>{{ __('Reset Selection') }}</span>
+                                    </button>
+                                    <span class="dash-map-badge" x-text="metricLabels[sections.ecommerce.sortCol] || 'Purchase Revenue'"></span>
+                                </div>
+                            </div>
+                            <div id="ga4-ecommerce-world-map" class="dash-map-canvas"></div>
+                        </div>
+
+                        {{-- Right Column: Leaderboard --}}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-4 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (sections.ecommerce.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb_ecom'">
+                                        <div class="dash-leaderboard-item"
+                                             @click="toggleSectionCountryFilter('ecommerce', row.name || row.id)"
+                                             :class="isSectionCountrySelected('ecommerce', row.name || row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatMetricValue(sections.ecommerce.sortCol || 'purchase_revenue', row[sections.ecommerce.sortCol || 'purchase_revenue'])"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </x-slot:top>
+
+            <table class="ga4-table" x-show="ss.ecommerce !== 'ecommerce_countries' || countryViewModes.ecommerce === 'table'">
                 <thead>
                 <tr>
                     <th><span x-text="(tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].label) || 'Name'"></span></th>
