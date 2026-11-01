@@ -840,12 +840,16 @@ class GoogleAnalyticsController extends Controller
 
             $tableData = empty($dataSets) ? [] : $this->mergeMatrixResults($dataSets, $groupByKeys);
             
+            $isCountryTab = in_array($tab, ['traffic_countries', 'engagement_countries', 'ecommerce_countries']);
             $mappedTableData = [];
             foreach ($tableData as $row) {
                 $mappedRow = [];
                 foreach ($row as $k => $v) {
                     $mappedKey = $this->mapFromGa4($k);
                     $mappedRow[$mappedKey] = $v;
+                }
+                if ($isCountryTab && isset($mappedRow['name']) && is_string($mappedRow['name'])) {
+                    $mappedRow['name'] = \App\Services\Analytics\Ga4ReportingSemantics::countryNameFromCode($mappedRow['name']);
                 }
                 $mappedTableData[] = $mappedRow;
             }

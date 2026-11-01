@@ -616,8 +616,18 @@ export function ga4Dashboard(config = {}) {
                 const response = await this.fetchDashboardResponse('/api/ga4/table', this.getFetchOptions(section));
                 const data = await response.json();
                 if (!data.error) {
+                    const rows = data.table || [];
+                    const countryTabs = ['traffic_countries', 'engagement_countries', 'ecommerce_countries'];
+                    const currentTab = this.ss[section];
+                    if (countryTabs.includes(currentTab)) {
+                        rows.forEach(r => {
+                            if (r.name && r.name.length === 2) {
+                                r.name = this.countryCodeToName(r.name) || r.name;
+                            }
+                        });
+                    }
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.sections[section].rows = data.table || [];
+                    this.sections[section].rows = rows;
                     this.sections[section].currentPage = 1;
                 }
             } catch (error) {
