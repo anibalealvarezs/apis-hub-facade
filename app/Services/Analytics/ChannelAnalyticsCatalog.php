@@ -164,15 +164,6 @@ class ChannelAnalyticsCatalog
             'GA-04' => 'Property metadata selects source key-event name; compatibility preflight before reports.',
             'GA-05' => 'Quality/currency/timezone metadata retained on new observations. Multi-account revenue requires matching known currencies.',
         ];
-        $tree['scoped_reports'] = [
-            'catalog' => '/api/analytics/catalog', 'query' => '/api/analytics/reports/query',
-            'families' => ['report', 'window', 'cohort', 'funnel'],
-            'source_calls' => 'bounded_background_queue', 'rollup' => 'forbidden',
-            'custom_fields' => 'property_metadata_and_frozen_compatible_definition',
-            'exact_users' => 'source_reported_whole_window; thresholding_and_sampling_still_apply',
-            'funnel' => 'alpha_endpoint; explicit_tenant_enablement_required',
-            'warehouse' => 'separate_connector_not_implemented',
-        ];
         foreach (['engagement_matrix', 'ecommerce_matrix', 'product_matrix'] as $scope) {
             $tree['scopes'][$scope]['requires_opt_in'] = true;
             foreach ($scopeMetrics[$scope] as $name) $tree['canonical_aliases'][strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $name))] = $name;

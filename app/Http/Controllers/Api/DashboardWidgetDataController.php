@@ -1701,7 +1701,7 @@
                     'data'           => $data,
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
-                    'analytics_warnings' => empty($widget->source_config['analytics_report']) && ($usesGa4UserMetrics || $this->usesGa4UserMetricReporting)
+                    'analytics_warnings' => ($usesGa4UserMetrics || $this->usesGa4UserMetricReporting)
                         ? [\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()] : [],
                 ], 200, [], JSON_UNESCAPED_UNICODE);
             } catch (\Illuminate\Validation\ValidationException $e) {
@@ -2530,28 +2530,6 @@
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
             $config = $widget->source_config ?? [];
-            if (!empty($config['analytics_report'])) {
-                $saved = $config['analytics_report'];
-                $account = (string)$saved['account'];
-                $user = request()->user();
-                if ($user && !$widget->dashboard->is_public) {
-                    $access = app(\App\Services\CollaboratorAssetAccessService::class);
-                    if (!$access->isProjectMember($project, (int)$user->id)) abort(403);
-                    if (!$access->isUnrestricted($project, (int)$user->id) && !$access->filterRequestedChannelAssets($project, (int)$user->id, 'google_analytics', [$account])) abort(403);
-                }
-                $definition = $saved['definition'];
-                $definition['start_date'] = $controls['date_start'] ?? $definition['start_date'];
-                $definition['end_date'] = $controls['date_end'] ?? $definition['end_date'];
-                $response = $this->remoteEngineService->scopedAnalytics($project, 'reports/query', ['account' => (int)$account, 'definition' => $definition], 'saved-widget:'.$widget->id);
-                $report = $response['data'] ?? null;
-                if (!$report) throw new \RuntimeException('The source report cache is unavailable.');
-                if (isset($report['definition']) && (
-                    $report['definition']['field_definitions'] !== $saved['frozen']['field_definitions'] ||
-                    $report['definition']['context']['time_zone'] !== $saved['frozen']['context']['time_zone'] ||
-                    $report['definition']['context']['currency'] !== $saved['frozen']['context']['currency']
-                )) throw new \InvalidArgumentException('The source report definition changed. Review and save a new revision in Data Explorer.');
-                return ['scoped_report' => $report];
-            }
 
             // Check if widget has multiple series or breakdown/filters configured via raw_series
             $rawSeries = $controls['raw_series'] ?? $config['raw_series'] ?? null;

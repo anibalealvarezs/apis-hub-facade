@@ -12,46 +12,6 @@ class GoogleAnalyticsController extends Controller
 {
     use Concerns\AppliesEntityAttributeFilters;
 
-    public function scopedCatalog(Request $request)
-    {
-        $input = $request->validate(['tenant' => 'required|integer', 'account' => 'required|integer|min:1', 'refresh' => 'sometimes|boolean']);
-        $project = Project::findOrFail($input['tenant']);
-        abort_unless($request->user()?->can('view_data'), 403);
-        return response()->json(app(RemoteEngineService::class)->scopedAnalytics($project, 'catalog', ['account' => $input['account'], 'refresh' => $input['refresh'] ?? false]));
-    }
-
-    public function scopedReport(Request $request)
-    {
-        $input = $request->validate(['tenant' => 'required|integer', 'account' => 'required|integer|min:1', 'definition' => 'required|array']);
-        $project = Project::findOrFail($input['tenant']);
-        abort_unless($request->user()?->can('view_data'), 403);
-        return response()->json(app(RemoteEngineService::class)->scopedAnalytics($project, 'reports/query', ['account' => $input['account'], 'definition' => $input['definition']]));
-    }
-
-    public function addReportWidget(Request $request)
-    {
-        $input = $request->validate([
-            'tenant' => 'required|integer', 'account' => 'required|integer|min:1', 'definition' => 'required|array',
-            'dashboard_id' => 'required|integer', 'title' => 'required|string|max:120', 'widget_type' => 'sometimes|in:table,tile',
-        ]);
-        $project = Project::findOrFail($input['tenant']);
-        $dashboard = \App\Models\Dashboard::where('project_id', $project->id)->findOrFail($input['dashboard_id']);
-        $this->authorize('view', $dashboard);
-        $this->authorize('update', $dashboard);
-        $result = app(RemoteEngineService::class)->scopedAnalytics($project, 'reports/query', ['account' => $input['account'], 'definition' => $input['definition']]);
-        $report = $result['data'] ?? [];
-        abort_unless(isset($report['definition']['hash']), 422, 'Validate the report definition first.');
-        $widgetType = $input['widget_type'] ?? 'table';
-        abort_if($widgetType === 'tile' && (!empty($report['definition']['payload']['dimensions']) || !in_array($report['definition']['kind'], ['window', 'report'], true)), 422, 'Tiles require a report without breakdowns.');
-        $widget = $dashboard->widgets()->create([
-            'name' => $input['title'], 'title' => $input['title'], 'source_type' => 'metric', 'widget_type' => $widgetType,
-            'source_config' => ['channel' => 'google_analytics', 'analytics_report' => ['account' => $input['account'], 'definition' => $input['definition'], 'frozen' => $report['definition']]],
-            'controls' => ['channel' => 'google_analytics', 'metrics' => $input['definition']['metrics'] ?? [], 'date_start' => $input['definition']['start_date'], 'date_end' => $input['definition']['end_date']],
-            'grid_x' => 0, 'grid_y' => (int)$dashboard->widgets()->max('grid_y') + 5, 'grid_w' => 8, 'grid_h' => 5,
-        ]);
-        return response()->json(['success' => true, 'widget_id' => $widget->id]);
-    }
-
     private function validateRequest(Request $request): array
     {
         $validated = $request->validate([
