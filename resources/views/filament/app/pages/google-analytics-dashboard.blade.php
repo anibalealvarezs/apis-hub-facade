@@ -314,15 +314,15 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
 
             <x-slot:actions>
                 <div x-cloak x-show="ss.traffic === 'traffic_countries'" class="dash-view-toggle">
-                    <button type="button" @click="countryViewMode = 'map'"
+                    <button type="button" @click="countryViewModes.traffic = 'map'"
                             class="dash-view-btn"
-                            :class="countryViewMode === 'map' ? 'is-active' : ''">
+                            :class="countryViewModes.traffic === 'map' ? 'is-active' : ''">
                         <x-heroicon-m-globe-alt class="w-4 h-4"/>
                         <span>{{ __('Map') }}</span>
                     </button>
-                    <button type="button" @click="countryViewMode = 'table'"
+                    <button type="button" @click="countryViewModes.traffic = 'table'"
                             class="dash-view-btn"
-                            :class="countryViewMode === 'table' ? 'is-active' : ''">
+                            :class="countryViewModes.traffic === 'table' ? 'is-active' : ''">
                         <x-heroicon-m-table-cells class="w-4 h-4"/>
                         <span>{{ __('Table') }}</span>
                     </button>
@@ -330,18 +330,18 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:actions>
 
             <x-slot:top>
-                <div wire:ignore x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="dash-map-section">
+                <div wire:ignore x-show="ss.traffic === 'traffic_countries' && countryViewModes.traffic === 'map'" class="dash-map-section">
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"
-                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: selectedCountryCodes })"
-                             x-effect="updateData(countryMapData, metricLabels[sections.traffic.sortCol] || 'Sessions', selectedCountryCodes)"
-                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
+                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: getCountryMapData('traffic'), metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: getSelectedCountryCodes('traffic') })"
+                             x-effect="updateData(getCountryMapData('traffic'), metricLabels[sections.traffic.sortCol] || 'Sessions', getSelectedCountryCodes('traffic'))"
+                             @country-selected.window="handleSectionMapCountrySelected('traffic', $event.detail.code)">
                             <div class="dash-map-header" style="justify-content: flex-end;">
                                 <div class="flex items-center gap-2">
                                     <button type="button"
                                             x-show="(sections.traffic.searchQuery || '').trim().length > 0"
-                                            @click="resetCountryFilters()"
+                                            @click="resetSectionCountryFilters('traffic')"
                                             class="dash-map-reset-btn"
                                             title="{{ __('Clear country filter') }}">
                                         <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
@@ -361,10 +361,10 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     <span>{{ __('Top Countries Leaderboard') }}</span>
                                 </h4>
                                 <div class="dash-leaderboard-list">
-                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb'">
+                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb_traffic'">
                                         <div class="dash-leaderboard-item"
-                                             @click="toggleCountryFilter(row.name || row.id)"
-                                             :class="isCountrySelected(row.name || row.id) ? 'is-active' : ''">
+                                             @click="toggleSectionCountryFilter('traffic', row.name || row.id)"
+                                             :class="isSectionCountrySelected('traffic', row.name || row.id) ? 'is-active' : ''">
                                             <div class="flex items-center gap-2 truncate pr-2">
                                                 <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
                                                 <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
@@ -384,7 +384,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:top>
 
-            <table class="ga4-table" x-show="ss.traffic !== 'traffic_countries' || countryViewMode === 'table'">
+            <table class="ga4-table" x-show="ss.traffic !== 'traffic_countries' || countryViewModes.traffic === 'table'">
                 <thead>
                 <tr>
                     <th><span x-text="(tabConfig[ss.traffic] && tabConfig[ss.traffic].label) || 'Name'"></span></th>

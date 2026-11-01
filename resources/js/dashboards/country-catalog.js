@@ -54,9 +54,9 @@ export const COUNTRY_NAME_TO_CODE = {
     'Thailand':'THA','Tajikistan':'TJK','Tokelau':'TKL','Turkmenistan':'TKM','Timor-Leste':'TLS',
     'Tonga':'TON','Trinidad and Tobago':'TTO','Tunisia':'TUN','Türkiye':'TUR','Tuvalu':'TUV',
     'Taiwan':'TWN','Tanzania':'TZA','Uganda':'UGA','Ukraine':'UKR',
-    'United States Minor Outlying Islands':'UMI','Uruguay':'URY','United States of America':'USA',
+    'United States Minor Outlying Islands':'UMI','Uruguay':'URY','United States of America':'USA','United States':'USA','USA':'USA',
     'Uzbekistan':'UZB','Holy See':'VAT','Saint Vincent and the Grenadines':'VCT','Venezuela':'VEN',
-    'Virgin Islands (British)':'VGB','Virgin Islands (U.S.)':'VIR','Viet Nam':'VNM','Vanuatu':'VUT',
+    'Virgin Islands (British)':'VGB','Virgin Islands (U.S.)':'VIR','Viet Nam':'VNM','Vietnam':'VNM','Vanuatu':'VUT',
     'Wallis and Futuna':'WLF','Samoa':'WSM','Yemen':'YEM','South Africa':'ZAF','Zambia':'ZMB',
     'Zimbabwe':'ZWE','Others':'OTH','Unknown':'UNK',
 };
