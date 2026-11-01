@@ -97,16 +97,24 @@ export function ga4Dashboard(config = {}) {
             channels: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             traffic: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             acquisition: dataTable({ sortCol: 'new_users', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            engagement: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            ecommerce: dataTable({ sortCol: 'purchase_revenue', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            products: dataTable({ sortCol: 'items_viewed', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             events: dataTable({ sortCol: 'event_count', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             adtouchpoints: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
         },
         sl: {
             campaigns: false, channels: false, traffic: false,
-            acquisition: false, events: false, adtouchpoints: false,
+            acquisition: false, engagement: false, ecommerce: false, products: false,
+            events: false, adtouchpoints: false,
         },
         ss: {
             campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
-            acquisition: 'acquisition_channels', events: 'events',
+            acquisition: 'acquisition_channels',
+            engagement: 'engagement_channels',
+            ecommerce: 'ecommerce_campaigns',
+            products: 'product_items',
+            events: 'events',
             adtouchpoints: 'adtouchpoints_adgroups',
         },
 
@@ -217,6 +225,9 @@ export function ga4Dashboard(config = {}) {
             channels: { label: 'Channels', tabs: ['channels', 'sources'] },
             traffic: { label: 'Traffic', tabs: ['traffic_pages', 'traffic_countries', 'traffic_devices'] },
             acquisition: { label: 'Acquisition', tabs: ['acquisition_channels'] },
+            engagement: { label: 'Engagement', tabs: ['engagement_channels', 'engagement_sources', 'engagement_pages', 'engagement_devices', 'engagement_countries'] },
+            ecommerce: { label: 'Ecommerce', tabs: ['ecommerce_campaigns', 'ecommerce_channels', 'ecommerce_sources', 'ecommerce_devices', 'ecommerce_countries'] },
+            products: { label: 'Products', tabs: ['product_items', 'product_brands', 'product_categories', 'product_variants'] },
             events: { label: 'Events', tabs: ['events'] },
             adtouchpoints: { label: 'Ad Touchpoints', tabs: ['adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content'] },
         },
@@ -230,6 +241,20 @@ export function ga4Dashboard(config = {}) {
             traffic_countries: { label: 'Country', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
             traffic_devices: { label: 'Device', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
             acquisition_channels: { label: 'Acq. Channel', metrics: ['new_users', 'reach', 'total_users'] },
+            engagement_channels: { label: 'Channel', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_sources: { label: 'Source/Medium', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_pages: { label: 'Landing Page', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_devices: { label: 'Device', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_countries: { label: 'Country', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            ecommerce_campaigns: { label: 'Campaign', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_channels: { label: 'Channel', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_sources: { label: 'Source/Medium', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_devices: { label: 'Device', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_countries: { label: 'Country', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            product_items: { label: 'Item Name', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'items_refunded', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
+            product_brands: { label: 'Brand', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'items_refunded', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
+            product_categories: { label: 'Category', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'items_refunded', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
+            product_variants: { label: 'Variant', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'items_refunded', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
             events: { label: 'Event Name', metrics: ['event_count', 'conversions'] },
             adtouchpoints_adgroups: { label: 'Ad Group', metrics: ['sessions', 'conversions', 'revenue'] },
             adtouchpoints_terms: { label: 'Manual Term', metrics: ['sessions', 'conversions', 'revenue'] },
@@ -239,14 +264,44 @@ export function ga4Dashboard(config = {}) {
             sessions: 'Sessions', reach: 'Users', new_users: 'New',
             conversions: 'Conv.', pageviews: 'Page Views',
             bounce_rate: 'Bounce Rate', event_count: 'Event Count',
-            average_session_duration: 'Avg. Duration', total_users: 'Total Users'
+            average_session_duration: 'Avg. Duration', total_users: 'Total Users',
+            engaged_sessions: 'Engaged Sessions',
+            engagement_rate: 'Engagement Rate',
+            user_engagement_duration: 'Engagement Duration',
+            ecommerce_purchases: 'Purchases',
+            transactions: 'Transactions',
+            purchase_revenue: 'Purchase Revenue',
+            gross_purchase_revenue: 'Gross Revenue',
+            refund_amount: 'Refund Amount',
+            items_viewed: 'Items Viewed',
+            items_added_to_cart: 'Added to Cart',
+            items_purchased: 'Items Purchased',
+            items_refunded: 'Items Refunded',
+            item_revenue: 'Item Revenue',
+            gross_item_revenue: 'Gross Item Rev.',
+            item_refund_amount: 'Item Refund Amt.'
         },
         metricColors: {
             sessions: 'var(--ga4-sessions)', reach: 'var(--ga4-activeUsers)',
             new_users: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
             pageviews: 'var(--ga4-pageViews)', bounce_rate: 'var(--ga4-revenue)',
             event_count: '#8B5CF6', average_session_duration: 'var(--ga4-avgSessionDuration)',
-            total_users: 'var(--ga4-totalUsers)'
+            total_users: 'var(--ga4-totalUsers)',
+            engaged_sessions: '#3B82F6',
+            engagement_rate: '#10B981',
+            user_engagement_duration: '#06B6D4',
+            ecommerce_purchases: '#10B981',
+            transactions: '#6366F1',
+            purchase_revenue: '#059669',
+            gross_purchase_revenue: '#047857',
+            refund_amount: '#EF4444',
+            items_viewed: '#8B5CF6',
+            items_added_to_cart: '#F59E0B',
+            items_purchased: '#10B981',
+            items_refunded: '#EF4444',
+            item_revenue: '#059669',
+            gross_item_revenue: '#047857',
+            item_refund_amount: '#DC2626'
         },
 
         get isAnySectionLoading() {
@@ -893,11 +948,14 @@ export function ga4Dashboard(config = {}) {
         },
 
         formatMetricValue(key, value) {
-            if (key === 'average_session_duration') {
+            if (key === 'average_session_duration' || key === 'user_engagement_duration') {
                 return this.formatDuration(value);
             }
-            if (key === 'bounce_rate') {
+            if (key === 'bounce_rate' || key === 'engagement_rate') {
                 return this.formatPercent(value);
+            }
+            if (['revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'].includes(key)) {
+                return '$' + this.formatDecimals(value);
             }
             return this.formatNumber(value);
         },

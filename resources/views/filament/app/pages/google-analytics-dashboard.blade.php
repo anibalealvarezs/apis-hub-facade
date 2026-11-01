@@ -479,6 +479,162 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </table>
         </x-data-table>
 
+        {{-- Engagement Section --}}
+        <x-data-table variant="ga4" state="sections.engagement" loading="sl.engagement" search>
+            <x-slot:header>
+                <div class="ga4-section-header">
+                    <h3 x-text="sectionConfig.engagement.label"></h3>
+                </div>
+                <div class="tab-nav-ga4">
+                    <template x-for="t in sectionConfig.engagement.tabs" :key="t">
+                        <div class="tab-ga4" :class="ss.engagement === t ? 'active' : ''"
+                             @click="setSectionSubTab('engagement', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
+                    </template>
+                </div>
+                <x-entity-attribute-filters tab="ss.engagement" />
+            </x-slot:header>
+
+            <table class="ga4-table">
+                <thead>
+                <tr>
+                    <th><span x-text="(tabConfig[ss.engagement] && tabConfig[ss.engagement].label) || 'Name'"></span></th>
+                    <template x-for="m in ((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics) || [])" :key="m">
+                        <x-data-table.column state="sections.engagement" key-bind="m">
+                            <span x-text="metricLabels[m] || m"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, idx) in sections.engagement.paginatedRows" :key="(row.id || idx) + '_' + idx">
+                    <x-data-table.row>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                            </div>
+                        </td>
+                        <template x-for="m in ((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics) || [])" :key="m">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill"
+                                         :style="`width: ${(row[m] / sectionMaxMetric('engagement', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                </div>
+                            </td>
+                        </template>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="sections.engagement.paginatedRows.length === 0">
+                    <td :colspan="((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics && tabConfig[ss.engagement].metrics.length) || 4) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
+        {{-- Ecommerce Section --}}
+        <x-data-table variant="ga4" state="sections.ecommerce" loading="sl.ecommerce" search>
+            <x-slot:header>
+                <div class="ga4-section-header">
+                    <h3 x-text="sectionConfig.ecommerce.label"></h3>
+                </div>
+                <div class="tab-nav-ga4">
+                    <template x-for="t in sectionConfig.ecommerce.tabs" :key="t">
+                        <div class="tab-ga4" :class="ss.ecommerce === t ? 'active' : ''"
+                             @click="setSectionSubTab('ecommerce', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
+                    </template>
+                </div>
+                <x-entity-attribute-filters tab="ss.ecommerce" />
+            </x-slot:header>
+
+            <table class="ga4-table">
+                <thead>
+                <tr>
+                    <th><span x-text="(tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].label) || 'Name'"></span></th>
+                    <template x-for="m in ((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics) || [])" :key="m">
+                        <x-data-table.column state="sections.ecommerce" key-bind="m">
+                            <span x-text="metricLabels[m] || m"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, idx) in sections.ecommerce.paginatedRows" :key="(row.id || idx) + '_' + idx">
+                    <x-data-table.row>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                            </div>
+                        </td>
+                        <template x-for="m in ((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics) || [])" :key="m">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill"
+                                         :style="`width: ${(row[m] / sectionMaxMetric('ecommerce', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                </div>
+                            </td>
+                        </template>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="sections.ecommerce.paginatedRows.length === 0">
+                    <td :colspan="((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics && tabConfig[ss.ecommerce].metrics.length) || 5) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
+        {{-- Products Section --}}
+        <x-data-table variant="ga4" state="sections.products" loading="sl.products" search>
+            <x-slot:header>
+                <div class="ga4-section-header">
+                    <h3 x-text="sectionConfig.products.label"></h3>
+                </div>
+                <div class="tab-nav-ga4">
+                    <template x-for="t in sectionConfig.products.tabs" :key="t">
+                        <div class="tab-ga4" :class="ss.products === t ? 'active' : ''"
+                             @click="setSectionSubTab('products', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
+                    </template>
+                </div>
+                <x-entity-attribute-filters tab="ss.products" />
+            </x-slot:header>
+
+            <table class="ga4-table">
+                <thead>
+                <tr>
+                    <th><span x-text="(tabConfig[ss.products] && tabConfig[ss.products].label) || 'Name'"></span></th>
+                    <template x-for="m in ((tabConfig[ss.products] && tabConfig[ss.products].metrics) || [])" :key="m">
+                        <x-data-table.column state="sections.products" key-bind="m">
+                            <span x-text="metricLabels[m] || m"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, idx) in sections.products.paginatedRows" :key="(row.id || idx) + '_' + idx">
+                    <x-data-table.row>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                            </div>
+                        </td>
+                        <template x-for="m in ((tabConfig[ss.products] && tabConfig[ss.products].metrics) || [])" :key="m">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill"
+                                         :style="`width: ${(row[m] / sectionMaxMetric('products', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                </div>
+                            </td>
+                        </template>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="sections.products.paginatedRows.length === 0">
+                    <td :colspan="((tabConfig[ss.products] && tabConfig[ss.products].metrics && tabConfig[ss.products].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
         {{-- Events Section --}}
         <x-data-table variant="ga4" state="sections.events" loading="sl.events" search>
             <x-slot:header>
