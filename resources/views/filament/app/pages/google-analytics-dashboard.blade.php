@@ -334,7 +334,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"
-                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: getCountryMapData('traffic'), metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: getSelectedCountryCodes('traffic') })"
+                             x-data="choroplethMap({ containerId: 'ga4-traffic-world-map', data: getCountryMapData('traffic'), metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: getSelectedCountryCodes('traffic') })"
                              x-effect="updateData(getCountryMapData('traffic'), metricLabels[sections.traffic.sortCol] || 'Sessions', getSelectedCountryCodes('traffic'))"
                              @country-selected.window="handleSectionMapCountrySelected('traffic', $event.detail.code)">
                             <div class="dash-map-header" style="justify-content: flex-end;">
@@ -350,7 +350,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
                                 </div>
                             </div>
-                            <div id="ga4-world-map" class="dash-map-canvas"></div>
+                            <div id="ga4-traffic-world-map" class="dash-map-canvas"></div>
                         </div>
 
                         {{-- Right Column: Leaderboard --}}
