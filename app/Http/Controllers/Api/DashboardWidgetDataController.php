@@ -427,7 +427,8 @@
                             'label' => 'Anomaly Rate',
                         ];
                     }
-                } elseif ($effectiveWidgetType === 'combo_chart' && isset($data['series']['macd_line'])) {
+                } elseif (isset($data['series']['macd_line']) && in_array($effectiveWidgetType, ['combo_chart', 'line_chart'], true)) {
+                    $effectiveWidgetType = 'combo_chart';
                     $series = $data['series'];
                     $data = [
                         'labels'   => $series['dates'] ?? [],
