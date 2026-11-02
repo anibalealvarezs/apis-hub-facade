@@ -1131,11 +1131,23 @@
                             $minValue = min($numericValues);
 
                             if (str_contains($cleanKey, 'position')) {
-                                $data['min'] = (float)$maxValue;
-                                $data['max'] = $minValue > 0 ? (float)$minValue : 1.0;
+                                // For position, lower is better. If only 1 data point (e.g. lifetime), set a meaningful scale:
+                                // min (worst boundary) = max(20.0, ceil($maxValue * 1.5)), max (best boundary) = 1.0
+                                if ($minValue == $maxValue) {
+                                    $data['min'] = (float) max(20.0, ceil($maxValue * 1.5));
+                                    $data['max'] = 1.0;
+                                } else {
+                                    $data['min'] = (float)$maxValue;
+                                    $data['max'] = $minValue > 0 ? (float)$minValue : 1.0;
+                                }
                             } else {
-                                $data['min'] = 0.0;
-                                $data['max'] = $maxValue > 0 ? (float)$maxValue : 1.0;
+                                if ($minValue == $maxValue && $maxValue > 0) {
+                                    $data['min'] = 0.0;
+                                    $data['max'] = (float) ($maxValue > 1.0 ? ceil($maxValue * 1.25) : 1.0);
+                                } else {
+                                    $data['min'] = 0.0;
+                                    $data['max'] = $maxValue > 0 ? (float)$maxValue : 1.0;
+                                }
                             }
                         }
                     }

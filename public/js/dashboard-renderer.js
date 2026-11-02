@@ -1915,10 +1915,10 @@ window.dashboardRenderer = {
             effectiveMax = max * 100;
         }
 
-        const pct = Math.min(
-            100,
-            Math.max(0, ((fillValue - min) / (effectiveMax - min)) * 100),
-        );
+        const range = effectiveMax - min;
+        const pct = range !== 0
+            ? Math.min(100, Math.max(0, ((fillValue - min) / range) * 100))
+            : (fillValue >= effectiveMax ? 100 : 0);
 
         let color = thresholds[0]?.color ?? "#22C55E";
         for (const t of thresholds) {
@@ -1951,6 +1951,11 @@ window.dashboardRenderer = {
                 : this.formatNumber(max);
 
         const formattedValueStr = `${formattedRawVal} / ${formattedMaxVal}`;
+
+        // Center primary text: show percentage only if it's a percentage metric, otherwise show the formatted raw value
+        const centerPrimaryText = isPercentageMetric || data?.percentage === true
+            ? `${Math.round(pct)}%`
+            : formattedRawVal;
 
         containerEl.innerHTML = `
             <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; padding:12px; box-sizing:border-box; position:relative; overflow:hidden;">
@@ -2000,11 +2005,11 @@ window.dashboardRenderer = {
                     const isDark =
                         document.documentElement.classList.contains("dark");
 
-                    // Draw formatted percentage (top line)
+                    // Draw primary value (top line): percentage or formatted metric value
                     ctx.fillStyle = isDark ? "#FFFFFF" : "#111827";
                     ctx.font = `bold ${pctFontSize}px system-ui, -apple-system, sans-serif`;
                     ctx.fillText(
-                        `${Math.round(pct)}%`,
+                        centerPrimaryText,
                         centerX,
                         centerY - innerRadius * 0.45,
                     );
