@@ -244,3 +244,16 @@ Route::get('/pv/{token}/embed.js', [\App\Http\Controllers\PublicViewEmbedControl
 
 
 Route::post('/api/entity-attributes', \App\Http\Controllers\Api\EntityAttributeController::class)->middleware(['web', 'auth']);
+
+// Internal Tenant Dashboard Management & Authoring (APIs Hub MCP Integration)
+Route::prefix('api/internal/v1/tenant-dashboards')
+    ->middleware([\App\Http\Middleware\VerifyTenantInternalSignature::class])
+    ->group(function () {
+        Route::get('/context', [\App\Http\Controllers\Api\Internal\TenantDashboardDraftController::class, 'getContext']);
+        Route::get('/spec/{dashboardId}', [\App\Http\Controllers\Api\Internal\TenantDashboardDraftController::class, 'getDashboardSpec']);
+        Route::post('/drafts', [\App\Http\Controllers\Api\Internal\TenantDashboardDraftController::class, 'createDraft']);
+        Route::put('/drafts/{token}', [\App\Http\Controllers\Api\Internal\TenantDashboardDraftController::class, 'updateDraft']);
+        Route::post('/drafts/{token}/commit', [\App\Http\Controllers\Api\Internal\TenantDashboardDraftController::class, 'commitDraft']);
+        Route::delete('/drafts/{token}', [\App\Http\Controllers\Api\Internal\TenantDashboardDraftController::class, 'discardDraft']);
+    });
+

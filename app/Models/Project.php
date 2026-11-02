@@ -355,9 +355,9 @@ class Project extends Model
     {
         parent::boot();
         static::creating(function ($project) {
-            $project->monitoring_token = \Illuminate\Support\Str::uuid();
-            $project->public_api_key = bin2hex(random_bytes(32));
-            $project->remote_admin_api_key = bin2hex(random_bytes(32));
+            $project->monitoring_token = $project->monitoring_token ?: \Illuminate\Support\Str::uuid();
+            $project->public_api_key = $project->public_api_key ?: bin2hex(random_bytes(32));
+            $project->remote_admin_api_key = $project->remote_admin_api_key ?: bin2hex(random_bytes(32));
 
             // Auto-assign the user's default billing profile if not explicitly set
             if (empty($project->billing_profile_id) && !empty($project->user_id)) {
