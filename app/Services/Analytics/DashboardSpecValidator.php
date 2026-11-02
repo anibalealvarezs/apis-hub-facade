@@ -35,7 +35,7 @@ class DashboardSpecValidator
             'widgets.*.name' => 'required|string|max:255',
             'widgets.*.title' => 'nullable|string|max:255',
             'widgets.*.description' => 'nullable|string|max:1000',
-            'widgets.*.widget_type' => 'required|string|in:tile,line_chart,bar_chart,table,gauge,sparkline,anomaly_list',
+            'widgets.*.widget_type' => 'required|string|in:tile,line_chart,bar_chart,table,gauge,sparkline,anomaly_list,pie_chart,combo_chart,anomaly_chart,scatter_plot',
             'widgets.*.source_type' => 'required|string|in:kpi,metric,entity,derived_metric',
             'widgets.*.source_config' => 'nullable|array',
             'widgets.*.controls' => 'nullable|array',
