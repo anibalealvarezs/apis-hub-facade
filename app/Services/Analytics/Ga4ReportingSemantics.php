@@ -22,7 +22,7 @@ final class Ga4ReportingSemantics
     public static function metricOptions(?string $scope): array
     {
         $tree = ChannelCapabilityRegistry::getAnalyticsTree('google_analytics');
-        $metrics = $scope ? self::metricsForScope($scope) : array_values(array_unique(array_merge(...array_map(fn ($key) => self::metricsForScope($key), ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix']))));
+        $metrics = $scope ? self::metricsForScope($scope) : array_values(array_unique(array_merge(...array_map(fn ($key) => self::metricsForScope($key), ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'engagement_matrix', 'ecommerce_matrix', 'product_matrix']))));
         $aliases = ['screenPageViews' => 'pageviews', 'bounceRate' => 'bounce_rate', 'newUsers' => 'new_users', 'activeUsers' => 'reach', 'totalUsers' => 'total_users', 'totalRevenue' => 'revenue', 'averageSessionDuration' => 'average_session_duration', 'eventCount' => 'event_count'];
         $options = [];
         foreach ($metrics as $metric) {

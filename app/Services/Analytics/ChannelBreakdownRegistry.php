@@ -283,6 +283,11 @@ class ChannelBreakdownRegistry
                 'type' => 'relational',
                 'operators' => $defaultOperators,
             ],
+            'channeledAd' => [
+                'label' => __('Ad (First User)'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
             'dimensions.firstUserDefaultChannelGroup' => [
                 'label' => __('Default Channel Group (First User)'),
                 'type' => 'dimension',
@@ -298,6 +303,36 @@ class ChannelBreakdownRegistry
         $event = [
             'event' => [
                 'label' => __('Event Name'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.page' => [
+                'label' => __('Page Path'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'channeledCampaign' => [
+                'label' => __('Campaign'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'channeledAdGroup' => [
+                'label' => __('Ad Group'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'channeledAd' => [
+                'label' => __('Ad'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.sessionDefaultChannelGroup' => [
+                'label' => __('Default Channel Group'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.sessionSourceMedium' => [
+                'label' => __('Source / Medium'),
                 'type' => 'dimension',
                 'operators' => $defaultOperators,
             ],

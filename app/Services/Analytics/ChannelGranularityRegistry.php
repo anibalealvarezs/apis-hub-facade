@@ -194,16 +194,32 @@ class ChannelGranularityRegistry
             'acquisition_matrix' => [
                 'channeledCampaign' => __('Campaign (First User)'),
                 'channeledAdGroup' => __('Ad Group (First User)'),
+                'channeledAd' => __('Ad (First User)'),
                 'dimensions.firstUserDefaultChannelGroup' => __('Default Channel Group (First User)'),
                 'dimensions.firstUserSourceMedium' => __('Source / Medium (First User)'),
             ],
             'event_matrix' => [
                 'event' => __('Event Name'),
+                'dimensions.page' => __('Page Path'),
+                'channeledCampaign' => __('Campaign'),
+                'channeledAdGroup' => __('Ad Group'),
+                'channeledAd' => __('Ad'),
+                'dimensions.sessionDefaultChannelGroup' => __('Default Channel Group'),
+                'dimensions.sessionSourceMedium' => __('Source / Medium'),
             ],
-            'engagement_matrix', 'ecommerce_matrix' => [
+            'engagement_matrix' => [
                 'dimensions.sessionDefaultChannelGroup' => __('Session channel group'),
                 'dimensions.sessionSourceMedium' => __('Session source / medium'),
-                'country' => __('Country'), 'device' => __('Device'),
+                'dimensions.landingPagePlusQueryString' => __('Landing Page'),
+                'country' => __('Country'),
+                'device' => __('Device'),
+            ],
+            'ecommerce_matrix' => [
+                'dimensions.sessionDefaultChannelGroup' => __('Session channel group'),
+                'dimensions.sessionSourceMedium' => __('Session source / medium'),
+                'dimensions.sessionCampaignName' => __('Campaign'),
+                'country' => __('Country'),
+                'device' => __('Device'),
             ],
             'product_matrix' => [
                 'dimensions.itemId' => __('Product ID'), 'dimensions.itemName' => __('Product'),
