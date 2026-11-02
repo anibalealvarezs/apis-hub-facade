@@ -127,7 +127,12 @@ class KpiPayloadBuilder
 
         // Allow explicit filters configured in state or template (e.g. account_type => 'instagram_account' or 'facebook_page')
         if (!empty($state['filters']) && is_array($state['filters'])) {
-            $dependentNode['filters'] = array_merge($dependentNode['filters'] ?? [], $state['filters']);
+            $sanitizedStateFilters = array_filter(
+                $state['filters'],
+                static fn ($k) => !str_starts_with((string)$k, '_'),
+                ARRAY_FILTER_USE_KEY
+            );
+            $dependentNode['filters'] = array_merge($dependentNode['filters'] ?? [], $sanitizedStateFilters);
         }
         if (!empty($state['account_type'])) {
             $dependentNode['filters']['account_type'] = $state['account_type'];
@@ -321,7 +326,12 @@ class KpiPayloadBuilder
         }
 
         if (!empty($var['filters']) && is_array($var['filters'])) {
-            $node['filters'] = array_merge($node['filters'] ?? [], $var['filters']);
+            $sanitizedVarFilters = array_filter(
+                $var['filters'],
+                static fn ($k) => !str_starts_with((string)$k, '_'),
+                ARRAY_FILTER_USE_KEY
+            );
+            $node['filters'] = array_merge($node['filters'] ?? [], $sanitizedVarFilters);
         }
         if (!empty($var['account_type'])) {
             $node['filters']['account_type'] = $var['account_type'];
