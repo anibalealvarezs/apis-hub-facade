@@ -1860,17 +1860,30 @@
             ]);
 
             if ($cached) {
-                $cachedDataKeys = !empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
-                \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache HIT, returning cached', [
-                    'widget_id'     => $widget->id,
-                    'kpi_id'        => $kpi->id,
-                    'controls_hash' => $controlsHash,
-                    'data_keys'     => $cachedDataKeys,
-                    'has_scatter'   => isset($cached->result['data']['scatter_data']),
-                    '_debug'        => $cached->result['data']['_debug'] ?? null,
-                ]);
+                $cachedData = $cached->result['data'] ?? [];
+                // Never serve cached "Not enough overlapping non-zero data points" failures
+                $isDebugFailure = isset($cachedData['_debug']) && str_contains((string)$cachedData['_debug'], 'Not enough overlapping non-zero data points');
 
-                return $cached->result;
+                if ($isDebugFailure) {
+                    \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Purging stale failed cache result', [
+                        'widget_id'     => $widget->id,
+                        'kpi_id'        => $kpi->id,
+                        'controls_hash' => $controlsHash,
+                    ]);
+                    $cached->delete();
+                } else {
+                    $cachedDataKeys = !empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
+                    \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache HIT, returning cached', [
+                        'widget_id'     => $widget->id,
+                        'kpi_id'        => $kpi->id,
+                        'controls_hash' => $controlsHash,
+                        'data_keys'     => $cachedDataKeys,
+                        'has_scatter'   => isset($cached->result['data']['scatter_data']),
+                        '_debug'        => $cached->result['data']['_debug'] ?? null,
+                    ]);
+
+                    return $cached->result;
+                }
             }
 
             $uiState = $kpi->filters['_ui_state'] ?? [];
@@ -2580,12 +2593,14 @@
                 '_debug'        => $resultData['_debug'] ?? null,
             ]);
 
-            $this->widgetDataService->cacheResult(
-                $kpi->id,
-                $project->id,
-                $controlsHash,
-                $resultData
-            );
+            if (!isset($resultData['_debug']) || !str_contains((string)$resultData['_debug'], 'Not enough overlapping non-zero data points')) {
+                $this->widgetDataService->cacheResult(
+                    $kpi->id,
+                    $project->id,
+                    $controlsHash,
+                    $resultData
+                );
+            }
 
             return $resultData;
         }
