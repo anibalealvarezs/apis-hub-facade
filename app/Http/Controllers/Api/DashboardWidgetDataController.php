@@ -455,7 +455,9 @@
                                 'type'            => 'bar',
                                 'label'           => 'Histogram',
                                 'data'            => $series['histogram'],
-                                'backgroundColor' => array_map(fn($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)', $series['histogram'] ?? []),
+                                'backgroundColor' => array_map(fn($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.75)' : 'rgba(239, 68, 68, 0.75)', $series['histogram'] ?? []),
+                                'borderColor'     => array_map(fn($v) => $v >= 0 ? '#16a34a' : '#dc2626', $series['histogram'] ?? []),
+                                'borderWidth'     => 1,
                             ],
                         ],
                     ];
