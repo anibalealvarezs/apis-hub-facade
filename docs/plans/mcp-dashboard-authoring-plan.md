@@ -110,55 +110,283 @@ Internal endpoints under `routes/api.php` (`/api/internal/v1/tenant-dashboards/`
 
 ### Phase 2: Tenant MCP Server Tools (`apis-hub/mcp-server`)
 
-Add the following tool definitions and handlers to `mcp-server/index.js`:
+The tenant MCP server (`mcp-server/index.js`) exposes the following 6 authoring tools to AI agents:
 
 #### 2.1 `get_dashboard_authoring_context`
-- **Description:** "Inspect active channels, connected asset groups, current dashboard counts, and billing tier quota limits before designing or editing a dashboard."
-- **Parameters:** None.
-- **Output:**
+- **Tool Name:** `get_dashboard_authoring_context`
+- **Description:** "Inspect active channels, connected asset groups, current dashboard counts, allowed widget types, and billing tier quota limitations before planning, designing, or editing a dashboard. Use this tool first to ground your dashboard proposal within the client's actual capabilities and subscription boundaries."
+- **Input Schema:**
   ```json
   {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  }
+  ```
+- **Output Contract:**
+  ```json
+  {
+    "status": "success",
     "tier": "growth",
-    "limits": {
+    "quotas": {
       "max_dashboards": 10,
       "current_dashboards": 4,
+      "can_create_more_dashboards": true,
       "max_widgets_per_dashboard": 25,
-      "allowed_widget_types": ["stat", "line_chart", "bar_chart", "combo_chart", "table", "scatter_plot", "sparkline"]
+      "allowed_widget_types": ["stat", "line_chart", "bar_chart", "combo_chart", "table", "scatter_plot", "sparkline"],
+      "allowed_source_types": ["metric", "kpi", "derived_metric", "entity"],
+      "can_create_public_dashboards": true
     },
     "connected_channels": ["google_ads", "google_search_console", "google_analytics", "mailchimp"],
-    "asset_groups": [{"id": 1, "name": "Main Brand Assets"}]
+    "asset_groups": [
+      { "id": 1, "name": "Main Brand Assets", "channels": ["google_ads", "google_search_console"] }
+    ],
+    "active_custom_kpis": [
+      { "id": 3, "name": "CTR Efficiency (By Page)", "calculation_type": "calculate_regression", "compatible_widgets": ["table", "scatter_plot"] }
+    ],
+    "active_derived_metrics": [
+      { "id": 7, "name": "Paid vs Organic Search Click Share", "format": "percentage" }
+    ]
   }
   ```
 
+---
+
 #### 2.2 `read_dashboard_spec`
-- **Description:** "Read the full structural JSON specification of an existing dashboard, including all widgets, metric configurations, and grid positions."
-- **Parameters:** `dashboard_id` (integer, required).
+- **Tool Name:** `read_dashboard_spec`
+- **Description:** "Read the full structural JSON specification of an existing dashboard, including all constituent widgets, metric bindings, chart types, source channels, breakdowns, and grid positions. Use this tool before proposing modifications or full rewrites of an existing dashboard."
+- **Input Schema:**
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "dashboard_id": {
+        "type": "number",
+        "description": "The unique numerical identifier of the live dashboard to inspect."
+      }
+    },
+    "required": ["dashboard_id"],
+    "additionalProperties": false
+  }
+  ```
+- **Output Contract:**
+  ```json
+  {
+    "status": "success",
+    "dashboard": {
+      "id": 12,
+      "name": "SERP & Ads Technical Audit",
+      "description": "Comprehensive diagnostic dashboard tracking search performance and cannibalization.",
+      "is_default": false,
+      "is_public": false,
+      "widgets_count": 8,
+      "widgets": [
+        {
+          "id": 101,
+          "title": "Paid vs Organic Click Share",
+          "widget_type": "line_chart",
+          "source_type": "derived_metric",
+          "derived_metric_id": 7,
+          "grid_layout": { "w": 6, "h": 4, "x": 0, "y": 0 }
+        }
+      ]
+    }
+  }
+  ```
+
+---
 
 #### 2.3 `create_dashboard_draft`
-- **Description:** "Stage a new dashboard draft or stage a clone/edit of an existing dashboard for iterative modification."
-- **Parameters:**
-  - `name`: string
-  - `description`: string (optional)
-  - `base_dashboard_id`: integer (optional, to edit an existing dashboard)
-  - `target_audience`: `client` | `agency` | `internal` | `executive`
-  - `account_mode`: `standalone` | `asset_group` | `mixed`
-  - `widgets`: array of widget specifications
+- **Tool Name:** `create_dashboard_draft`
+- **Description:** "Stage a new dashboard draft or clone an existing dashboard into a draft session for iterative refinement. Validates widget bindings and subscription quotas without writing directly to production or polluting version history. Returns a draft token and a secure preview URL."
+- **Input Schema:**
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "The descriptive title of the dashboard."
+      },
+      "description": {
+        "type": "string",
+        "description": "Optional: Purpose, objectives, and guidance for viewers."
+      },
+      "base_dashboard_id": {
+        "type": "number",
+        "description": "Optional: ID of an existing dashboard to clone/edit. If provided, existing widgets will be loaded as baseline."
+      },
+      "target_audience": {
+        "type": "string",
+        "description": "Audience persona: 'client', 'agency', 'internal', or 'executive'.",
+        "enum": ["client", "agency", "internal", "executive"]
+      },
+      "account_mode": {
+        "type": "string",
+        "description": "Default data scoping: 'standalone', 'asset_group', or 'mixed'.",
+        "enum": ["standalone", "asset_group", "mixed"]
+      },
+      "widgets": {
+        "type": "array",
+        "description": "Ordered list of widgets to include in this draft.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "widget_type": {
+              "type": "string",
+              "enum": ["stat", "line_chart", "bar_chart", "combo_chart", "table", "scatter_plot", "sparkline"]
+            },
+            "source_type": {
+              "type": "string",
+              "enum": ["metric", "kpi", "derived_metric", "entity"]
+            },
+            "channel": { "type": "string", "description": "Channel identifier (required if source_type is 'metric')" },
+            "metric": { "type": "string", "description": "Canonical metric key (required if source_type is 'metric')" },
+            "custom_kpi_id": { "type": "number", "description": "Custom KPI ID (required if source_type is 'kpi')" },
+            "derived_metric_id": { "type": "number", "description": "Derived Metric ID (required if source_type is 'derived_metric')" },
+            "granularity": { "type": "string", "enum": ["daily", "weekly", "monthly", "lifetime"], "default": "daily" },
+            "breakdown": {
+              "type": "object",
+              "properties": {
+                "dimension": { "type": "string" },
+                "limit": { "type": "number", "default": 10 }
+              }
+            },
+            "grid_layout": {
+              "type": "object",
+              "properties": {
+                "w": { "type": "number", "description": "Width columns (1-12)" },
+                "h": { "type": "number", "description": "Height rows" },
+                "x": { "type": "number", "description": "Column offset (0-11)" },
+                "y": { "type": "number", "description": "Row offset" }
+              }
+            }
+          },
+          "required": ["title", "widget_type", "source_type"]
+        }
+      }
+    },
+    "required": ["name", "widgets"],
+    "additionalProperties": false
+  }
+  ```
+- **Output Contract:**
+  ```json
+  {
+    "status": "success",
+    "draft_token": "drft_8f7a9c2b4d1e",
+    "preview_url": "https://apis-hub.cloud/draft-preview/drft_8f7a9c2b4d1e?sig=abc...",
+    "expires_at": "2026-11-04T09:30:00Z",
+    "widget_count": 8,
+    "validation_warnings": []
+  }
+  ```
+
+---
 
 #### 2.4 `update_dashboard_draft`
-- **Description:** "Update the widgets, titles, or layout of an active dashboard draft session without committing to production."
-- **Parameters:**
-  - `draft_token`: string (required)
-  - `patch`: object with `name`, `description`, `widgets`, `grid_layout`
+- **Tool Name:** `update_dashboard_draft`
+- **Description:** "Make iterative modifications to an active dashboard draft session (add, remove, or edit widgets, reorder layout, or change titles) before seeking user approval. Generates no production commits."
+- **Input Schema:**
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "draft_token": {
+        "type": "string",
+        "description": "The active draft session token."
+      },
+      "patch": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "target_audience": { "type": "string", "enum": ["client", "agency", "internal", "executive"] },
+          "widgets": {
+            "type": "array",
+            "description": "Full replacement array of staged widgets."
+          }
+        }
+      }
+    },
+    "required": ["draft_token", "patch"],
+    "additionalProperties": false
+  }
+  ```
+- **Output Contract:**
+  ```json
+  {
+    "status": "success",
+    "draft_token": "drft_8f7a9c2b4d1e",
+    "preview_url": "https://apis-hub.cloud/draft-preview/drft_8f7a9c2b4d1e?sig=abc...",
+    "widget_count": 9,
+    "diff_summary": "Added 1 widget, updated 2 widgets"
+  }
+  ```
+
+---
 
 #### 2.5 `commit_dashboard_draft`
-- **Description:** "Atomically commit an approved dashboard draft into production. Enforces billing quotas, creates a single version history record, and syncs project metadata."
-- **Parameters:**
-  - `draft_token`: string (required)
+- **Tool Name:** `commit_dashboard_draft`
+- **Description:** "Atomically publish an approved dashboard draft into production. Enforces billing quotas, creates or updates the live dashboard in a single database transaction, creates one version history entry, and synchronizes project context metadata."
+- **Input Schema:**
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "draft_token": {
+        "type": "string",
+        "description": "The draft token to publish."
+      },
+      "commit_message": {
+        "type": "string",
+        "description": "Summary of changes for the project's version audit trail (e.g. 'Initial technical SEO & PPC audit dashboard layout')."
+      }
+    },
+    "required": ["draft_token"],
+    "additionalProperties": false
+  }
+  ```
+- **Output Contract:**
+  ```json
+  {
+    "status": "success",
+    "dashboard_id": 15,
+    "name": "SERP & Ads Technical Audit",
+    "live_url": "https://apis-hub.cloud/app/projects/my-tenant/dashboards/15",
+    "widgets_created": 8,
+    "committed_at": "2026-11-02T09:35:10Z"
+  }
+  ```
+
+---
 
 #### 2.6 `discard_dashboard_draft`
-- **Description:** "Discard and clean up an active dashboard draft session."
-- **Parameters:**
-  - `draft_token`: string (required)
+- **Tool Name:** `discard_dashboard_draft`
+- **Description:** "Discard and delete an active draft session if the user decides to cancel or start over."
+- **Input Schema:**
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "draft_token": {
+        "type": "string",
+        "description": "The draft token to discard."
+      }
+    },
+    "required": ["draft_token"],
+    "additionalProperties": false
+  }
+  ```
+- **Output Contract:**
+  ```json
+  {
+    "status": "success",
+    "message": "Draft session discarded successfully."
+  }
+  ```
 
 ---
 
