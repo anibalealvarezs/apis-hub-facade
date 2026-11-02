@@ -572,7 +572,19 @@ class GoogleAnalyticsController extends Controller
             $breakdownDim = $validated['breakdown'] ?? null;
             $temporal = $validated['granularity'] ?? 'daily';
             $timeGroups = $temporal === 'lifetime' ? [] : [$temporal];
-            $customGroupBy = $validated['groupBy'] ?? array_merge($timeGroups, $breakdownDim ? [$breakdownDim] : []);
+            $normalizedBreakdown = $breakdownDim;
+            if ($breakdownDim && !str_starts_with($breakdownDim, 'dimensions.') && !in_array($breakdownDim, ['channeledAccount', 'channeledCampaign', 'channeledAdGroup', 'channeledAd', 'country', 'device', 'event'], true)) {
+                $normalizedBreakdown = "dimensions.{$breakdownDim}";
+            }
+            $customGroupBy = $validated['groupBy'] ?? array_merge($timeGroups, $normalizedBreakdown ? [$normalizedBreakdown] : []);
+            if (!empty($validated['groupBy'])) {
+                $customGroupBy = array_map(function ($g) {
+                    if (!str_starts_with($g, 'dimensions.') && !in_array($g, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'annually', 'channeledAccount', 'channeledCampaign', 'channeledAdGroup', 'channeledAd', 'country', 'device', 'event'], true)) {
+                        return "dimensions.{$g}";
+                    }
+                    return $g;
+                }, $validated['groupBy']);
+            }
 
             foreach ($scopesToQuery as $scope) {
                 if (empty($unassignedMetrics)) break;
@@ -616,7 +628,8 @@ class GoogleAnalyticsController extends Controller
                         $mappedRow = [];
                         foreach ($row as $k => $v) {
                             $mappedKey = $k === $temporal ? 'daily' : $this->mapFromGa4($k);
-                            $mappedRow[$mappedKey] = is_numeric($v) && !in_array($k, ['daily', 'date', 'metric_date', $temporal, $breakdownDim]) ? (float) $v : $v;
+                            $isDimField = in_array($k, ['daily', 'date', 'metric_date', $temporal, $breakdownDim, $normalizedBreakdown, 'dimensions.' . str_replace('dimensions.', '', (string)$breakdownDim), str_replace('dimensions.', '', (string)$breakdownDim)], true);
+                            $mappedRow[$mappedKey] = is_numeric($v) && !$isDimField ? (float) $v : $v;
                         }
                         $flatRows[] = $mappedRow;
                     }
