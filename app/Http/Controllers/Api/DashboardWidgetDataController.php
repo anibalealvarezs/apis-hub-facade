@@ -306,7 +306,7 @@
                     ]);
                 }
 
-                if ($widget->widget_type === 'scatter_plot') {
+                if ($widget->widget_type === 'scatter_plot' || (isset($data['scatter_data']) && $widget->widget_type === 'line_chart')) {
                     if (isset($data['scatter_data']['metrics']) && is_array($data['scatter_data']['metrics']) && count($data['scatter_data']['metrics']) >= 2) {
                         $resolvedControls['metrics'] = $data['scatter_data']['metrics'];
                     } elseif (empty($resolvedControls['metrics']) || count($resolvedControls['metrics']) < 2) {
@@ -321,6 +321,9 @@
                 }
 
                 $effectiveWidgetType = $widget->widget_type;
+                if (isset($data['scatter_data']) && $effectiveWidgetType === 'line_chart') {
+                    $effectiveWidgetType = 'scatter_plot';
+                }
 
                 if (isset($data['anomaly_detected'])) {
                     $chartTypes = ['line_chart', 'bar_chart', 'sparkline', 'anomaly_chart'];
