@@ -572,18 +572,28 @@ class GoogleAnalyticsController extends Controller
             $breakdownDim = $validated['breakdown'] ?? null;
             $temporal = $validated['granularity'] ?? 'daily';
             $timeGroups = $temporal === 'lifetime' ? [] : [$temporal];
-            $normalizedBreakdown = $breakdownDim;
-            if ($breakdownDim && !str_starts_with($breakdownDim, 'dimensions.') && !in_array($breakdownDim, ['channeledAccount', 'channeledCampaign', 'channeledAdGroup', 'channeledAd', 'country', 'device', 'event'], true)) {
-                $normalizedBreakdown = "dimensions.{$breakdownDim}";
-            }
+
+            $mapGaDimension = function (?string $dim): ?string {
+                if (!$dim) return null;
+                $stripped = str_starts_with($dim, 'dimensions.') ? substr($dim, 11) : $dim;
+                $canonical = match (strtolower($stripped)) {
+                    'landingpage', 'landing_page', 'landingpageplusquerystring' => 'landing_page',
+                    'sessiondefaultchannelgroup' => 'sessionDefaultChannelGroup',
+                    'firstuserdefaultchannelgroup' => 'firstUserDefaultChannelGroup',
+                    'sessionsourcemedium' => 'sessionSourceMedium',
+                    'firstusersourcemedium' => 'firstUserSourceMedium',
+                    default => $stripped,
+                };
+                if (!in_array($canonical, ['channeledAccount', 'channeledCampaign', 'channeledAdGroup', 'channeledAd', 'country', 'device', 'event', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'annually'], true)) {
+                    return "dimensions.{$canonical}";
+                }
+                return $canonical;
+            };
+
+            $normalizedBreakdown = $mapGaDimension($breakdownDim);
             $customGroupBy = $validated['groupBy'] ?? array_merge($timeGroups, $normalizedBreakdown ? [$normalizedBreakdown] : []);
             if (!empty($validated['groupBy'])) {
-                $customGroupBy = array_map(function ($g) {
-                    if (!str_starts_with($g, 'dimensions.') && !in_array($g, ['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'annually', 'channeledAccount', 'channeledCampaign', 'channeledAdGroup', 'channeledAd', 'country', 'device', 'event'], true)) {
-                        return "dimensions.{$g}";
-                    }
-                    return $g;
-                }, $validated['groupBy']);
+                $customGroupBy = array_map($mapGaDimension, $validated['groupBy']);
             }
 
             foreach ($scopesToQuery as $scope) {
