@@ -16,9 +16,9 @@ class ChannelAnalyticsCatalog
         };
     }
 
-    private static function metric(string $label, array $sources, string $unit, string $reducer, array $scopes, string $status = 'cached', array $caveats = []): array
+    private static function metric(string $label, array $sources, string $unit, string $reducer, array $scopes, string $status = 'cached', array $caveats = [], bool $isAdditive = true): array
     {
-        return compact('label', 'sources', 'unit', 'reducer', 'scopes', 'status', 'caveats');
+        return compact('label', 'sources', 'unit', 'reducer', 'scopes', 'status', 'caveats') + ['is_additive' => $isAdditive];
     }
 
     private static function scope(string $label, array $metrics, array $grain, array $filter, string $period = 'daily'): array
@@ -102,7 +102,8 @@ class ChannelAnalyticsCatalog
             $scopes = array_keys(array_filter($scopeMetrics, fn ($list) => in_array($key, $list, true)));
             $issues = in_array($key, ['newUsers', 'activeUsers', 'totalUsers', 'bounceRate', 'averageSessionDuration'], true) ? ['GA-02'] : [];
             if ($key === 'conversions') $issues[] = 'GA-04';
-            $metrics[$key] = self::metric($label, [$key], $unit, $reducer, $scopes, 'cached', $issues);
+            $isAdditive = !in_array($key, ['newUsers', 'activeUsers', 'totalUsers'], true);
+            $metrics[$key] = self::metric($label, [$key], $unit, $reducer, $scopes, 'cached', $issues, $isAdditive);
         }
         $metrics['spend'] = self::metric('Advertising spend', [], 'property_currency', 'sum', [], 'known_issue', ['GA-01']);
         $grains = [
