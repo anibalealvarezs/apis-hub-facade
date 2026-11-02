@@ -1874,6 +1874,57 @@
             }
 
             $uiState = $kpi->filters['_ui_state'] ?? [];
+
+            // If _ui_state is missing or incomplete, extract channel, metric, and filters from $kpi->ast
+            if (empty($uiState['dependent_metric']) && !empty($kpi->ast) && is_array($kpi->ast)) {
+                $extractMetricNode = function (array $node): ?array {
+                    if (($node['type'] ?? '') === 'metric' && !empty($node['metric'])) {
+                        $parts = explode('.', $node['metric'], 2);
+                        return [
+                            'channel' => count($parts) === 2 ? $parts[0] : null,
+                            'metric'  => count($parts) === 2 ? $parts[1] : $parts[0],
+                            'filters' => $node['filters'] ?? [],
+                        ];
+                    }
+                    return null;
+                };
+
+                if (($kpi->ast['type'] ?? '') === 'operator') {
+                    $leftInfo = $extractMetricNode($kpi->ast['left'] ?? []);
+                    if ($leftInfo) {
+                        $uiState['dependent_source_type'] = 'channel';
+                        $uiState['dependent_channel'] = $leftInfo['channel'];
+                        $uiState['dependent_metric'] = $leftInfo['metric'];
+                        if (!empty($leftInfo['filters'])) {
+                            $uiState['filters'] = $leftInfo['filters'];
+                        }
+                    }
+
+                    // Extract independent variable from right node
+                    $rightInfo = $extractMetricNode($kpi->ast['right'] ?? []);
+                    if ($rightInfo) {
+                        $uiState['independent_variables'] = [
+                            '0' => [
+                                'independent_source_type' => 'channel',
+                                'independent_channel'     => $rightInfo['channel'],
+                                'independent_metric'      => $rightInfo['metric'],
+                                'filters'                 => $rightInfo['filters'] ?? [],
+                            ],
+                        ];
+                    }
+                } elseif (($kpi->ast['type'] ?? '') === 'metric') {
+                    $nodeInfo = $extractMetricNode($kpi->ast);
+                    if ($nodeInfo) {
+                        $uiState['dependent_source_type'] = 'channel';
+                        $uiState['dependent_channel'] = $nodeInfo['channel'];
+                        $uiState['dependent_metric'] = $nodeInfo['metric'];
+                        if (!empty($nodeInfo['filters'])) {
+                            $uiState['filters'] = $nodeInfo['filters'];
+                        }
+                    }
+                }
+            }
+
             \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Raw _ui_state from KPI DB', [
                 'widget_id'             => $widget->id,
                 'kpi_id'                => $kpi->id,
@@ -2062,7 +2113,8 @@
             // Only allow runtime override for variables that were NOT hardcoded/predefined in the original KPI configuration
             $kpiOriginalUiState = $kpi->filters['_ui_state'] ?? [];
 
-            if (empty($kpiOriginalUiState['dependent_metric']) && !empty($runtimeMetrics[$metricIndex])) {
+            $origDepMetric = $kpiOriginalUiState['dependent_metric'] ?? $uiState['dependent_metric'] ?? null;
+            if (empty($origDepMetric) && !empty($runtimeMetrics[$metricIndex]) && trim($runtimeMetrics[$metricIndex]) !== '') {
                 $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
             }
             $metricIndex++;
@@ -2070,8 +2122,8 @@
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
                     $indSourceType = $var['independent_source_type'] ?? 'channel';
-                    $origIndMetric = $kpiOriginalUiState['independent_variables'][$key]['independent_metric'] ?? null;
-                    if ($indSourceType === 'channel' && empty($origIndMetric) && !empty($runtimeMetrics[$metricIndex])) {
+                    $origIndMetric = $kpiOriginalUiState['independent_variables'][$key]['independent_metric'] ?? $var['independent_metric'] ?? null;
+                    if ($indSourceType === 'channel' && empty($origIndMetric) && !empty($runtimeMetrics[$metricIndex]) && trim($runtimeMetrics[$metricIndex]) !== '') {
                         $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                     }
                     $metricIndex++;
