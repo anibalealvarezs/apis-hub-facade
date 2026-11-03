@@ -22,6 +22,8 @@
         $dashboardGroup = (string) array_key_first($allGroups);
     }
     $yesterdayDate = date('Y-m-d', strtotime('-1 day'));
+    $effectiveDateEnd = !empty($dc['date_end']) ? $dc['date_end'] : $yesterdayDate;
+    $effectiveDateStart = !empty($dc['date_start']) ? $dc['date_start'] : \Carbon\Carbon::parse($effectiveDateEnd)->subMonth()->addDay()->format('Y-m-d');
 
     // Determine if PDF Export / Print is allowed for this view context:
     $canExportPdf = false;
@@ -62,14 +64,14 @@
     totalCount: {{ count($viewObj->widgets) }},
     tenant: '{{ \Filament\Facades\Filament::getTenant()?->subdomain ?? ($viewObj->project->subdomain ?? '') }}',
     dashboardDefaults: {
-        date_start: '{{ $dc['date_start'] ?? '' }}',
-        date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
+        date_start: '{{ $effectiveDateStart }}',
+        date_end: '{{ $effectiveDateEnd }}',
         zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
         show_asset_group_selector: {{ !empty($dc['show_asset_group_selector']) ? 'true' : 'false' }},
     },
     dashboardOverrides: {
-        date_start: '{{ $dc['date_start'] ?? '' }}',
-        date_end: '{{ !empty($dc['date_end']) ? $dc['date_end'] : date('Y-m-d', strtotime('-1 day')) }}',
+        date_start: '{{ $effectiveDateStart }}',
+        date_end: '{{ $effectiveDateEnd }}',
         zero_handling: '{{ !empty($dc['zero_handling']) ? $dc['zero_handling'] : 'remove' }}',
     },
     assetGroups: @js($viewObj->getAllAssetGroups()),

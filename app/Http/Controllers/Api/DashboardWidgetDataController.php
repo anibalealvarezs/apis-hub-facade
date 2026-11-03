@@ -2681,8 +2681,8 @@
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
 
-            $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
-            $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
+            $dateEnd = $controls['date_end'] ?? now()->subDays(1)->format('Y-m-d');
+            $dateStart = $controls['date_start'] ?? \Carbon\Carbon::parse($dateEnd)->subMonth()->addDay()->format('Y-m-d');
 
             $granularity = ($widget->widget_type === 'scatter_plot')
                 ? 'lifetime'
@@ -2738,10 +2738,10 @@
             $granularity = ($widget->widget_type === 'scatter_plot')
                 ? 'lifetime'
                 : ($controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily');
+            $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->subDays(1)->format('Y-m-d');
             $dateStart = !empty($controls['date_start'])
                 ? $controls['date_start']
-                : ($granularity === 'lifetime' ? '2010-01-01' : now()->subDays(30)->format('Y-m-d'));
-            $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
+                : \Carbon\Carbon::parse($dateEnd)->subMonth()->addDay()->format('Y-m-d');
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
             $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
             $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
@@ -4622,6 +4622,26 @@
                 return $allowsMultiple ? $filtered : $filtered[0];
             };
 
+            // Resolve active asset group filter if specified
+            $groupAssets = null;
+            if (!empty($controls['asset_group'])) {
+                $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
+                if ($groups->isEmpty()) {
+                    return '___EMPTY_GROUP___';
+                }
+                $groupAssets = [];
+                foreach ($groups as $group) {
+                    $groupAssets = array_merge($groupAssets, $group->items()
+                        ->where('channel', $channel)
+                        ->pluck('asset_id')
+                        ->toArray());
+                }
+                $groupAssets = array_values(array_unique(array_map('strval', $groupAssets)));
+                if (empty($groupAssets)) {
+                    return '___EMPTY_GROUP___';
+                }
+            }
+
             if (!empty($controls['asset'])) {
                 $valid = $this->getValidAssetsForChannel($project, $channel);
                 if (!in_array((string)$controls['asset'], $valid)) {
@@ -4629,9 +4649,16 @@
                 }
 
                 $asset = $controls['asset'];
+                if ($groupAssets !== null && !in_array((string)$asset, $groupAssets, true)) {
+                    return '___EMPTY_GROUP___';
+                }
+
                 if ($seriesAssetFilter !== null && !empty($seriesAssetFilter)) {
                     $validArray = is_array($asset) ? $asset : [$asset];
                     $filtered = array_intersect($validArray, $seriesAssetFilter);
+                    if ($groupAssets !== null) {
+                        $filtered = array_intersect($filtered, $groupAssets);
+                    }
                     if (empty($filtered)) {
                         return '___EMPTY_GROUP___';
                     }
@@ -4646,7 +4673,10 @@
             if ($seriesAssetFilter !== null) {
                 if (!empty($seriesAssetFilter)) {
                     $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                    $filtered = array_intersect($seriesAssetFilter, $validForChannel);
+                    $filtered = array_intersect(array_map('strval', $seriesAssetFilter), array_map('strval', $validForChannel));
+                    if ($groupAssets !== null) {
+                        $filtered = array_intersect($filtered, $groupAssets);
+                    }
                     if (empty($filtered)) {
                         return '___EMPTY_GROUP___';
                     }
@@ -4654,7 +4684,15 @@
 
                     return $constrain($allowsMultiple ? $filtered : $filtered[0]);
                 }
-                // If seriesAssetFilter is explicitly empty array [], it means "all assets for this channel"
+                // If seriesAssetFilter is explicitly empty array [], it means "all assets for this channel" (or within group)
+                if ($groupAssets !== null) {
+                    $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                    $filtered = array_values(array_intersect($groupAssets, array_map('strval', $validForChannel)));
+                    if (empty($filtered)) {
+                        return '___EMPTY_GROUP___';
+                    }
+                    return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+                }
             }
 
             $seriesAssets = $controls['series_assets'] ?? null;
@@ -4668,11 +4706,16 @@
                 $flat = array_values(array_unique($flat));
                 if (!empty($flat)) {
                     $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                    $filtered = array_intersect($flat, $validForChannel);
+                    $filtered = array_intersect($flat, array_map('strval', $validForChannel));
+                    if ($groupAssets !== null) {
+                        $filtered = array_intersect($filtered, $groupAssets);
+                    }
                     if (!empty($filtered)) {
                         $filtered = array_values($filtered);
 
                         return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+                    } elseif ($groupAssets !== null) {
+                        return '___EMPTY_GROUP___';
                     }
                 }
             }
@@ -4680,32 +4723,18 @@
             $requestedAssets = [];
             if ($seriesAssetFilter === null) {
                 if (!empty($controls['assets']) && is_array($controls['assets'])) {
-                    $requestedAssets = $controls['assets'];
-                } elseif (!empty($controls['asset_group'])) {
-                    $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
-
-                    if ($groups->isEmpty()) {
-                        return '___EMPTY_GROUP___';
+                    $requestedAssets = array_map('strval', $controls['assets']);
+                    if ($groupAssets !== null) {
+                        $requestedAssets = array_intersect($requestedAssets, $groupAssets);
                     }
-
-                    $requestedAssets = [];
-                    foreach ($groups as $group) {
-                        $requestedAssets = array_merge($requestedAssets, $group->items()
-                            ->where('channel', $channel)
-                            ->pluck('asset_id')
-                            ->toArray());
-                    }
-                    $requestedAssets = array_values(array_unique($requestedAssets));
-
-                    if (empty($requestedAssets)) {
-                        return '___EMPTY_GROUP___';
-                    }
+                } elseif ($groupAssets !== null) {
+                    $requestedAssets = $groupAssets;
                 }
             }
 
             if (!empty($requestedAssets)) {
                 $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                $filtered = array_intersect($requestedAssets, $validForChannel);
+                $filtered = array_intersect($requestedAssets, array_map('strval', $validForChannel));
 
                 if (empty($filtered)) {
                     return '___EMPTY_GROUP___';
@@ -4718,7 +4747,10 @@
 
             if ($seriesAssetFilter !== null && !empty($seriesAssetFilter)) {
                 $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                $filtered = array_intersect($seriesAssetFilter, $validForChannel);
+                $filtered = array_intersect(array_map('strval', $seriesAssetFilter), array_map('strval', $validForChannel));
+                if ($groupAssets !== null) {
+                    $filtered = array_intersect($filtered, $groupAssets);
+                }
 
                 if (empty($filtered)) {
                     return '___EMPTY_GROUP___';
@@ -4726,6 +4758,15 @@
 
                 $filtered = array_values($filtered);
 
+                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+            }
+
+            if ($groupAssets !== null) {
+                $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                $filtered = array_values(array_intersect($groupAssets, array_map('strval', $validForChannel)));
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
                 return $constrain($allowsMultiple ? $filtered : $filtered[0]);
             }
 

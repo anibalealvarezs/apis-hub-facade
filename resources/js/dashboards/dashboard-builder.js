@@ -108,6 +108,7 @@ export function dashboardBuilder(config = {}) {
             this.sandboxKpiConfig = null;
             const wc = widget.controls || {};
             const resolved = this.resolveWidgetControls(widget);
+            const current = resolved;
             const eph = this.ephemeralOverrides[widget.id] || {};
 
             let initGranularity = '';
