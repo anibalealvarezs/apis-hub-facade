@@ -3525,8 +3525,8 @@
                     id="builder-save-layout-btn"
                     type="button"
                     x-on:click="saveLayout()"
-                    :class="isDirty 
-                        ? 'text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 ring-2 ring-amber-500/70 shadow-md animate-pulse' 
+                    :class="isDirty
+                        ? 'bd-save-layout-pending'
                         : 'text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-gray-800'"
                     class="w-full min-w-[42px] py-2 px-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer"
                     :title="isDirty ? '{{ __('Save Layout (Unsaved changes)') }}' : '{{ __('Layout Saved') }}'">
@@ -3542,37 +3542,36 @@
                 </div>
             </div>
 
-            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
-
-            <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
-                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Widget dimensions') }}
+            <div class="bd-widget-size-group" role="group" aria-labelledby="builder-widget-size-label">
+                <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 text-primary-600 dark:text-primary-400 min-w-[42px]">
+                    <span id="builder-widget-size-label" class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
+                    <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Widget dimensions') }}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
 
-            {{-- Category: Portrait --}}
-            <div class="relative">
-                <div class="bd-palette-cat-btn" data-size-category="portrait">
-                    <div class="bd-palette-cat-shape portrait"></div>
+                {{-- Category: Portrait --}}
+                <div class="relative">
+                    <div class="bd-palette-cat-btn" data-size-category="portrait">
+                        <div class="bd-palette-cat-shape portrait"></div>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Category: Square --}}
-            <div class="relative">
-                <div class="bd-palette-cat-btn" data-size-category="square">
-                    <div class="bd-palette-cat-shape square"></div>
+                {{-- Category: Square --}}
+                <div class="relative">
+                    <div class="bd-palette-cat-btn" data-size-category="square">
+                        <div class="bd-palette-cat-shape square"></div>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Category: Landscape --}}
-            <div class="relative">
-                <div class="bd-palette-cat-btn" data-size-category="landscape">
-                    <div class="bd-palette-cat-shape landscape"></div>
+                {{-- Category: Landscape --}}
+                <div class="relative">
+                    <div class="bd-palette-cat-btn" data-size-category="landscape">
+                        <div class="bd-palette-cat-shape landscape"></div>
+                    </div>
                 </div>
             </div>
 
