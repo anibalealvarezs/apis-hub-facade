@@ -16,27 +16,33 @@ class EditDashboard extends EditRecord
     {
         return [
             Actions\LocaleSwitcher::make(),
-            Actions\Action::make('settings')
-                ->label(__('Dashboard Settings'))
-                ->icon('heroicon-o-cog-6-tooth')
-                ->color('primary')
-                ->disabled()
-                ->extraAttributes([
-                    'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
-                ]),
-            Actions\Action::make('builder')
-                ->label(__('Dashboard Builder'))
-                ->icon('heroicon-o-pencil-square')
+            Actions\ActionGroup::make([
+                Actions\Action::make('settings')
+                    ->label(__('Settings'))
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->color('primary')
+                    ->disabled()
+                    ->extraAttributes([
+                        'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
+                    ]),
+                Actions\Action::make('builder')
+                    ->label(__('Builder'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('gray')
+                    ->url(DashboardResource::getUrl('builder', ['record' => $this->record]))
+                    ->extraAttributes(['wire:navigate.none' => true])
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Actions\Action::make('view')
+                    ->label(__('View'))
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->url(DashboardResource::getUrl('view', ['record' => $this->record]))
+                    ->extraAttributes(['wire:navigate.none' => true]),
+            ])
+                ->label(__('Environments'))
+                ->icon('heroicon-o-squares-2x2')
                 ->color('gray')
-                ->url(DashboardResource::getUrl('builder', ['record' => $this->record]))
-                ->extraAttributes(['wire:navigate.none' => true])
-                ->visible(fn () => auth()->user()->can('edit_preferences')),
-            Actions\Action::make('view')
-                ->label(__('View Dashboard'))
-                ->icon('heroicon-o-eye')
-                ->color('gray')
-                ->url(DashboardResource::getUrl('view', ['record' => $this->record]))
-                ->extraAttributes(['wire:navigate.none' => true]),
+                ->button(),
             Actions\DeleteAction::make(),
         ];
     }

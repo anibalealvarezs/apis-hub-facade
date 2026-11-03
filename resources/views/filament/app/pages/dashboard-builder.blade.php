@@ -35,18 +35,18 @@
 
             {{-- Right: Context Group Containers --}}
             <div class="flex items-center gap-3 flex-shrink-0">
-                {{-- Group 1 (Blue context): Dashboard Controls & Share --}}
-                <div class="flex items-center gap-1 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 shadow-sm">
+                {{-- Dashboard Context: Controls & Share (No border, solid grey background, proper grey button styles) --}}
+                <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 shadow-xs">
                     <button
                         id="dashboard-controls-button"
-                        class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xs transition-all flex items-center gap-1.5"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition-all flex items-center gap-1.5"
                         x-on:click="openDashboardControls()">
                         <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                         <span>{{ __('Controls') }}</span>
                     </button>
                     @can('edit_preferences')
                         <button
-                            class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xs transition-all flex items-center gap-1.5"
+                            class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition-all flex items-center gap-1.5"
                             x-on:click="openShareDialog()">
                             <x-filament::icon name="heroicon-o-share" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                             <span>{{ __('Share') }}</span>
@@ -54,40 +54,7 @@
                     @endcan
                 </div>
 
-                {{-- Group 2 (Yellow context): Version Actions & Unsaved Version Status --}}
-                <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 shadow-sm">
-                    <button
-                        id="builder-save-version-btn"
-                        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5"
-                        :class="$wire.unsavedChanges ? 'bg-primary-500 text-white shadow-sm hover:bg-primary-600' : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'"
-                        x-on:click="openSaveVersionModal()">
-                        <x-filament::icon name="heroicon-o-document-plus" class="w-4 h-4"/>
-                        <span>{{ __('Save Version') }}</span>
-                    </button>
-
-                    <button
-                        id="builder-version-history-btn"
-                        class="px-2.5 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
-                        x-on:click="openVersionHistoryModal()">
-                        <x-filament::icon name="heroicon-o-clock" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
-                        <span>{{ __('Version History') }}</span>
-                    </button>
-
-                    <button
-                        class="px-2.5 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
-                        x-on:click="openDuplicateModal()">
-                        <x-filament::icon name="heroicon-o-document-duplicate" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
-                        <span>{{ __('Duplicate') }}</span>
-                    </button>
-
-                    {{-- Unsaved Version Status Badge inside Version Group --}}
-                    <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge ml-1">
-                        <span class="bd-unsaved-dot"></span>
-                        <span>{{ __('Unsaved version') }}</span>
-                    </div>
-                </div>
-
-                {{-- Group 3: AI Classification Coverage Container --}}
+                {{-- AI Classification Coverage Container (No border, solid grey background) --}}
                 @php
                     $coverageData = $this->getClassificationCoverage();
                     $trafficPct = $coverageData['traffic_coverage_percentage'] ?? $coverageData['traffic_coverage_pct'] ?? null;
@@ -96,17 +63,17 @@
                 @if($coverageData && $trafficPct !== null)
                     @php
                         $badgeBg = $isFullyClassified || $trafficPct >= 99.9 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
                             : ($trafficPct >= 90.0
-                                ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300'
-                                : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300');
+                                ? 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300'
+                                : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300');
                         $iconColor = $isFullyClassified || $trafficPct >= 99.9
                             ? 'text-emerald-500 dark:text-emerald-400'
                             : ($trafficPct >= 90.0
                                 ? 'text-sky-500 dark:text-sky-400'
                                 : 'text-amber-500 dark:text-amber-400');
                     @endphp
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium shadow-sm {{ $badgeBg }}"
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium shadow-xs {{ $badgeBg }}"
                          title="{{ __('Query classification coverage: :pct% of traffic volume (:classified/:total unique queries categorized)', [
                              'pct' => $trafficPct,
                              'classified' => number_format($coverageData['classified_queries'] ?? 0),
@@ -3546,18 +3513,20 @@
         {{-- Floating Left Widget Size Palette --}}
         <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
 
-            {{-- Save Layout Button (with dynamic color indicating dirty state) --}}
-            <div class="group relative flex items-center justify-center">
+            {{-- Save Layout Button (full width, inline SVG icon with dynamic colors) --}}
+            <div class="group relative flex items-center justify-center w-full">
                 <button
                     id="builder-save-layout-btn"
                     type="button"
                     x-on:click="saveLayout()"
                     :class="isDirty 
-                        ? 'text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 ring-2 ring-amber-500/60 shadow-md animate-pulse' 
-                        : 'text-gray-400 hover:text-emerald-600 hover:bg-gray-100 dark:hover:bg-gray-800'"
-                    class="p-2.5 rounded-xl transition-all flex items-center justify-center"
+                        ? 'text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 ring-2 ring-amber-500/70 shadow-md animate-pulse' 
+                        : 'text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-gray-800'"
+                    class="w-full min-w-[42px] py-2 px-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer"
                     :title="isDirty ? '{{ __('Save Layout (Unsaved changes)') }}' : '{{ __('Layout Saved') }}'">
-                    <x-filament::icon name="heroicon-o-check" class="w-5 h-5"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
                 </button>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
                     <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl flex items-center gap-1.5">

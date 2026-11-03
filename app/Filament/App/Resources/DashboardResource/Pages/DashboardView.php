@@ -32,28 +32,34 @@ class DashboardView extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('settings')
-                ->label(__('Dashboard Settings'))
-                ->icon('heroicon-o-cog-6-tooth')
+            Actions\ActionGroup::make([
+                Actions\Action::make('settings')
+                    ->label(__('Settings'))
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->color('gray')
+                    ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard]))
+                    ->extraAttributes(['wire:navigate.none' => true])
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Actions\Action::make('builder')
+                    ->label(__('Builder'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('gray')
+                    ->url(DashboardResource::getUrl('builder', ['record' => $this->dashboard]))
+                    ->extraAttributes(['wire:navigate.none' => true])
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Actions\Action::make('view')
+                    ->label(__('View'))
+                    ->icon('heroicon-o-eye')
+                    ->color('primary')
+                    ->disabled()
+                    ->extraAttributes([
+                        'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
+                    ]),
+            ])
+                ->label(__('Environments'))
+                ->icon('heroicon-o-squares-2x2')
                 ->color('gray')
-                ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard]))
-                ->extraAttributes(['wire:navigate.none' => true])
-                ->visible(fn () => auth()->user()->can('edit_preferences')),
-            Actions\Action::make('builder')
-                ->label(__('Dashboard Builder'))
-                ->icon('heroicon-o-pencil-square')
-                ->color('gray')
-                ->url(DashboardResource::getUrl('builder', ['record' => $this->dashboard]))
-                ->extraAttributes(['wire:navigate.none' => true])
-                ->visible(fn () => auth()->user()->can('edit_preferences')),
-            Actions\Action::make('view')
-                ->label(__('View Dashboard'))
-                ->icon('heroicon-o-eye')
-                ->color('primary')
-                ->disabled()
-                ->extraAttributes([
-                    'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
-                ]),
+                ->button(),
         ];
     }
 }
