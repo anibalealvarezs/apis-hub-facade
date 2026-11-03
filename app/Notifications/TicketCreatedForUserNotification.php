@@ -19,7 +19,13 @@ class TicketCreatedForUserNotification extends Notification implements ShouldQue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if (! method_exists($notifiable, 'prefersEmailNotification') || $notifiable->prefersEmailNotification('ticket_created_for_user')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

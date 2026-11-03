@@ -20,7 +20,13 @@ class IntegrationDisconnectedNotification extends Notification implements Should
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if (! method_exists($notifiable, 'prefersEmailNotification') || $notifiable->prefersEmailNotification('integration_disconnected')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

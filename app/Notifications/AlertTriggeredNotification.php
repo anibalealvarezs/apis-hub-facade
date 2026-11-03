@@ -26,7 +26,7 @@ class AlertTriggeredNotification extends Notification implements ShouldQueue
         if ($this->alert->notify_ui) {
             $channels[] = 'database';
         }
-        if ($this->alert->notify_email) {
+        if ($this->alert->notify_email && (! method_exists($notifiable, 'prefersEmailNotification') || $notifiable->prefersEmailNotification('alert_triggered'))) {
             $channels[] = 'mail';
         }
         return $channels;

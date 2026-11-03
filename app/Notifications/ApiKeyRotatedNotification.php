@@ -21,7 +21,13 @@ class ApiKeyRotatedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if (! method_exists($notifiable, 'prefersEmailNotification') || $notifiable->prefersEmailNotification('api_key_rotated')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -130,7 +130,27 @@ class User extends Authenticatable implements FilamentUser, HasTenants, HasDefau
         'is_active',
         'locale',
         'pending_email',
+        'email_notification_preferences',
     ];
+
+    protected $casts = [
+        'email_notification_preferences' => 'array',
+    ];
+
+    /**
+     * Determine if the user has email notifications enabled for a given notification key.
+     * Defaults to true (opt-out model).
+     */
+    public function prefersEmailNotification(string $notificationKey): bool
+    {
+        $prefs = $this->email_notification_preferences ?? [];
+
+        if (array_key_exists($notificationKey, $prefs)) {
+            return (bool) $prefs[$notificationKey];
+        }
+
+        return true;
+    }
 
     /**
      * SaaS Relationship: A user can belong to multiple project instances via the pivot table.

@@ -20,7 +20,13 @@ class BillingAccessRevokedNotification extends Notification implements ShouldQue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if (! method_exists($notifiable, 'prefersEmailNotification') || $notifiable->prefersEmailNotification('billing_access_revoked')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage
