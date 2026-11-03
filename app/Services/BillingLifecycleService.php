@@ -260,6 +260,18 @@ class BillingLifecycleService
         };
     }
 
+    public function getMaxWidgetsPerDashboardForTier(UserTier $tier): int
+    {
+        return match ($tier) {
+            UserTier::FREE => 8,
+            UserTier::PRO => 20,
+            UserTier::ULTRA, UserTier::FOUNDER => 50,
+            UserTier::ENTERPRISE => 999999,
+            UserTier::SUSPENDED => 0,
+            default => 8,
+        };
+    }
+
     public function canInviteCollaborators(UserTier $tier): bool
     {
         return match ($tier) {

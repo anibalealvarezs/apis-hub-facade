@@ -1,64 +1,6 @@
 import { withEntityAttributes } from './entity-attributes.js';
 import { dataTable } from './data-table.js';
-
-const COUNTRY_NAME_TO_CODE = {
-    'Aruba':'ABW','Afghanistan':'AFG','Angola':'AGO','Anguilla':'AIA','Åland Islands':'ALA','Albania':'ALB',
-    'Andorra':'AND','United Arab Emirates':'ARE','Argentina':'ARG','Armenia':'ARM','American Samoa':'ASM',
-    'Antarctica':'ATA','French Southern Territories':'ATF','Antigua and Barbuda':'ATG','Australia':'AUS',
-    'Austria':'AUT','Azerbaijan':'AZE','Burundi':'BDI','Belgium':'BEL','Benin':'BEN',
-    'Bonaire, Sint Eustatius and Saba':'BES','Burkina Faso':'BFA','Bangladesh':'BGD','Bulgaria':'BGR',
-    'Bahrain':'BHR','Bahamas':'BHS','Bosnia and Herzegovina':'BIH','Saint Barthélemy':'BLM','Belarus':'BLR',
-    'Belize':'BLZ','Bermuda':'BMU','Bolivia':'BOL','Brazil':'BRA','Barbados':'BRB',
-    'Brunei Darussalam':'BRN','Bhutan':'BTN','Bouvet Island':'BVT','Botswana':'BWA',
-    'Central African Republic':'CAF','Canada':'CAN','Cocos (Keeling) Islands':'CCK','Switzerland':'CHE',
-    'Chile':'CHL','China':'CHN',"Côte d'Ivoire":'CIV','Cameroon':'CMR',
-    'Congo, Democratic Republic of the':'COD','Congo':'COG','Cook Islands':'COK','Colombia':'COL',
-    'Comoros':'COM','Cabo Verde':'CPV','Costa Rica':'CRI','Cuba':'CUB','Curaçao':'CUW',
-    'Christmas Island':'CXR','Cayman Islands':'CYM','Cyprus':'CYP','Czechia':'CZE','Germany':'DEU',
-    'Djibouti':'DJI','Dominica':'DMA','Denmark':'DNK','Dominican Republic':'DOM','Algeria':'DZA',
-    'Ecuador':'ECU','Egypt':'EGY','Eritrea':'ERI','Western Sahara':'ESH','Spain':'ESP','Estonia':'EST',
-    'Ethiopia':'ETH','Finland':'FIN','Fiji':'FJI','Falkland Islands (Malvinas)':'FLK','France':'FRA',
-    'Faroe Islands':'FRO','Micronesia':'FSM','Gabon':'GAB','United Kingdom':'GBR','Georgia':'GEO',
-    'Guernsey':'GGY','Ghana':'GHA','Gibraltar':'GIB','Guinea':'GIN','Guadeloupe':'GLP','Gambia':'GMB',
-    'Guinea-Bissau':'GNB','Equatorial Guinea':'GNQ','Greece':'GRC','Grenada':'GRD','Greenland':'GRL',
-    'Guatemala':'GTM','French Guiana':'GUF','Guam':'GUM','Guyana':'GUY','Hong Kong':'HKG',
-    'Heard Island and McDonald Islands':'HMD','Honduras':'HND','Croatia':'HRV','Haiti':'HTI',
-    'Hungary':'HUN','Indonesia':'IDN','Isle of Man':'IMN','India':'IND',
-    'British Indian Ocean Territory':'IOT','Ireland':'IRL','Iran':'IRN','Iraq':'IRQ','Iceland':'ISL',
-    'Israel':'ISR','Italy':'ITA','Jamaica':'JAM','Jersey':'JEY','Jordan':'JOR','Japan':'JPN',
-    'Kazakhstan':'KAZ','Kenya':'KEN','Kyrgyzstan':'KGZ','Cambodia':'KHM','Kiribati':'KIR',
-    'Saint Kitts and Nevis':'KNA','Korea, Republic of':'KOR','Kuwait':'KWT',
-    "Lao People's Democratic Republic":'LAO','Lebanon':'LBN','Liberia':'LBR','Libya':'LBY',
-    'Saint Lucia':'LCA','Liechtenstein':'LIE','Sri Lanka':'LKA','Lesotho':'LSO','Lithuania':'LTU',
-    'Luxembourg':'LUX','Latvia':'LVA','Macao':'MAC','Saint Martin (French part)':'MAF','Morocco':'MAR',
-    'Monaco':'MCO','Moldova':'MDA','Madagascar':'MDG','Maldives':'MDV','Mexico':'MEX',
-    'Marshall Islands':'MHL','North Macedonia':'MKD','Mali':'MLI','Malta':'MLT','Myanmar':'MMR',
-    'Montenegro':'MNE','Mongolia':'MNG','Northern Mariana Islands':'MNP','Mozambique':'MOZ',
-    'Mauritania':'MRT','Montserrat':'MSR','Martinique':'MTQ','Mauritius':'MUS','Malawi':'MWI',
-    'Malaysia':'MYS','Mayotte':'MYT','Namibia':'NAM','New Caledonia':'NCL','Niger':'NER',
-    'Norfolk Island':'NFK','Nigeria':'NGA','Nicaragua':'NIC','Niue':'NIU','Netherlands':'NLD',
-    'Norway':'NOR','Nepal':'NPL','Nauru':'NRU','New Zealand':'NZL','Oman':'OMN','Pakistan':'PAK',
-    'Panama':'PAN','Pitcairn':'PCN','Peru':'PER','Philippines':'PHL','Palau':'PLW',
-    'Papua New Guinea':'PNG','Poland':'POL','Puerto Rico':'PRI',
-    "Korea, Democratic People's Republic of":'PRK','Portugal':'PRT','Paraguay':'PRY',
-    'Palestine, State of':'PSE','French Polynesia':'PYF','Qatar':'QAT','Réunion':'REU',
-    'Romania':'ROU','Russian Federation':'RUS','Rwanda':'RWA','Saudi Arabia':'SAU','Sudan':'SDN',
-    'Senegal':'SEN','Singapore':'SGP','South Georgia and the South Sandwich Islands':'SGS',
-    'Saint Helena, Ascension and Tristan da Cunha':'SHN','Svalbard and Jan Mayen':'SJM',
-    'Solomon Islands':'SLB','Sierra Leone':'SLE','El Salvador':'SLV','San Marino':'SMR','Somalia':'SOM',
-    'Saint Pierre and Miquelon':'SPM','Serbia':'SRB','South Sudan':'SSD',
-    'Sao Tome and Principe':'STP','Suriname':'SUR','Slovakia':'SVK','Slovenia':'SVN','Sweden':'SWE',
-    'Eswatini':'SWZ','Sint Maarten (Dutch part)':'SXM','Seychelles':'SYC',
-    'Syrian Arab Republic':'SYR','Turks and Caicos Islands':'TCA','Chad':'TCD','Togo':'TGO',
-    'Thailand':'THA','Tajikistan':'TJK','Tokelau':'TKL','Turkmenistan':'TKM','Timor-Leste':'TLS',
-    'Tonga':'TON','Trinidad and Tobago':'TTO','Tunisia':'TUN','Türkiye':'TUR','Tuvalu':'TUV',
-    'Taiwan':'TWN','Tanzania':'TZA','Uganda':'UGA','Ukraine':'UKR',
-    'United States Minor Outlying Islands':'UMI','Uruguay':'URY','United States of America':'USA',
-    'Uzbekistan':'UZB','Holy See':'VAT','Saint Vincent and the Grenadines':'VCT','Venezuela':'VEN',
-    'Virgin Islands (British)':'VGB','Virgin Islands (U.S.)':'VIR','Viet Nam':'VNM','Vanuatu':'VUT',
-    'Wallis and Futuna':'WLF','Samoa':'WSM','Yemen':'YEM','South Africa':'ZAF','Zambia':'ZMB',
-    'Zimbabwe':'ZWE','Others':'OTH','Unknown':'UNK',
-};
+import { COUNTRY_NAME_TO_CODE, convertIso3ToIso2, countryCodeToName, resolveCountryToIso2 } from './country-catalog.js';
 
 export function ga4Dashboard(config = {}) {
     return withEntityAttributes({
@@ -74,7 +16,12 @@ export function ga4Dashboard(config = {}) {
         isSummaryLoading: false,
         isChartLoading: false,
 
-        countryViewMode: 'map', // 'map' or 'table'
+        countryViewMode: 'map', // 'map' or 'table' for traffic
+        countryViewModes: {
+            traffic: 'map',
+            engagement: 'map',
+            ecommerce: 'map'
+        },
 
         summary: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
         previous: { sessions: 0, reach: 0, new_users: 0, conversions: 0, pageviews: 0, average_session_duration: 0, total_users: 0, bounce_rate: 0, revenue: 0 },
@@ -97,119 +44,138 @@ export function ga4Dashboard(config = {}) {
             channels: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             traffic: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             acquisition: dataTable({ sortCol: 'new_users', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            engagement: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            ecommerce: dataTable({ sortCol: 'purchase_revenue', sortDir: 'desc', searchKeys: ['name', 'id'] }),
+            products: dataTable({ sortCol: 'items_viewed', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             events: dataTable({ sortCol: 'event_count', sortDir: 'desc', searchKeys: ['name', 'id'] }),
             adtouchpoints: dataTable({ sortCol: 'sessions', sortDir: 'desc', searchKeys: ['name', 'id'] }),
         },
         sl: {
             campaigns: false, channels: false, traffic: false,
-            acquisition: false, events: false, adtouchpoints: false,
+            acquisition: false, engagement: false, ecommerce: false, products: false,
+            events: false, adtouchpoints: false,
+        },
+        sectionErrors: {
+            campaigns: null, channels: null, traffic: null,
+            acquisition: null, engagement: null, ecommerce: null, products: null,
+            events: null, adtouchpoints: null,
         },
         ss: {
             campaigns: 'campaigns', channels: 'channels', traffic: 'traffic_pages',
-            acquisition: 'acquisition_channels', events: 'events',
+            acquisition: 'acquisition_channels',
+            engagement: 'engagement_channels',
+            ecommerce: 'ecommerce_campaigns',
+            products: 'product_items',
+            events: 'events',
             adtouchpoints: 'adtouchpoints_adgroups',
         },
 
-        get countryMapData() {
-            if (this.ss.traffic !== 'traffic_countries') return {};
+        getCountryMapData(section) {
+            const countryTabs = {
+                traffic: 'traffic_countries',
+                engagement: 'engagement_countries',
+                ecommerce: 'ecommerce_countries'
+            };
+            const expectedTab = countryTabs[section];
+            if (!expectedTab || this.ss[section] !== expectedTab) return {};
             const mapData = {};
-            const metric = this.sections.traffic.sortCol || 'sessions';
+            const defaultMetric = section === 'ecommerce' ? 'purchase_revenue' : 'sessions';
+            const metric = this.sections[section].sortCol || defaultMetric;
 
-            (this.sections.traffic.rows || []).forEach(row => {
-                const name = row.name || row.id;
-                if (!name) return;
-                const isoCode = COUNTRY_NAME_TO_CODE[name] || name;
-                if (isoCode && isoCode.length === 3) {
-                    const alpha2 = this.convertIso3ToIso2(isoCode);
-                    if (alpha2) {
-                        mapData[alpha2] = Number(row[metric]) || 0;
-                    }
-                } else if (isoCode && isoCode.length === 2) {
-                    mapData[isoCode.toUpperCase()] = Number(row[metric]) || 0;
+            (this.sections[section].rows || []).forEach(row => {
+                const alpha2 = resolveCountryToIso2(row.id) || resolveCountryToIso2(row.name);
+                if (alpha2) {
+                    mapData[alpha2] = Number(row[metric]) || 0;
                 }
             });
             return mapData;
         },
 
+        get countryMapData() {
+            return this.getCountryMapData('traffic');
+        },
+
         convertIso3ToIso2(iso3) {
-            const map3to2 = {
-                'AFG':'AF','ALA':'AX','ALB':'AL','DZA':'DZ','ASM':'AS','AND':'AD','AGO':'AO','AIA':'AI','ATA':'AQ','ATG':'AG','ARG':'AR','ARM':'AM','ABW':'AW','AUS':'AU','AUT':'AT','AZE':'AZ',
-                'BHS':'BS','BHR':'BH','BGD':'BD','BRB':'BB','BLR':'BY','BEL':'BE','BLZ':'BZ','BEN':'BJ','BMU':'BM','BTN':'BT','BOL':'BO','BES':'BQ','BIH':'BA','BWA':'BW','BVT':'BV','BRA':'BR',
-                'IOT':'IO','BRN':'BN','BGR':'BG','BFA':'BF','BDI':'BI','CPV':'CV','KHM':'KH','CMR':'CM','CAN':'CA','CYM':'KY','CAF':'CF','TCD':'TD','CHL':'CL','CHN':'CN','CXR':'CX','CCK':'CC',
-                'COL':'CO','COM':'KM','COG':'CG','COD':'CD','COK':'CK','CRI':'CR','CIV':'CI','HRV':'HR','CUB':'CU','CUW':'CW','CYP':'CY','CZE':'CZ','DNK':'DK','DJI':'DJ','DMA':'DM','DOM':'DO',
-                'ECU':'EC','EGY':'EG','SLV':'SV','GNQ':'GQ','ERI':'ER','EST':'EE','SWZ':'SZ','ETH':'ET','FLK':'FK','FRO':'FO','FJI':'FJ','FIN':'FI','FRA':'FR','GUF':'GF','PYF':'PF','ATF':'TF',
-                'GAB':'GA','GMB':'GM','GEO':'GE','DEU':'DE','GHA':'GH','GIB':'GI','GRC':'GR','GRL':'GL','GRD':'GD','GLP':'GP','GUM':'GU','GTM':'GT','GGY':'GG','GIN':'GN','GNB':'GW','GUY':'GY',
-                'HTI':'HT','HMD':'HM','VAT':'VA','HND':'HN','HKG':'HK','HUN':'HU','ISL':'IS','IND':'IN','IDN':'ID','IRN':'IR','IRQ':'IQ','IRL':'IE','IMN':'IM','ISR':'IL','ITA':'IT','JAM':'JM',
-                'JPN':'JP','JEY':'JE','JOR':'JO','KAZ':'KZ','KEN':'KE','KIR':'KI','PRK':'KP','KOR':'KR','KWT':'KW','KGZ':'KG','LAO':'LA','LVA':'LV','LBN':'LB','LSO':'LS','LBR':'LR','LBY':'LY',
-                'LIE':'LI','LTU':'LT','LUX':'LU','MAC':'MO','MDG':'MG','MWI':'MW','MYS':'MY','MDV':'MV','MLI':'ML','MLT':'MT','MHL':'MH','MTQ':'MQ','MRT':'MR','MUS':'MU','MYT':'YT','MEX':'MX',
-                'FSM':'FM','MDA':'MD','MCO':'MC','MNG':'MN','MNE':'ME','MSR':'MS','MAR':'MA','MOZ':'MZ','MMR':'MM','NAM':'NA','NRU':'NR','NPL':'NP','NLD':'NL','NCL':'NC','NZL':'NZ','NIC':'NI',
-                'NER':'NE','NGA':'NG','NIU':'NU','NFK':'NF','MKD':'MK','MNP':'MP','NOR':'NO','OMN':'OM','PAK':'PK','PLW':'PW','PSE':'PS','PAN':'PA','PNG':'PG','PRY':'PY','PER':'PE','PHL':'PH',
-                'PCN':'PN','POL':'PL','PRT':'PT','PRI':'PR','QAT':'QA','REU':'RE','ROU':'RO','RUS':'RU','RWA':'RW','BLM':'BL','SHN':'SH','KNA':'KN','LCA':'LC','MAF':'MF','SPM':'PM','VCT':'VC',
-                'WSM':'WS','SMR':'SM','STP':'ST','SAU':'SA','SEN':'SN','SRB':'RS','SYC':'SC','SLE':'SL','SGP':'SG','SXM':'SX','SVK':'SK','SVN':'SI','SLB':'SB','SOM':'SO','ZAF':'ZA','SGS':'GS',
-                'SSD':'SS','ESP':'ES','LKA':'LK','SDN':'SD','SUR':'SR','SJM':'SJ','SWE':'SE','CHE':'CH','SYR':'SY','TWN':'TW','TJK':'TJ','TZA':'TZ','THA':'TH','TLS':'TL','TGO':'TG','TKL':'TK',
-                'TON':'TO','TTO':'TT','TUN':'TN','TUR':'TR','TKM':'TM','TCA':'TC','TUV':'TV','UGA':'UG','UKR':'UA','ARE':'AE','GBR':'GB','USA':'US','UMI':'UM','URY':'UY','UZB':'UZ','VUT':'VU',
-                'VEN':'VE','VNM':'VN','VGB':'VG','VIR':'VI','WLF':'WF','ESH':'EH','YEM':'YE','ZMB':'ZM','ZWE':'ZW'
-            };
-            return map3to2[iso3.toUpperCase()] || null;
+            return convertIso3ToIso2(iso3);
         },
 
         countryCodeToName(alpha2) {
-            if (!alpha2) return null;
-            const code2 = alpha2.toUpperCase();
-            for (const [name, iso3] of Object.entries(COUNTRY_NAME_TO_CODE)) {
-                if (this.convertIso3ToIso2(iso3) === code2) {
-                    return name;
-                }
-            }
-            return alpha2;
+            return countryCodeToName(alpha2);
         },
 
-        get selectedCountryCodes() {
-            const query = (this.sections.traffic.searchQuery || '').trim();
-            if (!query || this.ss.traffic !== 'traffic_countries') return [];
-            const iso3 = COUNTRY_NAME_TO_CODE[query] || query;
-            const code2 = (iso3 && iso3.length === 3) ? (this.convertIso3ToIso2(iso3) || iso3) : (iso3 ? iso3.toUpperCase() : null);
+        resolveCountryToIso2(identifier) {
+            return resolveCountryToIso2(identifier);
+        },
+
+        getSelectedCountryCodes(section) {
+            const countryTabs = {
+                traffic: 'traffic_countries',
+                engagement: 'engagement_countries',
+                ecommerce: 'ecommerce_countries'
+            };
+            const expectedTab = countryTabs[section];
+            const query = (this.sections[section]?.searchQuery || '').trim();
+            if (!query || this.ss[section] !== expectedTab) return [];
+            const code2 = resolveCountryToIso2(query);
             return code2 ? [code2] : [];
         },
 
-        handleMapCountrySelected(code) {
+        get selectedCountryCodes() {
+            return this.getSelectedCountryCodes('traffic');
+        },
+
+        handleSectionMapCountrySelected(section, code) {
             if (!code) return;
             const code2 = code.toUpperCase();
-            const rows = this.sections.traffic.rows || [];
+            const rows = this.sections[section]?.rows || [];
             let matchingRow = rows.find(r => {
-                const name = ((r.name || r.id) || '').trim();
-                if (!name) return false;
-                if (name.toUpperCase() === code2) return true;
-                const iso3 = COUNTRY_NAME_TO_CODE[name] || name;
-                if (iso3 && (iso3.toUpperCase() === code2 || this.convertIso3ToIso2(iso3) === code2)) return true;
-                return false;
+                const rCode = resolveCountryToIso2(r.id) || resolveCountryToIso2(r.name);
+                return rCode === code2;
             });
 
             const filterVal = matchingRow ? (matchingRow.name || matchingRow.id) : (this.countryCodeToName(code2) || code2);
-            this.toggleCountryFilter(filterVal);
+            this.toggleSectionCountryFilter(section, filterVal);
+        },
+
+        handleMapCountrySelected(code) {
+            this.handleSectionMapCountrySelected('traffic', code);
+        },
+
+        toggleSectionCountryFilter(section, countryName) {
+            if (!countryName || !this.sections[section]) return;
+            const current = (this.sections[section].searchQuery || '').trim().toLowerCase();
+            const target = countryName.trim().toLowerCase();
+            if (current === target) {
+                this.sections[section].searchQuery = '';
+            } else {
+                this.sections[section].searchQuery = countryName.trim();
+            }
+            this.sections[section].currentPage = 1;
         },
 
         toggleCountryFilter(countryName) {
-            if (!countryName) return;
-            const current = (this.sections.traffic.searchQuery || '').trim().toLowerCase();
-            const target = countryName.trim().toLowerCase();
-            if (current === target) {
-                this.sections.traffic.searchQuery = '';
-            } else {
-                this.sections.traffic.searchQuery = countryName.trim();
-            }
-            this.sections.traffic.currentPage = 1;
+            this.toggleSectionCountryFilter('traffic', countryName);
         },
 
-        isCountrySelected(countryName) {
-            if (!countryName) return false;
-            const current = (this.sections.traffic.searchQuery || '').trim().toLowerCase();
+        isSectionCountrySelected(section, countryName) {
+            if (!countryName || !this.sections[section]) return false;
+            const current = (this.sections[section].searchQuery || '').trim().toLowerCase();
             return current === countryName.trim().toLowerCase();
         },
 
+        isCountrySelected(countryName) {
+            return this.isSectionCountrySelected('traffic', countryName);
+        },
+
+        resetSectionCountryFilters(section) {
+            if (this.sections[section]) {
+                this.sections[section].searchQuery = '';
+                this.sections[section].currentPage = 1;
+            }
+        },
+
         resetCountryFilters() {
-            this.sections.traffic.searchQuery = '';
-            this.sections.traffic.currentPage = 1;
+            this.resetSectionCountryFilters('traffic');
         },
 
         sectionConfig: {
@@ -217,6 +183,9 @@ export function ga4Dashboard(config = {}) {
             channels: { label: 'Channels', tabs: ['channels', 'sources'] },
             traffic: { label: 'Traffic', tabs: ['traffic_pages', 'traffic_countries', 'traffic_devices'] },
             acquisition: { label: 'Acquisition', tabs: ['acquisition_channels'] },
+            engagement: { label: 'Engagement', tabs: ['engagement_channels', 'engagement_sources', 'engagement_pages', 'engagement_devices', 'engagement_countries'] },
+            ecommerce: { label: 'Ecommerce', tabs: ['ecommerce_campaigns', 'ecommerce_channels', 'ecommerce_sources', 'ecommerce_devices', 'ecommerce_countries'] },
+            products: { label: 'Products', tabs: ['product_items', 'product_brands', 'product_categories', 'product_variants'] },
             events: { label: 'Events', tabs: ['events'] },
             adtouchpoints: { label: 'Ad Touchpoints', tabs: ['adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content'] },
         },
@@ -229,7 +198,21 @@ export function ga4Dashboard(config = {}) {
             traffic_pages: { label: 'Landing Page', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
             traffic_countries: { label: 'Country', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
             traffic_devices: { label: 'Device', metrics: ['sessions', 'pageviews', 'bounce_rate', 'average_session_duration', 'conversions', 'revenue'] },
-            acquisition_channels: { label: 'Acq. Channel', metrics: ['new_users', 'reach', 'total_users', 'revenue'] },
+            acquisition_channels: { label: 'Acq. Channel', metrics: ['new_users', 'reach', 'total_users'] },
+            engagement_channels: { label: 'Channel', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_sources: { label: 'Source/Medium', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_pages: { label: 'Landing Page', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_devices: { label: 'Device', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            engagement_countries: { label: 'Country', metrics: ['sessions', 'engaged_sessions', 'engagement_rate', 'user_engagement_duration'] },
+            ecommerce_campaigns: { label: 'Campaign', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_channels: { label: 'Channel', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_sources: { label: 'Source/Medium', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_devices: { label: 'Device', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            ecommerce_countries: { label: 'Country', metrics: ['purchase_revenue', 'gross_purchase_revenue', 'ecommerce_purchases', 'transactions', 'refund_amount'] },
+            product_items: { label: 'Item Name', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
+            product_brands: { label: 'Brand', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
+            product_categories: { label: 'Category', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
+            product_variants: { label: 'Variant', metrics: ['items_viewed', 'items_added_to_cart', 'items_purchased', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'] },
             events: { label: 'Event Name', metrics: ['event_count', 'conversions'] },
             adtouchpoints_adgroups: { label: 'Ad Group', metrics: ['sessions', 'conversions', 'revenue'] },
             adtouchpoints_terms: { label: 'Manual Term', metrics: ['sessions', 'conversions', 'revenue'] },
@@ -239,14 +222,44 @@ export function ga4Dashboard(config = {}) {
             sessions: 'Sessions', reach: 'Users', new_users: 'New',
             conversions: 'Conv.', pageviews: 'Page Views',
             bounce_rate: 'Bounce Rate', event_count: 'Event Count',
-            average_session_duration: 'Avg. Duration', total_users: 'Total Users'
+            average_session_duration: 'Avg. Duration', total_users: 'Total Users',
+            engaged_sessions: 'Engaged Sessions',
+            engagement_rate: 'Engagement Rate',
+            user_engagement_duration: 'Engagement Duration',
+            ecommerce_purchases: 'Purchases',
+            transactions: 'Transactions',
+            purchase_revenue: 'Purchase Revenue',
+            gross_purchase_revenue: 'Gross Revenue',
+            refund_amount: 'Refund Amount',
+            items_viewed: 'Items Viewed',
+            items_added_to_cart: 'Added to Cart',
+            items_purchased: 'Items Purchased',
+            items_refunded: 'Items Refunded',
+            item_revenue: 'Item Revenue',
+            gross_item_revenue: 'Gross Item Rev.',
+            item_refund_amount: 'Item Refund Amt.'
         },
         metricColors: {
             sessions: 'var(--ga4-sessions)', reach: 'var(--ga4-activeUsers)',
             new_users: 'var(--ga4-newUsers)', conversions: 'var(--ga4-conversions)',
             pageviews: 'var(--ga4-pageViews)', bounce_rate: 'var(--ga4-revenue)',
             event_count: '#8B5CF6', average_session_duration: 'var(--ga4-avgSessionDuration)',
-            total_users: 'var(--ga4-totalUsers)'
+            total_users: 'var(--ga4-totalUsers)',
+            engaged_sessions: '#3B82F6',
+            engagement_rate: '#10B981',
+            user_engagement_duration: '#06B6D4',
+            ecommerce_purchases: '#10B981',
+            transactions: '#6366F1',
+            purchase_revenue: '#059669',
+            gross_purchase_revenue: '#047857',
+            refund_amount: '#EF4444',
+            items_viewed: '#8B5CF6',
+            items_added_to_cart: '#F59E0B',
+            items_purchased: '#10B981',
+            items_refunded: '#EF4444',
+            item_revenue: '#059669',
+            gross_item_revenue: '#047857',
+            item_refund_amount: '#DC2626'
         },
 
         get isAnySectionLoading() {
@@ -267,13 +280,13 @@ export function ga4Dashboard(config = {}) {
             if (accParam && this.accountNames[accParam]) {
                 this.account = accParam;
                 this.selectedAccount = accParam;
-                if (this.$wire) this.$wire.set('selectedAccount', accParam);
+                try { if (this.$wire && typeof this.$wire.set === 'function') this.$wire.set('selectedAccount', accParam); } catch (e) {}
             }
             if (!this.selectedAccount && Object.keys(this.accountNames).length > 0) {
                 const firstAcc = Object.keys(this.accountNames)[0];
                 this.account = firstAcc;
                 this.selectedAccount = firstAcc;
-                if (this.$wire) this.$wire.set('selectedAccount', firstAcc);
+                try { if (this.$wire && typeof this.$wire.set === 'function') this.$wire.set('selectedAccount', firstAcc); } catch (e) {}
             }
             const ds = params.get('dateStart');
             if (ds && /^\d{4}-\d{2}-\d{2}$/.test(ds)) this.dateStart = ds;
@@ -360,7 +373,9 @@ export function ga4Dashboard(config = {}) {
             this.activeTab = tab;
             this.syncToUrl();
             this.fetchSection(section);
-            if (this.$wire) this.$wire.setActiveTab(tab);
+            this.$nextTick(() => {
+                window.dispatchEvent(new Event('resize'));
+            });
         },
 
         forceRefresh() {
@@ -513,16 +528,32 @@ export function ga4Dashboard(config = {}) {
             }
 
             this.sl[section] = true;
+            this.sectionErrors[section] = null;
             try {
                 const response = await this.fetchDashboardResponse('/api/ga4/table', this.getFetchOptions(section));
                 const data = await response.json();
-                if (!data.error) {
+                if (data.error) {
+                    this.sectionErrors[section] = data.error;
+                    this.sections[section].rows = [];
+                } else {
+                    this.sectionErrors[section] = null;
+                    const rows = data.table || [];
+                    const countryTabs = ['traffic_countries', 'engagement_countries', 'ecommerce_countries'];
+                    const currentTab = this.ss[section];
+                    if (countryTabs.includes(currentTab)) {
+                        rows.forEach(r => {
+                            if (r.name && r.name.length === 2) {
+                                r.name = this.countryCodeToName(r.name) || r.name;
+                            }
+                        });
+                    }
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
-                    this.sections[section].rows = data.table || [];
+                    this.sections[section].rows = rows;
                     this.sections[section].currentPage = 1;
                 }
             } catch (error) {
                 console.error('Error fetching section ' + section + ':', error);
+                this.sectionErrors[section] = error.message || 'Error loading data';
             } finally {
                 this.sl[section] = false;
             }
@@ -893,11 +924,14 @@ export function ga4Dashboard(config = {}) {
         },
 
         formatMetricValue(key, value) {
-            if (key === 'average_session_duration') {
+            if (key === 'average_session_duration' || key === 'user_engagement_duration') {
                 return this.formatDuration(value);
             }
-            if (key === 'bounce_rate') {
+            if (key === 'bounce_rate' || key === 'engagement_rate') {
                 return this.formatPercent(value);
+            }
+            if (['revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount'].includes(key)) {
+                return '$' + this.formatDecimals(value);
             }
             return this.formatNumber(value);
         },

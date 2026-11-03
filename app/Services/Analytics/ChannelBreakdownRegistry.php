@@ -60,7 +60,8 @@ class ChannelBreakdownRegistry
         if ($channel === 'google_search_console') {
             $tenant = \Filament\Facades\Filament::getTenant();
             if (!$tenant instanceof \App\Models\Project || $tenant->supportsGscSearchTypes()) {
-                $definitions['dimensions.search_type'] = ['label' => __('Search type'), 'type' => 'dimension', 'operators' => ['in', 'eq'], 'options' => GscAnalyticsCatalog::searchTypes()];
+                $configuredTypes = $tenant instanceof \App\Models\Project ? $tenant->getGscConfiguredSearchTypes() : null;
+                $definitions['dimensions.search_type'] = ['label' => __('Search type'), 'type' => 'dimension', 'operators' => ['in', 'eq'], 'options' => GscAnalyticsCatalog::searchTypes($configuredTypes)];
             }
         }
         return $definitions;
@@ -282,6 +283,11 @@ class ChannelBreakdownRegistry
                 'type' => 'relational',
                 'operators' => $defaultOperators,
             ],
+            'channeledAd' => [
+                'label' => __('Ad (First User)'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
             'dimensions.firstUserDefaultChannelGroup' => [
                 'label' => __('Default Channel Group (First User)'),
                 'type' => 'dimension',
@@ -297,6 +303,36 @@ class ChannelBreakdownRegistry
         $event = [
             'event' => [
                 'label' => __('Event Name'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.page' => [
+                'label' => __('Page Path'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'channeledCampaign' => [
+                'label' => __('Campaign'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'channeledAdGroup' => [
+                'label' => __('Ad Group'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'channeledAd' => [
+                'label' => __('Ad'),
+                'type' => 'relational',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.sessionDefaultChannelGroup' => [
+                'label' => __('Default Channel Group'),
+                'type' => 'dimension',
+                'operators' => $defaultOperators,
+            ],
+            'dimensions.sessionSourceMedium' => [
+                'label' => __('Source / Medium'),
                 'type' => 'dimension',
                 'operators' => $defaultOperators,
             ],
@@ -324,6 +360,7 @@ class ChannelBreakdownRegistry
             'acquisition_matrix' => $acquisition,
             'event_matrix' => $event,
             'ad_touchpoint_matrix' => $touchpoint,
+            'engagement_matrix', 'ecommerce_matrix', 'product_matrix' => array_map(fn ($label) => ['label' => $label, 'type' => 'dimension', 'operators' => $defaultOperators], ChannelGranularityRegistry::getBreakdownDimensions('google_analytics', $dep)),
             default => $traffic,
         };
     }

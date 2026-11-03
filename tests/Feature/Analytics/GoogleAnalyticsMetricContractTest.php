@@ -80,8 +80,44 @@ test('ad_touchpoint_matrix metric options round-trip symmetrically between form 
     }
 });
 
+test('engagement_matrix metric options round-trip symmetrically between form builder and controller response', function () {
+    $options = KpiFormBuilder::getMetricOptionsForChannel('google_analytics', 'daily', 'engagement_matrix');
+    expect($options)->not->toBeEmpty();
+
+    foreach (array_keys($options) as $canonicalKey) {
+        $ga4Key = $this->mapToGa4->invoke($this->controller, $canonicalKey);
+        $roundTripKey = $this->mapFromGa4->invoke($this->controller, $ga4Key);
+        
+        expect($roundTripKey)->toBe($canonicalKey, "Metric [{$canonicalKey}] failed round-trip symmetry. Mapped to [{$ga4Key}], but returned as [{$roundTripKey}].");
+    }
+});
+
+test('ecommerce_matrix metric options round-trip symmetrically between form builder and controller response', function () {
+    $options = KpiFormBuilder::getMetricOptionsForChannel('google_analytics', 'daily', 'ecommerce_matrix');
+    expect($options)->not->toBeEmpty();
+
+    foreach (array_keys($options) as $canonicalKey) {
+        $ga4Key = $this->mapToGa4->invoke($this->controller, $canonicalKey);
+        $roundTripKey = $this->mapFromGa4->invoke($this->controller, $ga4Key);
+        
+        expect($roundTripKey)->toBe($canonicalKey, "Metric [{$canonicalKey}] failed round-trip symmetry. Mapped to [{$ga4Key}], but returned as [{$roundTripKey}].");
+    }
+});
+
+test('product_matrix metric options round-trip symmetrically between form builder and controller response', function () {
+    $options = KpiFormBuilder::getMetricOptionsForChannel('google_analytics', 'daily', 'product_matrix');
+    expect($options)->not->toBeEmpty();
+
+    foreach (array_keys($options) as $canonicalKey) {
+        $ga4Key = $this->mapToGa4->invoke($this->controller, $canonicalKey);
+        $roundTripKey = $this->mapFromGa4->invoke($this->controller, $ga4Key);
+        
+        expect($roundTripKey)->toBe($canonicalKey, "Metric [{$canonicalKey}] failed round-trip symmetry. Mapped to [{$ga4Key}], but returned as [{$roundTripKey}].");
+    }
+});
+
 test('every google_analytics metric key across all matrices has perfect key symmetry', function () {
-    $matrices = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+    $matrices = ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'engagement_matrix', 'ecommerce_matrix', 'product_matrix'];
     $testedKeysCount = 0;
     
     foreach ($matrices as $matrix) {

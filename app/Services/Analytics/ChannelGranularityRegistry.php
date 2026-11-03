@@ -4,6 +4,10 @@ namespace App\Services\Analytics;
 
 class ChannelGranularityRegistry
 {
+    public static function getBreakdownDimensions(string $channel, ?string $dependency = null): array
+    {
+        return array_filter(self::getGranularitiesForChannel($channel, $dependency), fn ($key) => str_starts_with($key, 'dimensions.'), ARRAY_FILTER_USE_KEY);
+    }
     /**
      * Get available granularities for a specific channel.
      * Optionally filtered by a channel-specific dependency (e.g., GA4 matrix, GSC search appearance).
@@ -84,6 +88,9 @@ class ChannelGranularityRegistry
                 'acquisition_matrix' => __('Acquisition Matrix (First User)'),
                 'event_matrix' => __('Event Matrix'),
                 'ad_touchpoint_matrix' => __('Ad Touchpoint Matrix'),
+                'engagement_matrix' => __('Engagement and content quality'),
+                'ecommerce_matrix' => __('Purchases and revenue'),
+                'product_matrix' => __('Product performance'),
             ],
             default => [],
         };
@@ -187,11 +194,36 @@ class ChannelGranularityRegistry
             'acquisition_matrix' => [
                 'channeledCampaign' => __('Campaign (First User)'),
                 'channeledAdGroup' => __('Ad Group (First User)'),
+                'channeledAd' => __('Ad (First User)'),
                 'dimensions.firstUserDefaultChannelGroup' => __('Default Channel Group (First User)'),
                 'dimensions.firstUserSourceMedium' => __('Source / Medium (First User)'),
             ],
             'event_matrix' => [
                 'event' => __('Event Name'),
+                'dimensions.page' => __('Page Path'),
+                'channeledCampaign' => __('Campaign'),
+                'channeledAdGroup' => __('Ad Group'),
+                'channeledAd' => __('Ad'),
+                'dimensions.sessionDefaultChannelGroup' => __('Default Channel Group'),
+                'dimensions.sessionSourceMedium' => __('Source / Medium'),
+            ],
+            'engagement_matrix' => [
+                'dimensions.sessionDefaultChannelGroup' => __('Session channel group'),
+                'dimensions.sessionSourceMedium' => __('Session source / medium'),
+                'dimensions.landingPagePlusQueryString' => __('Landing Page'),
+                'country' => __('Country'),
+                'device' => __('Device'),
+            ],
+            'ecommerce_matrix' => [
+                'dimensions.sessionDefaultChannelGroup' => __('Session channel group'),
+                'dimensions.sessionSourceMedium' => __('Session source / medium'),
+                'dimensions.sessionCampaignName' => __('Campaign'),
+                'country' => __('Country'),
+                'device' => __('Device'),
+            ],
+            'product_matrix' => [
+                'dimensions.itemId' => __('Product ID'), 'dimensions.itemName' => __('Product'),
+                'dimensions.itemBrand' => __('Brand'), 'dimensions.itemCategory' => __('Category'), 'dimensions.itemVariant' => __('Variant'),
             ],
             'ad_touchpoint_matrix' => [
                 'channeledCampaign' => __('Campaign (Touchpoint)'),

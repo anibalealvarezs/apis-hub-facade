@@ -269,6 +269,37 @@ class PredefinedKpiRegistry
                     ],
                 ],
             ],
+            'paid_search_cannibalization' => [
+                'name' => 'Paid Search vs Organic Cannibalization',
+                'description' => 'Evaluates whether paid search spend competes with and cannibalizes free organic search traffic.',
+                'scope' => 'global',
+                'categories' => ['cross-channel', 'seo', 'paid_media', 'performance', 'search', 'scope_global', 'org_mkt_organic', 'org_mkt_marketing', 'source_src'],
+                'required_tags' => ['spendable', 'seo', 'clickable'],
+                'calculation_type' => 'calculate_regression',
+                'compatible_widgets' => ['table', 'scatter_plot'],
+                'optimal_widgets' => ['scatter_plot'],
+                'default_zero_handling' => 'remove',
+                'default_edge_case_handling' => [
+                    'weighted' => true,
+                    'grouping' => 'none',
+                ],
+                'template' => [
+                    'ast' => [
+                        'type' => 'operator',
+                        'operator' => '/',
+                        'left' => [
+                            'type' => 'metric',
+                            'channel' => '__SPENDABLE_CHANNEL_1__',
+                            'metric' => 'spend',
+                        ],
+                        'right' => [
+                            'type' => 'metric',
+                            'channel' => '__SEO_CHANNEL_1__',
+                            'metric' => 'clicks',
+                        ],
+                    ],
+                ],
+            ],
             'ctr_efficiency_page' => [
                 'name' => 'CTR Efficiency (By Page)',
                 'description' => 'Evaluates by landing page: Is your organic search presence becoming more or less effective at turning impressions into clicks?',

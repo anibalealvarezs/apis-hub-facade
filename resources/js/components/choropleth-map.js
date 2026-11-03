@@ -15,17 +15,23 @@ export function choroplethMap(options = {}) {
             this._cleanup = () => this.destroyMap();
             this.$el?.addEventListener('alpine:destroyed', this._cleanup);
 
+            const checkAndRender = () => {
+                const el = document.getElementById(this.containerId);
+                if (el && el.clientWidth > 0 && el.clientHeight > 0) {
+                    const hasSvg = el.querySelector('svg');
+                    if ((!this.mapInstance || !hasSvg) && !this._rendering) {
+                        this.renderMap();
+                    } else if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
+                        this.mapInstance.updateSize();
+                    }
+                }
+            };
+
             this._resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const cr = entry.contentRect;
                     if (cr && cr.width > 0 && cr.height > 0) {
-                        const el = document.getElementById(this.containerId);
-                        const hasSvg = el && el.querySelector('svg');
-                        if ((!this.mapInstance || !hasSvg) && !this._rendering) {
-                            this.renderMap();
-                        } else if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
-                            this.mapInstance.updateSize();
-                        }
+                        checkAndRender();
                     }
                 }
             });
@@ -34,11 +40,21 @@ export function choroplethMap(options = {}) {
                 const el = document.getElementById(this.containerId);
                 if (el) {
                     this._resizeObserver.observe(el);
-                    if (el.clientWidth > 0 && el.clientHeight > 0 && !this.mapInstance) {
-                        this.renderMap();
+                    if (this.$el && this.$el !== el) {
+                        this._resizeObserver.observe(this.$el);
                     }
+                    checkAndRender();
                 }
             });
+
+            // Watch for parent section visibility changes (e.g. x-show display toggle)
+            this._visibilityObserver = new MutationObserver(() => {
+                checkAndRender();
+            });
+            const sectionWrapper = this.$el?.closest('.dash-map-section') || this.$el?.parentElement;
+            if (sectionWrapper) {
+                this._visibilityObserver.observe(sectionWrapper, { attributes: true, attributeFilter: ['style', 'class'] });
+            }
 
             // Watch theme changes
             this._themeObserver = new MutationObserver(() => {
@@ -57,12 +73,7 @@ export function choroplethMap(options = {}) {
 
             // Handle window resize
             this._resizeHandler = () => {
-                const el = document.getElementById(this.containerId);
-                if (el && el.clientWidth > 0 && el.clientHeight > 0) {
-                    if (this.mapInstance && typeof this.mapInstance.updateSize === 'function') {
-                        this.mapInstance.updateSize();
-                    }
-                }
+                checkAndRender();
             };
             window.addEventListener('resize', this._resizeHandler);
         },
@@ -269,6 +280,10 @@ export function choroplethMap(options = {}) {
             if (this._resizeObserver) {
                 this._resizeObserver.disconnect();
                 this._resizeObserver = null;
+            }
+            if (this._visibilityObserver) {
+                this._visibilityObserver.disconnect();
+                this._visibilityObserver = null;
             }
             if (this._themeObserver) {
                 this._themeObserver.disconnect();

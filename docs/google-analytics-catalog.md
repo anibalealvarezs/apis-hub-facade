@@ -111,3 +111,11 @@ getMetricProfiles,getAggregationProfiles}`, `GoogleAnalyticsMetricConvert` matri
 methods and `preprocessRows`; Facade `GoogleAnalyticsController::metricsForScope`,
 breakdown/granularity registries; tenant `CanonicalMetricSqlResolver`.
 See [audit](analytics-availability-audit.md) for repair and migration proposals.
+
+
+User-count explanations appear as click-toggle warning icons beside widget heading
+actions, not permanent canvas content. They apply only to GA4 active/new/total user
+metrics (including aliases and dependent inputs), not all widgets containing GA4.
+Explorer uses the same tooltip in user metric labels/column headings and the chart
+heading when a user metric is selected. Public/shared and fullscreen widgets use
+the same heading component.

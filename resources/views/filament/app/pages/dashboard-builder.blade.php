@@ -8,8 +8,8 @@
         widgetDescriptions: @js(\App\Services\WidgetTypeRegistry::getWidgetDescriptions()),
         widgetSvgs: @js(\App\Services\WidgetTypeRegistry::getWidgetSvgs()),
         channels: @js($this->getActiveChannels()),
-        gscSearchTypeOptions: @js(\Filament\Facades\Filament::getTenant()?->supportsGscSearchTypes() ? \App\Services\Analytics\GscAnalyticsCatalog::searchTypes() : []),
-        gscAnalyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree()),
+        gscSearchTypeOptions: @js(\Filament\Facades\Filament::getTenant()?->supportsGscSearchTypes() ? \App\Services\Analytics\GscAnalyticsCatalog::searchTypes(\Filament\Facades\Filament::getTenant()?->getGscConfiguredSearchTypes()) : []),
+        gscAnalyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree(\Filament\Facades\Filament::getTenant()?->getGscConfiguredSearchTypes())),
         dashboardControls: @js($this->getDashboardControls()),
         assetGroups: @js($this->getAllAssetGroups()),
         isPublic: {{ $this->dashboard->is_public ? 'true' : 'false' }},
@@ -147,6 +147,7 @@
                                                   x-text="getWidgetTitleText(widget)"></span>
                                         </div>
                                         <div class="flex items-center gap-1 flex-shrink-0">
+                                            <x-analytics-warning />
                                             <template x-if="getWidgetDescriptionText(widget)">
                                                 <div class="group relative flex items-center justify-center p-1">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"

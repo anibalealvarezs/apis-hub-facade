@@ -19,7 +19,8 @@ class GoogleAnalyticsController extends Controller
             'account' => 'required',
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,adgroups,channels,sources,traffic_pages,traffic_countries,traffic_devices,acquisition_channels,events,adtouchpoints_adgroups,adtouchpoints_terms,adtouchpoints_content',
+            'granularity' => 'nullable|string|in:daily,weekly,monthly,quarterly,semiannual,annually,lifetime,trailing_weekly,trailing_monthly,trailing_quarterly,trailing_semiannual,trailing_annually',
+            'activeTab' => 'nullable|string|in:campaigns,adgroups,channels,sources,traffic_pages,traffic_countries,traffic_devices,acquisition_channels,events,adtouchpoints_adgroups,adtouchpoints_terms,adtouchpoints_content,engagement_channels,engagement_sources,engagement_pages,engagement_devices,engagement_countries,ecommerce_campaigns,ecommerce_channels,ecommerce_sources,ecommerce_devices,ecommerce_countries,product_items,product_brands,product_categories,product_variants',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
             'filters' => 'nullable|array',
@@ -27,7 +28,7 @@ class GoogleAnalyticsController extends Controller
             'groupBy' => 'nullable|array',
             'metrics' => 'nullable|array',
             'metrics.*' => 'string',
-            'dependency' => 'nullable|string|in:traffic_matrix,acquisition_matrix,event_matrix,ad_touchpoint_matrix',
+            'dependency' => 'nullable|string|in:traffic_matrix,acquisition_matrix,event_matrix,ad_touchpoint_matrix,engagement_matrix,ecommerce_matrix,product_matrix',
         ]);
         $blocked = ['spend', 'cost', 'cpc', 'cpm', 'cost_per_conversion', 'cost_per_result', 'roas', 'roas_purchase', 'purchase_roas'];
         if (array_intersect(array_map('strtolower', $validated['metrics'] ?? []), $blocked)) {
@@ -42,6 +43,9 @@ class GoogleAnalyticsController extends Controller
             'acquisition_channels' => 'acquisition_matrix',
             'events' => 'event_matrix',
             'adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content' => 'ad_touchpoint_matrix',
+            'engagement_channels', 'engagement_sources', 'engagement_pages', 'engagement_devices', 'engagement_countries' => 'engagement_matrix',
+            'ecommerce_campaigns', 'ecommerce_channels', 'ecommerce_sources', 'ecommerce_devices', 'ecommerce_countries' => 'ecommerce_matrix',
+            'product_items', 'product_brands', 'product_categories', 'product_variants' => 'product_matrix',
             default => 'traffic_matrix',
         };
     }
@@ -64,7 +68,21 @@ class GoogleAnalyticsController extends Controller
             'active_users', 'reach' => 'activeUsers',
             'total_users' => 'totalUsers',
             'keyEvents' => 'conversions',
-            default => $metric,
+            'engaged_sessions' => 'engagedSessions',
+            'user_engagement_duration' => 'userEngagementDuration',
+            'engagement_rate' => 'engagementRate',
+            'ecommerce_purchases' => 'ecommercePurchases',
+            'purchase_revenue' => 'purchaseRevenue',
+            'gross_purchase_revenue' => 'grossPurchaseRevenue',
+            'refund_amount' => 'refundAmount',
+            'items_viewed' => 'itemsViewed',
+            'items_added_to_cart' => 'itemsAddedToCart',
+            'items_purchased' => 'itemsPurchased',
+            'items_refunded' => 'itemsRefunded',
+            'item_revenue' => 'itemRevenue',
+            'gross_item_revenue' => 'grossItemRevenue',
+            'item_refund_amount' => 'itemRefundAmount',
+            default => \App\Services\Analytics\Ga4ReportingSemantics::rawMetric($metric),
         };
     }
 
@@ -79,7 +97,21 @@ class GoogleAnalyticsController extends Controller
             'eventCount' => 'event_count',
             'activeUsers' => 'reach',
             'totalUsers' => 'total_users',
-            default => $metric,
+            'engagedSessions' => 'engaged_sessions',
+            'userEngagementDuration' => 'user_engagement_duration',
+            'engagementRate' => 'engagement_rate',
+            'ecommercePurchases' => 'ecommerce_purchases',
+            'purchaseRevenue' => 'purchase_revenue',
+            'grossPurchaseRevenue' => 'gross_purchase_revenue',
+            'refundAmount' => 'refund_amount',
+            'itemsViewed' => 'items_viewed',
+            'itemsAddedToCart' => 'items_added_to_cart',
+            'itemsPurchased' => 'items_purchased',
+            'itemsRefunded' => 'items_refunded',
+            'itemRevenue' => 'item_revenue',
+            'grossItemRevenue' => 'gross_item_revenue',
+            'itemRefundAmount' => 'item_refund_amount',
+            default => \App\Services\Analytics\Ga4ReportingSemantics::displayMetric($metric),
         };
     }
 
@@ -157,6 +189,20 @@ class GoogleAnalyticsController extends Controller
             'events' => ['event'],
             'adtouchpoints_adgroups', 'adtouchpoints_terms' => ['channeledAdGroup'],
             'adtouchpoints_content' => ['channeledAd'],
+            'engagement_channels' => ['dimensions.sessionDefaultChannelGroup'],
+            'engagement_sources' => ['dimensions.sessionSourceMedium'],
+            'engagement_pages' => ['dimensions.landingPagePlusQueryString'],
+            'engagement_devices' => ['device'],
+            'engagement_countries' => ['country'],
+            'ecommerce_campaigns' => ['dimensions.sessionCampaignName'],
+            'ecommerce_channels' => ['dimensions.sessionDefaultChannelGroup'],
+            'ecommerce_sources' => ['dimensions.sessionSourceMedium'],
+            'ecommerce_devices' => ['device'],
+            'ecommerce_countries' => ['country'],
+            'product_items' => ['dimensions.itemName'],
+            'product_brands' => ['dimensions.itemBrand'],
+            'product_categories' => ['dimensions.itemCategory'],
+            'product_variants' => ['dimensions.itemVariant'],
             default => [],
         };
 
@@ -174,7 +220,16 @@ class GoogleAnalyticsController extends Controller
             'sessiondefaultchannelgroup', 'firstuserdefaultchannelgroup',
             'dimensions.sessionsourcemedium', 'dimensions.firstusersourcemedium',
             'sessionsourcemedium', 'firstusersourcemedium',
-            'dimensions.landing_page', 'landing_page', 'country', 'device', 'event'
+            'dimensions.landing_page', 'landing_page', 'country', 'device', 'event',
+            'dimensions.landingpageplusquerystring', 'landingpageplusquerystring',
+            'dimensions.devicecategory', 'devicecategory',
+            'dimensions.countryid', 'countryid',
+            'dimensions.sessioncampaignname', 'sessioncampaignname',
+            'dimensions.itemid', 'itemid',
+            'dimensions.itemname', 'itemname',
+            'dimensions.itembrand', 'itembrand',
+            'dimensions.itemcategory', 'itemcategory',
+            'dimensions.itemvariant', 'itemvariant',
         ];
 
         foreach ($results as $idx => $rows) {
@@ -336,7 +391,10 @@ class GoogleAnalyticsController extends Controller
                     $this->metricsForScope('traffic_matrix', true),
                     $this->metricsForScope('acquisition_matrix'),
                     $this->metricsForScope('event_matrix'),
-                    $this->metricsForScope('ad_touchpoint_matrix')
+                    $this->metricsForScope('ad_touchpoint_matrix'),
+                    $this->metricsForScope('engagement_matrix'),
+                    $this->metricsForScope('ecommerce_matrix'),
+                    $this->metricsForScope('product_matrix')
                 ));
                 
                 $intersect = array_intersect($requestedMetrics, $validForScope);
@@ -349,7 +407,7 @@ class GoogleAnalyticsController extends Controller
                 'requestedMetrics' => $requestedMetrics,
             ]);
 
-            $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+            $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'engagement_matrix', 'ecommerce_matrix', 'product_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
@@ -357,7 +415,10 @@ class GoogleAnalyticsController extends Controller
                 $this->metricsForScope('traffic_matrix', true),
                 $this->metricsForScope('acquisition_matrix'),
                 $this->metricsForScope('event_matrix'),
-                $this->metricsForScope('ad_touchpoint_matrix')
+                $this->metricsForScope('ad_touchpoint_matrix'),
+                $this->metricsForScope('engagement_matrix'),
+                $this->metricsForScope('ecommerce_matrix'),
+                $this->metricsForScope('product_matrix')
             ));
 
             foreach ($scopesToQuery as $scope) {
@@ -473,23 +534,28 @@ class GoogleAnalyticsController extends Controller
                 if ($dependency) {
                     $requestedMetrics = $this->metricsForScope($dependency, $dependency === 'traffic_matrix');
                 } else {
-                    $requestedMetrics = array_merge(
+                    $requestedMetrics = array_values(array_unique(array_merge(
                         $this->metricsForScope('traffic_matrix', true),
-                        $this->metricsForScope('acquisition_matrix')
-                    );
+                        $this->metricsForScope('acquisition_matrix'),
+                        $this->metricsForScope('event_matrix'),
+                        $this->metricsForScope('ad_touchpoint_matrix')
+                    )));
                 }
             } else {
-                $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_merge(
+                $validForScope = $dependency ? $this->metricsForScope($dependency, $dependency === 'traffic_matrix') : array_values(array_unique(array_merge(
                     $this->metricsForScope('traffic_matrix', true),
                     $this->metricsForScope('acquisition_matrix'),
                     $this->metricsForScope('event_matrix'),
-                    $this->metricsForScope('ad_touchpoint_matrix')
-                );
+                    $this->metricsForScope('ad_touchpoint_matrix'),
+                    $this->metricsForScope('engagement_matrix'),
+                    $this->metricsForScope('ecommerce_matrix'),
+                    $this->metricsForScope('product_matrix')
+                )));
                 
                 $intersect = array_intersect($requestedMetrics, $validForScope);
                 $requestedMetrics = !empty($intersect) ? array_values($intersect) : $validForScope;
             }
-            $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix'];
+            $scopesToQuery = $dependency ? [$dependency] : ['traffic_matrix', 'acquisition_matrix', 'event_matrix', 'ad_touchpoint_matrix', 'engagement_matrix', 'ecommerce_matrix', 'product_matrix'];
             $payloads = [];
             $unassignedMetrics = $requestedMetrics;
 
@@ -497,11 +563,38 @@ class GoogleAnalyticsController extends Controller
                 $this->metricsForScope('traffic_matrix', true),
                 $this->metricsForScope('acquisition_matrix'),
                 $this->metricsForScope('event_matrix'),
-                $this->metricsForScope('ad_touchpoint_matrix')
+                $this->metricsForScope('ad_touchpoint_matrix'),
+                $this->metricsForScope('engagement_matrix'),
+                $this->metricsForScope('ecommerce_matrix'),
+                $this->metricsForScope('product_matrix')
             ));
 
             $breakdownDim = $validated['breakdown'] ?? null;
-            $customGroupBy = $validated['groupBy'] ?? ($breakdownDim ? ['daily', $breakdownDim] : ['daily']);
+            $temporal = $validated['granularity'] ?? 'daily';
+            $timeGroups = $temporal === 'lifetime' ? [] : [$temporal];
+
+            $mapGaDimension = function (?string $dim): ?string {
+                if (!$dim) return null;
+                $stripped = str_starts_with($dim, 'dimensions.') ? substr($dim, 11) : $dim;
+                $canonical = match (strtolower($stripped)) {
+                    'landingpage', 'landing_page', 'landingpageplusquerystring' => 'landing_page',
+                    'sessiondefaultchannelgroup' => 'sessionDefaultChannelGroup',
+                    'firstuserdefaultchannelgroup' => 'firstUserDefaultChannelGroup',
+                    'sessionsourcemedium' => 'sessionSourceMedium',
+                    'firstusersourcemedium' => 'firstUserSourceMedium',
+                    default => $stripped,
+                };
+                if (!in_array($canonical, ['channeledAccount', 'channeledCampaign', 'channeledAdGroup', 'channeledAd', 'country', 'device', 'event', 'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'yearly', 'annually'], true)) {
+                    return "dimensions.{$canonical}";
+                }
+                return $canonical;
+            };
+
+            $normalizedBreakdown = $mapGaDimension($breakdownDim);
+            $customGroupBy = $validated['groupBy'] ?? array_merge($timeGroups, $normalizedBreakdown ? [$normalizedBreakdown] : []);
+            if (!empty($validated['groupBy'])) {
+                $customGroupBy = array_map($mapGaDimension, $validated['groupBy']);
+            }
 
             foreach ($scopesToQuery as $scope) {
                 if (empty($unassignedMetrics)) break;
@@ -544,14 +637,16 @@ class GoogleAnalyticsController extends Controller
                     foreach ($rows as $row) {
                         $mappedRow = [];
                         foreach ($row as $k => $v) {
-                            $mappedKey = $this->mapFromGa4($k);
-                            $mappedRow[$mappedKey] = is_numeric($v) && !in_array($k, ['daily', 'date', 'metric_date', $breakdownDim]) ? (float) $v : $v;
+                            $mappedKey = $k === $temporal ? 'daily' : $this->mapFromGa4($k);
+                            $isDimField = in_array($k, ['daily', 'date', 'metric_date', $temporal, $breakdownDim, $normalizedBreakdown, 'dimensions.' . str_replace('dimensions.', '', (string)$breakdownDim), str_replace('dimensions.', '', (string)$breakdownDim)], true);
+                            $mappedRow[$mappedKey] = is_numeric($v) && !$isDimField ? (float) $v : $v;
                         }
                         $flatRows[] = $mappedRow;
                     }
                 }
                 return response()->json([
                     'chart' => $flatRows,
+                    'aggregation_granularity' => $temporal,
                     'debug_results' => config('app.debug') ? $results : null,
                 ]);
             }
@@ -560,13 +655,13 @@ class GoogleAnalyticsController extends Controller
             foreach ($scopesToQuery as $scope) {
                 $rows = $results["chart_{$scope}"]['data'] ?? [];
                 foreach ($rows as $row) {
-                    $dateKey = $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? null;
+                    $dateKey = $row[$temporal] ?? $row['daily'] ?? $row['date'] ?? $row['metric_date'] ?? ($temporal === 'lifetime' ? 'Lifetime' : null);
                     if (!$dateKey) continue;
                     if (!isset($mergedByDate[$dateKey])) {
                         $mergedByDate[$dateKey] = ['daily' => $dateKey];
                     }
                     foreach ($row as $k => $v) {
-                        if (!in_array($k, ['daily', 'date', 'metric_date'])) {
+                        if (!in_array($k, ['daily', 'date', 'metric_date', $temporal])) {
                             $mappedKey = $this->mapFromGa4($k);
                             $mergedByDate[$dateKey][$mappedKey] = $v === null ? null : ($mergedByDate[$dateKey][$mappedKey] ?? 0) + (float) $v;
                         }
@@ -574,10 +669,13 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            ksort($mergedByDate);
+
             \Illuminate\Support\Facades\Log::error("GA4 Chart: Final mapped chart result:", array_values($mergedByDate));
 
             return response()->json([
                 'chart' => array_values($mergedByDate),
+                'aggregation_granularity' => $temporal,
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -619,13 +717,16 @@ class GoogleAnalyticsController extends Controller
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
             $queries = [];
 
-            $isLegacyTab = in_array($tab, [
+            $isStandardTab = in_array($tab, [
                 'campaigns', 'adgroups', 'channels', 'sources',
                 'traffic_pages', 'traffic_countries', 'traffic_devices', 'acquisition_channels',
-                'events', 'adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content'
+                'events', 'adtouchpoints_adgroups', 'adtouchpoints_terms', 'adtouchpoints_content',
+                'engagement_channels', 'engagement_sources', 'engagement_pages', 'engagement_devices', 'engagement_countries',
+                'ecommerce_campaigns', 'ecommerce_channels', 'ecommerce_sources', 'ecommerce_devices', 'ecommerce_countries',
+                'product_items', 'product_brands', 'product_categories', 'product_variants',
             ]);
 
-            if ($isLegacyTab) {
+            if ($isStandardTab) {
                 if ($this->isDualScopeTab($tab)) {
                     $queries = $this->dualScopeQueries($tab, $requestedMetrics);
                 } else {
@@ -724,12 +825,16 @@ class GoogleAnalyticsController extends Controller
 
             $tableData = empty($dataSets) ? [] : $this->mergeMatrixResults($dataSets, $groupByKeys);
             
+            $isCountryTab = in_array($tab, ['traffic_countries', 'engagement_countries', 'ecommerce_countries']);
             $mappedTableData = [];
             foreach ($tableData as $row) {
                 $mappedRow = [];
                 foreach ($row as $k => $v) {
                     $mappedKey = $this->mapFromGa4($k);
                     $mappedRow[$mappedKey] = $v;
+                }
+                if ($isCountryTab && isset($mappedRow['name']) && is_string($mappedRow['name'])) {
+                    $mappedRow['name'] = \App\Services\Analytics\Ga4ReportingSemantics::countryNameFromCode($mappedRow['name']);
                 }
                 $mappedTableData[] = $mappedRow;
             }

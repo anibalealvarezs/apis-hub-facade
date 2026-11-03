@@ -210,6 +210,12 @@ class KpiReference extends Page
                 'use_case' => 'You launch a big Facebook ad campaign and notice your organic page reach drops during the same period. Is this a coincidence or are your ads actually stealing reach that your organic posts would have gotten? This KPI tells you if your paid and organic channels are eating each other\'s lunch.',
                 'interpretation' => 'A positive result means cannibalization is happening — your ads are reducing your organic reach. Consider separating paid and organic audiences, or pausing paid campaigns during important organic pushes. A negative result means no conflict; your channels coexist independently.',
             ],
+            'paid_search_cannibalization' => [
+                'type_label' => 'SERP Cannibalization Detector',
+                'explanation' => 'Models whether increasing Google Ads spend on search terms diminishes free organic search clicks from Google Search Console. Bidding on brand or ranking keywords can inflate ad costs without producing net incremental search traffic.',
+                'use_case' => 'You spend $5,000 on Google Search Ads and see total website leads stay flat while your GSC organic clicks drop by 20%. Did your ad campaign genuinely bring new visitors, or did paid search simply intercept searchers who were already clicking your organic snippet? This KPI reveals whether paid spend is cannibalizing your organic search equity.',
+                'interpretation' => 'A negative regression slope or negative correlation indicates that higher ad spend is replacing organic clicks rather than expanding net audience. A positive relationship signals true incrementality where paid search amplifies visibility and brand demand in the SERP.',
+            ],
             'ctr_efficiency_page' => [
                 'type_label' => 'Search Presence Quality (Page)',
                 'explanation' => 'Analyzes how effectively your search impressions convert into clicks by landing page. As you rank for more pages, your average CTR naturally changes. This KPI helps you understand if your search snippets and rankings are becoming more or less compelling per page.',

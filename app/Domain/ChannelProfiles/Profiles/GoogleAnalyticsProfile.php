@@ -22,6 +22,12 @@ class GoogleAnalyticsProfile extends AbstractChannelProfile
             'type' => $this->getChannelKey(),
             'fields' => [
                 'enabled' => $this->configurableField('boolean', true),
+                'additional_recipes' => $this->configurableField('array', [], [
+                    'engagement_matrix' => 'Engagement and content quality',
+                    'ecommerce_matrix' => 'Purchases, revenue and refunds',
+                    'product_matrix' => 'Product views, carts and item sales',
+                ]),
+                'enable_funnel_reports' => $this->systemField('boolean', false),
                 'cache_history_range' => $this->configurableField('string', '2 years', [
                     '7 days' => '7 Days',
                     '14 days' => '14 Days',

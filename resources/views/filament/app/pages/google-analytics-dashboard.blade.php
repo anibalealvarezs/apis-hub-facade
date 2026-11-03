@@ -1,7 +1,4 @@
 <x-filament-panels::page>
-    <div role="note" class="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/40 dark:text-amber-100">
-        {{ \App\Services\Analytics\Ga4ReportingSemantics::userCountNotice() }}
-    </div>
     <link rel="stylesheet" href="{{ asset('css/dashboards.css') }}?v={{ file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time() }}">
 
     <div x-data="ga4Dashboard({
@@ -50,7 +47,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                             @foreach($accounts as $id => $url)
                                 <div
                                     x-show="searchAccount === '' || '{{ strtolower(addslashes($url)) }}'.includes(searchAccount.toLowerCase()) || '{{ strtolower($id) }}'.includes(searchAccount.toLowerCase())"
-                                    @click="selectedAccount = '{{ $id }}'; $wire.set('selectedAccount', '{{ $id }}'); open = false;"
+                                    @click="selectedAccount = '{{ $id }}'; account = '{{ $id }}'; open = false;"
                                     class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md cursor-pointer transition-all duration-150 border"
                                     :class="selectedAccount == '{{ $id }}' ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'">
                                     <div
@@ -103,7 +100,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.reach ? 'active' : ''" @click="toggleMetric('reach')"
                      data-metric="reach">
-                    <div class="ga4-label">{{ __('Active Users') }}</div>
+                    <div class="ga4-label inline-flex items-center gap-1">{{ __('Active Users') }} <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" /></div>
                     <div class="card-metric-value" x-text="formatNumber(summary.reach)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.reach)">
                         <span x-text="getVarianceIcon(variance.reach)"></span>
@@ -112,7 +109,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.new_users ? 'active' : ''" @click="toggleMetric('new_users')"
                      data-metric="new_users">
-                    <div class="ga4-label">{{ __('New Users') }}</div>
+                    <div class="ga4-label inline-flex items-center gap-1">{{ __('New Users') }} <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" /></div>
                     <div class="card-metric-value" x-text="formatNumber(summary.new_users)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.new_users)">
                         <span x-text="getVarianceIcon(variance.new_users)"></span>
@@ -157,7 +154,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
                 <div class="card-stat-ga4" :class="activeMetrics.total_users ? 'active' : ''" @click="toggleMetric('total_users')"
                      data-metric="total_users">
-                    <div class="ga4-label">{{ __('Total Users') }}</div>
+                    <div class="ga4-label inline-flex items-center gap-1">{{ __('Total Users') }} <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" /></div>
                     <div class="card-metric-value" x-text="formatNumber(summary.total_users)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.total_users)">
                         <span x-text="getVarianceIcon(variance.total_users)"></span>
@@ -175,6 +172,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </div>
 
+            <div class="flex justify-end" x-show="activeMetrics.reach || activeMetrics.new_users || activeMetrics.total_users">
+                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+            </div>
             <div class="chart-container-ga4 relative w-full" wire:ignore>
                 <div x-show="isChartLoading"
                      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
@@ -209,6 +209,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.campaigns] && tabConfig[ss.campaigns].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.campaigns" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -261,6 +264,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.channels] && tabConfig[ss.channels].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.channels" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -308,15 +314,15 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
 
             <x-slot:actions>
                 <div x-cloak x-show="ss.traffic === 'traffic_countries'" class="dash-view-toggle">
-                    <button type="button" @click="countryViewMode = 'map'"
+                    <button type="button" @click="countryViewModes.traffic = 'map'"
                             class="dash-view-btn"
-                            :class="countryViewMode === 'map' ? 'is-active' : ''">
+                            :class="countryViewModes.traffic === 'map' ? 'is-active' : ''">
                         <x-heroicon-m-globe-alt class="w-4 h-4"/>
                         <span>{{ __('Map') }}</span>
                     </button>
-                    <button type="button" @click="countryViewMode = 'table'"
+                    <button type="button" @click="countryViewModes.traffic = 'table'"
                             class="dash-view-btn"
-                            :class="countryViewMode === 'table' ? 'is-active' : ''">
+                            :class="countryViewModes.traffic === 'table' ? 'is-active' : ''">
                         <x-heroicon-m-table-cells class="w-4 h-4"/>
                         <span>{{ __('Table') }}</span>
                     </button>
@@ -324,18 +330,18 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </x-slot:actions>
 
             <x-slot:top>
-                <div wire:ignore x-show="ss.traffic === 'traffic_countries' && countryViewMode === 'map'" class="dash-map-section">
+                <div wire:ignore x-show="ss.traffic === 'traffic_countries' && countryViewModes.traffic === 'map'" class="dash-map-section">
                     <div class="dash-map-grid">
                         {{-- Left Column: Map --}}
                         <div class="dash-map-card"
-                             x-data="choroplethMap({ containerId: 'ga4-world-map', data: countryMapData, metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: selectedCountryCodes })"
-                             x-effect="updateData(countryMapData, metricLabels[sections.traffic.sortCol] || 'Sessions', selectedCountryCodes)"
-                             @country-selected.window="handleMapCountrySelected($event.detail.code)">
+                             x-data="choroplethMap({ containerId: 'ga4-traffic-world-map', data: getCountryMapData('traffic'), metricLabel: metricLabels[sections.traffic.sortCol] || 'Sessions', selectedRegions: getSelectedCountryCodes('traffic') })"
+                             x-effect="updateData(getCountryMapData('traffic'), metricLabels[sections.traffic.sortCol] || 'Sessions', getSelectedCountryCodes('traffic'))"
+                             @country-selected.window="handleSectionMapCountrySelected('traffic', $event.detail.code)">
                             <div class="dash-map-header" style="justify-content: flex-end;">
                                 <div class="flex items-center gap-2">
                                     <button type="button"
                                             x-show="(sections.traffic.searchQuery || '').trim().length > 0"
-                                            @click="resetCountryFilters()"
+                                            @click="resetSectionCountryFilters('traffic')"
                                             class="dash-map-reset-btn"
                                             title="{{ __('Clear country filter') }}">
                                         <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
@@ -344,7 +350,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     <span class="dash-map-badge" x-text="metricLabels[sections.traffic.sortCol] || 'Sessions'"></span>
                                 </div>
                             </div>
-                            <div id="ga4-world-map" class="dash-map-canvas"></div>
+                            <div id="ga4-traffic-world-map" class="dash-map-canvas"></div>
                         </div>
 
                         {{-- Right Column: Leaderboard --}}
@@ -355,10 +361,10 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                                     <span>{{ __('Top Countries Leaderboard') }}</span>
                                 </h4>
                                 <div class="dash-leaderboard-list">
-                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb'">
+                                    <template x-for="(row, idx) in (sections.traffic.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb_traffic'">
                                         <div class="dash-leaderboard-item"
-                                             @click="toggleCountryFilter(row.name || row.id)"
-                                             :class="isCountrySelected(row.name || row.id) ? 'is-active' : ''">
+                                             @click="toggleSectionCountryFilter('traffic', row.name || row.id)"
+                                             :class="isSectionCountrySelected('traffic', row.name || row.id) ? 'is-active' : ''">
                                             <div class="flex items-center gap-2 truncate pr-2">
                                                 <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
                                                 <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
@@ -378,13 +384,16 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                 </div>
             </x-slot:top>
 
-            <table class="ga4-table" x-show="ss.traffic !== 'traffic_countries' || countryViewMode === 'table'">
+            <table class="ga4-table" x-show="ss.traffic !== 'traffic_countries' || countryViewModes.traffic === 'table'">
                 <thead>
                 <tr>
                     <th><span x-text="(tabConfig[ss.traffic] && tabConfig[ss.traffic].label) || 'Name'"></span></th>
                     <template x-for="m in ((tabConfig[ss.traffic] && tabConfig[ss.traffic].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.traffic" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -437,6 +446,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.acquisition] && tabConfig[ss.acquisition].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.acquisition" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -467,6 +479,306 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
             </table>
         </x-data-table>
 
+        {{-- Engagement Section --}}
+        <x-data-table variant="ga4" state="sections.engagement" loading="sl.engagement" search>
+            <x-slot:header>
+                <div class="ga4-section-header">
+                    <h3 x-text="sectionConfig.engagement.label"></h3>
+                </div>
+                <div class="tab-nav-ga4">
+                    <template x-for="t in sectionConfig.engagement.tabs" :key="t">
+                        <div class="tab-ga4" :class="ss.engagement === t ? 'active' : ''"
+                             @click="setSectionSubTab('engagement', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
+                    </template>
+                </div>
+                <x-entity-attribute-filters tab="ss.engagement" />
+            </x-slot:header>
+
+            <x-slot:actions>
+                <div x-cloak x-show="ss.engagement === 'engagement_countries'" class="dash-view-toggle">
+                    <button type="button" @click="countryViewModes.engagement = 'map'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.engagement === 'map' ? 'is-active' : ''">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewModes.engagement = 'table'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.engagement === 'table' ? 'is-active' : ''">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <x-slot:top>
+                <div wire:ignore x-show="ss.engagement === 'engagement_countries' && countryViewModes.engagement === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        {{-- Left Column: Map --}}
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'ga4-engagement-world-map', data: getCountryMapData('engagement'), metricLabel: metricLabels[sections.engagement.sortCol] || 'Sessions', selectedRegions: getSelectedCountryCodes('engagement') })"
+                             x-effect="updateData(getCountryMapData('engagement'), metricLabels[sections.engagement.sortCol] || 'Sessions', getSelectedCountryCodes('engagement'))"
+                             @country-selected.window="handleSectionMapCountrySelected('engagement', $event.detail.code)">
+                            <div class="dash-map-header" style="justify-content: flex-end;">
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            x-show="(sections.engagement.searchQuery || '').trim().length > 0"
+                                            @click="resetSectionCountryFilters('engagement')"
+                                            class="dash-map-reset-btn"
+                                            title="{{ __('Clear country filter') }}">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                        <span>{{ __('Reset Selection') }}</span>
+                                    </button>
+                                    <span class="dash-map-badge" x-text="metricLabels[sections.engagement.sortCol] || 'Sessions'"></span>
+                                </div>
+                            </div>
+                            <div id="ga4-engagement-world-map" class="dash-map-canvas"></div>
+                        </div>
+
+                        {{-- Right Column: Leaderboard --}}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-4 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (sections.engagement.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb_eng'">
+                                        <div class="dash-leaderboard-item"
+                                             @click="toggleSectionCountryFilter('engagement', row.name || row.id)"
+                                             :class="isSectionCountrySelected('engagement', row.name || row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatMetricValue(sections.engagement.sortCol || 'sessions', row[sections.engagement.sortCol || 'sessions'])"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </x-slot:top>
+
+            <table class="ga4-table" x-show="ss.engagement !== 'engagement_countries' || countryViewModes.engagement === 'table'">
+                <thead>
+                <tr>
+                    <th><span x-text="(tabConfig[ss.engagement] && tabConfig[ss.engagement].label) || 'Name'"></span></th>
+                    <template x-for="m in ((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics) || [])" :key="m">
+                        <x-data-table.column state="sections.engagement" key-bind="m">
+                            <span x-text="metricLabels[m] || m"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, idx) in sections.engagement.paginatedRows" :key="(row.id || idx) + '_' + idx">
+                    <x-data-table.row>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                            </div>
+                        </td>
+                        <template x-for="m in ((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics) || [])" :key="m">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill"
+                                         :style="`width: ${(row[m] / sectionMaxMetric('engagement', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                </div>
+                            </td>
+                        </template>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="sections.engagement.paginatedRows.length === 0">
+                    <td :colspan="((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics && tabConfig[ss.engagement].metrics.length) || 4) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
+        {{-- Ecommerce Section --}}
+        <x-data-table variant="ga4" state="sections.ecommerce" loading="sl.ecommerce" search>
+            <x-slot:header>
+                <div class="ga4-section-header">
+                    <h3 x-text="sectionConfig.ecommerce.label"></h3>
+                </div>
+                <div class="tab-nav-ga4">
+                    <template x-for="t in sectionConfig.ecommerce.tabs" :key="t">
+                        <div class="tab-ga4" :class="ss.ecommerce === t ? 'active' : ''"
+                             @click="setSectionSubTab('ecommerce', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
+                    </template>
+                </div>
+                <x-entity-attribute-filters tab="ss.ecommerce" />
+            </x-slot:header>
+
+            <x-slot:actions>
+                <div x-cloak x-show="ss.ecommerce === 'ecommerce_countries'" class="dash-view-toggle">
+                    <button type="button" @click="countryViewModes.ecommerce = 'map'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.ecommerce === 'map' ? 'is-active' : ''">
+                        <x-heroicon-m-globe-alt class="w-4 h-4"/>
+                        <span>{{ __('Map') }}</span>
+                    </button>
+                    <button type="button" @click="countryViewModes.ecommerce = 'table'"
+                            class="dash-view-btn"
+                            :class="countryViewModes.ecommerce === 'table' ? 'is-active' : ''">
+                        <x-heroicon-m-table-cells class="w-4 h-4"/>
+                        <span>{{ __('Table') }}</span>
+                    </button>
+                </div>
+            </x-slot:actions>
+
+            <x-slot:top>
+                <div wire:ignore x-show="ss.ecommerce === 'ecommerce_countries' && countryViewModes.ecommerce === 'map'" class="dash-map-section">
+                    <div class="dash-map-grid">
+                        {{-- Left Column: Map --}}
+                        <div class="dash-map-card"
+                             x-data="choroplethMap({ containerId: 'ga4-ecommerce-world-map', data: getCountryMapData('ecommerce'), metricLabel: metricLabels[sections.ecommerce.sortCol] || 'Purchase Revenue', selectedRegions: getSelectedCountryCodes('ecommerce') })"
+                             x-effect="updateData(getCountryMapData('ecommerce'), metricLabels[sections.ecommerce.sortCol] || 'Purchase Revenue', getSelectedCountryCodes('ecommerce'))"
+                             @country-selected.window="handleSectionMapCountrySelected('ecommerce', $event.detail.code)">
+                            <div class="dash-map-header" style="justify-content: flex-end;">
+                                <div class="flex items-center gap-2">
+                                    <button type="button"
+                                            x-show="(sections.ecommerce.searchQuery || '').trim().length > 0"
+                                            @click="resetSectionCountryFilters('ecommerce')"
+                                            class="dash-map-reset-btn"
+                                            title="{{ __('Clear country filter') }}">
+                                        <x-heroicon-m-x-mark class="w-3.5 h-3.5"/>
+                                        <span>{{ __('Reset Selection') }}</span>
+                                    </button>
+                                    <span class="dash-map-badge" x-text="metricLabels[sections.ecommerce.sortCol] || 'Purchase Revenue'"></span>
+                                </div>
+                            </div>
+                            <div id="ga4-ecommerce-world-map" class="dash-map-canvas"></div>
+                        </div>
+
+                        {{-- Right Column: Leaderboard --}}
+                        <div class="dash-leaderboard-card">
+                            <div>
+                                <h4 class="dash-map-title mb-4 flex items-center gap-1.5">
+                                    <x-heroicon-m-trophy class="w-4 h-4 text-amber-500"/>
+                                    <span>{{ __('Top Countries Leaderboard') }}</span>
+                                </h4>
+                                <div class="dash-leaderboard-list">
+                                    <template x-for="(row, idx) in (sections.ecommerce.sortedRows || []).slice(0, 20)" :key="(row.id || row.name || idx) + '_lb_ecom'">
+                                        <div class="dash-leaderboard-item"
+                                             @click="toggleSectionCountryFilter('ecommerce', row.name || row.id)"
+                                             :class="isSectionCountrySelected('ecommerce', row.name || row.id) ? 'is-active' : ''">
+                                            <div class="flex items-center gap-2 truncate pr-2">
+                                                <span class="dash-leaderboard-rank" x-text="(idx + 1) + '.'"></span>
+                                                <span class="dash-leaderboard-name" x-text="row.name || row.id"></span>
+                                            </div>
+                                            <div class="flex items-center shrink-0">
+                                                <span class="dash-leaderboard-metric" x-text="formatMetricValue(sections.ecommerce.sortCol || 'purchase_revenue', row[sections.ecommerce.sortCol || 'purchase_revenue'])"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="dash-map-footnote">
+                                {{ __('Click any country on the map or leaderboard to filter dashboard.') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </x-slot:top>
+
+            <table class="ga4-table" x-show="ss.ecommerce !== 'ecommerce_countries' || countryViewModes.ecommerce === 'table'">
+                <thead>
+                <tr>
+                    <th><span x-text="(tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].label) || 'Name'"></span></th>
+                    <template x-for="m in ((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics) || [])" :key="m">
+                        <x-data-table.column state="sections.ecommerce" key-bind="m">
+                            <span x-text="metricLabels[m] || m"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, idx) in sections.ecommerce.paginatedRows" :key="(row.id || idx) + '_' + idx">
+                    <x-data-table.row>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                            </div>
+                        </td>
+                        <template x-for="m in ((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics) || [])" :key="m">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill"
+                                         :style="`width: ${(row[m] / sectionMaxMetric('ecommerce', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                </div>
+                            </td>
+                        </template>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="sections.ecommerce.paginatedRows.length === 0">
+                    <td :colspan="((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics && tabConfig[ss.ecommerce].metrics.length) || 5) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
+        {{-- Products Section --}}
+        <x-data-table variant="ga4" state="sections.products" loading="sl.products" search>
+            <x-slot:header>
+                <div class="ga4-section-header">
+                    <h3 x-text="sectionConfig.products.label"></h3>
+                </div>
+                <div class="tab-nav-ga4">
+                    <template x-for="t in sectionConfig.products.tabs" :key="t">
+                        <div class="tab-ga4" :class="ss.products === t ? 'active' : ''"
+                             @click="setSectionSubTab('products', t)" x-text="(tabConfig[t] && tabConfig[t].label) || t"></div>
+                    </template>
+                </div>
+                <x-entity-attribute-filters tab="ss.products" />
+            </x-slot:header>
+
+            <table class="ga4-table">
+                <thead>
+                <tr>
+                    <th><span x-text="(tabConfig[ss.products] && tabConfig[ss.products].label) || 'Name'"></span></th>
+                    <template x-for="m in ((tabConfig[ss.products] && tabConfig[ss.products].metrics) || [])" :key="m">
+                        <x-data-table.column state="sections.products" key-bind="m">
+                            <span x-text="metricLabels[m] || m"></span>
+                        </x-data-table.column>
+                    </template>
+                </tr>
+                </thead>
+                <tbody>
+                <template x-for="(row, idx) in sections.products.paginatedRows" :key="(row.id || idx) + '_' + idx">
+                    <x-data-table.row>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                            </div>
+                        </td>
+                        <template x-for="m in ((tabConfig[ss.products] && tabConfig[ss.products].metrics) || [])" :key="m">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="formatMetricValue(m, row[m])"></div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar-fill"
+                                         :style="`width: ${(row[m] / sectionMaxMetric('products', m)) * 100}%; background: ${metricColors[m] || 'var(--ga4-sessions)'}`"></div>
+                                </div>
+                            </td>
+                        </template>
+                    </x-data-table.row>
+                </template>
+                <tr x-show="sections.products.paginatedRows.length === 0">
+                    <td :colspan="((tabConfig[ss.products] && tabConfig[ss.products].metrics && tabConfig[ss.products].metrics.length) || 6) + 1" class="text-center py-8 text-gray-500 dark:text-gray-400">{{ __('No data available.') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </x-data-table>
+
         {{-- Events Section --}}
         <x-data-table variant="ga4" state="sections.events" loading="sl.events" search>
             <x-slot:header>
@@ -489,6 +801,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.events] && tabConfig[ss.events].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.events" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>
@@ -541,6 +856,9 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                     <template x-for="m in ((tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].metrics) || [])" :key="m">
                         <x-data-table.column state="sections.adtouchpoints" key-bind="m">
                             <span x-text="metricLabels[m] || m"></span>
+                            <template x-if="['reach', 'new_users', 'total_users'].includes(m)">
+                                <x-analytics-warning :message="\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()" />
+                            </template>
                         </x-data-table.column>
                     </template>
                 </tr>

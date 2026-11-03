@@ -11,7 +11,7 @@
         dateEnd: @entangle('dateEnd'),
         activeTab: @entangle('activeTab'),
         searchTypesEnabled: @js(\Filament\Facades\Filament::getTenant()?->supportsGscSearchTypes() ?? false),
-        analyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree()),
+        analyticsCatalog: @js(\App\Services\Analytics\GscAnalyticsCatalog::tree(\Filament\Facades\Filament::getTenant()?->getGscConfiguredSearchTypes())),
         csrfToken: @js(csrf_token()),
         intentOptions: {
             'transactional': @js(__('Transactional')),
@@ -69,7 +69,7 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                             @foreach($accounts as $id => $url)
                                 <div
                                     x-show="searchAccount === '' || '{{ strtolower(addslashes($url)) }}'.includes(searchAccount.toLowerCase()) || '{{ strtolower($id) }}'.includes(searchAccount.toLowerCase())"
-                                    @click="selectedAccount = '{{ $id }}'; $wire.set('selectedAccount', '{{ $id }}'); open = false;"
+                                    @click="selectedAccount = '{{ $id }}'; account = '{{ $id }}'; open = false;"
                                     class="flex gap-x-3 items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md cursor-pointer transition-all duration-150 border"
                                     :class="selectedAccount == '{{ $id }}' ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800' : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'">
                                     <div

@@ -364,6 +364,14 @@
             if (!isset($config['google_search_console']['calculate_synthetics'])) {
                 $config['google_search_console']['calculate_synthetics'] = true;
             }
+            if (!isset($config['google_search_console']['additional_search_types'])) {
+                $rawSearchTypes = $config['google_search_console']['search_types'] ?? [];
+                if (is_array($rawSearchTypes) && !empty($rawSearchTypes)) {
+                    $config['google_search_console']['additional_search_types'] = array_values(array_diff($rawSearchTypes, ['web']));
+                } else {
+                    $config['google_search_console']['additional_search_types'] = [];
+                }
+            }
             if (!isset($config['facebook_marketing']['metrics_level'])) {
                 $config['facebook_marketing']['metrics_level'] = 'AD';
             }
@@ -1007,7 +1015,7 @@
 
             // Remove fields rendered manually in secondary sections (not from schema)
             if ($this->activeChannel === 'google_search_console') {
-                unset($fields['calculate_synthetics']);
+                unset($fields['calculate_synthetics'], $fields['additional_search_types']);
             }
             if ($this->activeChannel === 'facebook_marketing') {
                 unset($fields['metric_set'], $fields['breakdown_passes']);
@@ -1137,6 +1145,25 @@
             }
 
             if ($this->activeChannel === 'google_search_console') {
+                $secondarySections[] = \Filament\Forms\Components\Section::make(__('Search Types Synchronization'))
+                    ->description(__('Configure which Search Console dataset types to collect and normalize.'))
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('gsc_search_types_warning')
+                            ->hiddenLabel()
+                            ->content(view('filament.app.components.data-sources.gsc-search-types-warning')),
+                        \Filament\Forms\Components\CheckboxList::make($this->activeChannel.'.additional_search_types')
+                            ->label(__('Additional Search Types'))
+                            ->helperText(__('Select additional search types to synchronize. Standard search (Web) is always included by default.'))
+                            ->options([
+                                'image' => __('Images'),
+                                'video' => __('Videos'),
+                                'news' => __('News (Google Search tab)'),
+                                'discover' => __('Discover'),
+                                'googleNews' => __('Google News (site and app)'),
+                            ])
+                            ->default([]),
+                    ])->columns(1);
+
                 $gscSchema = [
                     \Filament\Forms\Components\Toggle::make($this->activeChannel.'.calculate_synthetics')
                         ->label(__('Enable Synthetic Calculations (Möbius Reconciliation)'))
@@ -1285,7 +1312,12 @@
                     continue; // Feature removed: we always send the max range
                 }
 
-                if ($type === 'boolean') {
+                if ($type === 'array' && isset($definition['options'])) {
+                    $advanced[] = Select::make($fieldKey)->multiple()
+                        ->label($key === 'additional_recipes' ? __('Additional GA4 reports') : Str::headline($key))
+                        ->options($definition['options'])->default($definition['default'] ?? [])
+                        ->helperText(__('New report families require their own history to be collected. Existing scopes are kept separate.'));
+                } elseif ($type === 'boolean') {
                     $advanced[] = Toggle::make($fieldKey)
                         ->label(Str::headline($key))
                         ->default($definition['default'] ?? false);
@@ -2102,6 +2134,7 @@
             // Detect if any channel's enabled state changed
             $hasChannelToggle = false;
             $hasBreakdownChange = false;
+            $hasGscSearchTypeAddition = false;
             if ($tenant->last_deployed_at) {
                 foreach ($proposedState as $channel => $config) {
                     if (!is_array($config)) continue;
@@ -2123,6 +2156,19 @@
 
                     if ($oldPass !== $newPass || $oldMetricSet !== $newMetricSet) {
                         $hasBreakdownChange = true;
+                    }
+                }
+
+                // Detect if any NEW search type was added to Google Search Console
+                if ($this->activeChannel === 'google_search_console' && $tenant->supportsGscSearchTypes()) {
+                    $oldTypes = $tenant->getGscConfiguredSearchTypes();
+                    $newAdditional = (array)($proposedState['google_search_console']['additional_search_types'] ?? []);
+                    $newTypes = array_values(array_unique(array_merge(['web'], array_intersect($newAdditional, \App\Services\Analytics\GscAnalyticsCatalog::SEARCH_TYPES))));
+
+                    // Check if newTypes contains search types not present in oldTypes
+                    $addedTypes = array_diff($newTypes, $oldTypes);
+                    if (!empty($addedTypes)) {
+                        $hasGscSearchTypeAddition = true;
                     }
                 }
             }
@@ -2366,7 +2412,7 @@
 
                 // If we reached here, either it's a first deployment (safe to save offline)
                 // or the remote validation succeeded. We now persist the UI configuration locally.
-                $allowedArrayKeys = ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE', 'breakdown_passes'];
+                $allowedArrayKeys = ['CAMPAIGN', 'ADSET', 'AD', 'CREATIVE', 'breakdown_passes', 'search_types'];
                 foreach ($payload as $k => $v) {
                     if (!is_array($v) || in_array($k, $allowedArrayKeys, true)) {
                         $dbState[$channel][$k] = $v;
@@ -2485,6 +2531,24 @@
                 } catch (\Exception $e) {
                     \Filament\Notifications\Notification::make()
                         ->title(__('Configuration Saved but Nuclear Resync Failed'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            } elseif ($hasGscSearchTypeAddition) {
+                try {
+                    app(\App\Services\RemoteEngineService::class)->triggerHistoricalResync($tenant, [$this->activeChannel], false);
+                    $tenant->update(['last_historical_resync_at' => now()]);
+
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Search Types Updated'))
+                        ->body(__('A historical resync without wipe has been automatically initiated for :channel to backfill historical metrics for newly enabled search types.', ['channel' => $this->getChannelLabel($this->activeChannel)]))
+                        ->warning()
+                        ->persistent()
+                        ->send();
+                } catch (\Exception $e) {
+                    \Filament\Notifications\Notification::make()
+                        ->title(__('Configuration Saved but Historical Resync Failed'))
                         ->body($e->getMessage())
                         ->danger()
                         ->send();

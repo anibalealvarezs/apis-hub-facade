@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'webhooks/paypal',
             'api/dashboard/widget/*/data',
             'demo/api/widget/*/data',
+            'api/internal/v1/tenant-dashboards/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

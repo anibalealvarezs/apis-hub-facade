@@ -310,6 +310,23 @@ class Project extends Model
         return version_compare(ltrim($this->apisHubRelease?->version_tag ?? '0', 'v'), '1.18.3', '>=');
     }
 
+    /**
+     * Get the configured search types for Google Search Console.
+     * Always includes 'web' by default.
+     *
+     * @return array<int, string>
+     */
+    public function getGscConfiguredSearchTypes(): array
+    {
+        $configured = $this->sync_config['google_search_console']['search_types'] ?? null;
+        if (is_array($configured) && !empty($configured)) {
+            $types = array_values(array_unique(array_merge(['web'], array_intersect($configured, \App\Services\Analytics\GscAnalyticsCatalog::SEARCH_TYPES))));
+            return !empty($types) ? $types : ['web'];
+        }
+
+        return ['web'];
+    }
+
     public function supportsAiClassification(): bool
     {
         if (!$this->releaseSupportsAiClassification()) {
@@ -338,9 +355,9 @@ class Project extends Model
     {
         parent::boot();
         static::creating(function ($project) {
-            $project->monitoring_token = \Illuminate\Support\Str::uuid();
-            $project->public_api_key = bin2hex(random_bytes(32));
-            $project->remote_admin_api_key = bin2hex(random_bytes(32));
+            $project->monitoring_token = $project->monitoring_token ?: \Illuminate\Support\Str::uuid();
+            $project->public_api_key = $project->public_api_key ?: bin2hex(random_bytes(32));
+            $project->remote_admin_api_key = $project->remote_admin_api_key ?: bin2hex(random_bytes(32));
 
             // Auto-assign the user's default billing profile if not explicitly set
             if (empty($project->billing_profile_id) && !empty($project->user_id)) {

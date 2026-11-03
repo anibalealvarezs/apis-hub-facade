@@ -127,7 +127,12 @@ class KpiPayloadBuilder
 
         // Allow explicit filters configured in state or template (e.g. account_type => 'instagram_account' or 'facebook_page')
         if (!empty($state['filters']) && is_array($state['filters'])) {
-            $dependentNode['filters'] = array_merge($dependentNode['filters'] ?? [], $state['filters']);
+            $sanitizedStateFilters = array_filter(
+                $state['filters'],
+                static fn ($k) => !str_starts_with((string)$k, '_'),
+                ARRAY_FILTER_USE_KEY
+            );
+            $dependentNode['filters'] = array_merge($dependentNode['filters'] ?? [], $sanitizedStateFilters);
         }
         if (!empty($state['account_type'])) {
             $dependentNode['filters']['account_type'] = $state['account_type'];
@@ -150,13 +155,18 @@ class KpiPayloadBuilder
         }
 
         // GSC stores data separated by searchAppearance (standard vs AMP/etc).
-        // Without filtering to 'standard', metrics double-count because both
-        // dimension sets are summed independently.
-        // Only apply when NOT grouping BY searchAppearance itself.
+        // Without filtering to 'standard', metrics double-count on temporal aggregations
+        // because both dimension sets are summed independently.
+        // However, on dimensional breakdowns (like page, query, country, device),
+        // filtering by searchAppearance = 'standard' causes 0 rows because those records
+        // are not indexed under searchAppearance in the aggregation profile.
         $granularity = $state['granularity'] ?? 'daily';
+        $temporalGranularities = [
+            'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+            'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+        ];
         if (($state['dependent_channel'] ?? '') === 'google_search_console'
-            && $granularity !== 'search_appearance'
-            && $granularity !== 'dimensions.searchAppearance'
+            && in_array($granularity, $temporalGranularities, true)
             && !isset($dependentNode['filters']['dimensions.searchAppearance'])
         ) {
             $dependentNode['filters']['dimensions.searchAppearance'] = 'standard';
@@ -316,7 +326,12 @@ class KpiPayloadBuilder
         }
 
         if (!empty($var['filters']) && is_array($var['filters'])) {
-            $node['filters'] = array_merge($node['filters'] ?? [], $var['filters']);
+            $sanitizedVarFilters = array_filter(
+                $var['filters'],
+                static fn ($k) => !str_starts_with((string)$k, '_'),
+                ARRAY_FILTER_USE_KEY
+            );
+            $node['filters'] = array_merge($node['filters'] ?? [], $sanitizedVarFilters);
         }
         if (!empty($var['account_type'])) {
             $node['filters']['account_type'] = $var['account_type'];
@@ -333,9 +348,12 @@ class KpiPayloadBuilder
             }
         }
 
+        $temporalGranularities = [
+            'daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annually', 'lifetime',
+            'trailing_weekly', 'trailing_monthly', 'trailing_quarterly', 'trailing_semiannual', 'trailing_annually',
+        ];
         if (($var['independent_channel'] ?? '') === 'google_search_console'
-            && $granularity !== 'search_appearance'
-            && $granularity !== 'dimensions.searchAppearance'
+            && in_array($granularity, $temporalGranularities, true)
             && !isset($node['filters']['dimensions.searchAppearance'])
         ) {
             $node['filters']['dimensions.searchAppearance'] = 'standard';

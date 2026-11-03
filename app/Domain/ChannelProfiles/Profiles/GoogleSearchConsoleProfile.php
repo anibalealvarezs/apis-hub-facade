@@ -36,6 +36,13 @@ class GoogleSearchConsoleProfile extends AbstractChannelProfile
                 'granular_sync' => $this->systemField('boolean', true),
                 
                 'calculate_synthetics' => $this->systemField('boolean', true),
+                'additional_search_types' => $this->configurableField('array', [], [
+                    'image' => 'Images',
+                    'video' => 'Videos',
+                    'news' => 'News (Google Search tab)',
+                    'discover' => 'Discover',
+                    'googleNews' => 'Google News (site and app)',
+                ]),
                 
                 'feature_toggles' => $this->systemField('object', [
                     'cache_aggregations' => true,

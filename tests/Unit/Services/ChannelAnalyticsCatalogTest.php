@@ -71,7 +71,10 @@ class ChannelAnalyticsCatalogTest extends TestCase
         $this->assertSame('traffic_matrix', $tree['scopes']['traffic_matrix']['filter']['dimensions.scope']);
         $this->assertArrayHasKey('dimensions.source', $tree['dimensions']);
         $this->assertArrayHasKey('dimensions.landing_page', $tree['dimensions']);
-        $this->assertArrayNotHasKey('dimensions.sessionSourceMedium', $tree['dimensions']);
+        $this->assertNotContains('traffic_matrix', $tree['dimensions']['dimensions.sessionSourceMedium']['scopes']);
+        $this->assertContains('engagement_matrix', $tree['dimensions']['dimensions.sessionSourceMedium']['scopes']);
+        $this->assertNotContains('purchaseRevenue', $tree['scopes']['product_matrix']['metrics']);
+        $this->assertTrue($tree['scopes']['product_matrix']['requires_opt_in']);
         $this->assertSame('source_distinct_for_requested_window', $tree['metrics']['totalUsers']['reducer']);
     }
 

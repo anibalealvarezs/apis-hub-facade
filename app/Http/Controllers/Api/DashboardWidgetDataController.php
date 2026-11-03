@@ -14,6 +14,7 @@
     class DashboardWidgetDataController extends Controller
     {
         private bool $usesGa4Reporting = false;
+        private bool $usesGa4UserMetricReporting = false;
 
         public function __construct(
             protected WidgetDataService   $widgetDataService,
@@ -25,6 +26,7 @@
         public function show(Request $request, DashboardWidget $widget): JsonResponse
         {
             $this->usesGa4Reporting = false;
+            $this->usesGa4UserMetricReporting = false;
             $user = $request->user();
             $locale = $request->query('lang')
                 ?? $request->input('lang')
@@ -114,7 +116,11 @@
             if ($widget->source_type === 'kpi') $reportingConfig[] = $widget->customKpi?->filters ?? [];
             if ($widget->source_type === 'derived_metric') $reportingConfig[] = $widget->derivedMetric?->source_series ?? [];
             $this->usesGa4Reporting = \App\Services\Analytics\Ga4ReportingSemantics::containsGa4($reportingConfig);
-            if ($this->usesGa4Reporting) $resolvedControls['_analytics_semantics_version'] = 1;
+            if ($this->usesGa4Reporting) $resolvedControls['_analytics_semantics_version'] = 2;
+            $userMetricConfiguration = [array_replace($widget->source_config ?? [], $resolvedControls)];
+            if ($widget->source_type === 'kpi') $userMetricConfiguration[] = $widget->customKpi?->filters ?? [];
+            if ($widget->source_type === 'derived_metric') $userMetricConfiguration[] = $widget->derivedMetric?->source_series ?? [];
+            $usesGa4UserMetrics = \App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics($userMetricConfiguration);
 
             if (!$dashboard->is_public && $user && (!empty($resolvedControls['channel']) || !empty($widget->source_config['channel']))) {
                 $assetAccess = app(\App\Services\CollaboratorAssetAccessService::class);
@@ -300,7 +306,7 @@
                     ]);
                 }
 
-                if ($widget->widget_type === 'scatter_plot') {
+                if ($widget->widget_type === 'scatter_plot' || (isset($data['scatter_data']) && $widget->widget_type === 'line_chart')) {
                     if (isset($data['scatter_data']['metrics']) && is_array($data['scatter_data']['metrics']) && count($data['scatter_data']['metrics']) >= 2) {
                         $resolvedControls['metrics'] = $data['scatter_data']['metrics'];
                     } elseif (empty($resolvedControls['metrics']) || count($resolvedControls['metrics']) < 2) {
@@ -315,6 +321,9 @@
                 }
 
                 $effectiveWidgetType = $widget->widget_type;
+                if (isset($data['scatter_data']) && $effectiveWidgetType === 'line_chart') {
+                    $effectiveWidgetType = 'scatter_plot';
+                }
 
                 if (isset($data['anomaly_detected'])) {
                     $chartTypes = ['line_chart', 'bar_chart', 'sparkline', 'anomaly_chart'];
@@ -345,8 +354,8 @@
                                 ?? ($widget->customKpi->filters['_ui_state']['dependent_metric'] ?? null);
                             $anomalyCleanMetric = preg_replace('/^trend_(?:total|average)_/', '', (string)$anomalyMetric);
                             $anomalyMetricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                            $anomalyRatioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                            $anomalyCurrencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $anomalyRatioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
+                            $anomalyCurrencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
                             $isAnomalyRatio = in_array($anomalyCleanMetric, $anomalyRatioMetrics, true);
                             $isAnomalyCurrency = in_array($anomalyCleanMetric, $anomalyCurrencyMetrics, true);
 
@@ -421,7 +430,8 @@
                             'label' => 'Anomaly Rate',
                         ];
                     }
-                } elseif ($effectiveWidgetType === 'combo_chart' && isset($data['series']['macd_line'])) {
+                } elseif (isset($data['series']['macd_line']) && in_array($effectiveWidgetType, ['combo_chart', 'line_chart'], true)) {
+                    $effectiveWidgetType = 'combo_chart';
                     $series = $data['series'];
                     $data = [
                         'labels'   => $series['dates'] ?? [],
@@ -448,7 +458,9 @@
                                 'type'            => 'bar',
                                 'label'           => 'Histogram',
                                 'data'            => $series['histogram'],
-                                'backgroundColor' => array_map(fn($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.5)' : 'rgba(239, 68, 68, 0.5)', $series['histogram'] ?? []),
+                                'backgroundColor' => array_map(fn($v) => $v >= 0 ? 'rgba(34, 197, 94, 0.75)' : 'rgba(239, 68, 68, 0.75)', $series['histogram'] ?? []),
+                                'borderColor'     => array_map(fn($v) => $v >= 0 ? '#16a34a' : '#dc2626', $series['histogram'] ?? []),
+                                'borderWidth'     => 1,
                             ],
                         ],
                     ];
@@ -829,7 +841,7 @@
                     $metrics = $resolvedControls['metrics'] ?? array_keys($summary);
 
                     $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                    $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                    $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
 
                     $rows = [];
                     foreach ($metrics as $metric) {
@@ -845,7 +857,7 @@
                         }
 
                         $isRatio = in_array($metric, $ratioMetrics);
-                        $isTime = in_array($metric, ['average_session_duration', 'post_video_avg_time_watched']);
+                        $isTime = in_array($metric, ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched']);
                         if ($isRatio) {
                             $current = is_numeric($current) ? round((float)$current * 100, 4) : $current;
                             $prev = ($prev !== null && is_numeric($prev)) ? round((float)$prev * 100, 4) : $prev;
@@ -903,7 +915,7 @@
                             'purchase_roas'         => 'ROAS',
                         ];
 
-                        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                        $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
                         $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas'];
                         $granularity = $resolvedControls['granularity'] ?? 'daily';
 
@@ -945,7 +957,7 @@
 
                             $isRatio = in_array($cleanKey, $ratioMetrics);
                             $isCurrency = in_array($cleanKey, $currencyMetrics);
-                            $isTime = in_array($cleanKey, ['average_session_duration', 'post_video_avg_time_watched']);
+                            $isTime = in_array($cleanKey, ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched']);
                             $label = $metricLabels[$cleanKey] ?? ucwords(str_replace('_', ' ', $cleanKey));
 
                             $format = 'number';
@@ -964,7 +976,7 @@
                             ];
                         }
 
-                        $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                        $timeMetrics = ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched'];
 
                         $rawRows = [];
                         foreach ($chartData as $row) {
@@ -1021,8 +1033,8 @@
                         ];
                     } else {
                         $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-                        $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                        $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
+                        $timeMetrics = ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched'];
                         $columns = [];
                         foreach (array_keys($tableData[0]) as $key) {
                             $label = $metricLabels[$key] ?? ucfirst(str_replace('_', ' ', $key));
@@ -1125,11 +1137,23 @@
                             $minValue = min($numericValues);
 
                             if (str_contains($cleanKey, 'position')) {
-                                $data['min'] = (float)$maxValue;
-                                $data['max'] = $minValue > 0 ? (float)$minValue : 1.0;
+                                // For position, lower is better. If only 1 data point (e.g. lifetime), set a meaningful scale:
+                                // min (worst boundary) = max(20.0, ceil($maxValue * 1.5)), max (best boundary) = 1.0
+                                if ($minValue == $maxValue) {
+                                    $data['min'] = (float) max(20.0, ceil($maxValue * 1.5));
+                                    $data['max'] = 1.0;
+                                } else {
+                                    $data['min'] = (float)$maxValue;
+                                    $data['max'] = $minValue > 0 ? (float)$minValue : 1.0;
+                                }
                             } else {
-                                $data['min'] = 0.0;
-                                $data['max'] = $maxValue > 0 ? (float)$maxValue : 1.0;
+                                if ($minValue == $maxValue && $maxValue > 0) {
+                                    $data['min'] = 0.0;
+                                    $data['max'] = (float) ($maxValue > 1.0 ? ceil($maxValue * 1.25) : 1.0);
+                                } else {
+                                    $data['min'] = 0.0;
+                                    $data['max'] = $maxValue > 0 ? (float)$maxValue : 1.0;
+                                }
                             }
                         }
                     }
@@ -1151,7 +1175,7 @@
                         }
                     } else {
                         $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-                        $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+                        $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
                         $granularity = $resolvedControls['granularity'] ?? 'daily';
                         $dateKey = isset($chartData[0]['daily']) ? 'daily' : 'date';
 
@@ -1173,6 +1197,11 @@
                         if (in_array($granularity, $timelyGranularities, true) && count($chartData) > 1) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService($ratioMetrics);
                             $chartData = $aggregator->aggregateRows($chartData, $granularity, $dateKey, $endDate ?? null);
+                        }
+
+                        // Ensure chronological ordering for time-series charts
+                        if (in_array($granularity, array_merge(['daily'], $timelyGranularities), true) && count($chartData) > 1) {
+                            usort($chartData, fn($a, $b) => strcmp((string)($a[$dateKey] ?? ''), (string)($b[$dateKey] ?? '')));
                         }
 
                         $labels = array_map(fn($row) => $row[$dateKey] ?? '', $chartData);
@@ -1269,7 +1298,7 @@
 
                                 $color = !empty($customMetricColor) ? $customMetricColor : $palette[$idx % count($palette)];
 
-                                $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                                $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
                                 $isCurrency = in_array($cleanKey, $currencyMetrics);
 
                                 $metricNaming = $resolvedControls['series_metric_namings'][0][$key]
@@ -1695,7 +1724,7 @@
                     'data'           => $data,
                     'controls'       => $resolvedControls,
                     'missing_assets' => $missingAssets,
-                    'analytics_warnings' => $this->usesGa4Reporting
+                    'analytics_warnings' => ($usesGa4UserMetrics || $this->usesGa4UserMetricReporting)
                         ? [\App\Services\Analytics\Ga4ReportingSemantics::userCountNotice()] : [],
                 ], 200, [], JSON_UNESCAPED_UNICODE);
             } catch (\Illuminate\Validation\ValidationException $e) {
@@ -1842,20 +1871,84 @@
             ]);
 
             if ($cached) {
-                $cachedDataKeys = !empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
-                \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache HIT, returning cached', [
-                    'widget_id'     => $widget->id,
-                    'kpi_id'        => $kpi->id,
-                    'controls_hash' => $controlsHash,
-                    'data_keys'     => $cachedDataKeys,
-                    'has_scatter'   => isset($cached->result['data']['scatter_data']),
-                    '_debug'        => $cached->result['data']['_debug'] ?? null,
-                ]);
+                $cachedData = $cached->result['data'] ?? [];
+                // Never serve cached "Not enough overlapping non-zero data points" failures
+                $isDebugFailure = isset($cachedData['_debug']) && str_contains((string)$cachedData['_debug'], 'Not enough overlapping non-zero data points');
 
-                return $cached->result;
+                if ($isDebugFailure) {
+                    \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Purging stale failed cache result', [
+                        'widget_id'     => $widget->id,
+                        'kpi_id'        => $kpi->id,
+                        'controls_hash' => $controlsHash,
+                    ]);
+                    $cached->delete();
+                } else {
+                    $cachedDataKeys = !empty($cached->result['data']) ? array_keys($cached->result['data']) : [];
+                    \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Cache HIT, returning cached', [
+                        'widget_id'     => $widget->id,
+                        'kpi_id'        => $kpi->id,
+                        'controls_hash' => $controlsHash,
+                        'data_keys'     => $cachedDataKeys,
+                        'has_scatter'   => isset($cached->result['data']['scatter_data']),
+                        '_debug'        => $cached->result['data']['_debug'] ?? null,
+                    ]);
+
+                    return $cached->result;
+                }
             }
 
             $uiState = $kpi->filters['_ui_state'] ?? [];
+
+            // If _ui_state is missing or incomplete, extract channel, metric, and filters from $kpi->ast
+            if (empty($uiState['dependent_metric']) && !empty($kpi->ast) && is_array($kpi->ast)) {
+                $extractMetricNode = function (array $node): ?array {
+                    if (($node['type'] ?? '') === 'metric' && !empty($node['metric'])) {
+                        $parts = explode('.', $node['metric'], 2);
+                        return [
+                            'channel' => count($parts) === 2 ? $parts[0] : null,
+                            'metric'  => count($parts) === 2 ? $parts[1] : $parts[0],
+                            'filters' => $node['filters'] ?? [],
+                        ];
+                    }
+                    return null;
+                };
+
+                if (($kpi->ast['type'] ?? '') === 'operator') {
+                    $leftInfo = $extractMetricNode($kpi->ast['left'] ?? []);
+                    if ($leftInfo) {
+                        $uiState['dependent_source_type'] = 'channel';
+                        $uiState['dependent_channel'] = $leftInfo['channel'];
+                        $uiState['dependent_metric'] = $leftInfo['metric'];
+                        if (!empty($leftInfo['filters'])) {
+                            $uiState['filters'] = $leftInfo['filters'];
+                        }
+                    }
+
+                    // Extract independent variable from right node
+                    $rightInfo = $extractMetricNode($kpi->ast['right'] ?? []);
+                    if ($rightInfo) {
+                        $uiState['independent_variables'] = [
+                            '0' => [
+                                'independent_source_type' => 'channel',
+                                'independent_channel'     => $rightInfo['channel'],
+                                'independent_metric'      => $rightInfo['metric'],
+                                'filters'                 => $rightInfo['filters'] ?? [],
+                            ],
+                        ];
+                    }
+                } elseif (($kpi->ast['type'] ?? '') === 'metric') {
+                    $nodeInfo = $extractMetricNode($kpi->ast);
+                    if ($nodeInfo) {
+                        $uiState['dependent_source_type'] = 'channel';
+                        $uiState['dependent_channel'] = $nodeInfo['channel'];
+                        $uiState['dependent_metric'] = $nodeInfo['metric'];
+                        if (!empty($nodeInfo['filters'])) {
+                            $uiState['filters'] = $nodeInfo['filters'];
+                        }
+                    }
+                }
+            }
+
             \Illuminate\Support\Facades\Log::info('[STEP handleKpiSource] Raw _ui_state from KPI DB', [
                 'widget_id'             => $widget->id,
                 'kpi_id'                => $kpi->id,
@@ -2044,7 +2137,8 @@
             // Only allow runtime override for variables that were NOT hardcoded/predefined in the original KPI configuration
             $kpiOriginalUiState = $kpi->filters['_ui_state'] ?? [];
 
-            if (empty($kpiOriginalUiState['dependent_metric']) && !empty($runtimeMetrics[$metricIndex])) {
+            $origDepMetric = $kpiOriginalUiState['dependent_metric'] ?? $uiState['dependent_metric'] ?? null;
+            if (empty($origDepMetric) && !empty($runtimeMetrics[$metricIndex]) && trim($runtimeMetrics[$metricIndex]) !== '') {
                 $uiState['dependent_metric'] = $runtimeMetrics[$metricIndex];
             }
             $metricIndex++;
@@ -2052,8 +2146,8 @@
             if (isset($uiState['independent_variables']) && is_array($uiState['independent_variables'])) {
                 foreach ($uiState['independent_variables'] as $key => $var) {
                     $indSourceType = $var['independent_source_type'] ?? 'channel';
-                    $origIndMetric = $kpiOriginalUiState['independent_variables'][$key]['independent_metric'] ?? null;
-                    if ($indSourceType === 'channel' && empty($origIndMetric) && !empty($runtimeMetrics[$metricIndex])) {
+                    $origIndMetric = $kpiOriginalUiState['independent_variables'][$key]['independent_metric'] ?? $var['independent_metric'] ?? null;
+                    if ($indSourceType === 'channel' && empty($origIndMetric) && !empty($runtimeMetrics[$metricIndex]) && trim($runtimeMetrics[$metricIndex]) !== '') {
                         $uiState['independent_variables'][$key]['independent_metric'] = $runtimeMetrics[$metricIndex];
                     }
                     $metricIndex++;
@@ -2510,12 +2604,14 @@
                 '_debug'        => $resultData['_debug'] ?? null,
             ]);
 
-            $this->widgetDataService->cacheResult(
-                $kpi->id,
-                $project->id,
-                $controlsHash,
-                $resultData
-            );
+            if (!isset($resultData['_debug']) || !str_contains((string)$resultData['_debug'], 'Not enough overlapping non-zero data points')) {
+                $this->widgetDataService->cacheResult(
+                    $kpi->id,
+                    $project->id,
+                    $controlsHash,
+                    $resultData
+                );
+            }
 
             return $resultData;
         }
@@ -2647,7 +2743,7 @@
                 : ($granularity === 'lifetime' ? '2010-01-01' : now()->subDays(30)->format('Y-m-d'));
             $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
-            $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
+            $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
             $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
 
             $seriesCurves = [];
@@ -2841,8 +2937,8 @@
 
                             // Build table columns
                             $cleanDimName = ucwords(str_replace(['_', 'dimensions.'], [' ', ''], $breakdownDim));
-                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
-                            $timeMetrics = ['average_session_duration', 'post_video_avg_time_watched'];
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
+                            $timeMetrics = ['average_session_duration', 'user_engagement_duration', 'post_video_avg_time_watched'];
 
                             $columns = [
                                 [
@@ -3053,13 +3149,13 @@
                             $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
                             $isRatio = in_array($cleanMetric, $ratioMetrics);
 
-                            if ($granularity !== 'daily' && !empty($timeSeries)) {
+                            if ($granularity !== 'daily' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $granularity && !empty($timeSeries)) {
                                 $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                                 $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
                             }
 
                             $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
-                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+                            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
                             $isCurrency = in_array($cleanMetric, $currencyMetrics);
 
                             $metricNaming = $seriesMetricNamings[$metric]
@@ -3116,6 +3212,7 @@
                 }
 
                 $sourceSeries = $derivedMetric->source_series ?? [];
+            if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics($sourceSeries)) $this->usesGa4UserMetricReporting = true;
                 $ast = $derivedMetric->ast ?? [];
                 if (empty($sourceSeries) || empty($ast)) {
                     continue;
@@ -3239,7 +3336,7 @@
                         'account'     => $assetFilter,
                         'dateStart'   => $dateStart,
                         'dateEnd'     => $dateEnd,
-                        'granularity' => 'daily',
+                        'granularity' => $ssChannel === 'google_analytics' ? $effectiveGranularity : 'daily',
                         'metrics'     => [$ssMetric],
                     ];
 
@@ -3349,7 +3446,7 @@
                             $totals[$dimVal] += (float)$val;
                         }
 
-                        if ($effectiveGranularity !== 'daily' && $effectiveGranularity !== 'lifetime') {
+                        if ($effectiveGranularity !== 'daily' && $effectiveGranularity !== 'lifetime' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $effectiveGranularity) {
                             foreach ($groupedData as $dv => $ts) {
                                 $groupedData[$dv] = $aggregator->aggregateFlatMap($ts, $effectiveGranularity);
                             }
@@ -3370,7 +3467,7 @@
                             'sample' => array_slice($seriesData, 0, 3, true),
                         ]);
 
-                        if ($effectiveGranularity !== 'daily' && !empty($seriesData)) {
+                        if ($effectiveGranularity !== 'daily' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $effectiveGranularity && !empty($seriesData)) {
                             $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                             $seriesData = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
                         }
@@ -4127,7 +4224,7 @@
         {
             $cleanMetric = preg_replace('/^trend_(?:total|average)_/', '', $metric);
             $isRatio = in_array($cleanMetric, $ratioMetrics);
-            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
             $isCurrency = in_array($cleanMetric, $currencyMetrics);
             $mLabel = $metricLabels[$cleanMetric] ?? ucfirst($cleanMetric);
 
@@ -4238,7 +4335,7 @@
             foreach ($selectedDimValues as $dimVal) {
                 $timeSeries = $groupedData[$dimVal];
 
-                if ($granularity !== 'daily' && $granularity !== 'lifetime' && !empty($timeSeries)) {
+                if ($granularity !== 'daily' && $granularity !== 'lifetime' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $granularity && !empty($timeSeries)) {
                     $timeSeries = $aggregator->aggregateFlatMap($timeSeries, $granularity);
                 }
 
@@ -4944,6 +5041,16 @@
         public function forwardToChannelEndpoint(string $channel, string $action, array $payload): array
         {
             if ($channel === 'google_analytics') $this->usesGa4Reporting = true;
+            if ($channel === 'google_analytics' && $action === 'chart' && isset($payload['groupBy'])) {
+                $temporal = $payload['granularity'] ?? 'daily';
+                $payload['groupBy'] = array_values(array_filter(array_map(
+                    static fn ($field) => $field === 'daily' ? ($temporal === 'lifetime' ? null : $temporal) : $field,
+                    $payload['groupBy']
+                )));
+            }
+            if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics(array_replace($payload, ['channel' => $channel]))) {
+                $this->usesGa4UserMetricReporting = true;
+            }
             $t0 = microtime(true);
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] forwardToChannelEndpoint ENTER", ['channel' => $channel, 'action' => $action, 'tenant' => $payload['tenant'] ?? '?']);
 
@@ -5201,6 +5308,7 @@
             }
 
             $sourceSeries = $derivedMetric->source_series ?? [];
+            if (\App\Services\Analytics\Ga4ReportingSemantics::usesGa4UserMetrics($sourceSeries)) $this->usesGa4UserMetricReporting = true;
             $ast = $derivedMetric->ast ?? [];
 
             if (empty($sourceSeries) || empty($ast)) {
@@ -5328,7 +5436,7 @@
                     'account'     => $assetFilter,
                     'dateStart'   => $dateStart,
                     'dateEnd'     => $dateEnd,
-                    'granularity' => 'daily',
+                    'granularity' => $channel === 'google_analytics' ? $effectiveGranularity : 'daily',
                     'metrics'     => [$metric],
                 ];
 
@@ -5354,7 +5462,7 @@
                 \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] extracted seriesData for {$key}", ['count' => count($seriesData), 'sample' => array_slice($seriesData, 0, 3, true)]);
 
                 // Aggregate daily series data to target granularity before passing to compute engine
-                if ($effectiveGranularity !== 'daily' && !empty($seriesData)) {
+                if ($effectiveGranularity !== 'daily' && ($channelResponse['aggregation_granularity'] ?? 'daily') !== $effectiveGranularity && !empty($seriesData)) {
                     $aggregator = new \App\Services\Analytics\GranularityAggregationService;
                     $aggregated = $aggregator->aggregateFlatMap($seriesData, $effectiveGranularity);
                     \Illuminate\Support\Facades\Log::info('[DM_GRAN] Aggregated series data', [
@@ -5637,113 +5745,8 @@
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
             $metricLabel = $metricLabels[$metric] ?? ucfirst(str_replace('_', ' ', $metric));
 
-            $iso3to2 = [
-                'AFG'=>'AF','ALA'=>'AX','ALB'=>'AL','DZA'=>'DZ','ASM'=>'AS','AND'=>'AD','AGO'=>'AO','AIA'=>'AI','ATA'=>'AQ','ATG'=>'AG','ARG'=>'AR','ARM'=>'AM','ABW'=>'AW','AUS'=>'AU','AUT'=>'AT','AZE'=>'AZ',
-                'BHS'=>'BS','BHR'=>'BH','BGD'=>'BD','BRB'=>'BB','BLR'=>'BY','BEL'=>'BE','BLZ'=>'BZ','BEN'=>'BJ','BMU'=>'BM','BTN'=>'BT','BOL'=>'BO','BES'=>'BQ','BIH'=>'BA','BWA'=>'BW','BVT'=>'BV','BRA'=>'BR',
-                'IOT'=>'IO','BRN'=>'BN','BGR'=>'BG','BFA'=>'BF','BDI'=>'BI','CPV'=>'CV','KHM'=>'KH','CMR'=>'CM','CAN'=>'CA','CYM'=>'KY','CAF'=>'CF','TCD'=>'TD','CHL'=>'CL','CHN'=>'CN','CXR'=>'CX','CCK'=>'CC',
-                'COL'=>'CO','COM'=>'KM','COG'=>'CG','COD'=>'CD','COK'=>'CK','CRI'=>'CR','CIV'=>'CI','HRV'=>'HR','CUB'=>'CU','CUW'=>'CW','CYP'=>'CY','CZE'=>'CZ','DNK'=>'DK','DJI'=>'DJ','DMA'=>'DM','DOM'=>'DO',
-                'ECU'=>'EC','EGY'=>'EG','SLV'=>'SV','GNQ'=>'GQ','ERI'=>'ER','EST'=>'EE','SWZ'=>'SZ','ETH'=>'ET','FLK'=>'FK','FRO'=>'FO','FJI'=>'FJ','FIN'=>'FI','FRA'=>'FR','GUF'=>'GF','PYF'=>'PF','ATF'=>'TF',
-                'GAB'=>'GA','GMB'=>'GM','GEO'=>'GE','DEU'=>'DE','GHA'=>'GH','GIB'=>'GI','GRC'=>'GR','GRL'=>'GL','GRD'=>'GD','GLP'=>'GP','GUM'=>'GU','GTM'=>'GT','GGY'=>'GG','GIN'=>'GN','GNB'=>'GW','GUY'=>'GY',
-                'HTI'=>'HT','HMD'=>'HM','VAT'=>'VA','HND'=>'HN','HKG'=>'HK','HUN'=>'HU','ISL'=>'IS','IND'=>'IN','IDN'=>'ID','IRN'=>'IR','IRQ'=>'IQ','IRL'=>'IE','IMN'=>'IM','ISR'=>'IL','ITA'=>'IT','JAM'=>'JM',
-                'JPN'=>'JP','JEY'=>'JE','JOR'=>'JO','KAZ'=>'KZ','KEN'=>'KE','KIR'=>'KI','PRK'=>'KP','KOR'=>'KR','KWT'=>'KW','KGZ'=>'KG','LAO'=>'LA','LVA'=>'LV','LBN'=>'LB','LSO'=>'LS','LBR'=>'LR','LBY'=>'LY',
-                'LIE'=>'LI','LTU'=>'LT','LUX'=>'LU','MAC'=>'MO','MDG'=>'MG','MWI'=>'MW','MYS'=>'MY','MDV'=>'MV','MLI'=>'ML','MLT'=>'MT','MHL'=>'MH','MTQ'=>'MQ','MRT'=>'MR','MUS'=>'MU','MYT'=>'YT','MEX'=>'MX',
-                'FSM'=>'FM','MDA'=>'MD','MCO'=>'MC','MNG'=>'MN','MNE'=>'ME','MSR'=>'MS','MAR'=>'MA','MOZ'=>'MZ','MMR'=>'MM','NAM'=>'NAM' ? 'NA' : 'NA','NRU'=>'NR','NPL'=>'NP','NLD'=>'NL','NCL'=>'NC','NZL'=>'NZ','NIC'=>'NI',
-                'NER'=>'NE','NGA'=>'NG','NIU'=>'NU','NFK'=>'NF','MKD'=>'MK','MNP'=>'MP','NOR'=>'NO','OMN'=>'OM','PAK'=>'PK','PLW'=>'PW','PSE'=>'PS','PAN'=>'PA','PNG'=>'PG','PRY'=>'PY','PER'=>'PE','PHL'=>'PH',
-                'PCN'=>'PN','POL'=>'PL','PRT'=>'PT','PRI'=>'PR','QAT'=>'QA','REU'=>'RE','ROU'=>'RO','RUS'=>'RU','RWA'=>'RW','BLM'=>'BL','SHN'=>'SH','KNA'=>'KN','LCA'=>'LC','MAF'=>'MF','SPM'=>'PM','VCT'=>'VC',
-                'WSM'=>'WS','SMR'=>'SM','STP'=>'ST','SAU'=>'SA','SEN'=>'SN','SRB'=>'RS','SYC'=>'SC','SLE'=>'SL','SGP'=>'SG','SXM'=>'SX','SVK'=>'SK','SVN'=>'SI','SLB'=>'SB','SOM'=>'SO','ZAF'=>'ZA','SGS'=>'GS',
-                'SSD'=>'SS','ESP'=>'ES','LKA'=>'LK','SDN'=>'SD','SUR'=>'SR','SJM'=>'SJ','SWE'=>'SE','CHE'=>'CH','SYR'=>'SY','TWN'=>'TW','TJK'=>'TJ','TZA'=>'TZ','THA'=>'TH','TLS'=>'TL','TGO'=>'TG','TKL'=>'TK',
-                'TON'=>'TO','TTO'=>'TT','TUN'=>'TUN' ? 'TN' : 'TN','TUR'=>'TR','TKM'=>'TM','TCA'=>'TC','TUV'=>'TV','UGA'=>'UG','UKR'=>'UA','ARE'=>'AE','GBR'=>'GB','USA'=>'US','UMI'=>'UM','URY'=>'UY','UZB'=>'UZ','VUT'=>'VU',
-                'VEN'=>'VE','VNM'=>'VN','VGB'=>'VG','VIR'=>'VI','WLF'=>'WF','ESH'=>'EH','YEM'=>'YE','ZMB'=>'ZM','ZWE'=>'ZW'
-            ];
-
-            $countryNameToIso2 = [
-                'aruba' => 'AW', 'afghanistan' => 'AF', 'angola' => 'AO', 'anguilla' => 'AI', 'åland islands' => 'AX', 'aland islands' => 'AX',
-                'albania' => 'AL', 'andorra' => 'AD', 'united arab emirates' => 'AE', 'argentina' => 'AR', 'armenia' => 'AM',
-                'american samoa' => 'AS', 'antarctica' => 'AQ', 'french southern territories' => 'TF', 'antigua and barbuda' => 'AG',
-                'australia' => 'AU', 'austria' => 'AT', 'azerbaijan' => 'AZ', 'burundi' => 'BI', 'belgium' => 'BE', 'benin' => 'BJ',
-                'bonaire, sint eustatius and saba' => 'BQ', 'burkina faso' => 'BF', 'bangladesh' => 'BD', 'bulgaria' => 'BG',
-                'bahrain' => 'BH', 'bahamas' => 'BS', 'bosnia and herzegovina' => 'BA', 'saint barthélemy' => 'BL', 'saint barthelemy' => 'BL',
-                'belarus' => 'BY', 'belize' => 'BZ', 'bermuda' => 'BM', 'bolivia' => 'BO', 'brazil' => 'BR', 'barbados' => 'BB',
-                'brunei darussalam' => 'BN', 'brunei' => 'BN', 'bhutan' => 'BT', 'bouvet island' => 'BV', 'botswana' => 'BW',
-                'central african republic' => 'CF', 'canada' => 'CA', 'cocos (keeling) islands' => 'CC', 'switzerland' => 'CH',
-                'chile' => 'CL', 'china' => 'CN', "côte d'ivoire" => 'CI', "cote d'ivoire" => 'CI', 'ivory coast' => 'CI', 'cameroon' => 'CM',
-                'congo, democratic republic of the' => 'CD', 'dr congo' => 'CD', 'congo' => 'CG', 'cook islands' => 'CK', 'colombia' => 'CO',
-                'comoros' => 'KM', 'cabo verde' => 'CV', 'cape verde' => 'CV', 'costa rica' => 'CR', 'cuba' => 'CU', 'curaçao' => 'CW', 'curacao' => 'CW',
-                'christmas island' => 'CX', 'cayman islands' => 'KY', 'cyprus' => 'CY', 'czechia' => 'CZ', 'czech republic' => 'CZ', 'germany' => 'DE',
-                'djibouti' => 'DJ', 'dominica' => 'DM', 'denmark' => 'DK', 'dominican republic' => 'DO', 'algeria' => 'DZ',
-                'ecuador' => 'EC', 'egypt' => 'EG', 'eritrea' => 'ER', 'western sahara' => 'EH', 'spain' => 'ES', 'estonia' => 'EE',
-                'ethiopia' => 'ET', 'finland' => 'FI', 'fiji' => 'FJ', 'falkland islands (malvinas)' => 'FK', 'falkland islands' => 'FK', 'france' => 'FR',
-                'faroe islands' => 'FO', 'micronesia' => 'FM', 'gabon' => 'GA', 'united kingdom' => 'GB', 'great britain' => 'GB', 'georgia' => 'GE',
-                'guernsey' => 'GG', 'ghana' => 'GH', 'gibraltar' => 'GI', 'guinea' => 'GN', 'guadeloupe' => 'GP', 'gambia' => 'GM',
-                'guinea-bissau' => 'GW', 'equatorial guinea' => 'GQ', 'greece' => 'GR', 'grenada' => 'GD', 'greenland' => 'GL',
-                'guatemala' => 'GT', 'french guiana' => 'GF', 'guam' => 'GU', 'guyana' => 'GY', 'hong kong' => 'HK',
-                'heard island and mcdonald islands' => 'HM', 'honduras' => 'HN', 'croatia' => 'HR', 'haiti' => 'HT',
-                'hungary' => 'HU', 'indonesia' => 'ID', 'isle of man' => 'IM', 'india' => 'IN',
-                'british indian ocean territory' => 'IO', 'ireland' => 'IE', 'iran' => 'IR', 'iraq' => 'IQ', 'iceland' => 'IS',
-                'israel' => 'IL', 'italy' => 'IT', 'jamaica' => 'JM', 'jersey' => 'JE', 'jordan' => 'JO', 'japan' => 'JP',
-                'kazakhstan' => 'KZ', 'kenya' => 'KE', 'kyrgyzstan' => 'KG', 'cambodia' => 'KH', 'kiribati' => 'KI',
-                'saint kitts and nevis' => 'KN', 'korea, republic of' => 'KR', 'south korea' => 'KR', 'kuwait' => 'KW',
-                "lao people's democratic republic" => 'LA', 'laos' => 'LA', 'lebanon' => 'LB', 'liberia' => 'LR', 'libya' => 'LY',
-                'saint lucia' => 'LC', 'liechtenstein' => 'LI', 'sri lanka' => 'LK', 'lesotho' => 'LS', 'lithuania' => 'LT',
-                'luxembourg' => 'LU', 'latvia' => 'LV', 'macao' => 'MO', 'macau' => 'MO', 'saint martin (french part)' => 'MF', 'saint martin' => 'MF', 'morocco' => 'MA',
-                'monaco' => 'MC', 'moldova' => 'MD', 'madagascar' => 'MG', 'maldives' => 'MV', 'mexico' => 'MX',
-                'marshall islands' => 'MH', 'north macedonia' => 'MK', 'mali' => 'ML', 'malta' => 'MT', 'myanmar' => 'MM',
-                'montenegro' => 'ME', 'mongolia' => 'MN', 'northern mariana islands' => 'MP', 'mozambique' => 'MZ',
-                'mauritania' => 'MR', 'montserrat' => 'MS', 'martinique' => 'MQ', 'mauritius' => 'MU', 'malawi' => 'MW',
-                'malaysia' => 'MY', 'mayotte' => 'YT', 'namibia' => 'NA', 'new caledonia' => 'NC', 'niger' => 'NE',
-                'norfolk island' => 'NF', 'nigeria' => 'NG', 'nicaragua' => 'NI', 'niue' => 'NU', 'netherlands' => 'NL',
-                'norway' => 'NO', 'nepal' => 'NP', 'nauru' => 'NR', 'new zealand' => 'NZ', 'oman' => 'OM', 'pakistan' => 'PK',
-                'panama' => 'PA', 'pitcairn' => 'PN', 'peru' => 'PE', 'philippines' => 'PH', 'palau' => 'PW',
-                'papua new guinea' => 'PG', 'poland' => 'PL', 'puerto rico' => 'PR',
-                "korea, democratic people's republic of" => 'KP', 'north korea' => 'KP', 'portugal' => 'PT', 'paraguay' => 'PY',
-                'palestine, state of' => 'PS', 'palestine' => 'PS', 'french polynesia' => 'PF', 'qatar' => 'QA', 'réunion' => 'RE', 'reunion' => 'RE',
-                'romania' => 'RO', 'russian federation' => 'RU', 'russia' => 'RU', 'rwanda' => 'RW', 'saudi arabia' => 'SA', 'sudan' => 'SD',
-                'senegal' => 'SN', 'singapore' => 'SG', 'south georgia and the south sandwich islands' => 'GS',
-                'saint helena, ascension and tristan da cunha' => 'SH', 'saint helena' => 'SH', 'svalbard and jan mayen' => 'SJ',
-                'solomon islands' => 'SB', 'sierra leone' => 'SL', 'el salvador' => 'SV', 'san marino' => 'SM', 'somalia' => 'SO',
-                'saint pierre and miquelon' => 'PM', 'serbia' => 'RS', 'south sudan' => 'SS',
-                'sao tome and principe' => 'ST', 'suriname' => 'SR', 'slovakia' => 'SK', 'slovenia' => 'SI', 'sweden' => 'SE',
-                'eswatini' => 'SZ', 'swaziland' => 'SZ', 'sint maarten (dutch part)' => 'SX', 'sint maarten' => 'SX', 'seychelles' => 'SC',
-                'syrian arab republic' => 'SY', 'syria' => 'SY', 'turks and caicos islands' => 'TC', 'chad' => 'TD', 'togo' => 'TG',
-                'thailand' => 'TH', 'tajikistan' => 'TJ', 'tokelau' => 'TK', 'turkmenistan' => 'TM', 'timor-leste' => 'TL',
-                'tonga' => 'TO', 'trinidad and tobago' => 'TT', 'tunisia' => 'TN', 'türkiye' => 'TR', 'turkey' => 'TR', 'tuvalu' => 'TV',
-                'taiwan' => 'TW', 'tanzania' => 'TZ', 'uganda' => 'UG', 'ukraine' => 'UA',
-                'united states minor outlying islands' => 'UM', 'uruguay' => 'UY', 'united states of america' => 'US', 'united states' => 'US', 'usa' => 'US',
-                'uzbekistan' => 'UZ', 'holy see' => 'VA', 'vatican' => 'VA', 'saint vincent and the grenadines' => 'VC', 'venezuela' => 'VE',
-                'virgin islands (british)' => 'VG', 'british virgin islands' => 'VG', 'virgin islands (u.s.)' => 'VI', 'u.s. virgin islands' => 'VI', 'viet nam' => 'VN', 'vietnam' => 'VN', 'vanuatu' => 'VU',
-                'wallis and futuna' => 'WF', 'samoa' => 'WS', 'yemen' => 'YE', 'south africa' => 'ZA', 'zambia' => 'ZM',
-                'zimbabwe' => 'ZW'
-            ];
-
-            $resolveIso2AndName = function ($rawName) use ($iso3to2, $countryNameToIso2): array {
-                if (empty($rawName)) return [null, 'Unknown'];
-                $clean = trim((string)$rawName);
-                // Strip trailing ' (%)' or ' %' if appended by ratio formatting
-                $cleanWithoutRatio = preg_replace('/\s*\(?%\)?$/', '', $clean);
-                $lower = strtolower(trim($cleanWithoutRatio));
-
-                // Direct ISO2
-                if (strlen($lower) === 2 && ctype_alpha($lower)) {
-                    return [strtoupper($lower), $cleanWithoutRatio];
-                }
-                // ISO3 code
-                if (strlen($lower) === 3 && ctype_alpha($lower)) {
-                    $u3 = strtoupper($lower);
-                    if (isset($iso3to2[$u3])) {
-                        return [$iso3to2[$u3], $cleanWithoutRatio];
-                    }
-                }
-                // Country name match
-                if (isset($countryNameToIso2[$lower])) {
-                    return [$countryNameToIso2[$lower], $cleanWithoutRatio];
-                }
-                // Substring or sanitized match
-                $stripped = preg_replace('/[^\p{L}\p{N}\s]/u', '', $lower);
-                if (isset($countryNameToIso2[$stripped])) {
-                    return [$countryNameToIso2[$stripped], $cleanWithoutRatio];
-                }
-
-                return [null, $cleanWithoutRatio];
+            $resolveIso2AndName = function ($rawName): array {
+                return \App\Services\Analytics\CountryCatalog::resolveIso2AndName($rawName);
             };
 
             $mapData = [];
@@ -6008,8 +6011,8 @@
             $pieStyle = $controls['pie_style'] ?? 'donut';
             $pieMode = $controls['pie_mode'] ?? 'dimension';
 
-            $ratioMetrics = ['ctr', 'bounce_rate', 'result_rate'];
-            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'aov'];
+            $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
+            $currencyMetrics = ['spend', 'cpm', 'cpc', 'cost_per_result', 'purchase_roas', 'revenue', 'purchase_revenue', 'gross_purchase_revenue', 'refund_amount', 'item_revenue', 'gross_item_revenue', 'item_refund_amount', 'aov'];
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
 
             $slices = []; // [ ['label' => ..., 'value' => float, 'currency' => bool, 'percentage' => bool] ]

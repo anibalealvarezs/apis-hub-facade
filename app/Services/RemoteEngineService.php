@@ -9,6 +9,17 @@
 
     class RemoteEngineService
     {
+        public function scopedAnalytics(Project $project, string $operation, array $payload, ?string $authorizationScope = null): array
+        {
+            if (!in_array($operation, ['catalog', 'reports/query'], true)) throw new \InvalidArgumentException('Unsupported analytics operation.');
+            $payload['channel'] = 'google_analytics';
+            $payload['authorization_scope'] = $authorizationScope ?? 'user:'.(auth()->id() ?? 'system');
+            return $this->executeRead($project, 'scoped_analytics:'.$operation, $payload, function (ApisHubApi $client) use ($operation, $payload) {
+                $response = $client->performRequest(method: 'POST', endpoint: 'api/analytics/'.$operation, body: json_encode($payload, JSON_THROW_ON_ERROR));
+                return json_decode($response->getBody()->getContents(), true, flags: JSON_THROW_ON_ERROR);
+            }, 15);
+        }
+
         public function getEntityAttributes(Project $project, string $channel, array $payload = []): array
         {
             $response = $this->executeRead($project, 'entity_attributes:'.$channel, $payload, function (ApisHubApi $client) use ($channel, $payload): array {
