@@ -1,4 +1,7 @@
 {
+    "Preview not available given that widget's assets are set to be assigned dynamically. Please select any asset in the test sandbox modal in order to see it render": "Vista previa no disponible ya que los recursos del widget están configurados para asignarse dinámicamente. Selecciona cualquier recurso en el modal de prueba para verlo renderizado.",
+    "Test in Sandbox": "Probar en sandbox",
+    "Load": "Cargar",
     "Preferences": "Preferencias",
     "This is a key notification and therefore it cannot be disabled.": "Esta es una notificación clave y, por lo tanto, no se puede desactivar.",
     "Notification preferences saved successfully.": "Preferencias de notificación guardadas correctamente.",

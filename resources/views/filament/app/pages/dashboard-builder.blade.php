@@ -18,7 +18,12 @@
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
         availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog()),
-        tenant: @js(\Filament\Facades\Filament::getTenant()?->subdomain ?? \Filament\Facades\Filament::getTenant()?->id ?? '')
+        tenant: @js(\Filament\Facades\Filament::getTenant()?->subdomain ?? \Filament\Facades\Filament::getTenant()?->id ?? ''),
+        strings: {
+            previewDynamicAssetsNotice: @js(__('Preview not available given that widget\'s assets are set to be assigned dynamically. Please select any asset in the test sandbox modal in order to see it render')),
+            testInSandbox: @js(__('Test in Sandbox')),
+            load: @js(__('Load'))
+        }
     })" wire:ignore.self class="relative space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">

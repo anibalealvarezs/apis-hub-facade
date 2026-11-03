@@ -2,6 +2,8 @@ export function dashboardBuilder(config = {}) {
     const dashboardControls = config.dashboardControls || {};
     return {
         tenant: config.tenant || (window.location.pathname.match(/\/app\/([^\/]+)/)?.[1]) || '',
+        strings: config.strings || {},
+        forcedWidgetPreviews: {},
 
         // ─── Unsaved Layout State ───
         isDirty: false,
@@ -599,7 +601,126 @@ export function dashboardBuilder(config = {}) {
             return !!(this.ephemeralOverrides[widgetId] && Object.keys(this.ephemeralOverrides[widgetId]).length > 0);
         },
 
-        renderWidget(widgetId, el) {
+        widgetHasStaticAssets(widget, effectiveControls = null) {
+            const controls = effectiveControls || this.resolveWidgetControls(widget);
+
+            // 1. Check root asset / assets / asset_group
+            if (controls.asset && String(controls.asset).trim() !== '') return true;
+            if (Array.isArray(controls.assets) && controls.assets.length > 0) return true;
+            if (controls.asset_group && String(controls.asset_group).trim() !== '') return true;
+
+            // 2. Check series_assets
+            if (controls.series_assets && typeof controls.series_assets === 'object') {
+                for (const key of Object.keys(controls.series_assets)) {
+                    const list = controls.series_assets[key];
+                    if (Array.isArray(list) && list.length > 0) return true;
+                    if (typeof list === 'string' && list.trim() !== '') return true;
+                }
+            }
+
+            // 3. Check series_asset_groups
+            if (controls.series_asset_groups && typeof controls.series_asset_groups === 'object') {
+                for (const key of Object.keys(controls.series_asset_groups)) {
+                    const grp = controls.series_asset_groups[key];
+                    if (grp && String(grp).trim() !== '') return true;
+                }
+            }
+
+            // 4. Check raw_series definitions
+            const rawSeries = widget.controls?.raw_series || widget.source_config?.raw_series;
+            if (Array.isArray(rawSeries) && rawSeries.length > 0) {
+                for (const s of rawSeries) {
+                    if (s) {
+                        if (Array.isArray(s.assets) && s.assets.length > 0) return true;
+                        if (s.asset && String(s.asset).trim() !== '') return true;
+                        if (s.asset_group && String(s.asset_group).trim() !== '') return true;
+                    }
+                }
+            }
+
+            // 5. Check KPI source config if applicable
+            if (widget.source_type === 'kpi') {
+                const kpiId = widget.source_config?.custom_kpi_id;
+                const kpi = (kpiId && this.kpis) ? this.kpis[kpiId] : null;
+                const uiState = kpi?.filters?._ui_state;
+                if (uiState) {
+                    if (uiState.dependent_asset_filter && uiState.dependent_asset_filter.length > 0) return true;
+                    if (uiState.dependent_asset_group) return true;
+                    if (uiState.independent_variables) {
+                        for (const iv of Object.values(uiState.independent_variables)) {
+                            if (iv?.independent_asset_filter && iv.independent_asset_filter.length > 0) return true;
+                            if (iv?.independent_asset_group) return true;
+                        }
+                    }
+                }
+            }
+
+            // 6. Check Derived Metric source config if applicable
+            if (widget.source_type === 'derived_metric') {
+                const dmId = widget.source_config?.derived_metric_id;
+                const dm = (dmId && this.derivedMetrics) ? this.derivedMetrics[dmId] : null;
+                if (dm && Array.isArray(dm.source_series)) {
+                    for (const s of dm.source_series) {
+                        if (Array.isArray(s?.allowed_assets) && s.allowed_assets.length > 0) return true;
+                        if (Array.isArray(s?.asset_filter) && s.asset_filter.length > 0) return true;
+                    }
+                }
+            }
+
+            return false;
+        },
+
+        renderDynamicAssetPlaceholder(widget, targetEl) {
+            const noticeText = this.strings?.previewDynamicAssetsNotice ||
+                "Preview not available given that widget's assets are set to be assigned dynamically. Please select any asset in the test sandbox modal in order to see it render";
+            const sandboxBtnText = this.strings?.testInSandbox || "Test in Sandbox";
+            const loadBtnText = this.strings?.load || "Load";
+
+            targetEl.innerHTML = `
+                <div class="h-full w-full flex flex-col items-center justify-center p-4 text-center select-none bg-gray-50/60 dark:bg-gray-800/40 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+                    <div class="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-500 mb-2.5 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mb-3.5 leading-relaxed">
+                        ${noticeText}
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                class="bd-ph-sandbox-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-xs transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                            </svg>
+                            <span>${sandboxBtnText}</span>
+                        </button>
+                        <button type="button"
+                                class="bd-ph-load-btn inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium transition-colors">
+                            <span>${loadBtnText}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const sBtn = targetEl.querySelector('.bd-ph-sandbox-btn');
+            if (sBtn) {
+                sBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openSandboxModal(widget);
+                });
+            }
+
+            const lBtn = targetEl.querySelector('.bd-ph-load-btn');
+            if (lBtn) {
+                lBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.forcedWidgetPreviews[widget.id] = true;
+                    this.renderWidget(widget.id, targetEl, true);
+                });
+            }
+        },
+
+        renderWidget(widgetId, el, force = false) {
             const widget = (this.widgets || []).find(w => String(w.id) === String(widgetId));
             if (!widget) return;
             const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
@@ -607,7 +728,7 @@ export function dashboardBuilder(config = {}) {
             if (!window.dashboardRenderer) {
                 const checkReady = (retries = 0) => {
                     if (window.dashboardRenderer) {
-                        this.renderWidget(widgetId, el);
+                        this.renderWidget(widgetId, el, force);
                     } else if (retries < 50) {
                         setTimeout(() => checkReady(retries + 1), 100);
                     }
@@ -615,6 +736,16 @@ export function dashboardBuilder(config = {}) {
                 checkReady();
                 return;
             }
+
+            const isForced = force || !!this.forcedWidgetPreviews[widget.id];
+            const hasOverrides = this.hasSandboxOverrides(widget.id);
+
+            // If the widget has no static asset configured and no sandbox override, show placeholder instead of triggering 422
+            if (!isForced && !hasOverrides && !this.widgetHasStaticAssets(widget)) {
+                this.renderDynamicAssetPlaceholder(widget, targetEl);
+                return;
+            }
+
             targetEl.innerHTML = '';
             const resolved = this.resolveWidgetControls(widget);
             const eph = this.ephemeralOverrides[widget.id] || {};
