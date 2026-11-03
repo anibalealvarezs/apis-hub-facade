@@ -56,8 +56,8 @@ class DashboardView extends Page
                         'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
                     ]),
             ])
-                ->label(__('Environments'))
-                ->icon('heroicon-o-squares-2x2')
+                ->label(__('View'))
+                ->icon('heroicon-o-eye')
                 ->color('gray')
                 ->button(),
         ];

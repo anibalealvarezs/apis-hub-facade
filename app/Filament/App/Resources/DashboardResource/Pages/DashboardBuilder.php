@@ -579,8 +579,8 @@ class DashboardBuilder extends Page
                     ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard]))
                     ->extraAttributes(['id' => 'builder-view-dashboard-btn', 'wire:navigate.none' => true]),
             ])
-                ->label(__('Environments'))
-                ->icon('heroicon-o-squares-2x2')
+                ->label(__('Builder'))
+                ->icon('heroicon-o-pencil-square')
                 ->color('gray')
                 ->button(),
 

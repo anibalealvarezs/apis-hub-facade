@@ -39,8 +39,8 @@ class EditDashboard extends EditRecord
                     ->url(DashboardResource::getUrl('view', ['record' => $this->record]))
                     ->extraAttributes(['wire:navigate.none' => true]),
             ])
-                ->label(__('Environments'))
-                ->icon('heroicon-o-squares-2x2')
+                ->label(__('Settings'))
+                ->icon('heroicon-o-cog-6-tooth')
                 ->color('gray')
                 ->button(),
             Actions\DeleteAction::make(),
