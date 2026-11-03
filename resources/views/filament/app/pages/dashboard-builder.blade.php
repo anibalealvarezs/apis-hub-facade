@@ -27,27 +27,33 @@
     })" wire:ignore.self class="relative space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
-            <div class="flex items-center gap-2">
-                <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400"/>
-                <span class="text-lg font-medium text-gray-900 dark:text-white">{{ $this->dashboard->name }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button
-                    id="dashboard-controls-button"
-                    class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                    x-on:click="openDashboardControls()">
-                    <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1"/>
-                    {{ __('Controls') }}
-                </button>
-                @can('edit_preferences')
+            {{-- Left: Dashboard Title & Settings --}}
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="flex items-center gap-2 min-w-0">
+                    <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400 flex-shrink-0"/>
+                    <span class="text-lg font-medium text-gray-900 dark:text-white truncate" title="{{ $this->dashboard->name }}">{{ $this->dashboard->name }}</span>
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-3">
                     <button
-                        class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                        x-on:click="openShareDialog()">
-                        <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1"/>
-                        {{ __('Share') }}
+                        id="dashboard-controls-button"
+                        class="px-2.5 py-1.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                        x-on:click="openDashboardControls()">
+                        <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4"/>
+                        <span>{{ __('Controls') }}</span>
                     </button>
-                @endcan
+                    @can('edit_preferences')
+                        <button
+                            class="px-2.5 py-1.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                            x-on:click="openShareDialog()">
+                            <x-filament::icon name="heroicon-o-share" class="w-4 h-4"/>
+                            <span>{{ __('Share') }}</span>
+                        </button>
+                    @endcan
+                </div>
+            </div>
 
+            {{-- Right: Status Badges, AI Classification & Save Layout Action --}}
+            <div class="flex items-center gap-2.5 flex-shrink-0">
                 {{-- Version Unsaved Changes Indicator --}}
                 <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge">
                     <span class="bd-unsaved-dot"></span>
