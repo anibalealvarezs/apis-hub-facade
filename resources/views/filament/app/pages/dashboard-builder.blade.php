@@ -46,6 +46,7 @@
                     </button>
                     @can('edit_preferences')
                         <button
+                            id="dashboard-share-button"
                             class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition-all flex items-center gap-1.5"
                             x-on:click="openShareDialog()">
                             <x-filament::icon name="heroicon-o-share" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
@@ -3511,7 +3512,7 @@
         </div>
 
         {{-- Floating Left Widget Size Palette --}}
-        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+        <div class="floating-selection-bar bd-palette-left z-16 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
 
             {{-- Save Layout Button (full width, inline SVG icon with dynamic colors) --}}
             <div class="group relative flex items-center justify-center w-full">
@@ -3664,7 +3665,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-x-0 scale-100"
              x-transition:leave-end="opacity-0 translate-x-6 scale-95"
-             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-[99999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
+             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-16 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
              id="multi-select-action-bar">
 
             {{-- Selected Badge Counter --}}

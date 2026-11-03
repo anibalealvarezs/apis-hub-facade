@@ -591,8 +591,53 @@ body.pv-page .dvc-controls-bar {
     left: auto !important;
     top: auto !important;
     transform: none !important;
-    z-index: 3 !important;
+    z-index: 16 !important;
     border: 1px solid #E5E7EB !important;
+}
+
+/* Ensure dropdown menus (such as environment and version selectors) render with z-index: 16 */
+.fi-dropdown-panel {
+    z-index: 16 !important;
+}
+
+.floating-selection-bar#multi-select-action-bar,
+.floating-selection-bar.right-bar {
+    z-index: 16 !important;
+}
+
+/* Dashboard Builder Toolbar Controls & Share Button Styles */
+#dashboard-controls-button,
+#dashboard-share-button {
+    background-color: #FFFFFF !important;
+    color: #374151 !important;
+}
+
+#dashboard-controls-button:hover,
+#dashboard-share-button:hover {
+    background-color: #F9FAFB !important;
+    color: #111827 !important;
+}
+
+.dark #dashboard-controls-button,
+.dark #dashboard-share-button {
+    background-color: #374151 !important;
+    color: #F3F4F6 !important;
+}
+
+.dark #dashboard-controls-button:hover,
+.dark #dashboard-share-button:hover {
+    background-color: #4B5563 !important;
+    color: #FFFFFF !important;
+}
+
+.dark #dashboard-controls-button svg,
+.dark #dashboard-share-button svg {
+    color: #9CA3AF !important;
+}
+
+.dark #dashboard-controls-button:hover svg,
+.dark #dashboard-share-button:hover svg {
+    color: #E5E7EB !important;
 }
 
 .dark .floating-selection-bar {
