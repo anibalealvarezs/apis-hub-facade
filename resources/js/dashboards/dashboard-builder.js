@@ -598,22 +598,33 @@ export function dashboardBuilder(config = {}) {
         },
 
         hasSandboxOverrides(widgetId) {
-            return !!(this.ephemeralOverrides[widgetId] && Object.keys(this.ephemeralOverrides[widgetId]).length > 0);
+            const eph = this.ephemeralOverrides[widgetId];
+            if (!eph || typeof eph !== 'object') return false;
+            if (eph.asset && String(eph.asset).trim() !== '') return true;
+            if (Array.isArray(eph.assets) && eph.assets.some(a => String(a).trim() !== '')) return true;
+            if (eph.series_assets && typeof eph.series_assets === 'object') {
+                for (const k of Object.keys(eph.series_assets)) {
+                    const list = eph.series_assets[k];
+                    if (Array.isArray(list) && list.some(a => String(a).trim() !== '')) return true;
+                    if (typeof list === 'string' && list.trim() !== '') return true;
+                }
+            }
+            return false;
         },
 
         widgetHasStaticAssets(widget, effectiveControls = null) {
-            const controls = effectiveControls || this.resolveWidgetControls(widget);
+            const controls = effectiveControls || widget.controls || {};
 
             // 1. Check root asset / assets / asset_group
             if (controls.asset && String(controls.asset).trim() !== '') return true;
-            if (Array.isArray(controls.assets) && controls.assets.length > 0) return true;
+            if (Array.isArray(controls.assets) && controls.assets.some(a => String(a).trim() !== '')) return true;
             if (controls.asset_group && String(controls.asset_group).trim() !== '') return true;
 
             // 2. Check series_assets
             if (controls.series_assets && typeof controls.series_assets === 'object') {
                 for (const key of Object.keys(controls.series_assets)) {
                     const list = controls.series_assets[key];
-                    if (Array.isArray(list) && list.length > 0) return true;
+                    if (Array.isArray(list) && list.some(a => String(a).trim() !== '')) return true;
                     if (typeof list === 'string' && list.trim() !== '') return true;
                 }
             }
