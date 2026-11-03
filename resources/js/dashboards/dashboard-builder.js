@@ -12,6 +12,45 @@ export function dashboardBuilder(config = {}) {
         pendingNavUrl: null,
         pendingNavReload: false,
 
+        // ─── Version & Duplicate Modals State ───
+        showSaveVersionModal: false,
+        saveVersionLabel: '',
+        showVersionHistoryModal: false,
+        showDuplicateModal: false,
+
+        openSaveVersionModal() {
+            this.saveVersionLabel = '';
+            this.showSaveVersionModal = true;
+            this.$nextTick(() => {
+                if (this.$refs.saveVersionInput) {
+                    this.$refs.saveVersionInput.focus();
+                }
+            });
+        },
+
+        confirmSaveVersion() {
+            const label = (this.saveVersionLabel || '').trim();
+            this.showSaveVersionModal = false;
+            if (this.$wire && typeof this.$wire.saveVersion === 'function') {
+                this.$wire.saveVersion(label || null);
+            }
+        },
+
+        openVersionHistoryModal() {
+            this.showVersionHistoryModal = true;
+        },
+
+        openDuplicateModal() {
+            this.showDuplicateModal = true;
+        },
+
+        confirmDuplicateDashboard() {
+            this.showDuplicateModal = false;
+            if (this.$wire && typeof this.$wire.duplicateDashboard === 'function') {
+                this.$wire.duplicateDashboard();
+            }
+        },
+
         // ─── Unsaved Widget Controls State ───
         showUnsavedWidgetControlsModal: false,
         widgetControlsSnapshot: null,

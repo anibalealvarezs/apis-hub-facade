@@ -555,93 +555,27 @@ class DashboardBuilder extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ActionGroup::make([
-                Actions\Action::make('saveVersion')
-                    ->label(fn (): string => $this->getHasUnsavedChanges() ? __('Save Version') . ' ⚠' : __('Save Version'))
-                    ->icon('heroicon-o-document-plus')
-                    ->color('primary')
-                    ->extraAttributes(['id' => 'builder-save-version-btn'])
-                    ->form([
-                        Forms\Components\TextInput::make('label')
-                            ->label(__('Version Label'))
-                            ->placeholder(__('e.g. Campaign launch layout')),
-                    ])
-                    ->action(function (array $data) {
-                        $this->dashboard->createVersion(
-                            changeSummary: 'Manually saved',
-                            versionName: $data['label'] ?? null,
-                        );
-                        $this->unsavedChanges = false;
-                        Notification::make()
-                            ->title(__('Version saved'))
-                            ->success()
-                            ->send();
-                    }),
-                Actions\Action::make('versionHistory')
-                    ->label(__('Version History'))
-                    ->icon('heroicon-o-clock')
-                    ->color('gray')
-                    ->extraAttributes(['id' => 'builder-version-history-btn'])
-                    ->modalHeading(__('Dashboard Version History'))
-                    ->modalSubmitAction(false)
-                    ->modalCancelActionLabel(__('Close'))
-                    ->modalContent(function () {
-                        $versions = $this->dashboard->versions()
-                            ->with('user')
-                            ->orderBy('version_number', 'desc')
-                            ->get();
-
-                        return view('filament.modals.version-history', [
-                            'versions' => $versions,
-                            'dashboard' => $this->dashboard,
-                        ]);
-                    }),
-            ])
-                ->label(fn (): string => $this->getHasUnsavedChanges() ? __('Versions') . ' ⚠' : __('Versions'))
-                ->icon('heroicon-o-clock')
-                ->color(fn (): string => $this->getHasUnsavedChanges() ? 'warning' : 'gray')
-                ->button(),
-
-            Actions\ActionGroup::make([
-                Actions\Action::make('duplicateCurrent')
-                    ->label(__('Duplicate'))
-                    ->icon('heroicon-o-document-duplicate')
-                    ->color('gray')
-                    ->requiresConfirmation()
-                    ->modalHeading(__('Duplicate Dashboard'))
-                    ->modalDescription(__('Create a copy of this dashboard from its current state?'))
-                    ->modalSubmitActionLabel(__('Duplicate'))
-                    ->action(function () {
-                        $service = app(\App\Services\DashboardService::class);
-                        $clone = $service->cloneDashboard($this->dashboard);
-                        Notification::make()
-                            ->title(__('Dashboard duplicated'))
-                            ->success()
-                            ->send();
-                        $this->redirect(DashboardResource::getUrl('builder', ['record' => $clone]));
-                    }),
-                Actions\Action::make('settings')
-                    ->label(__('Dashboard Settings'))
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard]))
-                    ->extraAttributes(['wire:navigate.none' => true]),
-                Actions\Action::make('view')
-                    ->label(__('View Dashboard'))
-                    ->icon('heroicon-o-eye')
-                    ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard]))
-                    ->extraAttributes(['id' => 'builder-view-dashboard-btn', 'wire:navigate.none' => true]),
-            ])
-                ->label(__('Actions'))
-                ->icon('heroicon-o-ellipsis-vertical')
+            Actions\Action::make('settings')
+                ->label(__('Dashboard Settings'))
+                ->icon('heroicon-o-cog-6-tooth')
                 ->color('gray')
-                ->button(),
-
-            Actions\Action::make('back')
-                ->label(__('Back to Dashboards'))
-                ->icon('heroicon-o-arrow-left')
+                ->url(DashboardResource::getUrl('edit', ['record' => $this->dashboard]))
+                ->extraAttributes(['wire:navigate.none' => true])
+                ->visible(fn () => auth()->user()->can('edit_preferences')),
+            Actions\Action::make('builder')
+                ->label(__('Dashboard Builder'))
+                ->icon('heroicon-o-pencil-square')
+                ->color('primary')
+                ->disabled()
+                ->extraAttributes([
+                    'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
+                ]),
+            Actions\Action::make('view')
+                ->label(__('View Dashboard'))
+                ->icon('heroicon-o-eye')
                 ->color('gray')
-                ->url(DashboardResource::getUrl('index'))
-                ->extraAttributes(['wire:navigate.none' => true]),
+                ->url(DashboardResource::getUrl('view', ['record' => $this->dashboard]))
+                ->extraAttributes(['id' => 'builder-view-dashboard-btn', 'wire:navigate.none' => true]),
         ];
     }
 
@@ -673,6 +607,30 @@ class DashboardBuilder extends Page
             ->success()
             ->send();
 
+        $this->redirect(DashboardResource::getUrl('builder', ['record' => $clone]));
+    }
+
+    public function saveVersion(?string $versionName = null): void
+    {
+        $this->dashboard->createVersion(
+            changeSummary: 'Manually saved',
+            versionName: $versionName,
+        );
+        $this->unsavedChanges = false;
+        Notification::make()
+            ->title(__('Version saved'))
+            ->success()
+            ->send();
+    }
+
+    public function duplicateDashboard(): void
+    {
+        $service = app(\App\Services\DashboardService::class);
+        $clone = $service->cloneDashboard($this->dashboard);
+        Notification::make()
+            ->title(__('Dashboard duplicated'))
+            ->success()
+            ->send();
         $this->redirect(DashboardResource::getUrl('builder', ['record' => $clone]));
     }
 

@@ -27,50 +27,67 @@
     })" wire:ignore.self class="relative space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
-            {{-- Left: Dashboard Title & Settings --}}
-            <div class="flex items-center gap-3 min-w-0">
-                <div class="flex items-center gap-2 min-w-0">
-                    <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400 flex-shrink-0"/>
-                    <span class="text-lg font-medium text-gray-900 dark:text-white truncate" title="{{ $this->dashboard->name }}">{{ $this->dashboard->name }}</span>
-                </div>
-                <div class="flex items-center gap-1.5 flex-shrink-0 border-l border-gray-200 dark:border-gray-700 pl-3">
+            {{-- Left: Dashboard Title --}}
+            <div class="flex items-center gap-2 min-w-0">
+                <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400 flex-shrink-0"/>
+                <span class="text-lg font-medium text-gray-900 dark:text-white truncate" title="{{ $this->dashboard->name }}">{{ $this->dashboard->name }}</span>
+            </div>
+
+            {{-- Right: Context Group Containers --}}
+            <div class="flex items-center gap-3 flex-shrink-0">
+                {{-- Group 1 (Blue context): Dashboard Controls & Share --}}
+                <div class="flex items-center gap-1 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 shadow-sm">
                     <button
                         id="dashboard-controls-button"
-                        class="px-2.5 py-1.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xs transition-all flex items-center gap-1.5"
                         x-on:click="openDashboardControls()">
-                        <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4"/>
+                        <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                         <span>{{ __('Controls') }}</span>
                     </button>
                     @can('edit_preferences')
                         <button
-                            class="px-2.5 py-1.5 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                            class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 hover:shadow-xs transition-all flex items-center gap-1.5"
                             x-on:click="openShareDialog()">
-                            <x-filament::icon name="heroicon-o-share" class="w-4 h-4"/>
+                            <x-filament::icon name="heroicon-o-share" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
                             <span>{{ __('Share') }}</span>
                         </button>
                     @endcan
                 </div>
-            </div>
 
-            {{-- Right: Status Badges, AI Classification & Save Layout Action --}}
-            <div class="flex items-center gap-2.5 flex-shrink-0">
-                {{-- Version Unsaved Changes Indicator --}}
-                <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge">
-                    <span class="bd-unsaved-dot"></span>
-                    <span>{{ __('Unsaved version') }}</span>
+                {{-- Group 2 (Yellow context): Version Actions & Unsaved Version Status --}}
+                <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100/80 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700/80 shadow-sm">
+                    <button
+                        id="builder-save-version-btn"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5"
+                        :class="$wire.unsavedChanges ? 'bg-primary-500 text-white shadow-sm hover:bg-primary-600' : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700'"
+                        x-on:click="openSaveVersionModal()">
+                        <x-filament::icon name="heroicon-o-document-plus" class="w-4 h-4"/>
+                        <span>{{ __('Save Version') }}</span>
+                    </button>
+
+                    <button
+                        id="builder-version-history-btn"
+                        class="px-2.5 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
+                        x-on:click="openVersionHistoryModal()">
+                        <x-filament::icon name="heroicon-o-clock" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                        <span>{{ __('Version History') }}</span>
+                    </button>
+
+                    <button
+                        class="px-2.5 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
+                        x-on:click="openDuplicateModal()">
+                        <x-filament::icon name="heroicon-o-document-duplicate" class="w-4 h-4 text-gray-500 dark:text-gray-400"/>
+                        <span>{{ __('Duplicate') }}</span>
+                    </button>
+
+                    {{-- Unsaved Version Status Badge inside Version Group --}}
+                    <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge ml-1">
+                        <span class="bd-unsaved-dot"></span>
+                        <span>{{ __('Unsaved version') }}</span>
+                    </div>
                 </div>
 
-                {{-- Layout Dirty Status Badge --}}
-                <div x-show="isDirty" x-cloak class="bd-unsaved-badge">
-                    <span class="bd-unsaved-dot"></span>
-                    <span>{{ __('Unsaved layout changes') }}</span>
-                </div>
-                <div x-show="!isDirty"
-                     class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400">
-                    <x-filament::icon name="heroicon-m-check" class="w-3.5 h-3.5 text-success-500"/>
-                    <span>{{ __('Layout saved') }}</span>
-                </div>
-
+                {{-- Group 3: AI Classification Coverage Container --}}
                 @php
                     $coverageData = $this->getClassificationCoverage();
                     $trafficPct = $coverageData['traffic_coverage_percentage'] ?? $coverageData['traffic_coverage_pct'] ?? null;
@@ -89,13 +106,13 @@
                                 ? 'text-sky-500 dark:text-sky-400'
                                 : 'text-amber-500 dark:text-amber-400');
                     @endphp
-                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium {{ $badgeBg }}"
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium shadow-sm {{ $badgeBg }}"
                          title="{{ __('Query classification coverage: :pct% of traffic volume (:classified/:total unique queries categorized)', [
                              'pct' => $trafficPct,
                              'classified' => number_format($coverageData['classified_queries'] ?? 0),
                              'total' => number_format($coverageData['total_queries'] ?? 0)
                          ]) }}">
-                        <x-filament::icon name="heroicon-m-sparkles" class="w-3.5 h-3.5 {{ $iconColor }}"/>
+                        <x-filament::icon name="heroicon-m-sparkles" class="w-4 h-4 {{ $iconColor }}"/>
                         @if($isFullyClassified || $trafficPct >= 99.9)
                             <span>{{ __('AI Classification: 100% complete') }}</span>
                         @else
@@ -106,14 +123,6 @@
                         @endif
                     </div>
                 @endif
-
-                <x-filament::button
-                    x-on:click="saveLayout()"
-                    ::color="isDirty ? 'warning' : 'primary'"
-                    icon="heroicon-o-check"
-                    ::class="isDirty ? 'ring-2 ring-warning-500/50 shadow-md animate-pulse' : ''">
-                    {{ __('Save Layout') }}
-                </x-filament::button>
             </div>
         </div>
 
@@ -3537,6 +3546,29 @@
         {{-- Floating Left Widget Size Palette --}}
         <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
 
+            {{-- Save Layout Button (with dynamic color indicating dirty state) --}}
+            <div class="group relative flex items-center justify-center">
+                <button
+                    id="builder-save-layout-btn"
+                    type="button"
+                    x-on:click="saveLayout()"
+                    :class="isDirty 
+                        ? 'text-amber-500 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 ring-2 ring-amber-500/60 shadow-md animate-pulse' 
+                        : 'text-gray-400 hover:text-emerald-600 hover:bg-gray-100 dark:hover:bg-gray-800'"
+                    class="p-2.5 rounded-xl transition-all flex items-center justify-center"
+                    :title="isDirty ? '{{ __('Save Layout (Unsaved changes)') }}' : '{{ __('Layout Saved') }}'">
+                    <x-filament::icon name="heroicon-o-check" class="w-5 h-5"/>
+                </button>
+                <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl flex items-center gap-1.5">
+                        <span x-show="isDirty" class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <span x-text="isDirty ? '{{ __('Save Layout (Unsaved changes)') }}' : '{{ __('Save Layout (All changes saved)') }}'"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
+
             <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
                 <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
@@ -3750,6 +3782,115 @@
             </div>
 
         </div>
+
+        {{-- Save Version Modal --}}
+        <div x-show="showSaveVersionModal" x-cloak
+             class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-md w-full p-6 space-y-4"
+                 x-on:click.outside="showSaveVersionModal = false">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400">
+                        <x-filament::icon name="heroicon-o-document-plus" class="w-6 h-6"/>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Save Version') }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Create a snapshot of the current dashboard layout and configuration.') }}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Version Label (optional)') }}</label>
+                    <input type="text"
+                           x-model="saveVersionLabel"
+                           x-ref="saveVersionInput"
+                           placeholder="{{ __('e.g. Campaign launch layout') }}"
+                           class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500"
+                           x-on:keydown.enter="confirmSaveVersion()"/>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button"
+                            x-on:click="showSaveVersionModal = false"
+                            class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="button"
+                            x-on:click="confirmSaveVersion()"
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 shadow-sm transition-colors">
+                        {{ __('Save Version') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Version History Modal --}}
+        <div x-show="showVersionHistoryModal" x-cloak
+             class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-4xl w-full p-6 space-y-4 max-h-[85vh] flex flex-col"
+                 x-on:click.outside="showVersionHistoryModal = false">
+                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                            <x-filament::icon name="heroicon-o-clock" class="w-6 h-6"/>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Version History') }}</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Restore or duplicate from previously saved version snapshots.') }}</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            x-on:click="showVersionHistoryModal = false"
+                            class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                        <x-filament::icon name="heroicon-o-x-mark" class="w-5 h-5"/>
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto flex-1">
+                    @php
+                        $versions = $this->dashboard->versions()->with('user')->orderBy('version_number', 'desc')->get();
+                    @endphp
+                    @include('filament.modals.version-history', ['versions' => $versions, 'dashboard' => $this->dashboard])
+                </div>
+
+                <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-800">
+                    <button type="button"
+                            x-on:click="showVersionHistoryModal = false"
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        {{ __('Close') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Duplicate Dashboard Modal --}}
+        <x-confirm-modal
+            open="showDuplicateModal"
+            title="{{ __('Duplicate Dashboard') }}"
+            icon="heroicon-o-document-duplicate"
+            color="primary"
+            confirm-label="{{ __('Duplicate') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-document-duplicate"
+            on-confirm="confirmDuplicateDashboard()"
+            :close-on-confirm="false"
+            on-cancel="showDuplicateModal = false"
+        >
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ __('Create a copy of this dashboard from its current state?') }}
+            </p>
+        </x-confirm-modal>
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>
