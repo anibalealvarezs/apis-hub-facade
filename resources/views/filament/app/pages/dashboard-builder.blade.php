@@ -3600,6 +3600,7 @@
 
             @foreach($allSizes as $cat => $sizes)
             <div class="bd-palette-sizes-panel bd-sizes-{{ $cat }}" style="display:none;">
+                <p class="bd-palette-sizes-hint">{{ __('Drag and drop') }}</p>
                 <div class="bd-palette-sizes-grid">
                     @foreach($sizes as $s)
                     <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">

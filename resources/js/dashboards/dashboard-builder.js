@@ -635,6 +635,18 @@ export function dashboardBuilder(config = {}) {
             });
         },
 
+        hasSandboxOverrides(widgetId) {
+            const overrides = this.ephemeralOverrides[widgetId];
+            if (!overrides) return false;
+
+            const hasAsset = value => (Array.isArray(value) ? value : [value])
+                .some(id => id != null && String(id).trim() !== '' && id !== '__inherit__');
+
+            return hasAsset(overrides.asset)
+                || hasAsset(overrides.assets)
+                || Object.values(overrides.series_assets || {}).some(hasAsset);
+        },
+
         widgetHasStaticAssets(widget, controls) {
             const hasSelection = value => (Array.isArray(value) ? value : [value])
                 .some(id => id != null && String(id).trim() !== '' && id !== '__inherit__');
