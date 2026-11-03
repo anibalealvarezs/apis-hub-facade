@@ -2670,13 +2670,8 @@
 
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
 
-            if ($assetFilter === '___EMPTY_GROUP___') {
-                return [
-                    'columns' => [],
-                    'rows'    => [],
-                    'chart'   => [],
-                    'summary' => [],
-                ];
+            if (empty($assetFilter) || $assetFilter === '___EMPTY_GROUP___') {
+                return ['_missing_assets' => true];
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
@@ -2749,6 +2744,27 @@
             $seriesCurves = [];
             $dmGroups = [];
 
+            // Resolve all direct series before dispatching any analytics requests.
+            $seriesAccounts = [];
+            foreach ($rawSeries as $index => $series) {
+                if (($series['type'] ?? 'metric') === 'derived_metric' && !empty($series['dm_id'])) {
+                    continue;
+                }
+
+                $channel = $series['channel'] ?? '';
+                if ($channel === '' || empty($controls['series_metrics'][$index] ?? $series['metrics'] ?? [])) {
+                    continue;
+                }
+
+                $override = $controls['series_assets'][$index] ?? $series['assets'] ?? null;
+                $account = $this->extractAssetFilter($controls, $project, $channel, $override === null ? null : (array) $override);
+                if (empty($account) || $account === '___EMPTY_GROUP___') {
+                    return ['_missing_assets' => true];
+                }
+
+                $seriesAccounts[$index] = $account;
+            }
+
             // 1. Separate Raw Metric series and group Derived Metric series
             foreach ($rawSeries as $sIdx => $series) {
                 $type = $series['type'] ?? 'metric';
@@ -2766,13 +2782,7 @@
                         continue;
                     }
 
-                    // Check per-series asset override
-                    $seriesAssetOverride = $controls['series_assets'][$sIdx] ?? $series['assets'] ?? null;
-                    $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetOverride);
-                    if ($assetFilter === '___EMPTY_GROUP___') {
-                        continue;
-                    }
-                    $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+                    $assetFilter = $this->resolveChanneledAccountId($project, $channel, $seriesAccounts[$sIdx]);
 
                     $payload = [
                         'tenant'      => $project->id,
@@ -4565,11 +4575,8 @@
 
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
 
-            if ($assetFilter === '___EMPTY_GROUP___') {
-                return [
-                    'columns' => [],
-                    'rows'    => [],
-                ];
+            if (empty($assetFilter) || $assetFilter === '___EMPTY_GROUP___') {
+                return ['_missing_assets' => true];
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);

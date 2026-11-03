@@ -3,7 +3,6 @@ export function dashboardBuilder(config = {}) {
     return {
         tenant: config.tenant || (window.location.pathname.match(/\/app\/([^\/]+)/)?.[1]) || '',
         strings: config.strings || {},
-        forcedWidgetPreviews: {},
 
         // ─── Unsaved Layout State ───
         isDirty: false,
@@ -636,57 +635,24 @@ export function dashboardBuilder(config = {}) {
             });
         },
 
-        hasSandboxOverrides(widgetId) {
-            const eph = this.ephemeralOverrides[widgetId];
-            if (!eph || typeof eph !== 'object') return false;
-            if (eph.asset && String(eph.asset).trim() !== '') return true;
-            if (Array.isArray(eph.assets) && eph.assets.some(a => String(a).trim() !== '')) return true;
-            if (eph.series_assets && typeof eph.series_assets === 'object') {
-                for (const k of Object.keys(eph.series_assets)) {
-                    const list = eph.series_assets[k];
-                    if (Array.isArray(list) && list.some(a => String(a).trim() !== '')) return true;
-                    if (typeof list === 'string' && list.trim() !== '') return true;
-                }
-            }
-            return false;
-        },
+        widgetHasStaticAssets(widget, controls) {
+            const hasSelection = value => (Array.isArray(value) ? value : [value])
+                .some(id => id != null && String(id).trim() !== '' && id !== '__inherit__');
 
-        widgetHasStaticAssets(widget, effectiveControls = null) {
-            const controls = effectiveControls || widget.controls || {};
+            if ([controls.asset, controls.assets, controls.asset_group].some(hasSelection)) return true;
 
-            // 1. Check root asset / assets / asset_group
-            if (controls.asset && String(controls.asset).trim() !== '') return true;
-            if (Array.isArray(controls.assets) && controls.assets.some(a => String(a).trim() !== '')) return true;
-            if (controls.asset_group && String(controls.asset_group).trim() !== '') return true;
-
-            // 2. Check series_assets
-            if (controls.series_assets && typeof controls.series_assets === 'object') {
-                for (const key of Object.keys(controls.series_assets)) {
-                    const list = controls.series_assets[key];
-                    if (Array.isArray(list) && list.some(a => String(a).trim() !== '')) return true;
-                    if (typeof list === 'string' && list.trim() !== '') return true;
-                }
+            const rawSeries = controls.raw_series ?? widget.source_config?.raw_series;
+            if (widget.source_type === 'metric' && Array.isArray(rawSeries) && rawSeries.length) {
+                const hasSeriesAssets = (series, index) => hasSelection(controls.series_assets?.[index] ?? series?.assets);
+                const isDerived = series => series?.type === 'derived_metric' && series.dm_id;
+                return rawSeries.every((series, index) => isDerived(series) || hasSeriesAssets(series, index))
+                    && (rawSeries.some(series => !isDerived(series))
+                        || rawSeries.some(hasSeriesAssets)
+                        || Object.values(controls.series_assets || {}).some(hasSelection));
             }
 
-            // 3. Check series_asset_groups
-            if (controls.series_asset_groups && typeof controls.series_asset_groups === 'object') {
-                for (const key of Object.keys(controls.series_asset_groups)) {
-                    const grp = controls.series_asset_groups[key];
-                    if (grp && String(grp).trim() !== '') return true;
-                }
-            }
-
-            // 4. Check raw_series definitions
-            const rawSeries = widget.controls?.raw_series || widget.source_config?.raw_series;
-            if (Array.isArray(rawSeries) && rawSeries.length > 0) {
-                for (const s of rawSeries) {
-                    if (s) {
-                        if (Array.isArray(s.assets) && s.assets.length > 0) return true;
-                        if (s.asset && String(s.asset).trim() !== '') return true;
-                        if (s.asset_group && String(s.asset_group).trim() !== '') return true;
-                    }
-                }
-            }
+            if (Object.values(controls.series_assets || {}).some(hasSelection)) return true;
+            if (Object.values(controls.series_asset_groups || {}).some(hasSelection)) return true;
 
             // 5. Check KPI source config if applicable
             if (widget.source_type === 'kpi') {
@@ -724,7 +690,6 @@ export function dashboardBuilder(config = {}) {
             const noticeText = this.strings?.previewDynamicAssetsNotice ||
                 "Preview not available given that widget's assets are set to be assigned dynamically. Please select any asset in the test sandbox modal in order to see it render";
             const sandboxBtnText = this.strings?.testInSandbox || "Test in Sandbox";
-            const loadBtnText = this.strings?.load || "Load";
 
             targetEl.innerHTML = `
                 <div class="h-full w-full flex flex-col items-center justify-center p-4 text-center select-none bg-gray-50/60 dark:bg-gray-800/40 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
@@ -744,10 +709,6 @@ export function dashboardBuilder(config = {}) {
                             </svg>
                             <span>${sandboxBtnText}</span>
                         </button>
-                        <button type="button"
-                                class="bd-ph-load-btn inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-medium transition-colors">
-                            <span>${loadBtnText}</span>
-                        </button>
                     </div>
                 </div>
             `;
@@ -759,18 +720,9 @@ export function dashboardBuilder(config = {}) {
                     this.openSandboxModal(widget);
                 });
             }
-
-            const lBtn = targetEl.querySelector('.bd-ph-load-btn');
-            if (lBtn) {
-                lBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.forcedWidgetPreviews[widget.id] = true;
-                    this.renderWidget(widget.id, targetEl, true);
-                });
-            }
         },
 
-        renderWidget(widgetId, el, force = false) {
+        renderWidget(widgetId, el) {
             const widget = (this.widgets || []).find(w => String(w.id) === String(widgetId));
             if (!widget) return;
             const targetEl = el || document.getElementById('builder-widget-preview-' + widgetId);
@@ -778,7 +730,7 @@ export function dashboardBuilder(config = {}) {
             if (!window.dashboardRenderer) {
                 const checkReady = (retries = 0) => {
                     if (window.dashboardRenderer) {
-                        this.renderWidget(widgetId, el, force);
+                        this.renderWidget(widgetId, el);
                     } else if (retries < 50) {
                         setTimeout(() => checkReady(retries + 1), 100);
                     }
@@ -787,16 +739,6 @@ export function dashboardBuilder(config = {}) {
                 return;
             }
 
-            const isForced = force || !!this.forcedWidgetPreviews[widget.id];
-            const hasOverrides = this.hasSandboxOverrides(widget.id);
-
-            // If the widget has no static asset configured and no sandbox override, show placeholder instead of triggering 422
-            if (!isForced && !hasOverrides && !this.widgetHasStaticAssets(widget)) {
-                this.renderDynamicAssetPlaceholder(widget, targetEl);
-                return;
-            }
-
-            targetEl.innerHTML = '';
             const resolved = this.resolveWidgetControls(widget);
             const eph = this.ephemeralOverrides[widget.id] || {};
             const overrides = { ...eph };
@@ -816,6 +758,12 @@ export function dashboardBuilder(config = {}) {
                 ...resolved,
                 ...overrides
             };
+            if (!this.widgetHasStaticAssets(widget, effectiveControls)) {
+                this.renderDynamicAssetPlaceholder(widget, targetEl);
+                return;
+            }
+
+            targetEl.innerHTML = '';
             window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
         },
 
@@ -995,7 +943,8 @@ export function dashboardBuilder(config = {}) {
                 }
             }
 
-            if (dc.asset_group && !resolved.asset_group) {
+            if (dc.asset_group && (!resolved.asset_group || resolved.asset_group === '__inherit__'
+                || (Array.isArray(resolved.asset_group) && resolved.asset_group.length === 0))) {
                 resolved.asset_group = dc.asset_group;
             }
             return resolved;
