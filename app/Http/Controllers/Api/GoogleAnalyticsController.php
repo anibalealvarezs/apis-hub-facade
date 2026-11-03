@@ -669,6 +669,8 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            ksort($mergedByDate);
+
             \Illuminate\Support\Facades\Log::error("GA4 Chart: Final mapped chart result:", array_values($mergedByDate));
 
             return response()->json([

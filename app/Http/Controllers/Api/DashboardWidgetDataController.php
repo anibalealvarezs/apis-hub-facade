@@ -1199,6 +1199,11 @@
                             $chartData = $aggregator->aggregateRows($chartData, $granularity, $dateKey, $endDate ?? null);
                         }
 
+                        // Ensure chronological ordering for time-series charts
+                        if (in_array($granularity, array_merge(['daily'], $timelyGranularities), true) && count($chartData) > 1) {
+                            usort($chartData, fn($a, $b) => strcmp((string)($a[$dateKey] ?? ''), (string)($b[$dateKey] ?? '')));
+                        }
+
                         $labels = array_map(fn($row) => $row[$dateKey] ?? '', $chartData);
 
                         $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
