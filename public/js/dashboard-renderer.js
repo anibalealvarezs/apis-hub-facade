@@ -866,7 +866,7 @@ window.dashboardRenderer = {
                 <div class="text-center">
                     ${icon}
                     <p class="text-xs text-red-400 mt-2">${this.escapeHtml(displayMessage)}</p>
-                    <button onclick="this.closest('[x-ref]') ? null : location.reload()" class="text-xs text-primary-500 hover:underline mt-1">Retry</button>
+                    <button onclick="window.dashboardRenderer ? window.dashboardRenderer.retryWidget(this) : location.reload()" class="text-xs text-primary-500 hover:underline mt-1">Retry</button>
                 </div>
             </div>`;
     },
@@ -977,6 +977,91 @@ window.dashboardRenderer = {
             );
         }
         this._retryTimers.delete(widgetId);
+    },
+
+    retryWidget(buttonEl) {
+        if (!buttonEl) return;
+        const container = buttonEl.closest('.widget-content') || buttonEl.closest('.grid-stack-item')?.querySelector('.widget-content');
+        if (!container) {
+            location.reload();
+            return;
+        }
+
+        const gridItem = container.closest('.grid-stack-item');
+        const rawId = container.dataset.widgetId || gridItem?.getAttribute('gs-id') || gridItem?.getAttribute(':gs-id') || container.id?.replace(/^widget-container-|^builder-widget-preview-/, '');
+        const widgetId = rawId ? (isNaN(rawId) ? rawId : parseInt(rawId, 10)) : null;
+
+        if (widgetId !== null && widgetId !== undefined) {
+            this.clearStorageCache?.(widgetId);
+            this._cancelRetry(widgetId);
+            this._autoRetryCounts.delete(widgetId);
+        }
+
+        // 1. Dashboard View (App)
+        const dbView = document.getElementById("dashboard-view-container");
+        if (dbView && window.Alpine) {
+            const view = Alpine.$data(dbView);
+            if (view && typeof view.reloadWidget === "function" && widgetId !== null) {
+                let controls = null;
+                const rawControls = container.getAttribute('data-raw-controls');
+                if (rawControls) {
+                    try { controls = JSON.parse(rawControls); } catch (e) {}
+                }
+                view.reloadWidget(widgetId, controls);
+                return;
+            }
+        }
+
+        // 2. Public Dashboard View
+        const pvEl = document.getElementById("view-grid-stack") || document.querySelector('[x-data^="publicDashboard"]');
+        if (pvEl && window.Alpine) {
+            const pv = Alpine.$data(pvEl);
+            if (pv && typeof pv.reloadWidget === "function" && widgetId !== null) {
+                let controls = null;
+                const rawControls = container.getAttribute('data-raw-controls');
+                if (rawControls) {
+                    try { controls = JSON.parse(rawControls); } catch (e) {}
+                }
+                pv.reloadWidget(widgetId, controls);
+                return;
+            }
+        }
+
+        // 3. Interactive Demo Dashboard
+        const demoEl = document.getElementById("demo-grid-stack") || document.querySelector('[x-data^="demoDashboard"]');
+        if (demoEl && window.Alpine) {
+            const demo = Alpine.$data(demoEl);
+            if (demo && typeof demo.reloadWidget === "function" && widgetId !== null) {
+                demo.reloadWidget(widgetId);
+                return;
+            }
+        }
+
+        // 4. Dashboard Builder
+        const builderEl = document.querySelector('[x-data*="dashboardBuilder"]');
+        if (builderEl && window.Alpine) {
+            const builder = Alpine.$data(builderEl);
+            if (builder && typeof builder.renderWidget === "function" && widgetId !== null) {
+                builder.renderWidget(widgetId, container);
+                return;
+            }
+        }
+
+        // 5. Fallback: render directly via dashboardRenderer if controls attribute exists
+        if (widgetId !== null) {
+            let controls = null;
+            const rawControls = container.getAttribute('data-raw-controls');
+            if (rawControls) {
+                try { controls = JSON.parse(rawControls); } catch (e) {}
+            }
+            container.innerHTML = this.loadingSkeleton();
+            this.renderWidget(widgetId, container, controls);
+            window.dispatchEvent(new CustomEvent("reload-widget", { detail: { id: widgetId, controls: controls } }));
+            return;
+        }
+
+        // If no widget context could be determined at all, fall back to reload
+        location.reload();
     },
 
     escapeHtml(str) {
