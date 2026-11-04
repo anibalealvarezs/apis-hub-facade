@@ -2562,5 +2562,8 @@
     "View assets": "Ver activos",
     "Edit group": "Editar grupo",
     "Assigned assets by channel": "Activos asignados por canal",
-    "No assets assigned to this group.": "Este grupo no tiene activos asignados."
+    "No assets assigned to this group.": "Este grupo no tiene activos asignados.",
+    "Selected": "Seleccionados",
+    "Search assets": "Buscar activos",
+    "No assets available.": "No hay activos disponibles."
 }

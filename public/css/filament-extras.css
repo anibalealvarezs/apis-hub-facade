@@ -323,15 +323,17 @@
 
 /* ---------- Asset Group resource asset selector ---------- */
 .asg-container {
-    max-width: 100%;
-    min-height: 700px;
-    height: 700px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    align-items: start;
+    gap: 1rem;
 }
-.asg-column {
-    width: calc((100% - 3rem) / 3);
+.asg-asset-list {
+    max-height: 24rem;
+    overflow-y: auto;
 }
-.asg-search-input {
-    padding-left: 2.5rem;
+.asg-asset-name {
+    overflow-wrap: anywhere;
 }
 
 /* ================================================================
