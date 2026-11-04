@@ -11,13 +11,36 @@ class JointDashboard extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
     protected static ?string $cluster = \App\Filament\App\Clusters\DataExplorer::class;
-    protected static ?int $navigationSort = -1;
+    protected static ?int $navigationSort = 3;
     
     public static function getNavigationLabel(): string
     {
         return __('Performance Correlations');
     }
 
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Analysis');
+    }
+
+    public static function registerNavigationItems(): void
+    {
+        // The cluster still owns the existing route.
+        if (static::shouldRegisterNavigation() && static::canAccess()) {
+            Filament::getCurrentPanel()->navigationItems(static::getNavigationItems());
+        }
+    }
+
+    public function getSubNavigation(): array
+    {
+        return [];
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [];
+    }
 
     public function getTitle(): string
     {

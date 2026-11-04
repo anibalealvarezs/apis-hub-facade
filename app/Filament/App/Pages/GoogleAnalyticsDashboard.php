@@ -31,7 +31,7 @@ class GoogleAnalyticsDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Google Analytics 4 Insights');
+        return __(':channel Data Preview', ['channel' => static::getNavigationLabel()]);
     }
 
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable

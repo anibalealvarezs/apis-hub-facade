@@ -168,6 +168,17 @@
                             {{ $this->getChannelLabel($activeChannel) }}
                         </h2>
                     </div>
+                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                        @if($previewUrl = $this->getDataPreviewUrl())
+                            <x-filament::link :href="$previewUrl">{{ __('Preview cached data') }}</x-filament::link>
+                        @endif
+                        @if(\App\Filament\App\Pages\DataSync::canAccess())
+                            <x-filament::link :href="\App\Filament\App\Pages\DataSync::getUrl(['channel' => $activeChannel])">{{ __('Sync Activity') }}</x-filament::link>
+                        @endif
+                        @if(\App\Filament\App\Resources\AssetGroupResource::canAccess())
+                            <x-filament::link :href="\App\Filament\App\Resources\AssetGroupResource::getUrl()">{{ __('Manage asset groups') }}</x-filament::link>
+                        @endif
+                    </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-x-2">
                         <span>{{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}</span>
                         @php

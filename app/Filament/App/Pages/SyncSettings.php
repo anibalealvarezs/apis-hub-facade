@@ -19,12 +19,22 @@ class SyncSettings extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Integrations');
+        return __('Administration');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('Synchronization Settings');
+        return __('Synchronization & Access');
+    }
+
+    public static function getNavigationParentItem(): ?string
+    {
+        return ProjectSettings::getNavigationLabel();
+    }
+
+    public function getTitle(): string
+    {
+        return static::getNavigationLabel();
     }
 
     protected static string $view = 'filament.app.pages.sync-settings';
@@ -142,7 +152,8 @@ class SyncSettings extends Page
 
         return $form
             ->schema([
-                Section::make(__('Global Processing Settings'))
+                Section::make(__('Synchronization'))
+                    ->id('synchronization')
                     ->description(__('Configure how long your dedicated explorers should wait before considering a synchronization job as stuck.'))
                     ->schema([
                         Select::make('jobs_timeout_hours')
@@ -155,9 +166,10 @@ class SyncSettings extends Page
                             ])
                             ->default('1')
                             ->helperText(__('If a job takes longer than this duration, it will be automatically aborted to free up resources.')),
-                    ])->collapsed(),
+                    ])->collapsible(),
 
                 Section::make(__('API Access (External Integration)'))
+                    ->id('api-access')
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
                         $tier = Filament::getTenant()?->fresh()?->billingProfile?->fresh()?->tier?->value;
@@ -229,6 +241,7 @@ class SyncSettings extends Page
                     ])->columns(2),
 
                 Section::make(__('API Access (External Integration)'))
+                    ->id('api-access')
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
                         $tier = Filament::getTenant()?->fresh()?->billingProfile?->fresh()?->tier?->value;
@@ -260,6 +273,7 @@ class SyncSettings extends Page
                     ]),
 
                 Section::make(__('Model Context Protocol (MCP) for AI Agents'))
+                    ->id('mcp-access')
                     ->description(__('Connect Google Antigravity, Claude Desktop, Cursor, and autonomous agents directly to this project node.'))
                     ->schema([
                         \Filament\Forms\Components\Placeholder::make('mcp_info')

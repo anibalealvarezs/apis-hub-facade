@@ -54,7 +54,7 @@
                     <span class="text-xs ml-1 opacity-70">({{ __('started') }} {{ $elapsedSync }})</span>
                 @endif
                 <p class="mt-0.5 opacity-80 text-xs">
-                    {{ __('Refreshing instances, rebuilding the container manifest, and scheduling new jobs. This banner will clear once the node confirms it is live. Check the Telemetry page to see job progress.') }}
+                    {{ __('Refreshing instances, rebuilding the container manifest, and scheduling new jobs. This banner will clear once the node confirms it is live. Check the Sync Activity page to see job progress.') }}
                 </p>
             </div>
         </div>
@@ -68,7 +68,7 @@
                 <span class="font-semibold">{{ __('Sync sequence is taking longer than expected') }}</span>
                 <span class="text-xs ml-1 opacity-70">({{ __('started') }} {{ $elapsedSync }})</span>
                 <p class="mt-0.5 opacity-80 text-xs">
-                    {{ __('The sync process may have already completed or encountered an error on the node. This banner will automatically dismiss in a few minutes. Check the Telemetry page to verify job status.') }}
+                    {{ __('The sync process may have already completed or encountered an error on the node. This banner will automatically dismiss in a few minutes. Check the Sync Activity page to verify job status.') }}
                 </p>
             </div>
         </div>

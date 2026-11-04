@@ -266,11 +266,11 @@ class AppPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Analytics')),
+                    ->label(fn () => __('Data Sources')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Data')),
+                    ->label(fn () => __('Catalog')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Integrations')),
+                    ->label(fn () => __('Analysis')),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()

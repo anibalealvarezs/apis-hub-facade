@@ -14,17 +14,17 @@ class DataSync extends Page
 
     public static function getNavigationLabel(): string
     {
-        return __('Telemetry');
+        return __('Sync Activity');
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Integrations');
+        return __('Data Sources');
     }
 
     public function getTitle(): string
     {
-        return __('Data Telemetry');
+        return __('Sync Activity');
     }
 
     public static function canAccess(): bool
@@ -34,6 +34,7 @@ class DataSync extends Page
 
     protected static string $view = 'filament.app.pages.data-sync';
     protected static ?string $slug = 'telemetry';
+    protected static ?int $navigationSort = 4;
 
     public array $syncData = [];
     public ?array $classificationCoverage = null;

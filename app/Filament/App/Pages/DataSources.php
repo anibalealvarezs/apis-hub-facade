@@ -25,12 +25,27 @@
 
         public static function getNavigationLabel(): string
         {
-            return __('Data Sources');
+            return __('Sources');
         }
 
         public static function getNavigationGroup(): ?string
         {
-            return __('Integrations');
+            return __('Data Sources');
+        }
+
+        public function getDataPreviewUrl(): ?string
+        {
+            $page = match ($this->activeChannel) {
+                'facebook_marketing' => FacebookMarketingDashboard::class,
+                'facebook_organic' => FacebookOrganicDashboard::class,
+                'google_ads' => GoogleAdsDashboard::class,
+                'google_analytics' => GoogleAnalyticsDashboard::class,
+                'google_search_console' => GoogleSearchConsoleDashboard::class,
+                'mailchimp' => MailchimpDashboard::class,
+                default => null,
+            };
+
+            return $page && $page::canAccess() ? $page::getUrl() : null;
         }
 
         public function getTitle(): string
@@ -45,6 +60,7 @@
 
         protected static string $view = 'filament.app.pages.data-sources';
         protected static ?string $slug = 'data-sources';
+        protected static ?int $navigationSort = 1;
 
         #[Url(history: true)]
         public ?string $activeChannel = null;

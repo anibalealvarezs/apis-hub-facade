@@ -12,6 +12,14 @@
 
     @if($tenant)
     <div class="space-y-6">
+        @if(\App\Filament\App\Pages\SyncSettings::canAccess())
+            @php($settingsUrl = \App\Filament\App\Pages\SyncSettings::getUrl())
+            <div class="flex flex-wrap gap-4">
+                <x-filament::link :href="$settingsUrl . '#synchronization'">{{ __('Synchronization') }}</x-filament::link>
+                <x-filament::link :href="$settingsUrl . '#api-access'">{{ __('API Access') }}</x-filament::link>
+                <x-filament::link :href="$settingsUrl . '#mcp-access'">{{ __('MCP Access') }}</x-filament::link>
+            </div>
+        @endif
         @if(!$tenant->is_active || $tenant->billing_status === 'suspended')
             <div class="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
               <span class="font-bold">Proyecto Suspendido:</span> Este proyecto está actualmente inactivo debido a incidencias de facturación. Se permite el acceso de solo lectura para ver la configuración, pero las opciones de edición, despliegue, sincronización y transferencia de propiedad están bloqueadas.

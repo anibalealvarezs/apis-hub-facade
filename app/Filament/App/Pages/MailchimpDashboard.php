@@ -31,7 +31,7 @@ class MailchimpDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Performance on Mailchimp campaigns');
+        return __(':channel Data Preview', ['channel' => static::getNavigationLabel()]);
     }
 
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable

@@ -16,6 +16,6 @@ class Dashboards extends Cluster
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Analytics');
+        return __('Analysis');
     }
 }

@@ -10,6 +10,11 @@ class ListAssetGroups extends ListRecords
 {
     protected static string $resource = AssetGroupResource::class;
 
+    public function getSubheading(): string
+    {
+        return __('Group accounts across data sources so you can report on them together.');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -19,10 +19,7 @@ class AssetGroupResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return __('Data');
-    }
+    protected static ?int $navigationSort = 1;
 
     public static function getNavigationLabel(): string
     {

@@ -31,7 +31,7 @@ class GoogleAdsDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Google Ads Insights');
+        return __(':channel Data Preview', ['channel' => static::getNavigationLabel()]);
     }
 
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
