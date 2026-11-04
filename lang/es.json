@@ -2576,5 +2576,8 @@
     "Paused": "En pausa",
     "Above :value": "Por encima de :value",
     "Below :value": "Por debajo de :value",
-    ":configured configured · :enabled enabled · :paused paused": ":configured configuradas · :enabled habilitadas · :paused en pausa"
+    ":configured configured · :enabled enabled · :paused paused": ":configured configuradas · :enabled habilitadas · :paused en pausa",
+    "Assign a billing profile to avoid service interruptions.": "Asigna un perfil de facturación para evitar interrupciones del servicio.",
+    "Individual": "Individual",
+    "Company": "Empresa"
 }

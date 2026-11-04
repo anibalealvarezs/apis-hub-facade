@@ -1000,4 +1000,24 @@ input[type="datetime-local"] {
 .dark .meta-breakdown-warning__country { background: #881337; color: #ffe4e6; }
 .dark .meta-breakdown-warning__option { background: #164e63; color: #cffafe; }
 
+/* Project billing profile */
+.project-billing-profile-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), max-content));
+    gap: .875rem 2rem;
+    margin-top: 1rem;
+}
 
+.project-billing-profile-details dd {
+    margin-top: .25rem;
+    overflow-wrap: anywhere;
+}
+
+.project-billing-profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+}

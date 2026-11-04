@@ -39,6 +39,11 @@ class ProjectBillingSettings extends Page
         abort_unless(auth()->user()->can('manage_billing'), 403, __('You do not have permission to manage billing.'));
     }
 
+    public function getCachedHeaderActions(): array
+    {
+        return [];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -52,7 +57,7 @@ class ProjectBillingSettings extends Page
         return Action::make('assign_profile')
             ->label(__('Change Billing Profile'))
             ->icon('heroicon-o-pencil')
-            ->color('warning')
+            ->color('gray')
             ->form([
                 Forms\Components\ViewField::make('billing_profile_id')
                     ->label(__('Available Billing Profiles (Owned & Shared)'))
