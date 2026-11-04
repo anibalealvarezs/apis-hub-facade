@@ -703,7 +703,14 @@
                                                     <option value="dashboard">{{ __('Dashboard timeframe') }}</option>
                                                     <option value="last_7_days">{{ __('Last 7 days') }}</option>
                                                     <option value="last_30_days">{{ __('Last 30 days') }}</option>
+                                                    <option value="last_1_days">{{ __('Last day') }}</option>
+                                                    <option value="last_14_days">{{ __('Last 14 days') }}</option>
+                                                    <option value="last_90_days">{{ __('Last 90 days') }}</option>
+                                                    <option value="last_180_days">{{ __('Last 180 days') }}</option>
+                                                    <option value="last_365_days">{{ __('Last 365 days') }}</option>
+                                                    <option value="custom">{{ __('Custom days') }}</option>
                                                 </x-ui.select-input>
+                                                <input x-show="widgetControlsForm.advanced_tile.window === 'custom'" type="number" min="1" max="3650" x-model.number="widgetControlsForm.advanced_tile.days" class="w-full rounded-lg">
                                             </label>
                                             <label x-show="widgetControlsTarget.source_type === 'derived_metric'">{{ __('Series summary') }}
                                                 <x-ui.select-input x-model="widgetControlsForm.advanced_tile.reducer">

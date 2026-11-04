@@ -3054,7 +3054,7 @@ export function dashboardBuilder(config = {}) {
                 title: titles[this.activeIdentityLang] || titles.en || baseTitle,
                 description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
                 widget_type: widget.widget_type || '',
-                advanced_tile: { window: 'dashboard', reducer: 'latest', interval: 'auto', compare: true, sparkline: true, ...wc.advanced_tile },
+                advanced_tile: { window: 'dashboard', days: 30, reducer: 'latest', interval: 'auto', compare: true, sparkline: true, ...wc.advanced_tile, ...(wc.advanced_tile?.window && /^last_(\d+)_days$/.test(wc.advanced_tile.window) && ![1, 7, 14, 30, 90, 180, 365].includes(Number(wc.advanced_tile.window.match(/^last_(\d+)_days$/)[1])) ? { window: 'custom', days: Number(wc.advanced_tile.window.match(/^last_(\d+)_days$/)[1]) } : {}) },
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
                 date_end: wc.date_end || this.dashboardControls.date_end || '',
@@ -4239,7 +4239,11 @@ export function dashboardBuilder(config = {}) {
                         return;
                     }
                 }
-                payload.advanced_tile = c.advanced_tile;
+                if (c.advanced_tile.window === 'custom' && (!Number.isInteger(Number(c.advanced_tile.days)) || Number(c.advanced_tile.days) < 1 || Number(c.advanced_tile.days) > 3650)) {
+                    this.widgetControlsError = 'Enter a whole number of days between 1 and 3650.';
+                    return;
+                }
+                payload.advanced_tile = { ...c.advanced_tile, window: c.advanced_tile.window === 'custom' ? `last_${Number(c.advanced_tile.days)}_days` : c.advanced_tile.window };
             }
 
             payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;

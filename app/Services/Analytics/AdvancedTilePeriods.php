@@ -20,12 +20,13 @@ class AdvancedTilePeriods
             throw new InvalidArgumentException('Invalid tile date range.');
         }
 
-        $days = match ($window) {
-            'dashboard' => null,
-            'last_7_days' => 7,
-            'last_30_days' => 30,
-            default => throw new InvalidArgumentException('Invalid tile period.'),
-        };
+        $days = null;
+        if ($window !== 'dashboard') {
+            if (!preg_match('/^last_([1-9][0-9]{0,3})_days$/', $window, $matches) || (int) $matches[1] > 3650) {
+                throw new InvalidArgumentException('Invalid tile period.');
+            }
+            $days = (int) $matches[1];
+        }
         if ($days !== null) {
             $startDate = $endDate->subDays($days - 1);
         }

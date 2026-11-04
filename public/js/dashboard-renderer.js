@@ -4136,8 +4136,8 @@ window.dashboardRenderer = {
                 const finite = values.filter(Number.isFinite);
                 const current = data.periods.current;
                 const previous = data.periods.previous;
-                containerEl.title = `${current.start} – ${current.end}`
-                    + (previous ? ` / ${previous.start} – ${previous.end}` : "");
+                containerEl.title = `Current period and sparkline: ${current.start} – ${current.end}`
+                    + (previous ? `; compared with: ${previous.start} – ${previous.end}` : "");
                 if (finite.length < 2) break;
                 const min = Math.min(...finite);
                 const span = Math.max(...finite) - min;
