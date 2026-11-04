@@ -1071,7 +1071,11 @@ export function dashboardBuilder(config = {}) {
             return Array.isArray(rule.value) ? rule.value : String(rule.value).split(',').map(value => value.trim());
         },
         getRawSeriesMetricOptions(index, series) {
-            const options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
+            let options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
+            if (this.widgetControlsForm.widget_type === 'advanced_tile' && this.widgetControlsTarget?.source_type === 'metric') {
+                const capability = config.advancedTileMetricChannels?.[series.channel];
+                options = Object.fromEntries(Object.entries(options).filter(([metric]) => capability?.metrics.includes(metric)));
+            }
             if (series.channel !== 'google_search_console') return options;
             const types = this.gscTypesForSeries(series);
             return Object.fromEntries(Object.entries(options).filter(([metric]) => types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.metrics.includes(metric))));
@@ -4230,7 +4234,21 @@ export function dashboardBuilder(config = {}) {
                 payload.max_ratio = c.max_ratio !== '' && c.max_ratio !== null ? parseFloat(c.max_ratio) : null;
             }
 
-            if (c.widget_type === 'advanced_tile') payload.advanced_tile = c.advanced_tile;
+            if (c.widget_type === 'advanced_tile') {
+                if (this.widgetControlsTarget.source_type === 'metric') {
+                    const [series] = c.raw_series || [];
+                    const capability = config.advancedTileMetricChannels?.[series?.channel];
+                    const supported = capability?.metrics.includes(series?.metrics?.[0])
+                        && (!capability.dependencies || capability.dependencies.includes(series.dependency || ''))
+                        && (capability.filters || !series.filters?.length)
+                        && !series.breakdown?.dimension;
+                    if (!supported || c.raw_series.length !== 1 || series.metrics.length !== 1 || series.type === 'derived_metric') {
+                        this.widgetControlsError = config.strings?.advancedTileMetricError || 'Choose a single metric supported by Advanced tile, with compatible filters and no breakdown.';
+                        return;
+                    }
+                }
+                payload.advanced_tile = c.advanced_tile;
+            }
 
             payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;
 
@@ -4440,7 +4458,7 @@ export function dashboardBuilder(config = {}) {
             if (form.source_type === 'kpi') {
                 sourceConfig = { custom_kpi_id: form.custom_kpi_id };
             } else if (form.source_type === 'derived_metric') {
-                sourceType = 'metric';
+                sourceType = form.widget_type === 'advanced_tile' ? 'derived_metric' : 'metric';
                 const dmId = String(form.derived_metric_id);
                 const dmInfo = this.derivedMetrics[dmId] || {};
                 const dmName = dmInfo.name || ('DM #' + dmId);

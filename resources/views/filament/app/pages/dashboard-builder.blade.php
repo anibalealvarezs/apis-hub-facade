@@ -4,6 +4,7 @@
     <div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
         gridState: @js($this->gridState ?? []),
+        advancedTileMetricChannels: @js(\App\Services\Analytics\AdvancedTileMetricCatalog::channels()),
         widgetLabels: @js(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
         widgetDescriptions: @js(\App\Services\WidgetTypeRegistry::getWidgetDescriptions()),
         widgetSvgs: @js(\App\Services\WidgetTypeRegistry::getWidgetSvgs()),

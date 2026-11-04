@@ -2688,16 +2688,14 @@
             $metric = ($controls['series_metrics'][0] ?? $series['metrics'] ?? $controls['metrics'] ?? $widget->source_config['metrics'] ?? [])[0] ?? '';
             $filters = $this->normalizeFiltersForPayload($controls['series_filters'][0] ?? $series['filters'] ?? null);
             $dependency = $series['dependency'] ?? $controls['series_dependencies'][0] ?? $controls['dependency'] ?? null;
-            $supported = match ($channel) {
-                'google_search_console' => in_array($metric, ['clicks', 'impressions'], true)
-                    && in_array($dependency, [null, '', 'non-searchAppearance'], true),
-                'google_analytics' => $metric === 'sessions' && !$filters
-                    && in_array($dependency, [null, '', 'traffic_matrix'], true),
-                default => false,
-            };
+            $capability = \App\Services\Analytics\AdvancedTileMetricCatalog::channels()[$channel] ?? [];
+            $supported = in_array($metric, $capability['metrics'] ?? [], true)
+                && (!isset($capability['dependencies']) || in_array($dependency ?? '', $capability['dependencies'], true))
+                && (!$filters || ($capability['filters'] ?? false))
+                && !array_intersect_key($filters, array_flip(['channel', 'channeledAccount']));
             if (!$supported || count($rawSeries) > 1 || ($series['type'] ?? 'metric') !== 'metric'
                 || !empty($series['breakdown']['dimension'])) {
-                return response()->json(['success' => false, 'error' => __('Advanced tile supports a single Search Console clicks or impressions series, or an unfiltered Google Analytics sessions series.')], 422);
+                return response()->json(['success' => false, 'error' => __('Choose a single metric supported by Advanced tile, with compatible filters and no breakdown.')], 422);
             }
 
             $override = $controls['series_assets'][0] ?? $series['assets'] ?? null;
@@ -2714,7 +2712,7 @@
                 'dateEnd' => $current['end'],
                 'metrics' => [$metric],
                 'filters' => $filters,
-                'dependency' => $channel === 'google_analytics' ? 'traffic_matrix' : $dependency,
+                'dependency' => $capability['query_dependency'] ?? $dependency,
                 'granularity' => 'daily',
             ];
             $summary = $this->forwardToChannelEndpoint($channel, 'summary', $payload);

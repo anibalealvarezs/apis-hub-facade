@@ -94,7 +94,7 @@ class GoogleAdsController extends Controller
                 }
             }
 
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $aggregations = [
                 'total_spend'                 => 'spend',
