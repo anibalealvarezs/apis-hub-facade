@@ -2,6 +2,7 @@ export function dashboardBuilder(config = {}) {
     const dashboardControls = config.dashboardControls || {};
     return {
         tenant: config.tenant || (window.location.pathname.match(/\/app\/([^\/]+)/)?.[1]) || '',
+        strings: config.strings || {},
 
         // ─── Unsaved Layout State ───
         isDirty: false,
@@ -9,6 +10,45 @@ export function dashboardBuilder(config = {}) {
         showUnsavedNavModal: false,
         pendingNavUrl: null,
         pendingNavReload: false,
+
+        // ─── Version & Duplicate Modals State ───
+        showSaveVersionModal: false,
+        saveVersionLabel: '',
+        showVersionHistoryModal: false,
+        showDuplicateModal: false,
+
+        openSaveVersionModal() {
+            this.saveVersionLabel = '';
+            this.showSaveVersionModal = true;
+            this.$nextTick(() => {
+                if (this.$refs.saveVersionInput) {
+                    this.$refs.saveVersionInput.focus();
+                }
+            });
+        },
+
+        confirmSaveVersion() {
+            const label = (this.saveVersionLabel || '').trim();
+            this.showSaveVersionModal = false;
+            if (this.$wire && typeof this.$wire.saveVersion === 'function') {
+                this.$wire.saveVersion(label || null);
+            }
+        },
+
+        openVersionHistoryModal() {
+            this.showVersionHistoryModal = true;
+        },
+
+        openDuplicateModal() {
+            this.showDuplicateModal = true;
+        },
+
+        confirmDuplicateDashboard() {
+            this.showDuplicateModal = false;
+            if (this.$wire && typeof this.$wire.duplicateDashboard === 'function') {
+                this.$wire.duplicateDashboard();
+            }
+        },
 
         // ─── Unsaved Widget Controls State ───
         showUnsavedWidgetControlsModal: false,
@@ -108,6 +148,7 @@ export function dashboardBuilder(config = {}) {
             this.sandboxKpiConfig = null;
             const wc = widget.controls || {};
             const resolved = this.resolveWidgetControls(widget);
+            const current = resolved;
             const eph = this.ephemeralOverrides[widget.id] || {};
 
             let initGranularity = '';
@@ -595,7 +636,102 @@ export function dashboardBuilder(config = {}) {
         },
 
         hasSandboxOverrides(widgetId) {
-            return !!(this.ephemeralOverrides[widgetId] && Object.keys(this.ephemeralOverrides[widgetId]).length > 0);
+            const overrides = this.ephemeralOverrides[widgetId];
+            if (!overrides) return false;
+
+            const hasAsset = value => (Array.isArray(value) ? value : [value])
+                .some(id => id != null && String(id).trim() !== '' && id !== '__inherit__');
+
+            return hasAsset(overrides.asset)
+                || hasAsset(overrides.assets)
+                || Object.values(overrides.series_assets || {}).some(hasAsset);
+        },
+
+        widgetHasStaticAssets(widget, controls) {
+            const hasSelection = value => (Array.isArray(value) ? value : [value])
+                .some(id => id != null && String(id).trim() !== '' && id !== '__inherit__');
+
+            if ([controls.asset, controls.assets, controls.asset_group].some(hasSelection)) return true;
+
+            const rawSeries = controls.raw_series ?? widget.source_config?.raw_series;
+            if (widget.source_type === 'metric' && Array.isArray(rawSeries) && rawSeries.length) {
+                const hasSeriesAssets = (series, index) => hasSelection(controls.series_assets?.[index] ?? series?.assets);
+                const isDerived = series => series?.type === 'derived_metric' && series.dm_id;
+                return rawSeries.every((series, index) => isDerived(series) || hasSeriesAssets(series, index))
+                    && (rawSeries.some(series => !isDerived(series))
+                        || rawSeries.some(hasSeriesAssets)
+                        || Object.values(controls.series_assets || {}).some(hasSelection));
+            }
+
+            if (Object.values(controls.series_assets || {}).some(hasSelection)) return true;
+            if (Object.values(controls.series_asset_groups || {}).some(hasSelection)) return true;
+
+            // 5. Check KPI source config if applicable
+            if (widget.source_type === 'kpi') {
+                const kpiId = widget.source_config?.custom_kpi_id;
+                const kpi = (kpiId && this.kpis) ? this.kpis[kpiId] : null;
+                const uiState = kpi?.filters?._ui_state;
+                if (uiState) {
+                    if (uiState.dependent_asset_filter && uiState.dependent_asset_filter.length > 0) return true;
+                    if (uiState.dependent_asset_group) return true;
+                    if (uiState.independent_variables) {
+                        for (const iv of Object.values(uiState.independent_variables)) {
+                            if (iv?.independent_asset_filter && iv.independent_asset_filter.length > 0) return true;
+                            if (iv?.independent_asset_group) return true;
+                        }
+                    }
+                }
+            }
+
+            // 6. Check Derived Metric source config if applicable
+            if (widget.source_type === 'derived_metric') {
+                const dmId = widget.source_config?.derived_metric_id;
+                const dm = (dmId && this.derivedMetrics) ? this.derivedMetrics[dmId] : null;
+                if (dm && Array.isArray(dm.source_series)) {
+                    for (const s of dm.source_series) {
+                        if (Array.isArray(s?.allowed_assets) && s.allowed_assets.length > 0) return true;
+                        if (Array.isArray(s?.asset_filter) && s.asset_filter.length > 0) return true;
+                    }
+                }
+            }
+
+            return false;
+        },
+
+        renderDynamicAssetPlaceholder(widget, targetEl) {
+            const noticeText = this.strings?.previewDynamicAssetsNotice ||
+                "Preview not available given that widget's assets are set to be assigned dynamically. Please select any asset in the test sandbox modal in order to see it render";
+            const sandboxBtnText = this.strings?.testInSandbox || "Test in Sandbox";
+
+            targetEl.innerHTML = `
+                <div class="h-full w-full flex flex-col items-center justify-center p-4 text-center select-none bg-gray-50/60 dark:bg-gray-800/40 rounded-lg border border-dashed border-gray-200 dark:border-gray-700">
+                    <div class="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-500 mb-2.5 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        </svg>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mb-3.5 leading-relaxed">
+                        ${noticeText}
+                    </p>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                class="bd-ph-sandbox-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold shadow-xs transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3.5 h-3.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                            </svg>
+                            <span>${sandboxBtnText}</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const sBtn = targetEl.querySelector('.bd-ph-sandbox-btn');
+            if (sBtn) {
+                sBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.openSandboxModal(widget);
+                });
+            }
         },
 
         renderWidget(widgetId, el) {
@@ -614,7 +750,7 @@ export function dashboardBuilder(config = {}) {
                 checkReady();
                 return;
             }
-            targetEl.innerHTML = '';
+
             const resolved = this.resolveWidgetControls(widget);
             const eph = this.ephemeralOverrides[widget.id] || {};
             const overrides = { ...eph };
@@ -634,6 +770,12 @@ export function dashboardBuilder(config = {}) {
                 ...resolved,
                 ...overrides
             };
+            if (!this.widgetHasStaticAssets(widget, effectiveControls)) {
+                this.renderDynamicAssetPlaceholder(widget, targetEl);
+                return;
+            }
+
+            targetEl.innerHTML = '';
             window.dashboardRenderer.renderWidget(widget.id, targetEl, effectiveControls, this.tenant);
         },
 
@@ -813,7 +955,8 @@ export function dashboardBuilder(config = {}) {
                 }
             }
 
-            if (dc.asset_group && !resolved.asset_group) {
+            if (dc.asset_group && (!resolved.asset_group || resolved.asset_group === '__inherit__'
+                || (Array.isArray(resolved.asset_group) && resolved.asset_group.length === 0))) {
                 resolved.asset_group = dc.asset_group;
             }
             return resolved;
@@ -928,7 +1071,7 @@ export function dashboardBuilder(config = {}) {
             return Array.isArray(rule.value) ? rule.value : String(rule.value).split(',').map(value => value.trim());
         },
         getRawSeriesMetricOptions(index, series) {
-            const options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
+            let options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
             if (series.channel !== 'google_search_console') return options;
             const types = this.gscTypesForSeries(series);
             return Object.fromEntries(Object.entries(options).filter(([metric]) => types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.metrics.includes(metric))));
@@ -1301,7 +1444,7 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
+                const allowed = ['tile', 'advanced_tile', 'metric_breakdown', 'stacked_area', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1328,7 +1471,7 @@ export function dashboardBuilder(config = {}) {
             } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
-                    : ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
+                    : ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1360,7 +1503,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
+                const allowed = ['tile', 'advanced_tile', 'metric_breakdown', 'stacked_area', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1376,7 +1519,7 @@ export function dashboardBuilder(config = {}) {
                     typeMap = allTypes;
                 }
             } else if (target.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
+                const allowed = config.derivedMetricWidgetTypes || ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1397,7 +1540,7 @@ export function dashboardBuilder(config = {}) {
                 };
             }
 
-            return Object.entries(typeMap).map(([type, label]) => ({ type, label }));
+            return Object.entries(typeMap).filter(([type]) => type !== 'advanced_tile' || ['metric', 'derived_metric'].includes(target?.source_type)).map(([type, label]) => ({ type, label }));
         },
 
         selectWidgetTypeForControls(type) {
@@ -2911,6 +3054,8 @@ export function dashboardBuilder(config = {}) {
                 title: titles[this.activeIdentityLang] || titles.en || baseTitle,
                 description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
                 widget_type: widget.widget_type || '',
+                stacked_area_mode: wc.stacked_area_mode || 'absolute',
+                advanced_tile: { window: 'dashboard', days: 30, reducer: 'latest', interval: 'auto', compare: true, sparkline: true, ...wc.advanced_tile, ...(wc.advanced_tile?.window && /^last_(\d+)_days$/.test(wc.advanced_tile.window) && ![1, 7, 14, 30, 90, 180, 365].includes(Number(wc.advanced_tile.window.match(/^last_(\d+)_days$/)[1])) ? { window: 'custom', days: Number(wc.advanced_tile.window.match(/^last_(\d+)_days$/)[1]) } : {}) },
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
                 date_end: wc.date_end || this.dashboardControls.date_end || '',
@@ -4086,6 +4231,24 @@ export function dashboardBuilder(config = {}) {
                 payload.max_ratio = c.max_ratio !== '' && c.max_ratio !== null ? parseFloat(c.max_ratio) : null;
             }
 
+            if (c.widget_type === 'advanced_tile') {
+                if (this.widgetControlsTarget.source_type === 'metric') {
+                    const [series] = c.raw_series || [];
+                    const supported = !!series?.channel && !!series?.metrics?.[0] && !series.breakdown?.dimension;
+                    if (!supported || c.raw_series.length !== 1 || series.metrics.length !== 1 || series.type === 'derived_metric') {
+                        this.widgetControlsError = config.strings?.advancedTileMetricError || 'Choose a single metric supported by Advanced tile, with compatible filters and no breakdown.';
+                        return;
+                    }
+                }
+                if (c.advanced_tile.window === 'custom' && (!Number.isInteger(Number(c.advanced_tile.days)) || Number(c.advanced_tile.days) < 1 || Number(c.advanced_tile.days) > 3650)) {
+                    this.widgetControlsError = 'Enter a whole number of days between 1 and 3650.';
+                    return;
+                }
+                payload.advanced_tile = { ...c.advanced_tile, window: c.advanced_tile.window === 'custom' ? `last_${Number(c.advanced_tile.days)}_days` : c.advanced_tile.window };
+            }
+
+            if (c.widget_type === 'stacked_area') payload.stacked_area_mode = c.stacked_area_mode || 'absolute';
+
             payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;
 
             if (this.widgetControlsTarget.widget_type === 'pie_chart') {
@@ -4294,7 +4457,7 @@ export function dashboardBuilder(config = {}) {
             if (form.source_type === 'kpi') {
                 sourceConfig = { custom_kpi_id: form.custom_kpi_id };
             } else if (form.source_type === 'derived_metric') {
-                sourceType = 'metric';
+                sourceType = form.widget_type === 'advanced_tile' ? 'derived_metric' : 'metric';
                 const dmId = String(form.derived_metric_id);
                 const dmInfo = this.derivedMetrics[dmId] || {};
                 const dmName = dmInfo.name || ('DM #' + dmId);

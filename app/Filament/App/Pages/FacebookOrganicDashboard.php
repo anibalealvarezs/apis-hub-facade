@@ -33,7 +33,7 @@ class FacebookOrganicDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Meta Pages & Instagram Accounts');
+        return __(':channel Data Preview', ['channel' => static::getNavigationLabel()]);
     }
 
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable

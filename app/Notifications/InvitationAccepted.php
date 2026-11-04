@@ -25,7 +25,13 @@ class InvitationAccepted extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = ['database'];
+
+        if (! method_exists($notifiable, 'prefersEmailNotification') || $notifiable->prefersEmailNotification('invitation_accepted')) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -32,7 +32,7 @@ class FacebookMarketingDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Meta Ads Manager Insights');
+        return __(':channel Data Preview', ['channel' => static::getNavigationLabel()]);
     }
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
     {

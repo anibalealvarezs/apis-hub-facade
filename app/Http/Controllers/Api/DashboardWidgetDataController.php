@@ -240,6 +240,70 @@
                 }
                 \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} BEFORE match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
                 $tMatch = microtime(true);
+                if ($widget->widget_type === 'advanced_tile') {
+                    if (!in_array($widget->source_type, ['metric', 'derived_metric'], true)) {
+                        return response()->json(['success' => false, 'error' => __('Unsupported Advanced tile source.')], 422);
+                    }
+
+                    $periodService = new \App\Services\Analytics\AdvancedTilePeriods;
+                    $options = $widget->controls['advanced_tile'] ?? [];
+                    $periods = $periodService->resolve(
+                        $resolvedControls['date_start'],
+                        $resolvedControls['date_end'],
+                        $options['window'] ?? 'dashboard',
+                    );
+                    if ($widget->source_type === 'metric') {
+                        return $this->showAdvancedMetricTile($project, $widget, $resolvedControls, $options, $periods);
+                    }
+                    $results = [];
+                    foreach ($periods as $name => $period) {
+                        if ($name === 'previous' && !($options['compare'] ?? true)) {
+                            break;
+                        }
+                        $series = $this->handleDerivedMetricSource($project, $widget, array_replace($resolvedControls, [
+                            'date_start' => $period['start'],
+                            'date_end' => $period['end'],
+                            'granularity' => 'daily',
+                        ]));
+                        $results[$name] = $series['datasets'][0] ?? [];
+                    }
+
+                    $current = $results['current'];
+                    $sparkline = [];
+                    if ($options['sparkline'] ?? true) {
+                        $interval = $options['interval'] ?? 'auto';
+                        if ($interval === 'auto') {
+                            $interval = count($current['data'] ?? []) > 90 ? 'weekly' : 'daily';
+                        }
+                        $sparkline = $current['data'] ?? [];
+                        if (in_array($interval, ['weekly', 'monthly'], true)) {
+                            $range = $periods['current'];
+                            $trend = $this->handleDerivedMetricSource($project, $widget, array_replace($resolvedControls, [
+                                'date_start' => $range['start'],
+                                'date_end' => $range['end'],
+                                'granularity' => $interval,
+                            ]));
+                            $sparkline = $trend['datasets'][0]['data'] ?? [];
+                        }
+                    }
+
+                    $reducer = $options['reducer'] ?? 'latest';
+
+                    return response()->json([
+                        'success' => true,
+                        'widget_type' => 'advanced_tile',
+                        'data' => [
+                            'value' => $periodService->reduce($current['data'] ?? [], $reducer),
+                            'previous' => $periodService->reduce($results['previous']['data'] ?? [], $reducer),
+                            'periods' => array_intersect_key($periods, $results),
+                            'sparkline' => $sparkline,
+                            'label' => $current['label'] ?? '',
+                            'percentage' => $current['percentage'] ?? false,
+                            'lower_is_better' => $current['lower_is_better'] ?? false,
+                        ],
+                    ]);
+                }
+
                 $data = match ($widget->source_type) {
                     'kpi' => $this->handleKpiSource($project, $widget, $resolvedControls),
                     'metric' => $this->handleMetricSource($project, $widget, $resolvedControls),
@@ -2616,6 +2680,65 @@
             return $resultData;
         }
 
+        protected function showAdvancedMetricTile(Project $project, DashboardWidget $widget, array $controls, array $options, array $periods): \Illuminate\Http\JsonResponse
+        {
+            $rawSeries = $controls['raw_series'] ?? $widget->source_config['raw_series'] ?? [];
+            $series = $rawSeries[0] ?? [];
+            $channel = $series['channel'] ?? $controls['channel'] ?? $widget->source_config['channel'] ?? '';
+            $metric = ($controls['series_metrics'][0] ?? $series['metrics'] ?? $controls['metrics'] ?? $widget->source_config['metrics'] ?? [])[0] ?? '';
+            $filters = $this->normalizeFiltersForPayload($controls['series_filters'][0] ?? $series['filters'] ?? null);
+            $dependency = $series['dependency'] ?? $controls['series_dependencies'][0] ?? $controls['dependency'] ?? null;
+            if (!$channel || !$metric || count($rawSeries) > 1 || ($series['type'] ?? 'metric') !== 'metric'
+                || !empty($series['breakdown']['dimension'])
+                || array_intersect_key($filters, array_flip(['channel', 'channeledAccount', 'dimensions.scope']))) {
+                return response()->json(['success' => false, 'error' => __('Choose a single metric with no breakdown.')], 422);
+            }
+
+            $override = $controls['series_assets'][0] ?? $series['assets'] ?? null;
+            $account = $this->extractAssetFilter($controls, $project, $channel, $override === null ? null : (array) $override);
+            if (empty($account) || $account === '___EMPTY_GROUP___') {
+                return response()->json(['success' => true, 'widget_type' => 'advanced_tile', 'missing_assets' => true, 'data' => []]);
+            }
+
+            $current = $periods['current'];
+            $payload = [
+                'tenant' => $project->id,
+                'account' => $this->resolveChanneledAccountId($project, $channel, $account),
+                'dateStart' => $current['start'],
+                'dateEnd' => $current['end'],
+                'metrics' => [$metric],
+                'filters' => $filters,
+                'dependency' => $dependency,
+                'granularity' => 'daily',
+            ];
+            $summary = $this->forwardToChannelEndpoint($channel, 'summary', $payload);
+            $compare = $options['compare'] ?? true;
+            $values = [];
+            if ($options['sparkline'] ?? true) {
+                $chart = $this->forwardToChannelEndpoint($channel, 'chart', $payload)['chart'] ?? [];
+                $dateKey = isset($chart[0]['daily']) ? 'daily' : 'date';
+                $interval = $options['interval'] ?? 'auto';
+                if ($interval === 'auto') {
+                    $interval = count($chart) > 90 ? 'weekly' : 'daily';
+                }
+                $chart = (new \App\Services\Analytics\GranularityAggregationService)->aggregateRows($chart, $interval, $dateKey);
+                usort($chart, static fn ($a, $b) => ($a[$dateKey] ?? '') <=> ($b[$dateKey] ?? ''));
+                $values = array_map(static fn ($row) => $row[$metric] ?? null, $chart);
+            }
+
+            return response()->json([
+                'success' => true,
+                'widget_type' => 'advanced_tile',
+                'data' => [
+                    'value' => isset($summary['summary'][$metric]) ? (float) $summary['summary'][$metric] : null,
+                    'previous' => $compare && isset($summary['previous'][$metric]) ? (float) $summary['previous'][$metric] : null,
+                    'periods' => $compare ? $periods : ['current' => $current],
+                    'sparkline' => $values,
+                    'label' => ucfirst($metric),
+                ],
+            ]);
+        }
+
         protected function handleMetricSource(Project $project, DashboardWidget $widget, array $controls): array
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMetricSource ENTER", ['widget_id' => $widget->id]);
@@ -2632,6 +2755,10 @@
             }
 
 
+
+            if (in_array($widget->widget_type, ['metric_breakdown', 'stacked_area'], true) && !$hasMultiSeries) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['series' => __('Select one metric and a breakdown dimension.')]);
+            }
 
             if ($hasMultiSeries) {
                 return $this->handleMultiSeriesSource($project, $widget, $controls, $rawSeries);
@@ -2670,19 +2797,14 @@
 
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
 
-            if ($assetFilter === '___EMPTY_GROUP___') {
-                return [
-                    'columns' => [],
-                    'rows'    => [],
-                    'chart'   => [],
-                    'summary' => [],
-                ];
+            if (empty($assetFilter) || $assetFilter === '___EMPTY_GROUP___') {
+                return ['_missing_assets' => true];
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
 
-            $dateStart = $controls['date_start'] ?? now()->subDays(30)->format('Y-m-d');
-            $dateEnd = $controls['date_end'] ?? now()->format('Y-m-d');
+            $dateEnd = $controls['date_end'] ?? now()->subDays(1)->format('Y-m-d');
+            $dateStart = $controls['date_start'] ?? \Carbon\Carbon::parse($dateEnd)->subMonth()->addDay()->format('Y-m-d');
 
             $granularity = ($widget->widget_type === 'scatter_plot')
                 ? 'lifetime'
@@ -2735,19 +2857,40 @@
         protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
-            $granularity = ($widget->widget_type === 'scatter_plot')
+            $granularity = in_array($widget->widget_type, ['scatter_plot', 'metric_breakdown'], true)
                 ? 'lifetime'
                 : ($controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily');
+            $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->subDays(1)->format('Y-m-d');
             $dateStart = !empty($controls['date_start'])
                 ? $controls['date_start']
-                : ($granularity === 'lifetime' ? '2010-01-01' : now()->subDays(30)->format('Y-m-d'));
-            $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->format('Y-m-d');
+                : \Carbon\Carbon::parse($dateEnd)->subMonth()->addDay()->format('Y-m-d');
             $metricLabels = \App\Services\Analytics\KpiFormBuilder::getAllMetricOptions();
             $ratioMetrics = ['ctr', 'bounce_rate', 'engagement_rate', 'result_rate'];
             $palette = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#6366f1'];
 
             $seriesCurves = [];
             $dmGroups = [];
+
+            // Resolve all direct series before dispatching any analytics requests.
+            $seriesAccounts = [];
+            foreach ($rawSeries as $index => $series) {
+                if (($series['type'] ?? 'metric') === 'derived_metric' && !empty($series['dm_id'])) {
+                    continue;
+                }
+
+                $channel = $series['channel'] ?? '';
+                if ($channel === '' || empty($controls['series_metrics'][$index] ?? $series['metrics'] ?? [])) {
+                    continue;
+                }
+
+                $override = $controls['series_assets'][$index] ?? $series['assets'] ?? null;
+                $account = $this->extractAssetFilter($controls, $project, $channel, $override === null ? null : (array) $override);
+                if (empty($account) || $account === '___EMPTY_GROUP___') {
+                    return ['_missing_assets' => true];
+                }
+
+                $seriesAccounts[$index] = $account;
+            }
 
             // 1. Separate Raw Metric series and group Derived Metric series
             foreach ($rawSeries as $sIdx => $series) {
@@ -2762,17 +2905,21 @@
                 } else {
                     $channel = $series['channel'] ?? '';
                     $metrics = $controls['series_metrics'][$sIdx] ?? $series['metrics'] ?? [];
+                    if (in_array($widget->widget_type, ['stacked_area', 'metric_breakdown'], true)) {
+                        foreach ($metrics as $metric) {
+                            if (!\App\Services\Analytics\ChannelCapabilityRegistry::isMetricAdditive($channel, $metric)) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    'metrics' => __('This widget requires an additive metric supported by the selected channel.'),
+                                ]);
+                            }
+                        }
+                    }
+
                     if (empty($channel) || empty($metrics)) {
                         continue;
                     }
 
-                    // Check per-series asset override
-                    $seriesAssetOverride = $controls['series_assets'][$sIdx] ?? $series['assets'] ?? null;
-                    $assetFilter = $this->extractAssetFilter($controls, $project, $channel, $seriesAssetOverride);
-                    if ($assetFilter === '___EMPTY_GROUP___') {
-                        continue;
-                    }
-                    $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
+                    $assetFilter = $this->resolveChanneledAccountId($project, $channel, $seriesAccounts[$sIdx]);
 
                     $payload = [
                         'tenant'      => $project->id,
@@ -2820,6 +2967,13 @@
                     $isPosRank = str_contains(strtolower($breakdownRankBy), 'position') || str_contains(strtolower($breakdownRankBy), 'rank');
                     $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? ($isPosRank ? 'value_asc' : 'value_desc')) : ($isPosRank ? 'value_asc' : 'value_desc');
 
+                    if (in_array($widget->widget_type, ['metric_breakdown', 'stacked_area'], true)
+                        && (count($rawSeries) !== 1 || count($metrics) !== 1 || empty($breakdownDim))) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'series' => __('Select one metric and a breakdown dimension.'),
+                        ]);
+                    }
+
                     if (!empty($breakdownDim)) {
                         $payload['breakdown'] = $breakdownDim;
                         $payload['groupBy'] = $granularity === 'lifetime' ? [$breakdownDim] : ['daily', $breakdownDim];
@@ -2852,7 +3006,7 @@
                     if (!empty($breakdownDim)) {
                         // If widget is a table and granularity is lifetime, replace granularity/date with the breakdown dimension
                         // as rows, and list all requested metrics across the columns instead of fanning out curves.
-                        if ($widget->widget_type === 'table' && $granularity === 'lifetime') {
+                        if (in_array($widget->widget_type, ['table', 'metric_breakdown'], true) && $granularity === 'lifetime') {
                             $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
                             if (!is_array($rawRows)) {
                                 $rawRows = [];
@@ -3001,6 +3155,25 @@
                             if (in_array($breakdownOrder, ['value_desc', 'value_asc'], true)) {
                                 $tablePayload['default_sort_column'] = preg_replace('/^trend_(?:total|average)_/', '', $breakdownRankBy);
                                 $tablePayload['default_sort_direction'] = $breakdownOrder === 'value_asc' ? 'asc' : 'desc';
+                            }
+
+                            if ($widget->widget_type === 'metric_breakdown') {
+                                if (!in_array($channel, ['google_search_console', 'google_ads'], true)) {
+                                    throw \Illuminate\Validation\ValidationException::withMessages([
+                                        'channel' => __('Metric Breakdown is unavailable for this channel.'),
+                                    ]);
+                                }
+                                $summaryPayload = $payload;
+                                unset($summaryPayload['breakdown'], $summaryPayload['groupBy']);
+                                $summary = $this->forwardToChannelEndpoint($channel, 'summary', $summaryPayload);
+                                $metric = preg_replace('/^trend_(?:total|average)_/', '', $metrics[0]);
+                                if (!isset($summary['summary']) || !is_array($summary['summary']) || !array_key_exists($metric, $summary['summary'])) {
+                                    throw new \RuntimeException(__('The total for this metric is unavailable.'));
+                                }
+                                $total = $summary['summary'][$metric];
+                                $tablePayload['total'] = is_numeric($total) ? (float) $total : null;
+                                $tablePayload['metric'] = $metric;
+                                $tablePayload['additive'] = \App\Services\Analytics\ChannelCapabilityRegistry::isMetricAdditive($channel, $metric);
                             }
 
                             return $tablePayload;
@@ -4565,11 +4738,8 @@
 
             $assetFilter = $this->extractAssetFilter($controls, $project, $channel);
 
-            if ($assetFilter === '___EMPTY_GROUP___') {
-                return [
-                    'columns' => [],
-                    'rows'    => [],
-                ];
+            if (empty($assetFilter) || $assetFilter === '___EMPTY_GROUP___') {
+                return ['_missing_assets' => true];
             }
 
             $assetFilter = $this->resolveChanneledAccountId($project, $channel, $assetFilter);
@@ -4622,6 +4792,26 @@
                 return $allowsMultiple ? $filtered : $filtered[0];
             };
 
+            // Resolve active asset group filter if specified
+            $groupAssets = null;
+            if (!empty($controls['asset_group'])) {
+                $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
+                if ($groups->isEmpty()) {
+                    return '___EMPTY_GROUP___';
+                }
+                $groupAssets = [];
+                foreach ($groups as $group) {
+                    $groupAssets = array_merge($groupAssets, $group->items()
+                        ->where('channel', $channel)
+                        ->pluck('asset_id')
+                        ->toArray());
+                }
+                $groupAssets = array_values(array_unique(array_map('strval', $groupAssets)));
+                if (empty($groupAssets)) {
+                    return '___EMPTY_GROUP___';
+                }
+            }
+
             if (!empty($controls['asset'])) {
                 $valid = $this->getValidAssetsForChannel($project, $channel);
                 if (!in_array((string)$controls['asset'], $valid)) {
@@ -4629,9 +4819,16 @@
                 }
 
                 $asset = $controls['asset'];
+                if ($groupAssets !== null && !in_array((string)$asset, $groupAssets, true)) {
+                    return '___EMPTY_GROUP___';
+                }
+
                 if ($seriesAssetFilter !== null && !empty($seriesAssetFilter)) {
                     $validArray = is_array($asset) ? $asset : [$asset];
                     $filtered = array_intersect($validArray, $seriesAssetFilter);
+                    if ($groupAssets !== null) {
+                        $filtered = array_intersect($filtered, $groupAssets);
+                    }
                     if (empty($filtered)) {
                         return '___EMPTY_GROUP___';
                     }
@@ -4646,7 +4843,10 @@
             if ($seriesAssetFilter !== null) {
                 if (!empty($seriesAssetFilter)) {
                     $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                    $filtered = array_intersect($seriesAssetFilter, $validForChannel);
+                    $filtered = array_intersect(array_map('strval', $seriesAssetFilter), array_map('strval', $validForChannel));
+                    if ($groupAssets !== null) {
+                        $filtered = array_intersect($filtered, $groupAssets);
+                    }
                     if (empty($filtered)) {
                         return '___EMPTY_GROUP___';
                     }
@@ -4654,7 +4854,15 @@
 
                     return $constrain($allowsMultiple ? $filtered : $filtered[0]);
                 }
-                // If seriesAssetFilter is explicitly empty array [], it means "all assets for this channel"
+                // If seriesAssetFilter is explicitly empty array [], it means "all assets for this channel" (or within group)
+                if ($groupAssets !== null) {
+                    $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                    $filtered = array_values(array_intersect($groupAssets, array_map('strval', $validForChannel)));
+                    if (empty($filtered)) {
+                        return '___EMPTY_GROUP___';
+                    }
+                    return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+                }
             }
 
             $seriesAssets = $controls['series_assets'] ?? null;
@@ -4668,11 +4876,16 @@
                 $flat = array_values(array_unique($flat));
                 if (!empty($flat)) {
                     $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                    $filtered = array_intersect($flat, $validForChannel);
+                    $filtered = array_intersect($flat, array_map('strval', $validForChannel));
+                    if ($groupAssets !== null) {
+                        $filtered = array_intersect($filtered, $groupAssets);
+                    }
                     if (!empty($filtered)) {
                         $filtered = array_values($filtered);
 
                         return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+                    } elseif ($groupAssets !== null) {
+                        return '___EMPTY_GROUP___';
                     }
                 }
             }
@@ -4680,32 +4893,18 @@
             $requestedAssets = [];
             if ($seriesAssetFilter === null) {
                 if (!empty($controls['assets']) && is_array($controls['assets'])) {
-                    $requestedAssets = $controls['assets'];
-                } elseif (!empty($controls['asset_group'])) {
-                    $groups = $this->resolveGroupsForUser($project, $controls['asset_group']);
-
-                    if ($groups->isEmpty()) {
-                        return '___EMPTY_GROUP___';
+                    $requestedAssets = array_map('strval', $controls['assets']);
+                    if ($groupAssets !== null) {
+                        $requestedAssets = array_intersect($requestedAssets, $groupAssets);
                     }
-
-                    $requestedAssets = [];
-                    foreach ($groups as $group) {
-                        $requestedAssets = array_merge($requestedAssets, $group->items()
-                            ->where('channel', $channel)
-                            ->pluck('asset_id')
-                            ->toArray());
-                    }
-                    $requestedAssets = array_values(array_unique($requestedAssets));
-
-                    if (empty($requestedAssets)) {
-                        return '___EMPTY_GROUP___';
-                    }
+                } elseif ($groupAssets !== null) {
+                    $requestedAssets = $groupAssets;
                 }
             }
 
             if (!empty($requestedAssets)) {
                 $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                $filtered = array_intersect($requestedAssets, $validForChannel);
+                $filtered = array_intersect($requestedAssets, array_map('strval', $validForChannel));
 
                 if (empty($filtered)) {
                     return '___EMPTY_GROUP___';
@@ -4718,7 +4917,10 @@
 
             if ($seriesAssetFilter !== null && !empty($seriesAssetFilter)) {
                 $validForChannel = $this->getValidAssetsForChannel($project, $channel);
-                $filtered = array_intersect($seriesAssetFilter, $validForChannel);
+                $filtered = array_intersect(array_map('strval', $seriesAssetFilter), array_map('strval', $validForChannel));
+                if ($groupAssets !== null) {
+                    $filtered = array_intersect($filtered, $groupAssets);
+                }
 
                 if (empty($filtered)) {
                     return '___EMPTY_GROUP___';
@@ -4726,6 +4928,15 @@
 
                 $filtered = array_values($filtered);
 
+                return $constrain($allowsMultiple ? $filtered : $filtered[0]);
+            }
+
+            if ($groupAssets !== null) {
+                $validForChannel = $this->getValidAssetsForChannel($project, $channel);
+                $filtered = array_values(array_intersect($groupAssets, array_map('strval', $validForChannel)));
+                if (empty($filtered)) {
+                    return '___EMPTY_GROUP___';
+                }
                 return $constrain($allowsMultiple ? $filtered : $filtered[0]);
             }
 

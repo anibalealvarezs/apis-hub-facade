@@ -36,7 +36,7 @@ export const dataSourcesTour = {
             showIf: () => document.querySelector('#ds-assets-form') !== null,
             popover: {
                 title: 'Channel Authorization & Asset Discovery',
-                description: 'Update OAuth credentials or click "Refresh / Discover" at any time to sync newly created properties or ad accounts.',
+                description: 'Update OAuth credentials or click "Discover assets" at any time to sync newly created properties or ad accounts.',
                 side: 'bottom',
                 align: 'end'
             }
@@ -63,10 +63,10 @@ export const dataSourcesTour = {
                 align: 'center'
             }
         },
-        // Step 6: Internal sidebar section with config cards
+        // Step 6: Channel configuration tabs
         {
-            element: '#ds-assets-form div.sticky.top-4.self-start, #ds-assets-form div.sticky, #ds-assets-form .sticky.top-4',
-            showIf: () => document.querySelector('#ds-assets-form div.sticky.top-4.self-start, #ds-assets-form div.sticky, #ds-assets-form .sticky.top-4') !== null,
+            element: '#ds-source-tabs [role="tablist"]',
+            showIf: () => document.querySelector('#ds-source-tabs [role="tablist"]') !== null,
             popover: {
                 title: 'Channel Sync Settings',
                 description: 'Configure automated sync schedules, execution times, historic cache depth, and custom calculation settings for this channel.',

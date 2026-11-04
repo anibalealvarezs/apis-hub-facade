@@ -20,8 +20,9 @@
             groupsLabel: '{{ __('Groups:') }}'
          })">
 
-        <template x-teleport="#tier-usage-header-target">
-            <div class="flex items-center gap-4 text-sm transition-colors"
+        <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-gray-900">
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ __('Connect sources and choose which accounts, properties, and audiences to synchronize.') }}</p>
+            <div class="flex flex-wrap items-center gap-3 text-sm transition-colors"
                  :class="selectedCount >= (maxAssets * 0.8) ? 'text-danger-600 dark:text-danger-500' : (selectedCount < (maxAssets * 0.5) ? 'text-success-600 dark:text-success-500' : 'text-gray-700 dark:text-gray-300')">
                 <span class="inline-flex items-center px-3 py-1 rounded text-xs font-medium bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-white/5 shadow-sm">
                     <a href="{{ $this->getAssetBillingReferenceUrl(__('Annual vs. Monthly Subscriptions')) }}" target="_blank" x-tooltip="{ content: '{{ __('Click to read more about how billing cycles work.') }}', theme: $store.theme }" class="text-gray-500 dark:text-gray-400 font-normal pr-1 hover:underline cursor-help transition-colors hover:text-primary-600 dark:hover:text-primary-400">
@@ -41,11 +42,12 @@
                     </div>
                 </div>
             </div>
-        </template>
+        </div>
 
-        <div class="flex flex-col md:flex-row gap-6 items-start relative">
+        <div class="flex flex-col lg:flex-row gap-6 items-start relative">
         <!-- Sidebar Navigation -->
-        <div id="ds-channels-sidebar" class="w-full md:w-80 md:flex-none flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
+        <div id="ds-channels-sidebar" class="w-full lg:flex-none flex-shrink-0 flex flex-col gap-4 bg-white dark:bg-gray-900 rounded-xl shadow-sm ring-1 ring-gray-950/5 dark:ring-white/10 p-4 sticky top-6 max-h-[calc(100vh-2rem)] overflow-y-auto ds-sidebar">
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Providers') }}</h2>
             @foreach($this->getProviders() as $pKey => $provider)
                 @php
                     $hasActiveChannel = collect($provider['channels'])->contains('key', $activeChannel);
@@ -78,7 +80,8 @@
                             @endphp
                             @if($channel['status'] === 'Active')
                                 <button wire:click="$set('activeChannel', '{{ $channel['key'] }}')"
-                                        class="px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                                        class="ds-channel-option px-3 py-2 text-left rounded-lg text-sm font-medium transition-colors flex items-center justify-between"
+                                        :aria-current="activeTab === '{{ $channel['key'] }}' ? 'true' : null"
                                         :class="activeTab === '{{ $channel['key'] }}' ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-gray-950 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5'">
                                     <div class="flex items-center gap-2 truncate pr-2">
                                         @if($channelIcon)
@@ -158,7 +161,7 @@
                     @php
                         $sectionChannelIcon = \App\Support\BrandIcon::forChannel($activeChannel, null, null, 'w-6 h-6 shrink-0 text-gray-900 dark:text-white');
                     @endphp
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                         @if($sectionChannelIcon)
                             <div class="flex items-center justify-center shrink-0">
                                 {!! $sectionChannelIcon !!}
@@ -167,25 +170,39 @@
                         <h2 class="text-xl font-bold text-gray-900 dark:text-white">
                             {{ $this->getChannelLabel($activeChannel) }}
                         </h2>
+                        @if($this->isConnected($activeChannel))
+                            <x-filament::badge color="success">{{ __('Connected') }}</x-filament::badge>
+                        @endif
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                        @if($previewUrl = $this->getDataPreviewUrl())
+                            <x-filament::link :href="$previewUrl">{{ __('Preview cached data') }}</x-filament::link>
+                        @endif
+                        @if(\App\Filament\App\Pages\DataSync::canAccess())
+                            <x-filament::link :href="\App\Filament\App\Pages\DataSync::getUrl(['channel' => $activeChannel])">{{ __('Sync Activity') }}</x-filament::link>
+                        @endif
+                        @if(\App\Filament\App\Resources\AssetGroupResource::canAccess())
+                            <x-filament::link :href="\App\Filament\App\Resources\AssetGroupResource::getUrl()">{{ __('Manage asset groups') }}</x-filament::link>
+                        @endif
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 flex flex-wrap items-center gap-x-2">
-                        <span>{{ __('Last synced') }}: {{ $this->getLastSyncTime($activeChannel) }}</span>
                         @php
                             $tz = filament()->getTenant()->timezone ?? config('app.timezone', 'UTC');
                         @endphp
                         @if($lastPush = filament()->getTenant()->getLastConfigPushTime())
-                            <span class="text-gray-300 dark:text-gray-600">|</span>
                             <span>{{ __('Last sync push') }}: {{ $lastPush->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</span>
                         @endif
                         @if($lastDeploy = filament()->getTenant()->last_deployed_at)
-                            <span class="text-gray-300 dark:text-gray-600">|</span>
+                            @if($lastPush)
+                                <span class="text-gray-300 dark:text-gray-600">|</span>
+                            @endif
                             <span>{{ __('Last server deployment') }}: {{ $lastDeploy->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</span>
                         @endif
                     </p>
                 </div>
 
                 <div class="flex flex-col items-end gap-3">
-                    <div id="ds-auth-actions" class="flex items-center gap-3">
+                    <div id="ds-auth-actions" class="flex flex-wrap items-center justify-end gap-2">
                         {{ $this->getAction('updateCredentials') }}
                         {{ $this->getAction('discoverAssets') }}
                     </div>
@@ -242,8 +259,8 @@
 
                 <form id="ds-assets-form" wire:submit="save">
                     {{ $this->form }}
-                    <div class="sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 p-4 flex justify-end pointer-events-none">
-                        <div id="ds-save-container" class="flex items-center gap-3 pointer-events-auto bg-white dark:bg-gray-800 p-3 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700">
+                    <div class="ds-save-footer sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 border-t border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-gray-900">
+                        <div id="ds-save-container" class="flex flex-wrap items-center justify-end gap-2">
                             {{ $this->getAction('redeployInfrastructure') }}
                             
                             <x-filament::button type="submit" color="primary" size="lg"
@@ -255,6 +272,9 @@
                                 <span wire:loading wire:target="save">{{ __('Saving...') }}</span>
                             </x-filament::button>
                         </div>
+                        <p class="mt-2 text-right text-xs text-gray-500 dark:text-gray-400">
+                            {{ __('Save your selections, then apply infrastructure changes if prompted.') }}
+                        </p>
                     </div>
                 </form>
             @endif

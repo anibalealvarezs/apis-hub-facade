@@ -18,6 +18,9 @@ class WidgetDataService
         if (empty($dashboardControls['date_end'])) {
             $dashboardControls['date_end'] = \Carbon\Carbon::now()->subDays(1)->format('Y-m-d');
         }
+        if (empty($dashboardControls['date_start'])) {
+            $dashboardControls['date_start'] = \Carbon\Carbon::parse($dashboardControls['date_end'])->subMonth()->addDay()->format('Y-m-d');
+        }
         if (empty($dashboardControls['zero_handling'])) {
             $dashboardControls['zero_handling'] = 'remove';
         }

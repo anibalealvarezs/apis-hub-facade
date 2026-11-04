@@ -3,6 +3,8 @@
  * Each widget container calls `fetchWidgetData(widgetId, containerEl)` on mount.
  */
 
+window.dashboardRenderer?._removeNavigationListeners?.();
+
 window.dashboardRenderer = {
     _chartInstances: new Map(),
     _widgetData: new Map(),
@@ -375,6 +377,21 @@ window.dashboardRenderer = {
     _concurrencyLimit: 4,
     _activeRequests: 0,
     _queue: [],
+    _requestController: new AbortController(),
+
+    _cancelPageRequests() {
+        const controller = this._requestController;
+        this._requestController = new AbortController();
+        controller.abort();
+
+        for (const { reject } of this._queue.splice(0)) {
+            reject(controller.signal.reason);
+        }
+        for (const widgetId of this._retryTimers.keys()) {
+            this._cancelRetry(widgetId);
+        }
+        this._autoRetryCounts.clear();
+    },
 
     _enqueue(fn) {
         return new Promise((resolve, reject) => {
@@ -477,6 +494,7 @@ window.dashboardRenderer = {
      */
     async renderWidget(widgetId, containerEl, controls, tenant) {
         if (!containerEl) return;
+        const { signal } = this._requestController;
 
         this.updateAnalyticsWarnings(containerEl, []);
 
@@ -514,6 +532,7 @@ window.dashboardRenderer = {
                     "series_metric_colors",
                     "series_metric_namings",
                     "raw_series",
+                    "stacked_area_mode",
                 ];
                 const overrides = {};
                 for (const key of overrideKeys) {
@@ -552,6 +571,7 @@ window.dashboardRenderer = {
                 let lastError = null;
 
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    signal.throwIfAborted();
                     try {
                         const response = await fetch(
                             (window.dashboardWidgetDataUrlPrefix || "/api/dashboard/widget/") +
@@ -560,6 +580,8 @@ window.dashboardRenderer = {
                                 encodeURIComponent(currentLang),
                             {
                                 method: "POST",
+                                signal,
+                                priority: "low",
                                 headers: {
                                     "Content-Type": "application/json",
                                     Accept: "application/json",
@@ -596,17 +618,30 @@ window.dashboardRenderer = {
 
                         return resJson;
                     } catch (err) {
+                        signal.throwIfAborted();
                         lastError = err;
                         if (err.retryable === false || err.retryAfterMs > 15000) throw err;
                         if (attempt < maxAttempts) {
                             // Exponential backoff: 1000ms, then 2500ms
                             const delayMs = Math.max(attempt === 1 ? 1000 : 2500, err.retryAfterMs || 0) + Math.floor(Math.random() * 250);
-                            await new Promise((r) => setTimeout(r, delayMs));
+                            await new Promise((resolve) => {
+                                const abort = () => {
+                                    clearTimeout(timer);
+                                    resolve();
+                                };
+                                const timer = setTimeout(() => {
+                                    signal.removeEventListener("abort", abort);
+                                    resolve();
+                                }, delayMs);
+                                signal.addEventListener("abort", abort, { once: true });
+                            });
                         }
                     }
                 }
                 throw lastError || new Error("Failed to load widget data");
             });
+
+            if (signal.aborted) return;
 
             if (!json.success) {
                 if (json.retryable) {
@@ -648,6 +683,7 @@ window.dashboardRenderer = {
             // Render immediately if already in viewport, otherwise defer
             this._lazyRenderWhenVisible(containerEl, json);
         } catch (e) {
+            if (signal.aborted) return;
             if (e.message === "access_restricted") {
                 containerEl.innerHTML = this.accessRestrictedState();
             } else if (
@@ -1177,7 +1213,7 @@ window.dashboardRenderer = {
                 : changePercent >= 0;
             const color = changePercent === 0
                 ? "text-gray-400"
-                : (improved ? "text-green-500" : "text-red-500");
+                : (improved ? "dashboard-trend-positive" : "dashboard-trend-negative");
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
@@ -1199,6 +1235,7 @@ window.dashboardRenderer = {
                 </div>
                 ${changePercent !== null ? `<p class="text-xs text-gray-400 mt-1">vs previous period</p>` : ""}
             </div>`;
+        return lowerIsBetter;
     },
 
     // ─── Line Chart ───
@@ -1270,7 +1307,7 @@ window.dashboardRenderer = {
                 percentage: isPos || ds.currency
                     ? false
                     : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
-                pointRadius: 6,
+                pointRadius: ds.pointRadius ?? 2,
                 pointHoverRadius: 10,
                 pointHitRadius: 15,
                 pointBackgroundColor:
@@ -1355,6 +1392,28 @@ window.dashboardRenderer = {
                     }
                 });
             }
+        }
+
+        if (controls?.widget_type === 'stacked_area') {
+            const percent = controls.stacked_area_mode === 'percent';
+            if (mappedDatasets.some(dataset => dataset.data.some(value => value != null && Number(value) < 0))) {
+                containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Stacked area requires non-negative values.</div>';
+                return;
+            }
+            const totals = labels.map((_, index) => mappedDatasets.reduce((sum, dataset) => sum + Math.max(0, Number(dataset.data[index]) || 0), 0));
+            mappedDatasets.forEach(dataset => {
+                dataset.fill = true;
+                dataset.yAxisID = 'y';
+                dataset.pointRadius = 0;
+                if (percent) {
+                    dataset.data = dataset.data.map((value, index) => value == null || !totals[index] ? null : Number(value) * 100 / totals[index]);
+                    dataset.percentage = true;
+                }
+            });
+            chartScales = {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true, ...(percent ? { max: 100 } : {}) },
+            };
         }
 
         const config = {
@@ -2398,7 +2457,7 @@ window.dashboardRenderer = {
             percentage:
                 ds.percentage ??
                 (resultFormat?.format === "percentage" ? true : undefined),
-            pointRadius: 6,
+            pointRadius: ds.pointRadius ?? 2,
             pointHoverRadius: 10,
             pointHitRadius: 15,
             pointBackgroundColor:
@@ -3159,7 +3218,7 @@ window.dashboardRenderer = {
                         ? ds.borderWidth || 2.5
                         : ds.borderWidth || 1,
                 pointRadius:
-                    chartType === "line" ? (ds.pointRadius ?? 4) : undefined,
+                    chartType === "line" ? (ds.pointRadius ?? 2) : undefined,
                 pointHoverRadius:
                     chartType === "line"
                         ? (ds.pointHoverRadius ?? 6)
@@ -4091,6 +4150,61 @@ window.dashboardRenderer = {
         containerEl.style.padding = "";
         containerEl.style.overflow = "";
         switch (widget_type) {
+            case "advanced_tile": {
+                if (data.value == null) {
+                    containerEl.textContent = "—";
+                    break;
+                }
+                const lowerIsBetter = this.renderTile(containerEl, { ...data, format: data.percentage ? "percentage" : "number" }, controls);
+                const values = Object.values(data.sparkline ?? {}).map(value => value == null ? NaN : Number(value));
+                const finite = values.filter(Number.isFinite);
+                const current = data.periods.current;
+                const previous = data.periods.previous;
+                containerEl.title = `Current period and sparkline: ${current.start} – ${current.end}`
+                    + (previous ? `; compared with: ${previous.start} – ${previous.end}` : "");
+                if (finite.length < 2) break;
+                const change = finite[finite.length - 1] - finite[0];
+                const color = change === 0 ? "text-gray-400"
+                    : ((lowerIsBetter ? change < 0 : change > 0) ? "dashboard-trend-positive" : "dashboard-trend-negative");
+                const min = Math.min(...finite);
+                const span = Math.max(...finite) - min;
+                const path = values.map((value, index) => {
+                    if (!Number.isFinite(value)) return "";
+                    const command = Number.isFinite(values[index - 1]) ? "L" : "M";
+                    const x = 2 + index * 96 / (values.length - 1);
+                    const y = span ? 28 - (value - min) * 26 / span : 15;
+                    return `${command}${x},${y}`;
+                }).join(" ");
+                const content = containerEl.firstElementChild;
+                const layout = document.createElement("div");
+                layout.className = "grid h-full w-full items-center overflow-hidden";
+                layout.style.gridTemplateColumns = "minmax(0, 1fr) minmax(0, 1fr)";
+                content.style.minWidth = "0";
+                containerEl.append(layout);
+                layout.append(content);
+                layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="${color}" style="justify-self: center; width: 100%; max-width: 100%; min-width: 0; max-height: 50%;"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
+                break;
+            }
+            case "metric_breakdown": {
+                const rows = data?.rows || [];
+                const metric = data?.metric;
+                const total = data?.total;
+                if (!rows.length) {
+                    containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+                    break;
+                }
+                const additive = data.additive && Number.isFinite(total) && total > 0;
+                const items = rows.map(row => {
+                    const value = Number(row[metric]);
+                    const share = additive && Number.isFinite(value) ? Math.max(0, Math.min(100, value / total * 100)) : null;
+                    return `<div class="mb-3"><div class="flex justify-between gap-2 text-xs"><span class="truncate">${this.escapeHtml(String(row.dimension ?? ''))}</span><span>${this.escapeHtml(String(row[metric] ?? '—'))}${share === null ? '' : ' · ' + share.toFixed(1) + '%'}</span></div>${share === null ? '' : `<div class="mt-1 h-1.5 rounded bg-gray-200 dark:bg-gray-700"><div class="h-full rounded bg-primary-500" style="width:${share}%"></div></div>`}</div>`;
+                }).join('');
+                containerEl.innerHTML = `<div class="p-4 h-full overflow-auto"><div class="text-xl font-bold mb-3">${total == null ? '—' : this.formatNumber(total)}</div>${items}</div>`;
+                break;
+            }
+            case "stacked_area":
+                this.renderLineChart(containerEl, data, { ...controls, widget_type: 'stacked_area' });
+                break;
             case "tile":
                 this.renderTile(containerEl, data, controls);
                 break;
@@ -5046,6 +5160,24 @@ window.dashboardRenderer = {
         }
     },
 };
+
+{
+    const renderer = window.dashboardRenderer;
+    const cancelRequests = () => renderer._cancelPageRequests();
+    const onNavigate = (event) => {
+        queueMicrotask(() => {
+            if (!event.defaultPrevented) cancelRequests();
+        });
+    };
+
+    document.addEventListener("livewire:navigate", onNavigate);
+    window.addEventListener("pagehide", cancelRequests);
+    renderer._removeNavigationListeners = () => {
+        document.removeEventListener("livewire:navigate", onNavigate);
+        window.removeEventListener("pagehide", cancelRequests);
+        cancelRequests();
+    };
+}
 
 window.DashboardRenderer = window.dashboardRenderer;
 

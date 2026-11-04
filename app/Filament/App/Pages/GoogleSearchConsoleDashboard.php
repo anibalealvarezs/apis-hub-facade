@@ -33,7 +33,7 @@ class GoogleSearchConsoleDashboard extends Page
 
     public function getTitle(): string
     {
-        return __('Google Search Console performance');
+        return __(':channel Data Preview', ['channel' => static::getNavigationLabel()]);
     }
     public function getHeading(): string|\Illuminate\Contracts\Support\Htmlable
     {

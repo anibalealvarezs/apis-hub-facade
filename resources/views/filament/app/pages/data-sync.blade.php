@@ -149,7 +149,11 @@
                         $chFailed = $channelData['failed'] ?? 0;
                         $hasAssets = !empty($channelData['assets']);
                     @endphp
-                    <div x-data="{ expanded: false }"
+                    @php
+                        $focused = request()->query('channel') === ($channelData['channel'] ?? $channelKey);
+                    @endphp
+                    <div x-data="{ expanded: @js($focused) }"
+                         @if($focused) x-init="$nextTick(() => $el.scrollIntoView({ block: 'nearest' }))" @endif
                          class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden transition-all duration-200">
 
                         {{-- Channel Header Card --}}

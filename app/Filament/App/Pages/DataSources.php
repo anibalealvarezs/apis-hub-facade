@@ -25,12 +25,27 @@
 
         public static function getNavigationLabel(): string
         {
-            return __('Data Sources');
+            return __('Sources');
         }
 
         public static function getNavigationGroup(): ?string
         {
-            return __('Integrations');
+            return __('Data Sources');
+        }
+
+        public function getDataPreviewUrl(): ?string
+        {
+            $page = match ($this->activeChannel) {
+                'facebook_marketing' => FacebookMarketingDashboard::class,
+                'facebook_organic' => FacebookOrganicDashboard::class,
+                'google_ads' => GoogleAdsDashboard::class,
+                'google_analytics' => GoogleAnalyticsDashboard::class,
+                'google_search_console' => GoogleSearchConsoleDashboard::class,
+                'mailchimp' => MailchimpDashboard::class,
+                default => null,
+            };
+
+            return $page && $page::canAccess() ? $page::getUrl() : null;
         }
 
         public function getTitle(): string
@@ -45,6 +60,7 @@
 
         protected static string $view = 'filament.app.pages.data-sources';
         protected static ?string $slug = 'data-sources';
+        protected static ?int $navigationSort = 1;
 
         #[Url(history: true)]
         public ?string $activeChannel = null;
@@ -658,15 +674,6 @@
             return in_array($channel, $supportedChannels, true);
         }
 
-        public function getLastSyncTime(?string $channel): string
-        {
-            if (!$channel) {
-                return 'Never';
-            }
-            // To be implemented via SDK or local tenant timestamp
-            return 'Never';
-        }
-
         public function isProfileShared(string $channel): bool
         {
             $tenant = Filament::getTenant();
@@ -683,19 +690,6 @@
                 ->count();
 
             return $sharedCount > 0;
-        }
-
-        protected function getHeaderActions(): array
-        {
-            $tenant = Filament::getTenant();
-
-            $actions = [
-                \Filament\Actions\Action::make('tierUsageTarget')
-                    ->label('')
-                    ->view('filament.app.actions.tier-usage-target'),
-            ];
-
-            return $actions;
         }
 
         public function redeployInfrastructureAction(): Action
@@ -728,7 +722,7 @@
         public function discoverAssetsAction(): Action
         {
             return Action::make('discoverAssets')
-                ->label(__('Refresh / Discover'))
+                ->label(__('Discover assets'))
                 ->icon('heroicon-o-arrow-path')
                 ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended' || !\Illuminate\Support\Facades\Auth::user()->can('manage_channels'))
@@ -882,6 +876,7 @@
         {
             return Action::make('updateCredentials')
                 ->label(fn () => $this->activeChannel === 'mailchimp' ? __('Add accounts') : __('Update Permissions'))
+                ->color('gray')
                 ->icon(fn () => $this->activeChannel === 'mailchimp' ? 'heroicon-o-plus-circle' : 'heroicon-o-key')
                 ->visible(fn() => $this->isChannelCompatible((string)$this->activeChannel) && \Illuminate\Support\Facades\Auth::user()->can('manage_channels') && $this->isConnected($this->activeChannel))
                 ->disabled(fn() => !Filament::getTenant()->is_active || Filament::getTenant()->billing_status === 'suspended')
@@ -1269,17 +1264,16 @@
             }
 
             return [
-                Grid::make(4)
-                    ->schema([
-                        \Filament\Forms\Components\Group::make()
-                            ->schema($mainContent)
-                            ->columnSpan(3),
-
-                        \Filament\Forms\Components\Group::make()
-                            ->schema($secondarySections)
-                            ->columnSpan(1)
-                            ->extraAttributes(['class' => 'sticky top-4 self-start']),
-                    ]),
+                ...$parts['main'],
+                \Filament\Forms\Components\Tabs::make(__('Source configuration'))
+                    ->id('ds-source-tabs')
+                    ->tabs([
+                        \Filament\Forms\Components\Tabs\Tab::make(__('Assets'))
+                            ->schema($parts['repeaters']),
+                        \Filament\Forms\Components\Tabs\Tab::make(__('Sync Settings'))
+                            ->schema($secondarySections),
+                    ])
+                    ->columnSpanFull(),
             ];
         }
 
@@ -1476,9 +1470,9 @@
 
                             return new \Illuminate\Support\HtmlString('ID: <a href="' . ($get('link') ?? $get('url') ?? '#') . '" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">' . ($get('id') ?? $get('url') ?? 'N/A') . '</a>');
                         })
-                        ->inline(false)
+                        ->inline()
                         ->default(true)
-                        ->columnSpan(4);
+                        ->columnSpan(8);
                 } elseif ($key === 'lost_access') {
                     $headerComponents[] = \Filament\Forms\Components\Hidden::make($key);
                 } elseif ($type === 'boolean') {
@@ -1624,7 +1618,7 @@
                         'x-init' => 'extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; new MutationObserver(() => { extractionEnabled = $el.closest(\'li\').querySelector(\'button[role="switch"]\').getAttribute(\'aria-checked\') === \'true\'; }).observe($el.closest(\'li\').querySelector(\'button[role="switch"]\'), { attributes: true, attributeFilter: [\'aria-checked\'] })',
                         'x-show' => 'extractionEnabled',
                     ])
-                    ->columnSpan(8);
+                    ->columnSpan(4);
             }
 
             return \Filament\Forms\Components\Group::make([
@@ -1877,7 +1871,7 @@
                     'ID: <a href="'.$get('link').'" target="_blank" rel="nofollow noopener noreferrer" class="text-primary-500 hover:underline">'.$get('id').'</a>'.
                     (!empty($get('ig_account_name')) ? '<br><span class="text-xs text-gray-500 mt-0.5 inline-block">IG: <a href="https://instagram.com/'.$get('ig_account_name').'" target="_blank" class="text-pink-500 hover:underline">@'.$get('ig_account_name').'</a></span>' : '')
                 ))
-                ->inline(false)
+                ->inline()
                 ->default(true)
                 ->live()
                 ->columnSpan(4);

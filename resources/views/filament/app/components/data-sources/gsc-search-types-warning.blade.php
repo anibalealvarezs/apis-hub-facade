@@ -7,7 +7,10 @@
     <p>
         {{ __('Standard search') }} (<strong class="gsc-search-types-warning__tag">Web</strong>) {{ __('is always synchronized by default. Each additional search type selected below requires its own independent multi-pass retrieval and reconciliation process, which dramatically increases data synchronization times.') }}
     </p>
-    <p class="mt-2 text-xs opacity-90">
-        {{ __('To prevent schedule collisions and quota contention on day-to-day sync jobs—especially if you have multiple properties—we strongly encourage selecting only the specific additional search types you actively analyze.') }}
-    </p>
+    <details class="mt-2 text-xs">
+        <summary class="cursor-pointer font-semibold">{{ __('Scheduling guidance') }}</summary>
+        <p class="mt-2">
+            {{ __('To prevent schedule collisions and quota contention on day-to-day sync jobs—especially if you have multiple properties—we strongly encourage selecting only the specific additional search types you actively analyze.') }}
+        </p>
+    </details>
 </div>

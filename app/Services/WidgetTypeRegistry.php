@@ -6,8 +6,8 @@ class WidgetTypeRegistry
 {
     protected static array $compatibility = [
         'kpi' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'anomaly_chart', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
-        'metric' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
-        'derived_metric' => ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
+        'metric' => ['metric_breakdown', 'stacked_area', 'tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
+        'derived_metric' => ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'],
     ];
 
     protected static array $sourceLabels = [
@@ -17,7 +17,10 @@ class WidgetTypeRegistry
     ];
 
     protected static array $widgetLabels = [
+        'metric_breakdown' => 'Metric Breakdown',
+        'stacked_area' => 'Stacked Area',
         'tile' => 'Number Tile',
+        'advanced_tile' => 'Advanced tile',
         'line_chart' => 'Line Chart',
         'bar_chart' => 'Bar Chart',
         'pie_chart' => 'Pie / Donut Chart',

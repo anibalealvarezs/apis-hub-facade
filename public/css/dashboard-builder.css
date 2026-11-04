@@ -591,8 +591,53 @@ body.pv-page .dvc-controls-bar {
     left: auto !important;
     top: auto !important;
     transform: none !important;
-    z-index: 3 !important;
+    z-index: 16 !important;
     border: 1px solid #E5E7EB !important;
+}
+
+/* Ensure dropdown menus (such as environment and version selectors) render with z-index: 16 */
+.fi-dropdown-panel {
+    z-index: 16 !important;
+}
+
+.floating-selection-bar#multi-select-action-bar,
+.floating-selection-bar.right-bar {
+    z-index: 16 !important;
+}
+
+/* Dashboard Builder Toolbar Controls & Share Button Styles */
+#dashboard-controls-button,
+#dashboard-share-button {
+    background-color: #FFFFFF !important;
+    color: #374151 !important;
+}
+
+#dashboard-controls-button:hover,
+#dashboard-share-button:hover {
+    background-color: #F9FAFB !important;
+    color: #111827 !important;
+}
+
+.dark #dashboard-controls-button,
+.dark #dashboard-share-button {
+    background-color: #374151 !important;
+    color: #F3F4F6 !important;
+}
+
+.dark #dashboard-controls-button:hover,
+.dark #dashboard-share-button:hover {
+    background-color: #4B5563 !important;
+    color: #FFFFFF !important;
+}
+
+.dark #dashboard-controls-button svg,
+.dark #dashboard-share-button svg {
+    color: #9CA3AF !important;
+}
+
+.dark #dashboard-controls-button:hover svg,
+.dark #dashboard-share-button:hover svg {
+    color: #E5E7EB !important;
 }
 
 .dark .floating-selection-bar {
@@ -640,6 +685,14 @@ body.pv-page .dvc-controls-bar {
     background: #111827;
     border-color: #374151;
     box-shadow: 0 4px 16px rgba(0,0,0,0.30);
+}
+
+.bd-palette-sizes-hint {
+    margin: 0 0 0.375rem;
+    text-align: center;
+    font-size: 0.625rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .bd-palette-sizes-grid {
@@ -702,6 +755,46 @@ body.pv-page .dvc-controls-bar {
 }
 
 /* Category toggle buttons */
+.bd-widget-size-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+    padding: 0.25rem 0 0.375rem;
+    border-radius: 0.75rem;
+    background: rgb(148 163 184 / 14%);
+}
+
+.dark .bd-widget-size-group {
+    background: rgb(148 163 184 / 18%);
+}
+
+#builder-save-layout-btn.bd-save-layout-pending {
+    color: #78350f;
+    background: #fbbf24;
+    box-shadow: 0 0 0 2px #d97706;
+}
+
+#builder-save-layout-btn.bd-save-layout-pending:hover {
+    background: #fcd34d;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    #builder-save-layout-btn.bd-save-layout-pending {
+        animation: bd-save-layout-pulse 0.95s ease-out infinite;
+    }
+}
+
+@keyframes bd-save-layout-pulse {
+    from {
+        box-shadow: 0 0 0 2px #d97706, 0 0 0 2px rgb(245 158 11 / 85%);
+    }
+    to {
+        box-shadow: 0 0 0 2px #d97706, 0 0 0 8px rgb(245 158 11 / 0%);
+    }
+}
+
 .bd-palette-cat-btn {
     display: flex;
     align-items: center;
@@ -1179,4 +1272,96 @@ body.bd-cursor-grabbing * {
     cursor: grabbing !important;
 }
 
+.dashboard-trend-positive {
+    color: #15803d;
+}
 
+.dashboard-trend-negative {
+    color: #b91c1c;
+}
+
+.dark .dashboard-trend-positive {
+    color: #4ade80;
+}
+
+.dark .dashboard-trend-negative {
+    color: #f87171;
+}
+
+/* Internal dashboard controls and widget headers */
+.dvc-dashboard-panel {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: .75rem;
+    background: #f8fafc;
+}
+
+.dark .dvc-dashboard-panel {
+    border-color: #334155;
+    background: #151e2d;
+}
+
+.dvc-internal .dvc-dashboard-heading {
+    background: transparent;
+}
+
+.dvc-filter-row {
+    padding: .75rem 1rem;
+    border-top: 1px solid rgb(148 163 184 / .22);
+}
+
+.dvc-date-presets {
+    padding: .2rem;
+    border-radius: .5rem;
+    background: rgb(148 163 184 / .15);
+}
+
+.dvc-date-preset {
+    padding: .3rem .5rem;
+    border-radius: .3rem;
+    font-weight: 600;
+}
+
+.dvc-date-preset:hover,
+.dvc-date-preset[aria-pressed="true"] {
+    background: rgb(148 163 184 / .28);
+}
+
+.dvc-internal .dvc-widget-heading {
+    padding: .625rem .75rem;
+    background: #f1f5f9;
+}
+
+.dark .dvc-internal .dvc-widget-heading {
+    background: #1c2533;
+}
+
+.dvc-internal .dvc-widget-actions {
+    gap: .375rem;
+}
+
+.dvc-internal .dvc-widget-title:is(:hover, :focus-visible) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+@media screen and (max-width: 639px) {
+    body.pv-page .dvc-dashboard-heading {
+        flex-direction: column;
+        align-items: stretch;
+        gap: .75rem;
+    }
+
+    body.pv-page .dvc-dashboard-actions {
+        width: 100%;
+    }
+
+    body.pv-page .dvc-dashboard-actions button {
+        min-height: 2.25rem;
+    }
+
+    body.pv-page .dvc-controls-bar {
+        column-gap: .5rem;
+        row-gap: .5rem;
+    }
+}

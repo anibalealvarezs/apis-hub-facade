@@ -3,11 +3,13 @@
 namespace App\Filament\App\Resources\DashboardResource\Pages;
 
 use App\Filament\App\Resources\DashboardResource;
+use App\Filament\App\Resources\DashboardResource\Traits\HasDashboardEnvironmentHeader;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditDashboard extends EditRecord
 {
+    use HasDashboardEnvironmentHeader;
     use \Filament\Resources\Pages\EditRecord\Concerns\Translatable;
 
     protected static string $resource = DashboardResource::class;
@@ -16,10 +18,33 @@ class EditDashboard extends EditRecord
     {
         return [
             Actions\LocaleSwitcher::make(),
-            Actions\Action::make('open_builder')
-                ->label(__('Open Builder'))
-                ->icon('heroicon-o-pencil-square')
-                ->url(DashboardResource::getUrl('builder', ['record' => $this->record])),
+            Actions\ActionGroup::make([
+                Actions\Action::make('settings')
+                    ->label(__('Settings'))
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->color('primary')
+                    ->disabled()
+                    ->extraAttributes([
+                        'class' => 'opacity-100 ring-2 ring-primary-500 shadow-md cursor-default pointer-events-none',
+                    ]),
+                Actions\Action::make('builder')
+                    ->label(__('Builder'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('gray')
+                    ->url(DashboardResource::getUrl('builder', ['record' => $this->record]))
+                    ->extraAttributes(['wire:navigate.none' => true])
+                    ->visible(fn () => auth()->user()->can('edit_preferences')),
+                Actions\Action::make('view')
+                    ->label(__('View'))
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->url(DashboardResource::getUrl('view', ['record' => $this->record]))
+                    ->extraAttributes(['wire:navigate.none' => true]),
+            ])
+                ->label(__('Settings'))
+                ->icon('heroicon-o-cog-6-tooth')
+                ->color('gray')
+                ->button(),
             Actions\DeleteAction::make(),
         ];
     }

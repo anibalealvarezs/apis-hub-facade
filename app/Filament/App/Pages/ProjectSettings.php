@@ -60,6 +60,12 @@ class ProjectSettings extends Page
         return $project;
     }
 
+    public function getCachedHeaderActions(): array
+    {
+        return array_values(array_filter(parent::getCachedHeaderActions(), fn (Action $action): bool =>
+            ! in_array($action->getName(), ['transfer', 'cancel_transfer', 'delete'], true)));
+    }
+
     protected function getHeaderActions(): array
     {
         $project = $this->getProject();
@@ -420,7 +426,7 @@ class ProjectSettings extends Page
 
         $actions[] = Action::make('redeploy')
             ->label(__('Apply Changes (Redeploy)'))
-            ->color('success')
+            ->color(fn () => $project->redeploy_pending ? 'success' : 'gray')
             ->icon('heroicon-o-cloud-arrow-up')
             ->disabled(fn () => $isSuspended || $project->isInfrastructureBusy())
             ->tooltip(fn () => $project->isInfrastructureBusy() ? __('Please wait for the current deployment or upgrade to finish.') : null)

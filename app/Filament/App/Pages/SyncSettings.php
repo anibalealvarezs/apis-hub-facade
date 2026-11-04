@@ -19,12 +19,22 @@ class SyncSettings extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Integrations');
+        return __('Administration');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('Synchronization Settings');
+        return __('Synchronization & Access');
+    }
+
+    public static function getNavigationParentItem(): ?string
+    {
+        return ProjectSettings::getNavigationLabel();
+    }
+
+    public function getTitle(): string
+    {
+        return static::getNavigationLabel();
     }
 
     protected static string $view = 'filament.app.pages.sync-settings';
@@ -62,6 +72,11 @@ class SyncSettings extends Page
         ) {
             $tenant->update(['last_sync_started_at' => null]);
         }
+    }
+
+    public function getCachedHeaderActions(): array
+    {
+        return [];
     }
 
     protected function getHeaderActions(): array
@@ -142,7 +157,8 @@ class SyncSettings extends Page
 
         return $form
             ->schema([
-                Section::make(__('Global Processing Settings'))
+                Section::make(__('Synchronization'))
+                    ->id('synchronization')
                     ->description(__('Configure how long your dedicated explorers should wait before considering a synchronization job as stuck.'))
                     ->schema([
                         Select::make('jobs_timeout_hours')
@@ -154,10 +170,15 @@ class SyncSettings extends Page
                                 '12' => __('12 Hours'),
                             ])
                             ->default('1')
+                            ->extraFieldWrapperAttributes(['style' => 'max-width: 28rem'])
                             ->helperText(__('If a job takes longer than this duration, it will be automatically aborted to free up resources.')),
-                    ])->collapsed(),
+                        \Filament\Forms\Components\Placeholder::make('save_sync_settings')
+                            ->hiddenLabel()
+                            ->content(view('filament.app.components.save-sync-settings')),
+                    ])->collapsible(),
 
                 Section::make(__('API Access (External Integration)'))
+                    ->id('api-access')
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
                         $tier = Filament::getTenant()?->fresh()?->billingProfile?->fresh()?->tier?->value;
@@ -229,6 +250,7 @@ class SyncSettings extends Page
                     ])->columns(2),
 
                 Section::make(__('API Access (External Integration)'))
+                    ->id('api-access')
                     ->description(__('Use these credentials to access your data via third-party apps (PowerBI, Looker, etc.)'))
                     ->visible(function () {
                         $tier = Filament::getTenant()?->fresh()?->billingProfile?->fresh()?->tier?->value;
@@ -260,6 +282,7 @@ class SyncSettings extends Page
                     ]),
 
                 Section::make(__('Model Context Protocol (MCP) for AI Agents'))
+                    ->id('mcp-access')
                     ->description(__('Connect Google Antigravity, Claude Desktop, Cursor, and autonomous agents directly to this project node.'))
                     ->schema([
                         \Filament\Forms\Components\Placeholder::make('mcp_info')
@@ -284,7 +307,7 @@ class SyncSettings extends Page
                                                             ' . __('MCP Server Active on Dedicated Node (:tier)', ['tier' => ucfirst($tier)]) . '
                                                         </h4>
                                                     </div>
-                                                    <p class="text-xs text-gray-600 dark:text-gray-300">
+                                                    <p class="text-sm text-gray-700 dark:text-gray-200">
                                                         ' . __('Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.') . '
                                                     </p>
                                                 </div>
@@ -295,11 +318,11 @@ class SyncSettings extends Page
                                             </div>
 
                                             <div>
-                                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                                                <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 block mb-1.5">
                                                     ' . __('SSE Transport URL:') . '
                                                 </span>
                                                 <div class="api-ref-code-container" x-data="{ copied: false }">
-                                                    <pre class="api-ref-code-block"><code class="select-all">' . $mcpUrl . '</code></pre>
+                                                    <pre class="api-ref-code-block" style="white-space: pre-wrap; overflow-wrap: anywhere"><code class="select-all">' . $mcpUrl . '</code></pre>
                                                     <button type="button" 
                                                             @click="navigator.clipboard.writeText(\'' . $mcpUrl . '\'); copied = true; setTimeout(() => copied = false, 2000)" 
                                                             class="api-ref-copy-btn">

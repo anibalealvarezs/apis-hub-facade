@@ -4,6 +4,7 @@
     <div x-data="dashboardBuilder({
         widgets: @js($this->widgets ?? []),
         gridState: @js($this->gridState ?? []),
+        advancedTileMetricChannels: @js(\App\Services\Analytics\AdvancedTileMetricCatalog::channels()),
         widgetLabels: @js(\App\Services\WidgetTypeRegistry::getWidgetLabels()),
         widgetDescriptions: @js(\App\Services\WidgetTypeRegistry::getWidgetDescriptions()),
         widgetSvgs: @js(\App\Services\WidgetTypeRegistry::getWidgetSvgs()),
@@ -18,48 +19,49 @@
         derivedMetrics: @js($this->getDerivedMetricsForWidgetPicker()),
         defaultEndDate: @js(date('Y-m-d', strtotime('-1 day'))),
         availableLanguages: @js(\Filament\Facades\Filament::getTenant()?->getAvailableLanguages() ?? \App\Models\Project::getSupportedLanguageCatalog()),
-        tenant: @js(\Filament\Facades\Filament::getTenant()?->subdomain ?? \Filament\Facades\Filament::getTenant()?->id ?? '')
+        tenant: @js(\Filament\Facades\Filament::getTenant()?->subdomain ?? \Filament\Facades\Filament::getTenant()?->id ?? ''),
+        strings: {
+            previewDynamicAssetsNotice: @js(__('Preview not available given that widget\'s assets are set to be assigned dynamically. Please select any asset in the test sandbox modal in order to see it render')),
+            testInSandbox: @js(__('Test in Sandbox')),
+            load: @js(__('Load'))
+        }
     })" wire:ignore.self class="relative space-y-4">
         {{-- Toolbar --}}
         <div class="builder-toolbar flex items-center justify-between gap-4 rounded-xl p-4 transition-colors">
-            <div class="flex items-center gap-2">
-                <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400"/>
-                <span class="text-lg font-medium text-gray-900 dark:text-white">{{ $this->dashboard->name }}</span>
+            {{-- Left: Dashboard Title --}}
+            <div class="flex items-center gap-2 min-w-0">
+                <x-filament::icon name="heroicon-o-squares-2x2" class="w-6 h-6 text-gray-500 dark:text-gray-400 flex-shrink-0"/>
+                <span class="text-lg font-medium text-gray-900 dark:text-white truncate" title="{{ $this->dashboard->name }}">{{ $this->dashboard->name }}</span>
             </div>
-            <div class="flex items-center gap-2">
-                <button
-                    id="dashboard-controls-button"
-                    class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                    x-on:click="openDashboardControls()">
-                    <x-filament::icon name="heroicon-o-cog-6-tooth" class="w-4 h-4 inline mr-1"/>
-                    {{ __('Controls') }}
-                </button>
-                @can('edit_preferences')
+
+            {{-- Right: Context Group Containers --}}
+            <div class="flex items-center gap-3 flex-shrink-0">
+                {{-- Dashboard Context: Controls & Share (No border, solid grey background, proper grey button styles) --}}
+                <div class="flex items-center gap-1.5 p-1 rounded-xl bg-gray-100 dark:bg-gray-800 shadow-xs">
                     <button
-                        class="px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                        x-on:click="openShareDialog()">
-                        <x-filament::icon name="heroicon-o-share" class="w-4 h-4 inline mr-1"/>
-                        {{ __('Share') }}
+                        id="dashboard-controls-button"
+                        class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                        x-on:click="openDashboardControls()">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>{{ __('Controls') }}</span>
                     </button>
-                @endcan
-
-                {{-- Version Unsaved Changes Indicator --}}
-                <div x-show="$wire.unsavedChanges" x-cloak class="bd-unsaved-badge">
-                    <span class="bd-unsaved-dot"></span>
-                    <span>{{ __('Unsaved version') }}</span>
+                    @can('edit_preferences')
+                        <button
+                            id="dashboard-share-button"
+                            class="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                            x-on:click="openShareDialog()">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-4 h-4 text-gray-500 dark:text-gray-400">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                            </svg>
+                            <span>{{ __('Share') }}</span>
+                        </button>
+                    @endcan
                 </div>
 
-                {{-- Layout Dirty Status Badge --}}
-                <div x-show="isDirty" x-cloak class="bd-unsaved-badge">
-                    <span class="bd-unsaved-dot"></span>
-                    <span>{{ __('Unsaved layout changes') }}</span>
-                </div>
-                <div x-show="!isDirty"
-                     class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-xs font-medium text-gray-500 dark:text-gray-400">
-                    <x-filament::icon name="heroicon-m-check" class="w-3.5 h-3.5 text-success-500"/>
-                    <span>{{ __('Layout saved') }}</span>
-                </div>
-
+                {{-- AI Classification Coverage Container (No border, solid grey background) --}}
                 @php
                     $coverageData = $this->getClassificationCoverage();
                     $trafficPct = $coverageData['traffic_coverage_percentage'] ?? $coverageData['traffic_coverage_pct'] ?? null;
@@ -68,23 +70,23 @@
                 @if($coverageData && $trafficPct !== null)
                     @php
                         $badgeBg = $isFullyClassified || $trafficPct >= 99.9 
-                            ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300'
                             : ($trafficPct >= 90.0
-                                ? 'bg-sky-50 dark:bg-sky-950/50 border-sky-200 dark:border-sky-800/60 text-sky-700 dark:text-sky-300'
-                                : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800/60 text-amber-700 dark:text-amber-300');
+                                ? 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300'
+                                : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300');
                         $iconColor = $isFullyClassified || $trafficPct >= 99.9
                             ? 'text-emerald-500 dark:text-emerald-400'
                             : ($trafficPct >= 90.0
                                 ? 'text-sky-500 dark:text-sky-400'
                                 : 'text-amber-500 dark:text-amber-400');
                     @endphp
-                    <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium {{ $badgeBg }}"
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium shadow-xs {{ $badgeBg }}"
                          title="{{ __('Query classification coverage: :pct% of traffic volume (:classified/:total unique queries categorized)', [
                              'pct' => $trafficPct,
                              'classified' => number_format($coverageData['classified_queries'] ?? 0),
                              'total' => number_format($coverageData['total_queries'] ?? 0)
                          ]) }}">
-                        <x-filament::icon name="heroicon-m-sparkles" class="w-3.5 h-3.5 {{ $iconColor }}"/>
+                        <x-filament::icon name="heroicon-m-sparkles" class="w-4 h-4 {{ $iconColor }}"/>
                         @if($isFullyClassified || $trafficPct >= 99.9)
                             <span>{{ __('AI Classification: 100% complete') }}</span>
                         @else
@@ -95,14 +97,6 @@
                         @endif
                     </div>
                 @endif
-
-                <x-filament::button
-                    x-on:click="saveLayout()"
-                    ::color="isDirty ? 'warning' : 'primary'"
-                    icon="heroicon-o-check"
-                    ::class="isDirty ? 'ring-2 ring-warning-500/50 shadow-md animate-pulse' : ''">
-                    {{ __('Save Layout') }}
-                </x-filament::button>
             </div>
         </div>
 
@@ -389,6 +383,9 @@
                                     <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{{ __('Filters available assets for widgets that don’t have their own asset group selected.') }}</p>
                                     
                                     <div class="w-full relative z-30">
+                                        @if(\App\Filament\App\Resources\AssetGroupResource::canAccess())
+                                            <x-filament::link :href="\App\Filament\App\Resources\AssetGroupResource::getUrl()">{{ __('Manage asset groups') }}</x-filament::link>
+                                        @endif
                                         <x-ui.asset-selector model="dashboardControls.asset_group" options="assetGroups" :multiple="true" placeholder="{{ __('All Asset Groups (Unrestricted)') }}" changeEvent="" size="sm"/>
                                     </div>
 
@@ -702,6 +699,49 @@
                                             </button>
                                         </template>
                                     </div>
+                                    <template x-if="widgetControlsForm.widget_type === 'stacked_area'">
+                                        <label>{{ __('Stacking mode') }}
+                                            <x-ui.select-input x-model="widgetControlsForm.stacked_area_mode">
+                                                <option value="absolute">{{ __('Absolute values') }}</option>
+                                                <option value="percent">{{ __('Percentage') }}</option>
+                                            </x-ui.select-input>
+                                        </label>
+                                    </template>
+                                    <template x-if="widgetControlsForm.widget_type === 'advanced_tile' && widgetControlsForm.advanced_tile">
+                                        <div class="grid gap-2">
+                                            <label>{{ __('Value period') }}
+                                                <x-ui.select-input x-model="widgetControlsForm.advanced_tile.window">
+                                                    <option value="dashboard">{{ __('Dashboard timeframe') }}</option>
+                                                    <option value="last_7_days">{{ __('Last 7 days') }}</option>
+                                                    <option value="last_30_days">{{ __('Last 30 days') }}</option>
+                                                    <option value="last_1_days">{{ __('Last day') }}</option>
+                                                    <option value="last_14_days">{{ __('Last 14 days') }}</option>
+                                                    <option value="last_90_days">{{ __('Last 90 days') }}</option>
+                                                    <option value="last_180_days">{{ __('Last 180 days') }}</option>
+                                                    <option value="last_365_days">{{ __('Last 365 days') }}</option>
+                                                    <option value="custom">{{ __('Custom days') }}</option>
+                                                </x-ui.select-input>
+                                                <input x-show="widgetControlsForm.advanced_tile.window === 'custom'" type="number" min="1" max="3650" x-model.number="widgetControlsForm.advanced_tile.days" class="w-full rounded-lg">
+                                            </label>
+                                            <label x-show="widgetControlsTarget.source_type === 'derived_metric'">{{ __('Series summary') }}
+                                                <x-ui.select-input x-model="widgetControlsForm.advanced_tile.reducer">
+                                                    <option value="latest">{{ __('Latest value') }}</option>
+                                                    <option value="sum">{{ __('Sum') }}</option>
+                                                    <option value="average">{{ __('Average') }}</option>
+                                                </x-ui.select-input>
+                                            </label>
+                                            <label x-show="widgetControlsForm.advanced_tile.sparkline">{{ __('Sparkline interval') }}
+                                                <x-ui.select-input x-model="widgetControlsForm.advanced_tile.interval">
+                                                    <option value="auto">{{ __('Automatic') }}</option>
+                                                    <option value="daily">{{ __('Daily') }}</option>
+                                                    <option value="weekly">{{ __('Weekly') }}</option>
+                                                    <option value="monthly">{{ __('Monthly') }}</option>
+                                                </x-ui.select-input>
+                                            </label>
+                                            <label><input type="checkbox" x-model="widgetControlsForm.advanced_tile.compare"> {{ __('Previous equivalent period') }}</label>
+                                            <label><input type="checkbox" x-model="widgetControlsForm.advanced_tile.sparkline"> {{ __('Show sparkline') }}</label>
+                                        </div>
+                                    </template>
                                     <template x-if="widgetControlsForm.widget_type === 'choropleth_map' && !(widgetControlsForm.raw_series || []).some(s => s.breakdown && s.breakdown.dimension && (s.breakdown.dimension === 'country' || s.breakdown.dimension === 'geo_country' || s.breakdown.dimension.toLowerCase().includes('country')))">
                                         <div class="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2.5">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
@@ -3524,37 +3564,61 @@
         </div>
 
         {{-- Floating Left Widget Size Palette --}}
-        <div class="floating-selection-bar bd-palette-left flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
+        <div class="floating-selection-bar bd-palette-left z-16 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl">
 
-            <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-primary-50 dark:bg-primary-500/10 border border-primary-200/80 dark:border-primary-500/20 text-primary-600 dark:text-primary-400 min-w-[42px]">
-                <span class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
+            {{-- Save Layout Button (full width, inline SVG icon with dynamic colors) --}}
+            <div class="group relative flex items-center justify-center w-full">
+                <button
+                    id="builder-save-layout-btn"
+                    type="button"
+                    x-on:click="saveLayout()"
+                    :class="isDirty
+                        ? 'bd-save-layout-pending'
+                        : 'text-gray-400 hover:text-emerald-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-emerald-400 dark:hover:bg-gray-800'"
+                    class="w-full min-w-[42px] py-2 px-2.5 rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                    :title="isDirty ? '{{ __('Save Layout (Unsaved changes)') }}' : '{{ __('Layout Saved') }}'">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                </button>
                 <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
-                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
-                        {{ __('Widget dimensions') }}
+                    <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl flex items-center gap-1.5">
+                        <span x-show="isDirty" class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                        <span x-text="isDirty ? '{{ __('Save Layout (Unsaved changes)') }}' : '{{ __('Save Layout (All changes saved)') }}'"></span>
                     </div>
                 </div>
             </div>
 
-            <div class="w-6 h-px bg-gray-200 dark:bg-gray-800 my-0.5"></div>
-
-            {{-- Category: Portrait --}}
-            <div class="relative">
-                <div class="bd-palette-cat-btn" data-size-category="portrait">
-                    <div class="bd-palette-cat-shape portrait"></div>
+            <div class="bd-widget-size-group" role="group" aria-labelledby="builder-widget-size-label">
+                <div class="group relative flex flex-col items-center justify-center px-2.5 py-1.5 text-primary-600 dark:text-primary-400 min-w-[42px]">
+                    <span id="builder-widget-size-label" class="bd-text-5xs font-bold uppercase tracking-wider opacity-80">{{ __('Size') }}</span>
+                    <div class="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[100000]">
+                        <div class="rounded-lg bg-gray-900 dark:bg-gray-800 border border-gray-800 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-white dark:text-gray-200 shadow-xl">
+                            {{ __('Widget dimensions') }}
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Category: Square --}}
-            <div class="relative">
-                <div class="bd-palette-cat-btn" data-size-category="square">
-                    <div class="bd-palette-cat-shape square"></div>
+
+                {{-- Category: Portrait --}}
+                <div class="relative">
+                    <div class="bd-palette-cat-btn" data-size-category="portrait">
+                        <div class="bd-palette-cat-shape portrait"></div>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Category: Landscape --}}
-            <div class="relative">
-                <div class="bd-palette-cat-btn" data-size-category="landscape">
-                    <div class="bd-palette-cat-shape landscape"></div>
+                {{-- Category: Square --}}
+                <div class="relative">
+                    <div class="bd-palette-cat-btn" data-size-category="square">
+                        <div class="bd-palette-cat-shape square"></div>
+                    </div>
+                </div>
+
+                {{-- Category: Landscape --}}
+                <div class="relative">
+                    <div class="bd-palette-cat-btn" data-size-category="landscape">
+                        <div class="bd-palette-cat-shape landscape"></div>
+                    </div>
                 </div>
             </div>
 
@@ -3583,6 +3647,7 @@
 
             @foreach($allSizes as $cat => $sizes)
             <div class="bd-palette-sizes-panel bd-sizes-{{ $cat }}" style="display:none;">
+                <p class="bd-palette-sizes-hint">{{ __('Drag and drop') }}</p>
                 <div class="bd-palette-sizes-grid">
                     @foreach($sizes as $s)
                     <div class="bd-size-option grid-stack-drag-in" data-grid-w="{{ $s['w'] }}" data-grid-h="{{ $s['h'] }}" title="{{ $s['h'] }}×{{ $s['w'] }}">
@@ -3652,7 +3717,7 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-x-0 scale-100"
              x-transition:leave-end="opacity-0 translate-x-6 scale-95"
-             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-[99999] flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
+             class="floating-selection-bar fixed right-6 top-1/2 -translate-y-1/2 z-16 flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl"
              id="multi-select-action-bar">
 
             {{-- Selected Badge Counter --}}
@@ -3739,6 +3804,115 @@
             </div>
 
         </div>
+
+        {{-- Save Version Modal --}}
+        <div x-show="showSaveVersionModal" x-cloak
+             class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-md w-full p-6 space-y-4"
+                 x-on:click.outside="showSaveVersionModal = false">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400">
+                        <x-filament::icon name="heroicon-o-document-plus" class="w-6 h-6"/>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Save Version') }}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Create a snapshot of the current dashboard layout and configuration.') }}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">{{ __('Version Label (optional)') }}</label>
+                    <input type="text"
+                           x-model="saveVersionLabel"
+                           x-ref="saveVersionInput"
+                           placeholder="{{ __('e.g. Campaign launch layout') }}"
+                           class="w-full text-sm rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500"
+                           x-on:keydown.enter="confirmSaveVersion()"/>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button"
+                            x-on:click="showSaveVersionModal = false"
+                            class="px-3.5 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="button"
+                            x-on:click="confirmSaveVersion()"
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 shadow-sm transition-colors">
+                        {{ __('Save Version') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Version History Modal --}}
+        <div x-show="showVersionHistoryModal" x-cloak
+             class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 max-w-4xl w-full p-6 space-y-4 max-h-[85vh] flex flex-col"
+                 x-on:click.outside="showVersionHistoryModal = false">
+                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                            <x-filament::icon name="heroicon-o-clock" class="w-6 h-6"/>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Dashboard Version History') }}</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Restore or duplicate from previously saved version snapshots.') }}</p>
+                        </div>
+                    </div>
+                    <button type="button"
+                            x-on:click="showVersionHistoryModal = false"
+                            class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                        <x-filament::icon name="heroicon-o-x-mark" class="w-5 h-5"/>
+                    </button>
+                </div>
+
+                <div class="overflow-y-auto flex-1">
+                    @php
+                        $versions = $this->dashboard->versions()->with('user')->orderBy('version_number', 'desc')->get();
+                    @endphp
+                    @include('filament.modals.version-history', ['versions' => $versions, 'dashboard' => $this->dashboard])
+                </div>
+
+                <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-800">
+                    <button type="button"
+                            x-on:click="showVersionHistoryModal = false"
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        {{ __('Close') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Duplicate Dashboard Modal --}}
+        <x-confirm-modal
+            open="showDuplicateModal"
+            title="{{ __('Duplicate Dashboard') }}"
+            icon="heroicon-o-document-duplicate"
+            color="primary"
+            confirm-label="{{ __('Duplicate') }}"
+            confirm-color="primary"
+            confirm-icon="heroicon-o-document-duplicate"
+            on-confirm="confirmDuplicateDashboard()"
+            :close-on-confirm="false"
+            on-cancel="showDuplicateModal = false"
+        >
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ __('Create a copy of this dashboard from its current state?') }}
+            </p>
+        </x-confirm-modal>
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/gridstack@12.6.0/dist/gridstack-all.min.js"></script>

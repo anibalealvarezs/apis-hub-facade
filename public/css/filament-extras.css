@@ -26,8 +26,36 @@
 
 /* ---------- Data Sources page ---------- */
 .ds-sidebar {
-    width: 20rem;
-    max-width: 20rem;
+    width: 100%;
+}
+@media (min-width: 1024px) {
+    .ds-sidebar {
+        width: 15rem;
+    }
+}
+.ds-channel-option[aria-current="true"] {
+    outline: 1px solid currentColor;
+    outline-offset: -1px;
+}
+#ds-assets-form .compact-repeater ul {
+    gap: 0;
+}
+#ds-assets-form .compact-repeater .fi-fo-repeater-item {
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid rgb(148 163 184 / .25);
+    background: transparent;
+}
+#ds-assets-form .compact-repeater .fi-fo-repeater-item-content {
+    padding: .75rem 1rem;
+    overflow-wrap: anywhere;
+}
+.ds-save-footer {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+.gsc-search-types-warning .gsc-search-types-warning__icon {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
 }
 .ds-provider-header {
     padding-bottom: 0.5rem;
@@ -295,15 +323,17 @@
 
 /* ---------- Asset Group resource asset selector ---------- */
 .asg-container {
-    max-width: 100%;
-    min-height: 700px;
-    height: 700px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+    align-items: start;
+    gap: 1rem;
 }
-.asg-column {
-    width: calc((100% - 3rem) / 3);
+.asg-asset-list {
+    max-height: 24rem;
+    overflow-y: auto;
 }
-.asg-search-input {
-    padding-left: 2.5rem;
+.asg-asset-name {
+    overflow-wrap: anywhere;
 }
 
 /* ================================================================

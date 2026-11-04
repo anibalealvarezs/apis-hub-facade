@@ -2,7 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\App\AppNavigationManager;
 use App\Http\Middleware\VerifyReCaptcha;
+use Filament\Facades\Filament;
+use Filament\Navigation\NavigationManager;
 use App\Models\Project;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -21,6 +24,16 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        // Filament resolves the manager twice while mounting the sidebar.
+        $this->app->scoped(NavigationManager::class, fn () => Filament::getCurrentPanel()?->getId() === 'app'
+            ? new AppNavigationManager()
+            : new NavigationManager());
+    }
+
     public function boot(): void
     {
         $this->app['view']->getFinder()->prependNamespace(
@@ -84,7 +97,7 @@ class AppPanelProvider extends PanelProvider
                 fn () => \Illuminate\Support\Facades\Blade::render('
                     <link rel="stylesheet" href="' . \Illuminate\Support\Facades\Vite::asset('resources/css/driver-theme.css') . '">
                     <link rel="stylesheet" href="' . asset('css/branding.css') . '?v=20260825.1">
-                    <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=20261016.1">
+                    <link rel="stylesheet" href="' . asset('css/filament-extras.css') . '?v=20261104.2">
                     <link rel="stylesheet" href="' . asset('css/modals.css') . '?v=20260825.1">
                     <link rel="stylesheet" href="' . asset('css/dashboards.css') . '?v=' . (file_exists(public_path('css/dashboards.css')) ? filemtime(public_path('css/dashboards.css')) : time()) . '">
                 ')
@@ -266,11 +279,12 @@ class AppPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Analytics')),
+                    ->label(fn () => __('Data Sources')),
+                \Filament\Navigation\NavigationGroup::make(AppNavigationManager::ASSET_GROUPS),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Data')),
+                    ->label(fn () => __('Catalog')),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Integrations')),
+                    ->label(fn () => __('Analysis')),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Administration')),
                 \Filament\Navigation\NavigationGroup::make()

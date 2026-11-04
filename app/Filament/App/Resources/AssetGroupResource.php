@@ -5,6 +5,8 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\AssetGroupResource\Pages;
 use App\Filament\App\Resources\AssetGroupResource\RelationManagers;
 use App\Models\AssetGroup;
+use App\Services\CollaboratorAssetAccessService;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -19,9 +21,11 @@ class AssetGroupResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
 
+    protected static ?int $navigationSort = 1;
+
     public static function getNavigationGroup(): ?string
     {
-        return __('Data');
+        return \App\Filament\App\AppNavigationManager::ASSET_GROUPS;
     }
 
     public static function getNavigationLabel(): string
@@ -88,20 +92,31 @@ class AssetGroupResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query
+                ->whereIn('asset_groups.id', app(CollaboratorAssetAccessService::class)
+                    ->getAllowedAssetGroupQuery(Filament::getTenant(), auth()->id())
+                    ->select('asset_groups.id'))
+                ->with('items'))
+            ->recordUrl(null)
+            ->recordAction('view')
+            ->recordClasses(fn (AssetGroup $record, Pages\ListAssetGroups $livewire) =>
+                (string) $record->getKey() === $livewire->previewGroupId ? 'bg-primary-50 dark:bg-primary-500/10' : null)
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->weight('semibold')
+                    ->description(fn (AssetGroup $record) => \Illuminate\Support\Str::limit($record->description ?? '', 90))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('description')
-                    ->limit(50)
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('items_count')
                     ->label(__('Total Assets'))
+                    ->badge()
+                    ->color('gray')
                     ->counts('items')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('items')
-                    ->label(__('Assets Summary'))
+                    ->label(__('Channels'))
                     ->badge()
+                    ->color('gray')
                     ->placeholder(__('None'))
                     ->getStateUsing(function (AssetGroup $record) {
                         $items = $record->items;
@@ -131,9 +146,15 @@ class AssetGroupResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('view')
+                    ->label(__('View assets'))
+                    ->icon('heroicon-o-eye')
+                    ->authorize(fn (AssetGroup $record): bool => static::canView($record))
+                    ->action(fn (AssetGroup $record, Pages\ListAssetGroups $livewire) => $livewire->previewGroupId = (string) $record->getKey()),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
