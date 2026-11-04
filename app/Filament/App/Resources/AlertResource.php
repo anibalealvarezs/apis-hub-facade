@@ -31,6 +31,16 @@ class AlertResource extends Resource
         return __('Alerts');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('Alert');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Alerts');
+    }
+
     public static function getNavigationGroup(): ?string
     {
         return __('Analysis');
@@ -421,35 +431,47 @@ class AlertResource extends Resource
                     ->label(__('Alert Name'))
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('semibold')
+                    ->description(function (Alert $record): string {
+                        if ($record->source_type !== 'metric') {
+                            return app(AlertService::class)->buildAlertSummary($record);
+                        }
 
-                Tables\Columns\TextColumn::make('source_type')
-                    ->label(__('Source'))
-                    ->formatStateUsing(fn ($record) => app(AlertService::class)->buildAlertSummary($record))
-                    ->sortable(),
+                        $source = $record->source_config ?? [];
+                        $channel = \App\Services\Analytics\KpiFormBuilder::getChannelDisplayName($source['channel'] ?? '');
+                        $metric = $source['metric'] ?? '';
+
+                        return implode(' · ', array_filter([$channel, strlen($metric) <= 4 ? strtoupper($metric) : \Illuminate\Support\Str::headline($metric)]));
+                    }),
 
                 Tables\Columns\TextColumn::make('limits')
                     ->label(__('Thresholds'))
                     ->getStateUsing(function (Alert $record) {
                         $alertService = app(AlertService::class);
-                        $upper = $record->upper_limit !== null ? ('> ' . $alertService->formatMetricValue($record->upper_limit, $record->unit)) : null;
-                        $lower = $record->lower_limit !== null ? ('< ' . $alertService->formatMetricValue($record->lower_limit, $record->unit)) : null;
-                        return implode(' | ', array_filter([$upper, $lower]));
+                        $upper = $record->upper_limit !== null ? __('Above :value', ['value' => $alertService->formatMetricValue($record->upper_limit, $record->unit)]) : null;
+                        $lower = $record->lower_limit !== null ? __('Below :value', ['value' => $alertService->formatMetricValue($record->lower_limit, $record->unit)]) : null;
+                        return implode(' · ', array_filter([$upper, $lower]));
                     })
                     ->placeholder(__('None')),
 
                 Tables\Columns\TextColumn::make('schedule_type')
                     ->label(__('Schedule'))
-                    ->formatStateUsing(fn ($state) => ucfirst($state))
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('next_evaluation_at')
-                    ->label(__('Next Eval'))
-                    ->dateTime()
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'daily' => __('Daily'),
+                        'weekly' => __('Weekly'),
+                        'biweekly' => __('Bi-weekly'),
+                        'monthly' => __('Monthly'),
+                        'once' => __('One-time'),
+                        default => $state,
+                    })
+                    ->description(fn (Alert $record) => $record->is_active
+                        ? ($record->next_evaluation_at?->translatedFormat(__('M j, Y H:i')) ?? '—')
+                        : __('Paused') . ' · —')
                     ->sortable(),
 
                 Tables\Columns\ToggleColumn::make('is_active')
-                    ->label(__('Active'))
+                    ->label(__('Enabled'))
+                    ->tooltip(fn (Alert $record) => $record->is_active ? __('Enabled') : __('Paused'))
                     ->afterStateUpdated(function ($record, $state) {
                         if ($record->project) {
                             app(\App\Services\DeployerService::class)->syncAlertConfig($record->project);
@@ -459,77 +481,79 @@ class AlertResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('evaluate')
-                    ->label(__('Evaluate Now'))
-                    ->icon('heroicon-o-calculator')
-                    ->color('warning')
-                    ->action(function (Alert $record) {
-                        $result = app(DeployerService::class)->evaluateAlert($record);
-                        if ($result['success']) {
-                            $output = $result['output'] ?? '';
-                            $alertService = app(AlertService::class);
-                            $upper = $record->upper_limit !== null ? (float)$record->upper_limit : null;
-                            $lower = $record->lower_limit !== null ? (float)$record->lower_limit : null;
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('evaluate')
+                        ->label(__('Evaluate Now'))
+                        ->icon('heroicon-o-calculator')
+                        ->color('warning')
+                        ->action(function (Alert $record) {
+                            $result = app(DeployerService::class)->evaluateAlert($record);
+                            if ($result['success']) {
+                                $output = $result['output'] ?? '';
+                                $alertService = app(AlertService::class);
+                                $upper = $record->upper_limit !== null ? (float)$record->upper_limit : null;
+                                $lower = $record->lower_limit !== null ? (float)$record->lower_limit : null;
 
-                            // Highlight colored arrows in CLI output
-                            $colorGreen = '#10b981';
-                            $colorRed = '#ef4444';
+                                // Highlight colored arrows in CLI output
+                                $colorGreen = '#10b981';
+                                $colorRed = '#ef4444';
 
-                            $isHigherGood = $alertService->isHigherBetter($record);
-                            $upColor = $isHigherGood ? $colorGreen : $colorRed;
-                            $downColor = $isHigherGood ? $colorRed : $colorGreen;
+                                $isHigherGood = $alertService->isHigherBetter($record);
+                                $upColor = $isHigherGood ? $colorGreen : $colorRed;
+                                $downColor = $isHigherGood ? $colorRed : $colorGreen;
 
-                            $formattedHtml = nl2br(e($output));
-                            $formattedHtml = str_replace('⚠️ TRIGGERED: Upper limit', "<strong style='color: {$upColor};'>▲ TRIGGERED: Upper limit</strong>", $formattedHtml);
-                            $formattedHtml = str_replace('⚠️ TRIGGERED: Lower limit', "<strong style='color: {$downColor};'>▼ TRIGGERED: Lower limit</strong>", $formattedHtml);
-                            $formattedHtml = str_replace('✅ Status: OK', "<strong style='color: {$colorGreen};'>✅ Status: OK</strong>", $formattedHtml);
+                                $formattedHtml = nl2br(e($output));
+                                $formattedHtml = str_replace('⚠️ TRIGGERED: Upper limit', "<strong style='color: {$upColor};'>▲ TRIGGERED: Upper limit</strong>", $formattedHtml);
+                                $formattedHtml = str_replace('⚠️ TRIGGERED: Lower limit', "<strong style='color: {$downColor};'>▼ TRIGGERED: Lower limit</strong>", $formattedHtml);
+                                $formattedHtml = str_replace('✅ Status: OK', "<strong style='color: {$colorGreen};'>✅ Status: OK</strong>", $formattedHtml);
 
-                            Notification::make()
-                                ->title(new \Illuminate\Support\HtmlString("<span style='font-weight: 700;'>" . __('Alert Evaluation Complete') . "</span>"))
-                                ->body(new \Illuminate\Support\HtmlString($formattedHtml))
-                                ->success()
-                                ->persistent()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title(__('Evaluation Failed'))
-                                ->body($result['message'] ?? __('Failed to execute alert evaluation.'))
-                                ->danger()
-                                ->send();
-                        }
-                    }),
-                Tables\Actions\ReplicateAction::make()
-                    ->label(__('Duplicate'))
-                    ->icon('heroicon-o-square-2-stack')
-                    ->beforeReplicaSaved(function (Alert $replica): void {
-                        $replica->is_active = false;
-                        $replica->name = $replica->name . ' (' . __('Copy') . ')';
-                    })
-                    ->after(function (Alert $replica, Alert $record): void {
-                        foreach ($record->calculationLines as $line) {
-                            $replica->calculationLines()->create([
-                                'label' => $line->label,
-                                'asset_filter' => $line->asset_filter,
-                                'sort_order' => $line->sort_order,
-                            ]);
-                        }
-                        if ($replica->project) {
-                            app(DeployerService::class)->syncAlertConfig($replica->project);
-                        }
-                    }),
-                Tables\Actions\Action::make('sync')
-                    ->label(__('Sync Now'))
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('secondary')
-                    ->action(function (Alert $record) {
-                        $synced = app(\App\Services\DeployerService::class)->syncAlertConfig($record->project);
-                        if ($synced) {
-                            Notification::make()->title(__('Alert configurations synchronized to tenant server!'))->success()->send();
-                        } else {
-                            Notification::make()->title(__('Sync failed. Please check server connectivity.'))->danger()->send();
-                        }
-                    }),
-                Tables\Actions\DeleteAction::make(),
+                                Notification::make()
+                                    ->title(new \Illuminate\Support\HtmlString("<span style='font-weight: 700;'>" . __('Alert Evaluation Complete') . "</span>"))
+                                    ->body(new \Illuminate\Support\HtmlString($formattedHtml))
+                                    ->success()
+                                    ->persistent()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title(__('Evaluation Failed'))
+                                    ->body($result['message'] ?? __('Failed to execute alert evaluation.'))
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
+                    Tables\Actions\ReplicateAction::make()
+                        ->label(__('Duplicate'))
+                        ->icon('heroicon-o-square-2-stack')
+                        ->beforeReplicaSaved(function (Alert $replica): void {
+                            $replica->is_active = false;
+                            $replica->name = $replica->name . ' (' . __('Copy') . ')';
+                        })
+                        ->after(function (Alert $replica, Alert $record): void {
+                            foreach ($record->calculationLines as $line) {
+                                $replica->calculationLines()->create([
+                                    'label' => $line->label,
+                                    'asset_filter' => $line->asset_filter,
+                                    'sort_order' => $line->sort_order,
+                                ]);
+                            }
+                            if ($replica->project) {
+                                app(DeployerService::class)->syncAlertConfig($replica->project);
+                            }
+                        }),
+                    Tables\Actions\Action::make('sync')
+                        ->label(__('Sync Now'))
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('secondary')
+                        ->action(function (Alert $record) {
+                            $synced = app(\App\Services\DeployerService::class)->syncAlertConfig($record->project);
+                            if ($synced) {
+                                Notification::make()->title(__('Alert configurations synchronized to tenant server!'))->success()->send();
+                            } else {
+                                Notification::make()->title(__('Sync failed. Please check server connectivity.'))->danger()->send();
+                            }
+                        }),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

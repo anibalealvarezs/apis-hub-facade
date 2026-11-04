@@ -2571,5 +2571,10 @@
     "Member": "Miembro",
     "Can manage collaborators": "Puede gestionar colaboradores",
     "No project invitations": "No hay invitaciones para este proyecto",
-    "Email invitations and join requests from users using a share code.": "Invitaciones por correo y solicitudes de acceso mediante un código compartido."
+    "Email invitations and join requests from users using a share code.": "Invitaciones por correo y solicitudes de acceso mediante un código compartido.",
+    "Alert": "alerta",
+    "Paused": "En pausa",
+    "Above :value": "Por encima de :value",
+    "Below :value": "Por debajo de :value",
+    ":configured configured · :enabled enabled · :paused paused": ":configured configuradas · :enabled habilitadas · :paused en pausa"
 }
