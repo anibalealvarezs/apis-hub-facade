@@ -2558,5 +2558,9 @@
     "Source configuration": "Configuración de la fuente",
     "Save your selections, then apply infrastructure changes if prompted.": "Guarda tus selecciones y aplica los cambios de infraestructura cuando se te indique.",
     "Scheduling guidance": "Recomendaciones de programación",
-    "Discover assets": "Descubrir activos"
+    "Discover assets": "Descubrir activos",
+    "View assets": "Ver activos",
+    "Edit group": "Editar grupo",
+    "Assigned assets by channel": "Activos asignados por canal",
+    "No assets assigned to this group.": "Este grupo no tiene activos asignados."
 }
