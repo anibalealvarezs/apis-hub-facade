@@ -3,6 +3,8 @@
  * Each widget container calls `fetchWidgetData(widgetId, containerEl)` on mount.
  */
 
+window.dashboardRenderer?._removeNavigationListeners?.();
+
 window.dashboardRenderer = {
     _chartInstances: new Map(),
     _widgetData: new Map(),
@@ -375,6 +377,21 @@ window.dashboardRenderer = {
     _concurrencyLimit: 4,
     _activeRequests: 0,
     _queue: [],
+    _requestController: new AbortController(),
+
+    _cancelPageRequests() {
+        const controller = this._requestController;
+        this._requestController = new AbortController();
+        controller.abort();
+
+        for (const { reject } of this._queue.splice(0)) {
+            reject(controller.signal.reason);
+        }
+        for (const widgetId of this._retryTimers.keys()) {
+            this._cancelRetry(widgetId);
+        }
+        this._autoRetryCounts.clear();
+    },
 
     _enqueue(fn) {
         return new Promise((resolve, reject) => {
@@ -477,6 +494,7 @@ window.dashboardRenderer = {
      */
     async renderWidget(widgetId, containerEl, controls, tenant) {
         if (!containerEl) return;
+        const { signal } = this._requestController;
 
         this.updateAnalyticsWarnings(containerEl, []);
 
@@ -552,6 +570,7 @@ window.dashboardRenderer = {
                 let lastError = null;
 
                 for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                    signal.throwIfAborted();
                     try {
                         const response = await fetch(
                             (window.dashboardWidgetDataUrlPrefix || "/api/dashboard/widget/") +
@@ -560,6 +579,8 @@ window.dashboardRenderer = {
                                 encodeURIComponent(currentLang),
                             {
                                 method: "POST",
+                                signal,
+                                priority: "low",
                                 headers: {
                                     "Content-Type": "application/json",
                                     Accept: "application/json",
@@ -596,17 +617,30 @@ window.dashboardRenderer = {
 
                         return resJson;
                     } catch (err) {
+                        signal.throwIfAborted();
                         lastError = err;
                         if (err.retryable === false || err.retryAfterMs > 15000) throw err;
                         if (attempt < maxAttempts) {
                             // Exponential backoff: 1000ms, then 2500ms
                             const delayMs = Math.max(attempt === 1 ? 1000 : 2500, err.retryAfterMs || 0) + Math.floor(Math.random() * 250);
-                            await new Promise((r) => setTimeout(r, delayMs));
+                            await new Promise((resolve) => {
+                                const abort = () => {
+                                    clearTimeout(timer);
+                                    resolve();
+                                };
+                                const timer = setTimeout(() => {
+                                    signal.removeEventListener("abort", abort);
+                                    resolve();
+                                }, delayMs);
+                                signal.addEventListener("abort", abort, { once: true });
+                            });
                         }
                     }
                 }
                 throw lastError || new Error("Failed to load widget data");
             });
+
+            if (signal.aborted) return;
 
             if (!json.success) {
                 if (json.retryable) {
@@ -648,6 +682,7 @@ window.dashboardRenderer = {
             // Render immediately if already in viewport, otherwise defer
             this._lazyRenderWhenVisible(containerEl, json);
         } catch (e) {
+            if (signal.aborted) return;
             if (e.message === "access_restricted") {
                 containerEl.innerHTML = this.accessRestrictedState();
             } else if (
@@ -5046,6 +5081,24 @@ window.dashboardRenderer = {
         }
     },
 };
+
+{
+    const renderer = window.dashboardRenderer;
+    const cancelRequests = () => renderer._cancelPageRequests();
+    const onNavigate = (event) => {
+        queueMicrotask(() => {
+            if (!event.defaultPrevented) cancelRequests();
+        });
+    };
+
+    document.addEventListener("livewire:navigate", onNavigate);
+    window.addEventListener("pagehide", cancelRequests);
+    renderer._removeNavigationListeners = () => {
+        document.removeEventListener("livewire:navigate", onNavigate);
+        window.removeEventListener("pagehide", cancelRequests);
+        cancelRequests();
+    };
+}
 
 window.DashboardRenderer = window.dashboardRenderer;
 
