@@ -2565,5 +2565,7 @@
     "No assets assigned to this group.": "Este grupo no tiene activos asignados.",
     "Selected": "Seleccionados",
     "Search assets": "Buscar activos",
-    "No assets available.": "No hay activos disponibles."
+    "No assets available.": "No hay activos disponibles.",
+    "Date range presets": "Intervalos de fechas predefinidos",
+    ":days days": ":days días"
 }

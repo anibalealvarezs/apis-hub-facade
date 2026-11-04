@@ -1287,3 +1287,60 @@ body.bd-cursor-grabbing * {
 .dark .dashboard-trend-negative {
     color: #f87171;
 }
+
+/* Internal dashboard controls and widget headers */
+.dvc-dashboard-panel {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: .75rem;
+    background: #f8fafc;
+}
+
+.dark .dvc-dashboard-panel {
+    border-color: #334155;
+    background: #151e2d;
+}
+
+.dvc-internal .dvc-dashboard-heading {
+    background: transparent;
+}
+
+.dvc-filter-row {
+    padding: .75rem 1rem;
+    border-top: 1px solid rgb(148 163 184 / .22);
+}
+
+.dvc-date-presets {
+    padding: .2rem;
+    border-radius: .5rem;
+    background: rgb(148 163 184 / .15);
+}
+
+.dvc-date-preset {
+    padding: .3rem .5rem;
+    border-radius: .3rem;
+    font-weight: 600;
+}
+
+.dvc-date-preset:hover,
+.dvc-date-preset[aria-pressed="true"] {
+    background: rgb(148 163 184 / .28);
+}
+
+.dvc-internal .dvc-widget-heading {
+    padding: .625rem .75rem;
+    background: #f1f5f9;
+}
+
+.dark .dvc-internal .dvc-widget-heading {
+    background: #1c2533;
+}
+
+.dvc-internal .dvc-widget-actions {
+    gap: .375rem;
+}
+
+.dvc-internal .dvc-widget-title:is(:hover, :focus-visible) {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}

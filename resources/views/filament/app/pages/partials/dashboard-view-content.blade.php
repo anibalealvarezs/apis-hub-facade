@@ -27,7 +27,8 @@
 
     // Determine if PDF Export / Print is allowed for this view context:
     $canExportPdf = false;
-    if ($viewObj instanceof \App\Http\Controllers\PublicDashboardViewModel) {
+    $isPublicDashboard = $viewObj instanceof \App\Http\Controllers\PublicDashboardViewModel;
+    if ($isPublicDashboard) {
         // Public View level:
         $canExportPdf = !empty($viewObj->pv?->allow_pdf_export);
     } else {
@@ -77,18 +78,21 @@
     assetGroups: @js($viewObj->getAllAssetGroups()),
     channelAssetGroupMap: @js($viewObj->getChannelAssetGroupMap()),
     selectedAssetGroup: '{{ $dashboardGroup }}'
-})" x-init="init()" id="dashboard-view-container" class="space-y-4"
+})" x-init="init()" id="dashboard-view-container" @class(['space-y-4', 'dvc-internal' => ! $isPublicDashboard])
      @open-widget-settings.window="openWidgetSettings($event.detail.widgetId, $event.detail.controls, $event.detail.builderControls, $event.detail.seriesOptions, $event.detail.variables, $event.detail.granularityOnTheGo, $event.detail.sourceType)"
      @open-pop-out.window="openPopOut($event.detail.widgetId)">
     {{-- Header --}}
-    <div class="flex items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4 no-print">
+    @if(! $isPublicDashboard)
+        <div class="dvc-dashboard-panel no-print">
+    @endif
+    <div class="dvc-dashboard-heading flex flex-wrap items-center justify-between gap-4 rounded-xl bg-gray-50 dark:bg-gray-900 p-4 no-print">
         <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ $viewObj->dashboard->name }}</h1>
             @if ($viewObj->dashboard->description)
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $viewObj->dashboard->description }}</p>
             @endif
         </div>
-        <div class="flex items-center gap-3 no-print">
+        <div class="flex flex-wrap items-center gap-2 no-print">
             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
             </span>
@@ -122,6 +126,40 @@
         </div>
     </div>
 
+    @if(! $isPublicDashboard)
+        <div class="dvc-filter-row flex flex-wrap items-center gap-3 text-xs">
+            <template x-if="dashboardDefaults.show_asset_group_selector">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-medium text-gray-600 dark:text-gray-300">{{ __('Asset Group:') }}</span>
+                    <x-ui.asset-selector model="selectedAssetGroup" options="assetGroups" changeEvent="applyAssetGroup()" size="xs" />
+                </div>
+            </template>
+            <div class="dvc-date-presets flex flex-wrap items-center gap-1" role="group" aria-label="{{ __('Date range presets') }}">
+                @foreach([7, 14, 30, 90] as $days)
+                    @php
+                        $presetStart = \Carbon\Carbon::parse($effectiveDateEnd)->subDays($days - 1)->toDateString();
+                    @endphp
+                    <button type="button" class="dvc-date-preset"
+                            :aria-pressed="dashboardOverrides.date_start === @js($presetStart) && dashboardOverrides.date_end === @js($effectiveDateEnd)"
+                            @click="dashboardOverrides.date_start = @js($presetStart); dashboardOverrides.date_end = @js($effectiveDateEnd); applyDateRange()">
+                        {{ __(':days days', ['days' => $days]) }}
+                    </button>
+                @endforeach
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:inline">{{ __('Date range:') }}</span>
+                <x-ui.date-input size="xs" x-model="dashboardOverrides.date_start"
+                                 x-on:change.debounce.500ms="applyDateRange()"
+                                 x-bind:max="dashboardOverrides.date_end || '{{ $yesterdayDate }}'" />
+                <span class="text-gray-400">→</span>
+                <x-ui.date-input size="xs" x-model="dashboardOverrides.date_end"
+                                 x-on:change.debounce.500ms="applyDateRange()"
+                                 x-bind:min="dashboardOverrides.date_start || ''" x-bind:max="dashboardDefaults.date_end" />
+            </div>
+        </div>
+        </div>
+    @endif
+
     {{-- Print-Only Summary Header --}}
     <div class="print-only-header hidden">
         <div class="flex items-center justify-between gap-4 border-b pb-3 mb-4 border-gray-300 dark:border-gray-700">
@@ -144,6 +182,7 @@
         </div>
     </div>
 
+    @if($isPublicDashboard)
     {{-- Dashboard Controls (on-the-go) --}}
     <div class="dvc-controls-bar flex flex-wrap items-center gap-3 text-xs py-3 px-3">
         <span class="text-xs text-gray-500 dark:text-gray-400 font-medium hidden sm:inline">{{ __('Date range:') }}</span>
@@ -161,6 +200,8 @@
             <x-ui.asset-selector model="selectedAssetGroup" options="assetGroups" changeEvent="applyAssetGroup()" size="xs" />
         </template>
     </div>
+
+    @endif
 
     {{-- Grid --}}
     <div id="view-grid-stack" class="grid-stack relative" wire:ignore>
@@ -206,7 +247,7 @@
                 <div
                     class="grid-stack-item-content rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative flex flex-col pd-widget-content">
                     <div
-                        class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
+                        class="dvc-widget-heading px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between flex-shrink-0 rounded-t-xl relative"
                             x-data="widgetHeader"
                             data-widget-id="{{ $widget['id'] }}"
                             data-controls="{{ json_encode($widget['resolved_controls']) }}"
@@ -216,9 +257,9 @@
                             data-variables="{{ json_encode($widget['variables'] ?? []) }}"
                             @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
                             <div class="min-w-0 flex-1">
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate" title="{{ $widget['title'] ?? $widget['name'] }}">{{ $widget['title'] ?? $widget['name'] }}</h3>
+                                <h3 class="dvc-widget-title text-sm font-semibold text-gray-900 dark:text-white truncate" @if(! $isPublicDashboard) tabindex="0" @endif title="{{ $widget['title'] ?? $widget['name'] }}">{{ $widget['title'] ?? $widget['name'] }}</h3>
                             </div>
-                            <div class="flex flex-shrink-0 items-center gap-2 ml-2">
+                            <div class="dvc-widget-actions flex flex-shrink-0 items-center gap-2 ml-2">
                                             <x-analytics-warning />
                                 @if (!empty($widget['kpi_theory']))
                                     {{-- KPI Theory info button (rich HTML tooltip) --}}
