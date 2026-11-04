@@ -54,7 +54,7 @@
 
         public static function getNavigationGroup(): ?string
         {
-            return __('Analytics');
+            return __('Analysis');
         }
 
         public static function canAccess(): bool

@@ -2,7 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\App\AppNavigationManager;
 use App\Http\Middleware\VerifyReCaptcha;
+use Filament\Facades\Filament;
+use Filament\Navigation\NavigationManager;
 use App\Models\Project;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -21,6 +24,15 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
 {
+    public function register(): void
+    {
+        parent::register();
+
+        $this->app->bind(NavigationManager::class, fn () => Filament::getCurrentPanel()?->getId() === 'app'
+            ? new AppNavigationManager()
+            : new NavigationManager());
+    }
+
     public function boot(): void
     {
         $this->app['view']->getFinder()->prependNamespace(
@@ -267,6 +279,7 @@ class AppPanelProvider extends PanelProvider
             ->navigationGroups([
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Data Sources')),
+                \Filament\Navigation\NavigationGroup::make(AppNavigationManager::ASSET_GROUPS),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Catalog')),
                 \Filament\Navigation\NavigationGroup::make()

@@ -33,7 +33,7 @@ class AlertResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('Analytics');
+        return __('Analysis');
     }
 
     public static function shouldRegisterNavigation(): bool

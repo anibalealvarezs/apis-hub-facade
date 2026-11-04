@@ -21,6 +21,11 @@ class AssetGroupResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationGroup(): ?string
+    {
+        return \App\Filament\App\AppNavigationManager::ASSET_GROUPS;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('Asset Groups');
