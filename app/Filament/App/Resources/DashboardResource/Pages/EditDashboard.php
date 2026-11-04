@@ -3,11 +3,13 @@
 namespace App\Filament\App\Resources\DashboardResource\Pages;
 
 use App\Filament\App\Resources\DashboardResource;
+use App\Filament\App\Resources\DashboardResource\Traits\HasDashboardEnvironmentHeader;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
 class EditDashboard extends EditRecord
 {
+    use HasDashboardEnvironmentHeader;
     use \Filament\Resources\Pages\EditRecord\Concerns\Translatable;
 
     protected static string $resource = DashboardResource::class;

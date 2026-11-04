@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\DashboardResource\Pages;
 
 use App\Filament\App\Resources\DashboardResource;
+use App\Filament\App\Resources\DashboardResource\Traits\HasDashboardEnvironmentHeader;
 use App\Models\Dashboard;
 use App\Models\DashboardWidget;
 use App\Models\CustomKpi;
@@ -15,6 +16,7 @@ use Filament\Notifications\Notification;
 
 class DashboardBuilder extends Page
 {
+    use HasDashboardEnvironmentHeader;
     protected static string $resource = DashboardResource::class;
 
     protected static string $view = 'filament.app.pages.dashboard-builder';

@@ -3,12 +3,14 @@
 namespace App\Filament\App\Resources\DashboardResource\Pages;
 
 use App\Filament\App\Resources\DashboardResource;
+use App\Filament\App\Resources\DashboardResource\Traits\HasDashboardEnvironmentHeader;
 use App\Models\Dashboard;
 use Filament\Actions;
 use Filament\Resources\Pages\Page;
 
 class DashboardView extends Page
 {
+    use HasDashboardEnvironmentHeader;
     protected static string $resource = DashboardResource::class;
 
     protected static string $view = 'filament.app.pages.dashboard-view';
