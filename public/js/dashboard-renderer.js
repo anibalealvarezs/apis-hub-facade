@@ -1234,6 +1234,7 @@ window.dashboardRenderer = {
                 </div>
                 ${changePercent !== null ? `<p class="text-xs text-gray-400 mt-1">vs previous period</p>` : ""}
             </div>`;
+        return lowerIsBetter;
     },
 
     // ─── Line Chart ───
@@ -4131,7 +4132,7 @@ window.dashboardRenderer = {
                     containerEl.textContent = "—";
                     break;
                 }
-                this.renderTile(containerEl, { ...data, format: data.percentage ? "percentage" : "number" }, controls);
+                const lowerIsBetter = this.renderTile(containerEl, { ...data, format: data.percentage ? "percentage" : "number" }, controls);
                 const values = Object.values(data.sparkline ?? {}).map(value => value == null ? NaN : Number(value));
                 const finite = values.filter(Number.isFinite);
                 const current = data.periods.current;
@@ -4139,6 +4140,9 @@ window.dashboardRenderer = {
                 containerEl.title = `Current period and sparkline: ${current.start} – ${current.end}`
                     + (previous ? `; compared with: ${previous.start} – ${previous.end}` : "");
                 if (finite.length < 2) break;
+                const change = finite[finite.length - 1] - finite[0];
+                const color = change === 0 ? "text-gray-400"
+                    : ((lowerIsBetter ? change < 0 : change > 0) ? "text-green-500" : "text-red-500");
                 const min = Math.min(...finite);
                 const span = Math.max(...finite) - min;
                 const path = values.map((value, index) => {
@@ -4156,7 +4160,7 @@ window.dashboardRenderer = {
                 content.style.flex = "1 1 50%";
                 containerEl.append(layout);
                 layout.append(content);
-                layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="text-primary-500" style="flex: 0 1 50%; width: 50%; max-width: 50%; min-width: 0; max-height: 50%;"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
+                layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="${color}" style="flex: 0 1 50%; width: 50%; max-width: 50%; min-width: 0; max-height: 50%;"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
                 break;
             }
             case "tile":
