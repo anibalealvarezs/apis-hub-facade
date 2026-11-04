@@ -2688,14 +2688,10 @@
             $metric = ($controls['series_metrics'][0] ?? $series['metrics'] ?? $controls['metrics'] ?? $widget->source_config['metrics'] ?? [])[0] ?? '';
             $filters = $this->normalizeFiltersForPayload($controls['series_filters'][0] ?? $series['filters'] ?? null);
             $dependency = $series['dependency'] ?? $controls['series_dependencies'][0] ?? $controls['dependency'] ?? null;
-            $capability = \App\Services\Analytics\AdvancedTileMetricCatalog::channels()[$channel] ?? [];
-            $supported = in_array($metric, $capability['metrics'] ?? [], true)
-                && (!isset($capability['dependencies']) || in_array($dependency ?? '', $capability['dependencies'], true))
-                && (!$filters || ($capability['filters'] ?? false))
-                && !array_intersect_key($filters, array_flip(['channel', 'channeledAccount']));
-            if (!$supported || count($rawSeries) > 1 || ($series['type'] ?? 'metric') !== 'metric'
-                || !empty($series['breakdown']['dimension'])) {
-                return response()->json(['success' => false, 'error' => __('Choose a single metric supported by Advanced tile, with compatible filters and no breakdown.')], 422);
+            if (!$channel || !$metric || count($rawSeries) > 1 || ($series['type'] ?? 'metric') !== 'metric'
+                || !empty($series['breakdown']['dimension'])
+                || array_intersect_key($filters, array_flip(['channel', 'channeledAccount', 'dimensions.scope']))) {
+                return response()->json(['success' => false, 'error' => __('Choose a single metric with no breakdown.')], 422);
             }
 
             $override = $controls['series_assets'][0] ?? $series['assets'] ?? null;
@@ -2712,7 +2708,7 @@
                 'dateEnd' => $current['end'],
                 'metrics' => [$metric],
                 'filters' => $filters,
-                'dependency' => $capability['query_dependency'] ?? $dependency,
+                'dependency' => $dependency,
                 'granularity' => 'daily',
             ];
             $summary = $this->forwardToChannelEndpoint($channel, 'summary', $payload);

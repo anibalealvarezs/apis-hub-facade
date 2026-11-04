@@ -1072,10 +1072,6 @@ export function dashboardBuilder(config = {}) {
         },
         getRawSeriesMetricOptions(index, series) {
             let options = this.widgetControlsForm.series_metrics_map?.[index] || this.allChannelMetrics[series.channel] || {};
-            if (this.widgetControlsForm.widget_type === 'advanced_tile' && this.widgetControlsTarget?.source_type === 'metric') {
-                const capability = config.advancedTileMetricChannels?.[series.channel];
-                options = Object.fromEntries(Object.entries(options).filter(([metric]) => capability?.metrics.includes(metric)));
-            }
             if (series.channel !== 'google_search_console') return options;
             const types = this.gscTypesForSeries(series);
             return Object.fromEntries(Object.entries(options).filter(([metric]) => types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.metrics.includes(metric))));
@@ -4237,11 +4233,7 @@ export function dashboardBuilder(config = {}) {
             if (c.widget_type === 'advanced_tile') {
                 if (this.widgetControlsTarget.source_type === 'metric') {
                     const [series] = c.raw_series || [];
-                    const capability = config.advancedTileMetricChannels?.[series?.channel];
-                    const supported = capability?.metrics.includes(series?.metrics?.[0])
-                        && (!capability.dependencies || capability.dependencies.includes(series.dependency || ''))
-                        && (capability.filters || !series.filters?.length)
-                        && !series.breakdown?.dimension;
+                    const supported = !!series?.channel && !!series?.metrics?.[0] && !series.breakdown?.dimension;
                     if (!supported || c.raw_series.length !== 1 || series.metrics.length !== 1 || series.type === 'derived_metric') {
                         this.widgetControlsError = config.strings?.advancedTileMetricError || 'Choose a single metric supported by Advanced tile, with compatible filters and no breakdown.';
                         return;

@@ -371,6 +371,12 @@ class GoogleAnalyticsController extends Controller
                 }
             }
 
+            foreach ($validated['filters'] ?? [] as $key => $value) {
+                if (!in_array($key, ['channel', 'channeledAccount', 'dimensions.scope'], true)) {
+                    $baseFilters[$key] = $value;
+                }
+            }
+
             $requestedMetrics = $validated['metrics'] ?? [];
             $requestedMetrics = array_map([$this, 'mapToGa4'], $requestedMetrics);
             $dependency = $validated['dependency'] ?? null;
