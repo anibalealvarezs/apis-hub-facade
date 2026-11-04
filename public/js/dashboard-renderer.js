@@ -4126,6 +4126,37 @@ window.dashboardRenderer = {
         containerEl.style.padding = "";
         containerEl.style.overflow = "";
         switch (widget_type) {
+            case "advanced_tile": {
+                if (data.value == null) {
+                    containerEl.textContent = "—";
+                    break;
+                }
+                this.renderTile(containerEl, { ...data, format: data.percentage ? "percentage" : "number" }, controls);
+                const values = Object.values(data.sparkline ?? {}).map(value => value == null ? NaN : Number(value));
+                const finite = values.filter(Number.isFinite);
+                const current = data.periods.current;
+                const previous = data.periods.previous;
+                containerEl.title = `${current.start} – ${current.end}`
+                    + (previous ? ` / ${previous.start} – ${previous.end}` : "");
+                if (finite.length < 2) break;
+                const min = Math.min(...finite);
+                const span = Math.max(...finite) - min;
+                const path = values.map((value, index) => {
+                    if (!Number.isFinite(value)) return "";
+                    const command = Number.isFinite(values[index - 1]) ? "L" : "M";
+                    const x = 2 + index * 96 / (values.length - 1);
+                    const y = span ? 28 - (value - min) * 26 / span : 15;
+                    return `${command}${x},${y}`;
+                }).join(" ");
+                const content = containerEl.firstElementChild;
+                content.classList.replace("items-center", "items-start");
+                const layout = document.createElement("div");
+                layout.className = "flex h-full items-center justify-between";
+                containerEl.append(layout);
+                layout.append(content);
+                layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="w-1/3 mr-4 text-primary-500"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
+                break;
+            }
             case "tile":
                 this.renderTile(containerEl, data, controls);
                 break;

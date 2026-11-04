@@ -695,6 +695,34 @@
                                             </button>
                                         </template>
                                     </div>
+                                    <template x-if="widgetControlsForm.widget_type === 'advanced_tile' && widgetControlsForm.advanced_tile">
+                                        <div class="grid gap-2">
+                                            <label>{{ __('Value period') }}
+                                                <x-ui.select-input x-model="widgetControlsForm.advanced_tile.window">
+                                                    <option value="dashboard">{{ __('Dashboard timeframe') }}</option>
+                                                    <option value="last_7_days">{{ __('Last 7 days') }}</option>
+                                                    <option value="last_30_days">{{ __('Last 30 days') }}</option>
+                                                </x-ui.select-input>
+                                            </label>
+                                            <label x-show="widgetControlsTarget.source_type === 'derived_metric'">{{ __('Series summary') }}
+                                                <x-ui.select-input x-model="widgetControlsForm.advanced_tile.reducer">
+                                                    <option value="latest">{{ __('Latest value') }}</option>
+                                                    <option value="sum">{{ __('Sum') }}</option>
+                                                    <option value="average">{{ __('Average') }}</option>
+                                                </x-ui.select-input>
+                                            </label>
+                                            <label x-show="widgetControlsForm.advanced_tile.sparkline">{{ __('Sparkline interval') }}
+                                                <x-ui.select-input x-model="widgetControlsForm.advanced_tile.interval">
+                                                    <option value="auto">{{ __('Automatic') }}</option>
+                                                    <option value="daily">{{ __('Daily') }}</option>
+                                                    <option value="weekly">{{ __('Weekly') }}</option>
+                                                    <option value="monthly">{{ __('Monthly') }}</option>
+                                                </x-ui.select-input>
+                                            </label>
+                                            <label><input type="checkbox" x-model="widgetControlsForm.advanced_tile.compare"> {{ __('Previous equivalent period') }}</label>
+                                            <label><input type="checkbox" x-model="widgetControlsForm.advanced_tile.sparkline"> {{ __('Show sparkline') }}</label>
+                                        </div>
+                                    </template>
                                     <template x-if="widgetControlsForm.widget_type === 'choropleth_map' && !(widgetControlsForm.raw_series || []).some(s => s.breakdown && s.breakdown.dimension && (s.breakdown.dimension === 'country' || s.breakdown.dimension === 'geo_country' || s.breakdown.dimension.toLowerCase().includes('country')))">
                                         <div class="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-start gap-2.5">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">

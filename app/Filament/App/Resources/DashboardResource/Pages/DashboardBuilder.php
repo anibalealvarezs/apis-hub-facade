@@ -432,6 +432,11 @@ class DashboardBuilder extends Page
 
     public function addWidget(array $data): array
     {
+        if (($data['widget_type'] ?? null) === 'advanced_tile'
+            && !WidgetTypeRegistry::isWidgetTypeCompatible($data['source_type'] ?? '', 'advanced_tile')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['source_type' => __('Unsupported Advanced tile source.')]);
+        }
+
         $service = app(\App\Services\DashboardService::class);
         $widget = $service->addWidget($this->dashboard, $data);
 

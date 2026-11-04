@@ -1444,7 +1444,7 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
+                const allowed = ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1471,7 +1471,7 @@ export function dashboardBuilder(config = {}) {
             } else if (sourceType === 'derived_metric') {
                 const allowed = (config.derivedMetricWidgetTypes && config.derivedMetricWidgetTypes.length > 0)
                     ? config.derivedMetricWidgetTypes
-                    : ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
+                    : ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1503,7 +1503,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
+                const allowed = ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1519,7 +1519,7 @@ export function dashboardBuilder(config = {}) {
                     typeMap = allTypes;
                 }
             } else if (target.source_type === 'derived_metric') {
-                const allowed = config.derivedMetricWidgetTypes || ['tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
+                const allowed = config.derivedMetricWidgetTypes || ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'gauge', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -1540,7 +1540,7 @@ export function dashboardBuilder(config = {}) {
                 };
             }
 
-            return Object.entries(typeMap).map(([type, label]) => ({ type, label }));
+            return Object.entries(typeMap).filter(([type]) => type !== 'advanced_tile' || ['metric', 'derived_metric'].includes(target?.source_type)).map(([type, label]) => ({ type, label }));
         },
 
         selectWidgetTypeForControls(type) {
@@ -3054,6 +3054,7 @@ export function dashboardBuilder(config = {}) {
                 title: titles[this.activeIdentityLang] || titles.en || baseTitle,
                 description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
                 widget_type: widget.widget_type || '',
+                advanced_tile: { window: 'dashboard', reducer: 'latest', interval: 'auto', compare: true, sparkline: true, ...wc.advanced_tile },
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
                 date_end: wc.date_end || this.dashboardControls.date_end || '',
@@ -4228,6 +4229,8 @@ export function dashboardBuilder(config = {}) {
             if (!c.max_ratio_inherit) {
                 payload.max_ratio = c.max_ratio !== '' && c.max_ratio !== null ? parseFloat(c.max_ratio) : null;
             }
+
+            if (c.widget_type === 'advanced_tile') payload.advanced_tile = c.advanced_tile;
 
             payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;
 

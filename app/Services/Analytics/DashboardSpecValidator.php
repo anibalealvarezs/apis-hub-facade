@@ -35,7 +35,7 @@ class DashboardSpecValidator
             'widgets.*.name' => 'required|string|max:255',
             'widgets.*.title' => 'nullable|string|max:255',
             'widgets.*.description' => 'nullable|string|max:1000',
-            'widgets.*.widget_type' => 'required|string|in:tile,line_chart,bar_chart,table,gauge,sparkline,anomaly_list,pie_chart,combo_chart,anomaly_chart,scatter_plot',
+            'widgets.*.widget_type' => 'required|string|in:tile,advanced_tile,line_chart,bar_chart,table,gauge,sparkline,anomaly_list,pie_chart,combo_chart,anomaly_chart,scatter_plot',
             'widgets.*.source_type' => 'required|string|in:kpi,metric,entity,derived_metric',
             'widgets.*.source_config' => 'nullable|array',
             'widgets.*.controls' => 'nullable|array',
@@ -54,6 +54,11 @@ class DashboardSpecValidator
         }
 
         $validated = $validator->validated();
+        foreach ($validated['widgets'] ?? [] as $index => $widget) {
+            if ($widget['widget_type'] === 'advanced_tile' && !in_array($widget['source_type'], ['metric', 'derived_metric'], true)) {
+                throw ValidationException::withMessages(["widgets.{$index}.source_type" => __('Unsupported Advanced tile source.')]);
+            }
+        }
         $tier = $project->billingProfile ? $project->billingProfile->tier : UserTier::FREE;
 
         // Check widget quota per dashboard

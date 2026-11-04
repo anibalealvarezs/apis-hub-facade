@@ -240,6 +240,70 @@
                 }
                 \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] show() widget={$widget->id} BEFORE match source_type={$widget->source_type}", ['ms' => round((microtime(true) - $t0) * 1000, 1)]);
                 $tMatch = microtime(true);
+                if ($widget->widget_type === 'advanced_tile') {
+                    if (!in_array($widget->source_type, ['metric', 'derived_metric'], true)) {
+                        return response()->json(['success' => false, 'error' => __('Unsupported Advanced tile source.')], 422);
+                    }
+
+                    $periodService = new \App\Services\Analytics\AdvancedTilePeriods;
+                    $options = $widget->controls['advanced_tile'] ?? [];
+                    $periods = $periodService->resolve(
+                        $resolvedControls['date_start'],
+                        $resolvedControls['date_end'],
+                        $options['window'] ?? 'dashboard',
+                    );
+                    if ($widget->source_type === 'metric') {
+                        return $this->showAdvancedMetricTile($project, $widget, $resolvedControls, $options, $periods);
+                    }
+                    $results = [];
+                    foreach ($periods as $name => $period) {
+                        if ($name === 'previous' && !($options['compare'] ?? true)) {
+                            break;
+                        }
+                        $series = $this->handleDerivedMetricSource($project, $widget, array_replace($resolvedControls, [
+                            'date_start' => $period['start'],
+                            'date_end' => $period['end'],
+                            'granularity' => 'daily',
+                        ]));
+                        $results[$name] = $series['datasets'][0] ?? [];
+                    }
+
+                    $current = $results['current'];
+                    $sparkline = [];
+                    if ($options['sparkline'] ?? true) {
+                        $interval = $options['interval'] ?? 'auto';
+                        if ($interval === 'auto') {
+                            $interval = count($current['data'] ?? []) > 90 ? 'weekly' : 'daily';
+                        }
+                        $sparkline = $current['data'] ?? [];
+                        if (in_array($interval, ['weekly', 'monthly'], true)) {
+                            $range = $periods['current'];
+                            $trend = $this->handleDerivedMetricSource($project, $widget, array_replace($resolvedControls, [
+                                'date_start' => $range['start'],
+                                'date_end' => $range['end'],
+                                'granularity' => $interval,
+                            ]));
+                            $sparkline = $trend['datasets'][0]['data'] ?? [];
+                        }
+                    }
+
+                    $reducer = $options['reducer'] ?? 'latest';
+
+                    return response()->json([
+                        'success' => true,
+                        'widget_type' => 'advanced_tile',
+                        'data' => [
+                            'value' => $periodService->reduce($current['data'] ?? [], $reducer),
+                            'previous' => $periodService->reduce($results['previous']['data'] ?? [], $reducer),
+                            'periods' => array_intersect_key($periods, $results),
+                            'sparkline' => $sparkline,
+                            'label' => $current['label'] ?? '',
+                            'percentage' => $current['percentage'] ?? false,
+                            'lower_is_better' => $current['lower_is_better'] ?? false,
+                        ],
+                    ]);
+                }
+
                 $data = match ($widget->source_type) {
                     'kpi' => $this->handleKpiSource($project, $widget, $resolvedControls),
                     'metric' => $this->handleMetricSource($project, $widget, $resolvedControls),
@@ -2614,6 +2678,71 @@
             }
 
             return $resultData;
+        }
+
+        protected function showAdvancedMetricTile(Project $project, DashboardWidget $widget, array $controls, array $options, array $periods): \Illuminate\Http\JsonResponse
+        {
+            $rawSeries = $controls['raw_series'] ?? $widget->source_config['raw_series'] ?? [];
+            $series = $rawSeries[0] ?? [];
+            $channel = $series['channel'] ?? $controls['channel'] ?? $widget->source_config['channel'] ?? '';
+            $metric = ($controls['series_metrics'][0] ?? $series['metrics'] ?? $controls['metrics'] ?? $widget->source_config['metrics'] ?? [])[0] ?? '';
+            $filters = $this->normalizeFiltersForPayload($controls['series_filters'][0] ?? $series['filters'] ?? null);
+            $dependency = $series['dependency'] ?? $controls['series_dependencies'][0] ?? $controls['dependency'] ?? null;
+            $supported = match ($channel) {
+                'google_search_console' => in_array($metric, ['clicks', 'impressions'], true)
+                    && in_array($dependency, [null, '', 'non-searchAppearance'], true),
+                'google_analytics' => $metric === 'sessions' && !$filters
+                    && in_array($dependency, [null, '', 'traffic_matrix'], true),
+                default => false,
+            };
+            if (!$supported || count($rawSeries) > 1 || ($series['type'] ?? 'metric') !== 'metric'
+                || !empty($series['breakdown']['dimension'])) {
+                return response()->json(['success' => false, 'error' => __('Advanced tile supports a single Search Console clicks or impressions series, or an unfiltered Google Analytics sessions series.')], 422);
+            }
+
+            $override = $controls['series_assets'][0] ?? $series['assets'] ?? null;
+            $account = $this->extractAssetFilter($controls, $project, $channel, $override === null ? null : (array) $override);
+            if (empty($account) || $account === '___EMPTY_GROUP___') {
+                return response()->json(['success' => true, 'widget_type' => 'advanced_tile', 'missing_assets' => true, 'data' => []]);
+            }
+
+            $current = $periods['current'];
+            $payload = [
+                'tenant' => $project->id,
+                'account' => $this->resolveChanneledAccountId($project, $channel, $account),
+                'dateStart' => $current['start'],
+                'dateEnd' => $current['end'],
+                'metrics' => [$metric],
+                'filters' => $filters,
+                'dependency' => $channel === 'google_analytics' ? 'traffic_matrix' : $dependency,
+                'granularity' => 'daily',
+            ];
+            $summary = $this->forwardToChannelEndpoint($channel, 'summary', $payload);
+            $compare = $options['compare'] ?? true;
+            $values = [];
+            if ($options['sparkline'] ?? true) {
+                $chart = $this->forwardToChannelEndpoint($channel, 'chart', $payload)['chart'] ?? [];
+                $dateKey = isset($chart[0]['daily']) ? 'daily' : 'date';
+                $interval = $options['interval'] ?? 'auto';
+                if ($interval === 'auto') {
+                    $interval = count($chart) > 90 ? 'weekly' : 'daily';
+                }
+                $chart = (new \App\Services\Analytics\GranularityAggregationService)->aggregateRows($chart, $interval, $dateKey);
+                usort($chart, static fn ($a, $b) => ($a[$dateKey] ?? '') <=> ($b[$dateKey] ?? ''));
+                $values = array_map(static fn ($row) => $row[$metric] ?? null, $chart);
+            }
+
+            return response()->json([
+                'success' => true,
+                'widget_type' => 'advanced_tile',
+                'data' => [
+                    'value' => isset($summary['summary'][$metric]) ? (float) $summary['summary'][$metric] : null,
+                    'previous' => $compare && isset($summary['previous'][$metric]) ? (float) $summary['previous'][$metric] : null,
+                    'periods' => $compare ? $periods : ['current' => $current],
+                    'sparkline' => $values,
+                    'label' => ucfirst($metric),
+                ],
+            ]);
         }
 
         protected function handleMetricSource(Project $project, DashboardWidget $widget, array $controls): array
