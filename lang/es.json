@@ -2567,5 +2567,9 @@
     "Search assets": "Buscar activos",
     "No assets available.": "No hay activos disponibles.",
     "Date range presets": "Intervalos de fechas predefinidos",
-    ":days days": ":days días"
+    ":days days": ":days días",
+    "Member": "Miembro",
+    "Can manage collaborators": "Puede gestionar colaboradores",
+    "No project invitations": "No hay invitaciones para este proyecto",
+    "Email invitations and join requests from users using a share code.": "Invitaciones por correo y solicitudes de acceso mediante un código compartido."
 }

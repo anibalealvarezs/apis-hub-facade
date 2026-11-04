@@ -69,11 +69,17 @@ class ManageCollaborators extends Page implements HasTable
             })->when(!auth()->user()->can('view_settings'), function ($query) {
                 $query->where('id', auth()->id());
             }))
+            ->heading(__('Project Members'))
+            ->description(__('Manage users who have access to this project.'))
             ->columns([
-                TextColumn::make('name')->label(__('Name')),
-                TextColumn::make('email')->label(__('Email')),
+                TextColumn::make('name')
+                    ->label(__('Member'))
+                    ->weight('semibold')
+                    ->description(fn (User $record) => $record->email),
                 TextColumn::make('project_roles')
                     ->label(__('Role in this Project'))
+                    ->badge()
+                    ->color('gray')
                     ->getStateUsing(function (User $record) use ($project) {
                         // Usamos DB directa para evitar que el HasRoles de Spatie intente
                         // sobre-filtrar basándose en un team_id estático nulo.
@@ -86,7 +92,7 @@ class ManageCollaborators extends Page implements HasTable
                             ->join(', ') ?: __('No specific role');
                     }),
                 TextColumn::make('can_expel')
-                    ->label(__('Can Expel'))
+                    ->label(__('Can manage collaborators'))
                     ->badge()
                     ->getStateUsing(fn (User $record) => $record->can('manage_collaborators') ? __('Yes') : __('No'))
                     ->color(fn (User $record) => $record->can('manage_collaborators') ? 'success' : 'danger'),
@@ -100,9 +106,9 @@ class ManageCollaborators extends Page implements HasTable
                             return __('All assets');
                         }
 
-                        $hasGroups = $service->getSharedAssetGroups($project, $record->id)->isNotEmpty();
+                        $groups = $service->getSharedAssetGroups($project, $record->id)->pluck('name')->sort();
 
-                        return $hasGroups ? __('Custom list') : __('No access');
+                        return $groups->isEmpty() ? __('No access') : Str::limit($groups->join(', '), 70);
                     })
                     ->color(function (User $record) use ($project) {
                         $service = app(\App\Services\CollaboratorAssetAccessService::class);

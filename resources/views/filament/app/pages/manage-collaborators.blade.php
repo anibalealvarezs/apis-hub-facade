@@ -33,11 +33,6 @@
             </div>
         @endif
 
-        <div>
-            <h2 class="text-lg font-medium">{{ __('Project Members') }}</h2>
-            <p class="text-sm text-gray-500">{{ __('Manage users who have access to this project.') }}</p>
-        </div>
-
         <div id="active-members-section">
             {{ $this->table }}
         </div>

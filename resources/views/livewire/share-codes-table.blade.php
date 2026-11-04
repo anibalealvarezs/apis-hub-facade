@@ -1,7 +1,7 @@
-<div class="space-y-4">
-    <div class="flex items-center justify-between gap-4">
+<div class="space-y-4 rounded-xl border border-gray-200 bg-white p-6 dark:border-white/10 dark:bg-gray-900">
+    <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-            <h3 class="text-lg font-medium">{{ __('Share Codes') }}</h3>
+            <h3 class="text-base font-semibold">{{ __('Share Codes') }}</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('Use these codes so that any user can join this project from the registration form. Each code can only be used once.') }}</p>
         </div>
         @if($canInvite)
@@ -16,7 +16,7 @@
     </div>
 
     @if(count($codes) > 0)
-        <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
             <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-800">
                     <tr>

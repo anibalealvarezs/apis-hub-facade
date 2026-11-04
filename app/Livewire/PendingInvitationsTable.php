@@ -27,8 +27,11 @@ class PendingInvitationsTable extends Component implements HasForms, HasTable
 
         return $table
             ->query(ProjectInvitation::query()->where('project_id', $project->id))
-            ->heading('Pending Invitations')
-            ->description('Email invitations and join requests from users using a share code.')
+            ->heading(__('Pending Invitations'))
+            ->description(__('Email invitations and join requests from users using a share code.'))
+            ->emptyState(new \Illuminate\Support\HtmlString(
+                '<p class="px-6 py-5 text-sm text-gray-500 dark:text-gray-400">' . e(__('No project invitations')) . '</p>'
+            ))
             ->columns([
                 TextColumn::make('email')->label('Email'),
                 TextColumn::make('role')->label('Role'),

@@ -13,7 +13,9 @@
     @if($tenant)
     <div class="space-y-6">
         @if(\App\Filament\App\Pages\SyncSettings::canAccess())
-            @php($settingsUrl = \App\Filament\App\Pages\SyncSettings::getUrl())
+            @php
+                $settingsUrl = \App\Filament\App\Pages\SyncSettings::getUrl();
+            @endphp
             <div class="flex flex-wrap gap-4">
                 <x-filament::link :href="$settingsUrl . '#synchronization'">{{ __('Synchronization') }}</x-filament::link>
                 <x-filament::link :href="$settingsUrl . '#api-access'">{{ __('API Access') }}</x-filament::link>
