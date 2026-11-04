@@ -215,10 +215,10 @@
                             data-source-type="{{ $widget['source_type'] }}"
                             data-variables="{{ json_encode($widget['variables'] ?? []) }}"
                             @reload-widget.window="if ($event.detail.id === {{ $widget['id'] }}) controls = $event.detail.controls">
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ $widget['title'] ?? $widget['name'] }}</h3>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate" title="{{ $widget['title'] ?? $widget['name'] }}">{{ $widget['title'] ?? $widget['name'] }}</h3>
                             </div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-shrink-0 items-center gap-2 ml-2">
                                             <x-analytics-warning />
                                 @if (!empty($widget['kpi_theory']))
                                     {{-- KPI Theory info button (rich HTML tooltip) --}}
