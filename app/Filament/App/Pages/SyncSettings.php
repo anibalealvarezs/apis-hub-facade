@@ -74,6 +74,11 @@ class SyncSettings extends Page
         }
     }
 
+    public function getCachedHeaderActions(): array
+    {
+        return [];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -165,7 +170,11 @@ class SyncSettings extends Page
                                 '12' => __('12 Hours'),
                             ])
                             ->default('1')
+                            ->extraFieldWrapperAttributes(['style' => 'max-width: 28rem'])
                             ->helperText(__('If a job takes longer than this duration, it will be automatically aborted to free up resources.')),
+                        \Filament\Forms\Components\Placeholder::make('save_sync_settings')
+                            ->hiddenLabel()
+                            ->content(view('filament.app.components.save-sync-settings')),
                     ])->collapsible(),
 
                 Section::make(__('API Access (External Integration)'))
@@ -298,7 +307,7 @@ class SyncSettings extends Page
                                                             ' . __('MCP Server Active on Dedicated Node (:tier)', ['tier' => ucfirst($tier)]) . '
                                                         </h4>
                                                     </div>
-                                                    <p class="text-xs text-gray-600 dark:text-gray-300">
+                                                    <p class="text-sm text-gray-700 dark:text-gray-200">
                                                         ' . __('Your project node supports real-time tool calling via SSE transport. Tools included: performance aggregations, channel coverage audits, and instance metrics.') . '
                                                     </p>
                                                 </div>
@@ -309,11 +318,11 @@ class SyncSettings extends Page
                                             </div>
 
                                             <div>
-                                                <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-1.5">
+                                                <span class="text-sm font-semibold text-gray-800 dark:text-gray-200 block mb-1.5">
                                                     ' . __('SSE Transport URL:') . '
                                                 </span>
                                                 <div class="api-ref-code-container" x-data="{ copied: false }">
-                                                    <pre class="api-ref-code-block"><code class="select-all">' . $mcpUrl . '</code></pre>
+                                                    <pre class="api-ref-code-block" style="white-space: pre-wrap; overflow-wrap: anywhere"><code class="select-all">' . $mcpUrl . '</code></pre>
                                                     <button type="button" 
                                                             @click="navigator.clipboard.writeText(\'' . $mcpUrl . '\'); copied = true; setTimeout(() => copied = false, 2000)" 
                                                             class="api-ref-copy-btn">

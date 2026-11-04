@@ -18,6 +18,31 @@
     {{-- Auto-refresh so status banners update without a full page reload --}}
     <div wire:poll.15s="refreshTenantStatus"></div>
 
+    <x-filament::section>
+        <x-slot name="heading">{{ __('Infrastructure') }}</x-slot>
+        <x-slot name="headerEnd">
+            <div class="flex flex-wrap gap-2">
+                {{ $this->getAction('viewLogs') }}
+                {{ $this->getAction('triggerSync') }}
+            </div>
+        </x-slot>
+        @php
+            $tz = $tenant->timezone ?? config('app.timezone', 'UTC');
+        @endphp
+        <dl class="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+            <div>
+                <dt class="text-gray-600 dark:text-gray-300">{{ __('Last server deployment') }}</dt>
+                <dd class="font-medium">{{ $tenant->last_deployed_at?->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) ?? __('Never') }}</dd>
+            </div>
+            @if($tenant->last_sync_started_at)
+                <div>
+                    <dt class="text-gray-600 dark:text-gray-300">{{ __('Last sync push') }}</dt>
+                    <dd class="font-medium">{{ $tenant->last_sync_started_at->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</dd>
+                </div>
+            @endif
+        </dl>
+    </x-filament::section>
+
     @if(!$tenant->is_active || $tenant->billing_status === 'suspended')
         <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
           <span class="font-bold">{{ __('Suspended Project') }}:</span> {{ __('This project is currently inactive due to billing issues. Read-only access is permitted to view configuration, but editing, deployment, synchronization, and ownership transfer options are blocked.') }}
@@ -72,27 +97,10 @@
                 </p>
             </div>
         </div>
-    @elseif($tenant->last_deployed_at || $tenant->last_sync_started_at)
-        @php
-            $tz = $tenant->timezone ?? config('app.timezone', 'UTC');
-        @endphp
-        <div class="p-4 mb-4 text-sm text-gray-800 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-800/30 flex flex-wrap gap-x-4 gap-y-1" role="alert">
-            @if($tenant->last_sync_started_at)
-                <div><span class="font-bold">{{ __('Last sync push') }}:</span> {{ $tenant->last_sync_started_at->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</div>
-            @endif
-            @if($tenant->last_deployed_at)
-                <div><span class="font-bold">{{ __('Last server deployment') }}:</span> {{ $tenant->last_deployed_at->setTimezone($tz)->translatedFormat(__('M j, Y H:i')) }}</div>
-            @endif
-        </div>
     @endif
 
     <form wire:submit.prevent="save">
         {{ $this->form }}
 
-        <div class="mt-6">
-            <x-filament::button type="submit" :disabled="!$tenant->is_active || $tenant->billing_status === 'suspended' || !auth()->user()->can('edit_preferences')">
-                {{ __('Save & Push Changes') }}
-            </x-filament::button>
-        </div>
     </form>
 </x-filament-panels::page>

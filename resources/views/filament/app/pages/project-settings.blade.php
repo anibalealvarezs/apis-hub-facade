@@ -16,11 +16,11 @@
             @php
                 $settingsUrl = \App\Filament\App\Pages\SyncSettings::getUrl();
             @endphp
-            <div class="flex flex-wrap gap-4">
-                <x-filament::link :href="$settingsUrl . '#synchronization'">{{ __('Synchronization') }}</x-filament::link>
-                <x-filament::link :href="$settingsUrl . '#api-access'">{{ __('API Access') }}</x-filament::link>
-                <x-filament::link :href="$settingsUrl . '#mcp-access'">{{ __('MCP Access') }}</x-filament::link>
-            </div>
+            <nav aria-label="{{ __('Synchronization & Access') }}" class="flex flex-wrap gap-2">
+                <x-filament::button tag="a" size="sm" color="gray" icon="heroicon-o-arrow-path" :href="$settingsUrl . '#synchronization'">{{ __('Synchronization') }}</x-filament::button>
+                <x-filament::button tag="a" size="sm" color="gray" icon="heroicon-o-key" :href="$settingsUrl . '#api-access'">{{ __('API Access') }}</x-filament::button>
+                <x-filament::button tag="a" size="sm" color="gray" icon="heroicon-o-command-line" :href="$settingsUrl . '#mcp-access'">{{ __('MCP Access') }}</x-filament::button>
+            </nav>
         @endif
         @if(!$tenant->is_active || $tenant->billing_status === 'suspended')
             <div class="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30" role="alert">
@@ -139,7 +139,7 @@
             </div>
         </x-filament::section>
  
-        @if($isOwner)
+        @if(collect(['transfer', 'cancel_transfer', 'delete'])->contains(fn ($name) => $this->getAction($name)?->isVisible()))
         <x-filament::section>
             <x-slot name="heading">
                 {{ __('Danger Zone') }}
@@ -148,8 +148,10 @@
                 {{ __('Irreversible or critical actions for the lifecycle of the project.') }}
             </x-slot>
  
-            <div class="flex flex-col gap-4">
-                <p class="text-sm text-gray-500">{{ __('To transfer this project to another team member or delete it (starting the 30-day grace period), use the top action buttons.') }}</p>
+            <div class="flex flex-wrap items-center gap-3">
+                {{ $this->getAction('transfer') }}
+                {{ $this->getAction('cancel_transfer') }}
+                {{ $this->getAction('delete') }}
             </div>
         </x-filament::section>
         @endif
@@ -198,7 +200,7 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-gray-700 dark:text-gray-300">
-                                        <div class="truncate max-w-lg" title="{{ $summary }}">
+                                        <div class="break-words text-gray-900 dark:text-gray-200">
                                             {{ $summary }}
                                         </div>
                                         @if($log->status === 'running' && $log->progress_stage)
