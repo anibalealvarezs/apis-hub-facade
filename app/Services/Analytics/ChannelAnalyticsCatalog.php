@@ -222,6 +222,29 @@ class ChannelAnalyticsCatalog
             ['dimensions.media_product_type' => ['scopes' => ['instagram_account']], 'dimensions.follow_type' => ['scopes' => ['instagram_account']], 'dimensions.contact_button_type' => ['scopes' => ['instagram_account']], 'dimensions.reaction_type' => ['scopes' => ['facebook_page', 'fb_post']]],
             ['instagram_account_passes' => 5, 'coverage' => 'Account type, media type, permissions and API version dependent; failed optional passes can leave partial data.', 'history' => 'Driver clamps Instagram account requests to approximately two years; not a source retention guarantee.', 'snapshots' => 'Repeated lifetime snapshots must not be summed as daily flows.'],
             ['ORG-01' => 'SDK fills missing requested Instagram account metrics with zero; optional pass failures can still produce partial success.', 'ORG-02' => 'Likes aliases include all reactions; follows/unfollows and engagement aliases require source-specific interpretation.', 'ORG-03' => 'Unique reach/engagement is non-additive; baseline totals and breakdown slices overlap.', 'ORG-04' => 'Exact live API/media availability and time units require versioned source verification.']);
+        $tree['audience_growth'] = [
+            'facebook_page' => [
+                'legacy_metric' => 'page_follows',
+                'follower_total_snapshots' => 'conditional_on_provider_field',
+                'directional_flows' => 'not_established',
+            ],
+            'instagram_account' => [
+                'legacy_metric' => 'follows_and_unfollows',
+                'follower_total_snapshots' => 'conditional_on_provider_field',
+                'directional_flows' => 'conditional_on_provider_breakdown',
+                'direction_dimension' => 'dimensions.follow_type',
+            ],
+            'snapshot_metric' => [
+                'name' => 'follower_total',
+                'provider_field' => 'followers_count',
+                'period' => 'lifetime',
+                'grain' => 'account_and_observation_date',
+                'is_additive' => false,
+                'reporting_status' => 'requires_snapshot_aware_reader',
+            ],
+            'window_growth' => 'requires_dated_follower_total_snapshots',
+            'provider_coverage_verified' => false,
+        ];
         unset($tree['filters']['scope']);
         return $tree;
     }

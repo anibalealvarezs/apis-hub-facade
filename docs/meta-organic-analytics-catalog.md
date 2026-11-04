@@ -51,6 +51,46 @@ they are not daily increments. Reach is also not additive across posts or dates.
 The driver clamps Instagram account history to roughly two years; this is a local
 request policy, not a promise of provider retention.
 
+## Audience growth coverage
+
+| Surface | Existing ingestion | Reporting boundary |
+|---|---|---|
+| Facebook Page | Page Insights includes `page_follows` in the SDK's basic set. The driver maps it into the legacy `follows_and_unfollows` family. | This path does not establish a dated total-follower snapshot or a separate unfollow series. Keep the source value separate from Instagram directional flows. |
+| Instagram account | Daily total-value pass 2 requests `follows_and_unfollows` with `follow_type`. The converter retains returned dimension keys and values and can also emit a baseline row. | Only explicit directional breakdown rows can inform follow/unfollow reporting. Baseline rows overlap the slices. Missing rows and synthesized baseline zeros cannot establish zero activity or full window coverage. |
+
+### Follower snapshots
+
+The driver now requests the Graph node field `followers_count` on enabled
+Facebook Pages and linked Instagram professional accounts during recent metrics
+syncs. It stores the value as `follower_total`, period `lifetime`, with the
+account and actual observation date. The Facebook request uses the Page token
+and the Instagram request uses the user token. Each eligible account is sampled
+on the first chunk of a recent run. Requests scoped to one account sample only
+that account. A historical run ending before yesterday does not fetch the
+current value. Explicit zero is stored. Missing, invalid and failed responses
+leave a gap and allow the existing sync to continue.
+
+Snapshots are non-additive over time. This release adds ingestion through the
+existing tenant metric processor. A snapshot-aware reader is required before
+offering period growth in Explorer, widgets, or the Catalog Account page.
+The historical `page_follows` and `follows_and_unfollows` series retain their
+existing ingestion paths and meanings.
+
+A live coverage check should sample one enabled Facebook Page and one enabled
+Instagram professional account on the pinned API version. Verify the current
+total, timestamp and permission behavior, then inspect a daily Instagram
+breakdown for direction values, absent rows and explicit zeros. Record the
+outcomes without exposing account identifiers. Provider documentation access
+did not establish field availability on every pinned API version or account, and no authenticated source calls ran.
+
+For a future account overview, calculate net follower change as ending snapshot
+minus starting snapshot. Calculate growth rate only with a positive starting
+count. Show observation dates and gaps explicitly. Keep gross follows and
+unfollows separate and validate coverage before using them in a period total.
+Capture present-day snapshots at observation time and verify idempotent retries,
+missing-versus-zero handling, and that historical sync cannot backdate a current
+total. Update this catalog and its runtime tree with each implementation tranche.
+
 ## Coverage caveats
 
 - ORG-01: the SDK fabricates zero for requested Instagram metrics missing from a
