@@ -92,6 +92,22 @@ class JointDashboard extends Page
             'ctr' => 'CTR',
             'position' => 'Position'
         ],
+        'google_ads' => [
+            'spend' => 'Spend',
+            'impressions' => 'Impressions',
+            'clicks' => 'Clicks',
+            'ctr' => 'CTR',
+            'cpc' => 'CPC',
+            'conversions' => 'Conversions',
+            'cost_per_conversion' => 'CPA',
+        ],
+        'mailchimp' => [
+            'sends' => 'Sends',
+            'opens' => 'Total Opens',
+            'clicks' => 'Total Clicks',
+            'bounces' => 'Bounces',
+            'unsubscribes' => 'Unsubscribes',
+        ],
         'google_analytics' => [
             'sessions' => 'Sessions',
             'activeUsers' => 'Active Users',
@@ -108,6 +124,8 @@ class JointDashboard extends Page
         'facebook_organic' => [],
         'google_search_console' => [],
         'google_analytics' => [],
+        'google_ads' => [],
+        'mailchimp' => [],
     ];
 
     public function getJointConfig(): array
@@ -156,6 +174,8 @@ class JointDashboard extends Page
             'facebook_organic' => 'FB & IG Organic',
             'google_search_console' => 'Google Search Console',
             'google_analytics' => 'Google Analytics',
+            'google_ads' => 'Google Ads',
+            'mailchimp' => 'Mailchimp',
         ];
 
         $this->channels = [];
@@ -179,7 +199,15 @@ class JointDashboard extends Page
             $enabledIds = [];
             $enabledIgIds = []; // Specific for FB organic
 
-            if ($channel === 'facebook_marketing') {
+            if (in_array($channel, ['google_ads', 'mailchimp'], true)) {
+                $assetType = $channel === 'google_ads' ? 'ad_accounts' : 'audiences';
+                foreach ($config['assets'][$assetType] ?? $config[$assetType] ?? [] as $asset) {
+                    $id = $asset['id'] ?? $asset['list_id'] ?? null;
+                    if (!empty($asset['enabled']) && !empty($id)) {
+                        $enabledIds[] = $this->normalizeAccountId($channel, (string) $id);
+                    }
+                }
+            } elseif ($channel === 'facebook_marketing') {
                 $assets = $config['assets']['ad_accounts'] ?? $config['ad_accounts'] ?? [];
                 foreach ($assets as $asset) {
                     if (!empty($asset['enabled']) && !empty($asset['id'])) {
@@ -229,6 +257,10 @@ class JointDashboard extends Page
                         } elseif ($type === 'instagram_account' && in_array($cleanId, $enabledIgIds)) {
                             $accounts[$accountId] = ($account['name'] ?? $account['username'] ?? $cleanId) . ' (Instagram)';
                         }
+                    } elseif (in_array($channel, ['google_ads', 'mailchimp'], true)) {
+                        if (in_array($this->normalizeAccountId($channel, $platformId), $enabledIds, true)) {
+                            $accounts[$accountId] = $account['name'] ?? $accountId;
+                        }
                     } else {
                         $accounts[$accountId] = $account['name'] ?? $accountId;
                     }
@@ -240,6 +272,11 @@ class JointDashboard extends Page
         
         uasort($accounts, fn($a, $b) => strcasecmp($a, $b));
         return (object) $accounts;
+    }
+
+    private function normalizeAccountId(string $channel, string $id): string
+    {
+        return $channel === 'google_ads' ? str_replace(['customers/', '-'], '', $id) : $id;
     }
 
     public function fetchJointData(array $a, array $b, string $dStart, string $dEnd)
@@ -276,14 +313,13 @@ class JointDashboard extends Page
             'groupBy' => ['daily'],
             'startDate' => Carbon::parse($dateStart)->format('Y-m-d'),
             'endDate' => Carbon::parse($dateEnd)->format('Y-m-d'),
-            'filters' => []
+            'filters' => ['channeledAccount' => (string) $asset]
         ];
 
         $entity = 'metric';
 
         if ($channel === 'facebook_marketing') {
             $payload['filters']['channel'] = $channel;
-            $payload['filters']['channeledAccount'] = $asset;
             if (in_array($metric, ['spend', 'impressions', 'clicks', 'reach', 'results'])) {
                 $payload['aggregations'] = ['trend_total_' . $metric => $metric];
             } else {
@@ -291,12 +327,12 @@ class JointDashboard extends Page
             }
         } else if ($channel === 'facebook_organic') {
             $payload['filters']['channel'] = $channel;
-            $payload['filters']['channeledAccount'] = $asset;
             $payload['filters']['period'] = 'daily';
             $payload['filters']['account_type'] = ['operator' => 'in', 'value' => ['facebook_page', 'instagram_account']];
         } else if ($channel === 'google_search_console') {
-            $payload['filters']['channeledAccount'] = (string)$asset;
             $payload['filters']['dimensions.searchAppearance'] = 'standard';
+        } elseif (in_array($channel, ['google_ads', 'mailchimp'], true)) {
+            $payload['filters']['channel'] = $channel;
         }
 
         $response = $service->aggregateChanneled($tenant, $channel, $entity, $payload);
