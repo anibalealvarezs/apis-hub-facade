@@ -2552,5 +2552,11 @@
     "Orders": "Pedidos",
     "Products": "Productos",
     "Events": "Eventos",
-    "Group accounts across data sources so you can report on them together.": "Agrupa cuentas de distintas fuentes de datos para analizarlas juntas."
+    "Group accounts across data sources so you can report on them together.": "Agrupa cuentas de distintas fuentes de datos para analizarlas juntas.",
+    "Connect sources and choose which accounts, properties, and audiences to synchronize.": "Conecta fuentes y elige qué cuentas, propiedades y audiencias sincronizar.",
+    "Providers": "Proveedores",
+    "Source configuration": "Configuración de la fuente",
+    "Save your selections, then apply infrastructure changes if prompted.": "Guarda tus selecciones y aplica los cambios de infraestructura cuando se te indique.",
+    "Scheduling guidance": "Recomendaciones de programación",
+    "Discover assets": "Descubrir activos"
 }
