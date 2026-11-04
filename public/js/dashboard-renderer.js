@@ -1213,7 +1213,7 @@ window.dashboardRenderer = {
                 : changePercent >= 0;
             const color = changePercent === 0
                 ? "text-gray-400"
-                : (improved ? "text-green-500" : "text-red-500");
+                : (improved ? "dashboard-trend-positive" : "dashboard-trend-negative");
             trendHtml = `<span class="${color} text-sm font-medium ml-2">${arrow} ${Math.abs(changePercent).toFixed(1)}%</span>`;
         }
 
@@ -1307,7 +1307,7 @@ window.dashboardRenderer = {
                 percentage: isPos || ds.currency
                     ? false
                     : (ds.percentage ?? (resultFormat?.format === "percentage" ? true : undefined)),
-                pointRadius: 6,
+                pointRadius: ds.pointRadius ?? 2,
                 pointHoverRadius: 10,
                 pointHitRadius: 15,
                 pointBackgroundColor:
@@ -2457,7 +2457,7 @@ window.dashboardRenderer = {
             percentage:
                 ds.percentage ??
                 (resultFormat?.format === "percentage" ? true : undefined),
-            pointRadius: 6,
+            pointRadius: ds.pointRadius ?? 2,
             pointHoverRadius: 10,
             pointHitRadius: 15,
             pointBackgroundColor:
@@ -3218,7 +3218,7 @@ window.dashboardRenderer = {
                         ? ds.borderWidth || 2.5
                         : ds.borderWidth || 1,
                 pointRadius:
-                    chartType === "line" ? (ds.pointRadius ?? 4) : undefined,
+                    chartType === "line" ? (ds.pointRadius ?? 2) : undefined,
                 pointHoverRadius:
                     chartType === "line"
                         ? (ds.pointHoverRadius ?? 6)
@@ -4165,7 +4165,7 @@ window.dashboardRenderer = {
                 if (finite.length < 2) break;
                 const change = finite[finite.length - 1] - finite[0];
                 const color = change === 0 ? "text-gray-400"
-                    : ((lowerIsBetter ? change < 0 : change > 0) ? "text-green-500" : "text-red-500");
+                    : ((lowerIsBetter ? change < 0 : change > 0) ? "dashboard-trend-positive" : "dashboard-trend-negative");
                 const min = Math.min(...finite);
                 const span = Math.max(...finite) - min;
                 const path = values.map((value, index) => {

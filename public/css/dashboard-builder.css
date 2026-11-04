@@ -1272,4 +1272,18 @@ body.bd-cursor-grabbing * {
     cursor: grabbing !important;
 }
 
+.dashboard-trend-positive {
+    color: #15803d;
+}
 
+.dashboard-trend-negative {
+    color: #b91c1c;
+}
+
+.dark .dashboard-trend-positive {
+    color: #4ade80;
+}
+
+.dark .dashboard-trend-negative {
+    color: #f87171;
+}
