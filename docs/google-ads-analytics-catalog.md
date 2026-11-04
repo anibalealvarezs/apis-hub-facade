@@ -4,6 +4,20 @@ Audited 2026-10-30. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('googl
 This is an inventory of the current implementation, not an expansion of ingestion.
 See the [audit and proposed changes](analytics-availability-audit.md).
 
+## Conversion value and ROAS rollout
+
+The local driver correction stores provider conversion value as `conversion_value`
+and stops emitting `roas_purchase` observations. The tenant derives Google Ads
+ROAS from the sum of these new values divided by the sum of spend. It returns
+unavailable for zero spend, unequal observation counts, or a group containing
+legacy ROAS rows. Observation counts provide a coverage check, but equal counts
+alone do not establish a one-to-one match of historical observations.
+
+The runtime catalog retains ADS-01 until the matching driver and tenant changes
+are released and historical coverage is reconciled. Existing legacy ROAS rows
+contain conversion amounts. Historical replay must account for those old rows
+before a mixed window can show ROAS. No history was rewritten by this change.
+
 ## Customer → hierarchy scope → device → metric
 
 | Scope | Entity / dependency | Cached grain | Selection |
