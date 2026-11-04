@@ -28,7 +28,8 @@ class AppPanelProvider extends PanelProvider
     {
         parent::register();
 
-        $this->app->bind(NavigationManager::class, fn () => Filament::getCurrentPanel()?->getId() === 'app'
+        // Filament resolves the manager twice while mounting the sidebar.
+        $this->app->scoped(NavigationManager::class, fn () => Filament::getCurrentPanel()?->getId() === 'app'
             ? new AppNavigationManager()
             : new NavigationManager());
     }
