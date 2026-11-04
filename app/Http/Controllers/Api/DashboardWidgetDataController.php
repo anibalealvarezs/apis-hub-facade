@@ -2756,6 +2756,10 @@
 
 
 
+            if (in_array($widget->widget_type, ['metric_breakdown', 'stacked_area'], true) && !$hasMultiSeries) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['series' => __('Select one metric and a breakdown dimension.')]);
+            }
+
             if ($hasMultiSeries) {
                 return $this->handleMultiSeriesSource($project, $widget, $controls, $rawSeries);
             }
@@ -2853,7 +2857,7 @@
         protected function handleMultiSeriesSource(Project $project, DashboardWidget $widget, array $controls, array $rawSeries): array
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleMultiSeriesSource ENTER", ['widget_id' => $widget->id, 'series_count' => count($rawSeries)]);
-            $granularity = ($widget->widget_type === 'scatter_plot')
+            $granularity = in_array($widget->widget_type, ['scatter_plot', 'metric_breakdown'], true)
                 ? 'lifetime'
                 : ($controls['granularity'] ?? $widget->source_config['granularity'] ?? 'daily');
             $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->subDays(1)->format('Y-m-d');
@@ -2901,6 +2905,16 @@
                 } else {
                     $channel = $series['channel'] ?? '';
                     $metrics = $controls['series_metrics'][$sIdx] ?? $series['metrics'] ?? [];
+                    if (in_array($widget->widget_type, ['stacked_area', 'metric_breakdown'], true)) {
+                        foreach ($metrics as $metric) {
+                            if (!\App\Services\Analytics\ChannelCapabilityRegistry::isMetricAdditive($channel, $metric)) {
+                                throw \Illuminate\Validation\ValidationException::withMessages([
+                                    'metrics' => __('This widget requires an additive metric supported by the selected channel.'),
+                                ]);
+                            }
+                        }
+                    }
+
                     if (empty($channel) || empty($metrics)) {
                         continue;
                     }
@@ -2953,6 +2967,13 @@
                     $isPosRank = str_contains(strtolower($breakdownRankBy), 'position') || str_contains(strtolower($breakdownRankBy), 'rank');
                     $breakdownOrder = is_array($seriesBreakdown) ? ($seriesBreakdown['order'] ?? ($isPosRank ? 'value_asc' : 'value_desc')) : ($isPosRank ? 'value_asc' : 'value_desc');
 
+                    if (in_array($widget->widget_type, ['metric_breakdown', 'stacked_area'], true)
+                        && (count($rawSeries) !== 1 || count($metrics) !== 1 || empty($breakdownDim))) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'series' => __('Select one metric and a breakdown dimension.'),
+                        ]);
+                    }
+
                     if (!empty($breakdownDim)) {
                         $payload['breakdown'] = $breakdownDim;
                         $payload['groupBy'] = $granularity === 'lifetime' ? [$breakdownDim] : ['daily', $breakdownDim];
@@ -2985,7 +3006,7 @@
                     if (!empty($breakdownDim)) {
                         // If widget is a table and granularity is lifetime, replace granularity/date with the breakdown dimension
                         // as rows, and list all requested metrics across the columns instead of fanning out curves.
-                        if ($widget->widget_type === 'table' && $granularity === 'lifetime') {
+                        if (in_array($widget->widget_type, ['table', 'metric_breakdown'], true) && $granularity === 'lifetime') {
                             $rawRows = $channelResponse['chart'] ?? $channelResponse['data'] ?? [];
                             if (!is_array($rawRows)) {
                                 $rawRows = [];
@@ -3134,6 +3155,25 @@
                             if (in_array($breakdownOrder, ['value_desc', 'value_asc'], true)) {
                                 $tablePayload['default_sort_column'] = preg_replace('/^trend_(?:total|average)_/', '', $breakdownRankBy);
                                 $tablePayload['default_sort_direction'] = $breakdownOrder === 'value_asc' ? 'asc' : 'desc';
+                            }
+
+                            if ($widget->widget_type === 'metric_breakdown') {
+                                if (!in_array($channel, ['google_search_console', 'google_ads'], true)) {
+                                    throw \Illuminate\Validation\ValidationException::withMessages([
+                                        'channel' => __('Metric Breakdown is unavailable for this channel.'),
+                                    ]);
+                                }
+                                $summaryPayload = $payload;
+                                unset($summaryPayload['breakdown'], $summaryPayload['groupBy']);
+                                $summary = $this->forwardToChannelEndpoint($channel, 'summary', $summaryPayload);
+                                $metric = preg_replace('/^trend_(?:total|average)_/', '', $metrics[0]);
+                                if (!isset($summary['summary']) || !is_array($summary['summary']) || !array_key_exists($metric, $summary['summary'])) {
+                                    throw new \RuntimeException(__('The total for this metric is unavailable.'));
+                                }
+                                $total = $summary['summary'][$metric];
+                                $tablePayload['total'] = is_numeric($total) ? (float) $total : null;
+                                $tablePayload['metric'] = $metric;
+                                $tablePayload['additive'] = \App\Services\Analytics\ChannelCapabilityRegistry::isMetricAdditive($channel, $metric);
                             }
 
                             return $tablePayload;

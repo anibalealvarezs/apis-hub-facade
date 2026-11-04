@@ -12,6 +12,12 @@ class ChannelCapabilityRegistry
         };
     }
 
+    public static function isMetricAdditive(string $channel, string $metric): bool
+    {
+        $tree = self::getAnalyticsTree($channel);
+        return ($tree['metrics'][$metric]['is_additive'] ?? false) === true;
+    }
+
     /**
      * Define the capabilities/tags for each channel.
      *

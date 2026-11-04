@@ -532,6 +532,7 @@ window.dashboardRenderer = {
                     "series_metric_colors",
                     "series_metric_namings",
                     "raw_series",
+                    "stacked_area_mode",
                 ];
                 const overrides = {};
                 for (const key of overrideKeys) {
@@ -1391,6 +1392,28 @@ window.dashboardRenderer = {
                     }
                 });
             }
+        }
+
+        if (controls?.widget_type === 'stacked_area') {
+            const percent = controls.stacked_area_mode === 'percent';
+            if (mappedDatasets.some(dataset => dataset.data.some(value => value != null && Number(value) < 0))) {
+                containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">Stacked area requires non-negative values.</div>';
+                return;
+            }
+            const totals = labels.map((_, index) => mappedDatasets.reduce((sum, dataset) => sum + Math.max(0, Number(dataset.data[index]) || 0), 0));
+            mappedDatasets.forEach(dataset => {
+                dataset.fill = true;
+                dataset.yAxisID = 'y';
+                dataset.pointRadius = 0;
+                if (percent) {
+                    dataset.data = dataset.data.map((value, index) => value == null || !totals[index] ? null : Number(value) * 100 / totals[index]);
+                    dataset.percentage = true;
+                }
+            });
+            chartScales = {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true, ...(percent ? { max: 100 } : {}) },
+            };
         }
 
         const config = {
@@ -4162,6 +4185,26 @@ window.dashboardRenderer = {
                 layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="${color}" style="justify-self: center; width: 100%; max-width: 100%; min-width: 0; max-height: 50%;"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
                 break;
             }
+            case "metric_breakdown": {
+                const rows = data?.rows || [];
+                const metric = data?.metric;
+                const total = data?.total;
+                if (!rows.length) {
+                    containerEl.innerHTML = '<div class="text-sm text-gray-400 p-4 text-center">No data available</div>';
+                    break;
+                }
+                const additive = data.additive && Number.isFinite(total) && total > 0;
+                const items = rows.map(row => {
+                    const value = Number(row[metric]);
+                    const share = additive && Number.isFinite(value) ? Math.max(0, Math.min(100, value / total * 100)) : null;
+                    return `<div class="mb-3"><div class="flex justify-between gap-2 text-xs"><span class="truncate">${this.escapeHtml(String(row.dimension ?? ''))}</span><span>${this.escapeHtml(String(row[metric] ?? '—'))}${share === null ? '' : ' · ' + share.toFixed(1) + '%'}</span></div>${share === null ? '' : `<div class="mt-1 h-1.5 rounded bg-gray-200 dark:bg-gray-700"><div class="h-full rounded bg-primary-500" style="width:${share}%"></div></div>`}</div>`;
+                }).join('');
+                containerEl.innerHTML = `<div class="p-4 h-full overflow-auto"><div class="text-xl font-bold mb-3">${total == null ? '—' : this.formatNumber(total)}</div>${items}</div>`;
+                break;
+            }
+            case "stacked_area":
+                this.renderLineChart(containerEl, data, { ...controls, widget_type: 'stacked_area' });
+                break;
             case "tile":
                 this.renderTile(containerEl, data, controls);
                 break;

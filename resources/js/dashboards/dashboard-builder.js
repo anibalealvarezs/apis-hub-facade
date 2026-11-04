@@ -1444,7 +1444,7 @@ export function dashboardBuilder(config = {}) {
             let filtered = {};
 
             if (sourceType === 'metric') {
-                const allowed = ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
+                const allowed = ['tile', 'advanced_tile', 'metric_breakdown', 'stacked_area', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     filtered[t] = allTypes[t] || defaultLabels[t] || t;
                 }
@@ -1503,7 +1503,7 @@ export function dashboardBuilder(config = {}) {
             if (!target || !target.source_type) {
                 typeMap = allTypes;
             } else if (target.source_type === 'metric') {
-                const allowed = ['tile', 'advanced_tile', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
+                const allowed = ['tile', 'advanced_tile', 'metric_breakdown', 'stacked_area', 'line_chart', 'bar_chart', 'pie_chart', 'sparkline', 'scatter_plot', 'combo_chart', 'table', 'gauge', 'choropleth_map'];
                 for (const t of allowed) {
                     if (allTypes[t]) typeMap[t] = allTypes[t];
                 }
@@ -3054,6 +3054,7 @@ export function dashboardBuilder(config = {}) {
                 title: titles[this.activeIdentityLang] || titles.en || baseTitle,
                 description: descriptions[this.activeIdentityLang] || descriptions.en || baseDesc,
                 widget_type: widget.widget_type || '',
+                stacked_area_mode: wc.stacked_area_mode || 'absolute',
                 advanced_tile: { window: 'dashboard', days: 30, reducer: 'latest', interval: 'auto', compare: true, sparkline: true, ...wc.advanced_tile, ...(wc.advanced_tile?.window && /^last_(\d+)_days$/.test(wc.advanced_tile.window) && ![1, 7, 14, 30, 90, 180, 365].includes(Number(wc.advanced_tile.window.match(/^last_(\d+)_days$/)[1])) ? { window: 'custom', days: Number(wc.advanced_tile.window.match(/^last_(\d+)_days$/)[1]) } : {}) },
                 date_inherit: wc.date_start === undefined && wc.date_end === undefined,
                 date_start: wc.date_start || this.dashboardControls.date_start || '',
@@ -4245,6 +4246,8 @@ export function dashboardBuilder(config = {}) {
                 }
                 payload.advanced_tile = { ...c.advanced_tile, window: c.advanced_tile.window === 'custom' ? `last_${Number(c.advanced_tile.days)}_days` : c.advanced_tile.window };
             }
+
+            if (c.widget_type === 'stacked_area') payload.stacked_area_mode = c.stacked_area_mode || 'absolute';
 
             payload.block_first_col = c.block_first_col !== undefined ? !!c.block_first_col : true;
 

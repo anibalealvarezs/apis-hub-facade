@@ -696,6 +696,14 @@
                                             </button>
                                         </template>
                                     </div>
+                                    <template x-if="widgetControlsForm.widget_type === 'stacked_area'">
+                                        <label>{{ __('Stacking mode') }}
+                                            <x-ui.select-input x-model="widgetControlsForm.stacked_area_mode">
+                                                <option value="absolute">{{ __('Absolute values') }}</option>
+                                                <option value="percent">{{ __('Percentage') }}</option>
+                                            </x-ui.select-input>
+                                        </label>
+                                    </template>
                                     <template x-if="widgetControlsForm.widget_type === 'advanced_tile' && widgetControlsForm.advanced_tile">
                                         <div class="grid gap-2">
                                             <label>{{ __('Value period') }}
