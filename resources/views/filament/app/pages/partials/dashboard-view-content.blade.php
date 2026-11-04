@@ -92,7 +92,7 @@
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ $viewObj->dashboard->description }}</p>
             @endif
         </div>
-        <div class="flex flex-wrap items-center gap-2 no-print">
+        <div class="dvc-dashboard-actions flex flex-wrap items-center gap-2 no-print">
             <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 <span x-text="loadedCount"></span>/<span x-text="totalCount"></span> {{ __('loaded') }}
             </span>
