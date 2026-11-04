@@ -4151,10 +4151,12 @@ window.dashboardRenderer = {
                 const content = containerEl.firstElementChild;
                 content.classList.replace("items-center", "items-start");
                 const layout = document.createElement("div");
-                layout.className = "flex h-full items-center justify-between";
+                layout.className = "flex h-full w-full items-center overflow-hidden";
+                content.style.minWidth = "0";
+                content.style.flex = "1 1 50%";
                 containerEl.append(layout);
                 layout.append(content);
-                layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="w-1/3 mr-4 text-primary-500"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
+                layout.insertAdjacentHTML("beforeend", `<svg aria-hidden="true" viewBox="0 0 100 30" class="text-primary-500" style="flex: 0 1 50%; width: 50%; max-width: 50%; min-width: 0; max-height: 50%;"><path d="${path}" fill="none" stroke="currentColor" stroke-width="2"/></svg>`);
                 break;
             }
             case "tile":
