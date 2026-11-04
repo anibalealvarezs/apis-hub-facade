@@ -51,7 +51,7 @@
 
             @if($billingProfile)
                 <p class="break-words text-xl font-semibold text-gray-950 dark:text-white">{{ $billingProfile->display_name }}</p>
-                <dl class="mt-4 flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                <dl class="project-billing-profile-details text-sm">
                     @if($billingProfile->reference_name)
                         <div class="min-w-0">
                             <dt class="text-gray-600 dark:text-gray-300">{{ __('Legal Name') }}</dt>
@@ -70,7 +70,7 @@
                 </p>
             @endif
 
-            <div class="mt-5 flex flex-wrap items-center gap-3 border-t border-gray-200 pt-4 dark:border-white/10">
+            <div class="project-billing-profile-actions border-t border-gray-200 dark:border-white/10">
                 {{ $this->getAction('assign_profile') }}
                 {{ $this->getAction('cancel_pending_request') }}
             </div>
