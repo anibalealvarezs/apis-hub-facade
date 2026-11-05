@@ -45,8 +45,11 @@ coverage should be checked before enabling multi-audience reporting.
 The local driver adds `opens_unique_daily` through the existing campaign
 pre-aggregation. One recipient opening repeatedly on a campaign-day counts
 once. The same recipient can count again on a different day or campaign.
-The metric remains outside the Explorer and widget selectors until a
-compatible reporting path is available. Its coverage starts with windows
+Data Preview shows the metric in a summary tile, the daily chart, and the
+campaign, automation, and audience breakdowns. Tiles and table rows sum the
+cached campaign-day counts. The chart sums campaigns for each day. Opens
+have no URL attribution. Missing observations display as dashes or chart gaps. Widget support
+remains pending. Its coverage starts with windows
 processed by the updated driver; old cached windows may have no observation.
 
 ## Gaps and expansion

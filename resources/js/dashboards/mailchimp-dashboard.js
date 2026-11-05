@@ -23,6 +23,12 @@ const MAILCHIMP_METRICS = {
         axis: 'yOpens',
         trendable: true,
     },
+    opens_unique_daily: {
+        label: 'Daily unique openers (sum by campaign)',
+        color: '#A78BFA',
+        background: 'rgba(167, 139, 250, 0.08)',
+        axis: 'yOpens',
+    },
     clicks: {
         key: 'clicks',
         label: 'Clicks',
@@ -76,6 +82,7 @@ const EMPTY_SUMMARY = {
     opens_proxy: 0,
     clicks: 0,
     clicks_unique: 0,
+    opens_unique_daily: null,
     open_rate: 0,
     click_rate: 0,
     bounces: 0,
@@ -110,6 +117,7 @@ export function mailchimpDashboard(config = {}) {
         activeMetrics: {
             sends: true,
             opens: true,
+            opens_unique_daily: true,
             clicks: true,
             open_rate: false,
             click_rate: false,
@@ -118,6 +126,14 @@ export function mailchimpDashboard(config = {}) {
         },
 
         activeFilters: { campaigns: [], automations: [], audiences: [], urls: [] },
+
+        get showDailyUniqueOpeners() {
+            return this.activeFilters.urls.length === 0;
+        },
+
+        get hasDailyUniqueOpeners() {
+            return this.chartDataRaw.some(row => row.opens_unique_daily != null);
+        },
 
         get hasAnyFilters() {
             return Object.values(this.activeFilters).some(arr => arr.length > 0);
@@ -351,7 +367,7 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchSummary() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('summary');
+            const cacheKey = this.getCacheKey('summary-v2');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -378,7 +394,7 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchChart() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('chart');
+            const cacheKey = this.getCacheKey('chart-v4');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -474,7 +490,7 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchTable() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('table', false);
+            const cacheKey = this.getCacheKey('table-v2', false);
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -685,15 +701,16 @@ export function mailchimpDashboard(config = {}) {
             const datasets = [];
 
             Object.entries(MAILCHIMP_METRICS).forEach(([key, config]) => {
-                if (!this.activeMetrics[key]) return;
+                const isUniqueOpeners = key === 'opens_unique_daily';
+                if (!this.activeMetrics[key] || (isUniqueOpeners && !this.showDailyUniqueOpeners)) return;
 
                 datasets.push({
                     label: config.label,
-                    data: paddedData.map(r => config.isRate ? (r[key] * 100) : r[key]),
+                    data: paddedData.map(r => config.isRate ? (r[key] * 100) : (r[key] ?? null)),
                     borderColor: config.color,
                     backgroundColor: config.background,
                     borderWidth: 2,
-                    pointRadius: 0,
+                    pointRadius: isUniqueOpeners ? 2 : 0,
                     pointHoverRadius: 6,
                     fill: !config.isRate,
                     yAxisID: config.axis,
@@ -752,10 +769,12 @@ export function mailchimpDashboard(config = {}) {
             chart.options.scales.x.ticks.color = cssTicksColor;
 
             Object.entries(MAILCHIMP_METRICS).forEach(([key, config]) => {
+                if (key === 'opens_unique_daily') return;
                 const scaleId = config.axis;
                 if (!chart.options.scales[scaleId]) return;
-                chart.options.scales[scaleId].display = this.activeMetrics[key];
-                if (this.activeMetrics[key]) {
+                const visible = datasets.some(dataset => dataset.yAxisID === scaleId);
+                chart.options.scales[scaleId].display = visible;
+                if (visible) {
                     if (!gridDrawn) {
                         chart.options.scales[scaleId].grid.drawOnChartArea = true;
                         chart.options.scales[scaleId].grid.color = cssGridColor;

@@ -140,6 +140,14 @@
                     </div>
                 </div>
 
+                <div x-show="showDailyUniqueOpeners" class="card-stat-mailchimp"
+                     :class="activeMetrics.opens_unique_daily ? 'active' : ''" @click="toggleMetric('opens_unique_daily')"
+                     data-metric="opens_unique_daily"
+                     title="{{ __('Counts each recipient once per campaign per day, including proxy opens. A recipient can count again on a different day or campaign.') }}">
+                    <div class="mailchimp-label">{{ __('Daily Unique Opens (Sum)') }}</div>
+                    <div class="card-metric-value" x-text="summary.opens_unique_daily == null ? '—' : formatNumber(summary.opens_unique_daily)"></div>
+                </div>
+
                 <div class="card-stat-mailchimp" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
                      data-metric="clicks">
                     <div class="dash-modal-close text-primary-500 dark:text-primary-400" title="{{ __('Trend Analysis Supported') }}">
@@ -219,6 +227,10 @@
                 </div>
             </div>
 
+            <p x-show="showDailyUniqueOpeners && !isChartLoading" class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                <span x-show="hasDailyUniqueOpeners">{{ __('Daily unique openers counts each recipient once per campaign per day. Recipients who open multiple campaigns can count in each.') }}</span>
+                <span x-show="!hasDailyUniqueOpeners">{{ __('No daily unique opener observations are available for the selected date range.') }}</span>
+            </p>
             <div class="chart-container-mailchimp relative w-full" wire:ignore>
                 <div x-show="isChartLoading"
                      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
@@ -320,6 +332,9 @@
                         <x-data-table.column state="tableState" key="opens" label="{{ __('Opens') }}"/>
                     </template>
                     <template x-if="activeTab !== 'urls'">
+                        <x-data-table.column state="tableState" key="opens_unique_daily" label="{{ __('Daily Unique Opens (Sum)') }}"/>
+                    </template>
+                    <template x-if="activeTab !== 'urls'">
                         <x-data-table.column state="tableState" key="open_rate" label="{{ __('Open Rate') }}"/>
                     </template>
 
@@ -387,6 +402,12 @@
                                     <div class="progress-bar-fill mailchimp-bar-opens"
                                          :style="`width: ${maxOpens > 0 ? (row.opens / maxOpens) * 100 : 0}%`"></div>
                                 </div>
+                            </td>
+                        </template>
+
+                        <template x-if="activeTab !== 'urls'">
+                            <td class="metric-cell">
+                                <div class="metric-val-main" x-text="row.opens_unique_daily == null ? '—' : formatNumber(row.opens_unique_daily)"></div>
                             </td>
                         </template>
 

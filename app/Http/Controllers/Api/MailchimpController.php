@@ -17,9 +17,12 @@ class MailchimpController extends Controller
      * Keys are the canonical metric names resolved by
      * MailchimpDriver::getCanonicalMetricDictionary().
      */
+    private const DAILY_UNIQUE_OPENS = 'opens_unique_daily';
+
     private const AVAILABLE_AGGS = [
         'sends' => 'sends',
         'opens' => 'opens',
+        self::DAILY_UNIQUE_OPENS => self::DAILY_UNIQUE_OPENS,
         'opens_standard' => 'opens_standard',
         'opens_proxy' => 'opens_proxy',
         'clicks' => 'clicks',
@@ -62,22 +65,17 @@ class MailchimpController extends Controller
         ]);
     }
 
-    private function getRequestedAggregations(Request $request): array
+    private function getRequestedAggregations(Request $request, array $filters, array $groupBy): array
     {
-        $requestedMetrics = $request->input('metrics');
-
-        if (empty($requestedMetrics)) {
-            return self::AVAILABLE_AGGS;
+        $available = self::AVAILABLE_AGGS;
+        if (isset($filters['dimensions.page']) || in_array('dimensions.page', $groupBy, true)) {
+            unset($available[self::DAILY_UNIQUE_OPENS]);
         }
 
-        $aggregations = [];
-        foreach ((array) $requestedMetrics as $metric) {
-            if (isset(self::AVAILABLE_AGGS[$metric])) {
-                $aggregations[$metric] = self::AVAILABLE_AGGS[$metric];
-            }
-        }
+        $requestedMetrics = (array) $request->input('metrics');
+        $aggregations = array_intersect_key($available, array_fill_keys($requestedMetrics, true));
 
-        return empty($aggregations) ? self::AVAILABLE_AGGS : $aggregations;
+        return $aggregations ?: $available;
     }
 
     /**
@@ -141,6 +139,9 @@ class MailchimpController extends Controller
         $opens = (float) ($row['opens'] ?? 0);
         $clicks = (float) ($row['clicks'] ?? 0);
 
+        $row[self::DAILY_UNIQUE_OPENS] = isset($row[self::DAILY_UNIQUE_OPENS])
+            ? (float) $row[self::DAILY_UNIQUE_OPENS]
+            : null;
         $row['open_rate'] = $sends > 0 ? round($opens / $sends, 6) : 0.0;
         $row['click_rate'] = $sends > 0 ? round($clicks / $sends, 6) : 0.0;
 
@@ -165,9 +166,9 @@ class MailchimpController extends Controller
                 'channel' => 'mailchimp',
                 'channeledAccount' => (string) $validated['account'],
             ];
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null);
+            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
-            $aggs = $this->getRequestedAggregations($request);
+            $aggs = $this->getRequestedAggregations($request, $baseFilters, []);
 
             $payloads = [
                 'summary' => [
@@ -221,8 +222,6 @@ class MailchimpController extends Controller
             ];
             $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
-            $aggs = $this->getRequestedAggregations($request);
-
             $groupBy = ['daily'];
             if (!empty($validated['groupBy'])) {
                 $groupBy = $validated['groupBy'];
@@ -230,6 +229,7 @@ class MailchimpController extends Controller
                 $groupBy = ['daily', $validated['breakdown']];
             }
 
+            $aggs = $this->getRequestedAggregations($request, $baseFilters, $groupBy);
             $payloads = [
                 'chart' => [
                     'aggregations' => $aggs,
@@ -261,10 +261,9 @@ class MailchimpController extends Controller
                 \Illuminate\Support\Facades\Log::error("Mailchimp Chart APIs Hub Error: " . json_encode($results['chart']));
             }
 
-            $rows = $results['chart']['data'] ?? [];
-
+            $rows = $this->normalizeChartRows($results['chart']['data'] ?? [], $validated['breakdown'] ?? null);
             return response()->json([
-                'chart' => $this->normalizeChartRows($rows, $validated['breakdown'] ?? null),
+                'chart' => $rows,
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['chart']['retryable']),
             ]);
@@ -282,8 +281,6 @@ class MailchimpController extends Controller
             $service = app(RemoteEngineService::class);
 
             $tab = $validated['activeTab'] ?? 'campaigns';
-            $aggs = $this->getRequestedAggregations($request);
-
             $tableFilters = [
                 'channel' => 'mailchimp',
                 'channeledAccount' => (string) $validated['account'],
@@ -304,7 +301,6 @@ class MailchimpController extends Controller
             $this->applyDynamicFilters($tableFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
 
             $tabPayload = [
-                'aggregations' => $aggs,
                 'groupBy' => [self::TAB_DIMENSIONS[$tab] ?? self::TAB_DIMENSIONS['campaigns']],
                 'filters' => $tableFilters,
                 'startDate' => $validated['dateStart'],
@@ -317,6 +313,7 @@ class MailchimpController extends Controller
                 $tabPayload['groupBy'] = [$validated['breakdown']];
             }
 
+            $tabPayload['aggregations'] = $this->getRequestedAggregations($request, $tableFilters, $tabPayload['groupBy']);
             $payloads = ['table' => $tabPayload];
             $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
 
@@ -413,7 +410,9 @@ class MailchimpController extends Controller
             }
 
             foreach (self::AVAILABLE_AGGS as $metric => $_) {
-                if (isset($lower[$metric])) {
+                if ($metric === self::DAILY_UNIQUE_OPENS) {
+                    $entry[$metric] = isset($lower[$metric]) ? (float) $lower[$metric] : null;
+                } elseif (isset($lower[$metric])) {
                     $entry[$metric] = (float) ($lower[$metric] ?? 0);
                 }
             }
@@ -489,7 +488,9 @@ class MailchimpController extends Controller
             }
 
             foreach (self::AVAILABLE_AGGS as $metric => $_) {
-                if (array_key_exists($metric, $lower)) {
+                if ($metric === self::DAILY_UNIQUE_OPENS) {
+                    $entry[$metric] = isset($lower[$metric]) ? (float) $lower[$metric] : null;
+                } elseif (array_key_exists($metric, $lower)) {
                     $entry[$metric] = (float) $lower[$metric];
                 }
             }
