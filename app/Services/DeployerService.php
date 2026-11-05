@@ -868,8 +868,8 @@ EOT;
             "git reset --hard",
             "git checkout {$targetTag}",
             
-            // 2. Kill current active workers instantly
-            "docker compose stop",
+            // 2. Kill current active workers quickly (override 30m autoscaler stop_grace_period)
+            "docker compose stop -t 15",
             
             // 3. Build the new images based on the target version
             "echo '__UPGRADE_STAGE__:building'",

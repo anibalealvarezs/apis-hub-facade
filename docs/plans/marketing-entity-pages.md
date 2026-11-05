@@ -1,10 +1,26 @@
 # Marketing entity pages
 
-**Status** · Proposed
+**Status** · Phase 0, Phase 1, Phase 2 & Phase 3 Implemented (Catalog Entity Pages & Marketing Overview; Commerce Orders/Products Deferred to Phase 4)
+
+**Delivery track** · Facade entity browsing and profiles, supported by worker and SDK read APIs.
 
 Add a project navigation section called **Catalog**. Each supported entity type gets a searchable list and each record gets a durable detail page. The project scope selector offers **All assets** and individual asset groups. All assets means all assets visible to the current viewer in that project.
 
 Use the same entity pages as destinations from Data Explorer, authenticated dashboards, and related records. Once these pages share a scope and stable references, a Marketing Overview can summarize activity across entity types and link into the relevant lists or records.
+
+## Relationship to entity aggregation
+
+Ship functional entity pages after establishing the shared read foundation below. Entity-derived measures have their own implementation phases and acceptance criteria in the linked plan. That track can proceed in parallel and enrich released pages as capabilities become available. Existing supported metric queries can populate profiles during the first release. Customer profiles with sparse data remain usable through their attributes, source records, relationships and recorded activity. [Entity measures aggregation plan](../../../apis-hub/docs/entity-measures-aggregation-plan.md)
+
+### Shared read foundation
+
+- **Entity references** distinguish a verified core identity from a source record and remain stable in deep links and API responses.
+- **Authorized scope** identifies the project and permitted assets, optionally narrowed to an asset group, entity selection or channel. Entity reads can span channels. Apply scope before resolving visible source memberships, attributes or related records.
+- **Typed filters** define field names, types and operators for the selected entity type, with explicit current-attribute and source-date semantics. Lists and later entity measures consume the same supported filter vocabulary.
+- **Provenance and time** identify the source, owning asset, source occurrence or creation timestamp, latest synchronization time and coverage where known.
+- **Capabilities** declare available fields, relationships, activity kinds and existing profile metrics. Pages enable each supported capability independently as worker versions and cached coverage allow.
+
+Agree on these contracts before either track implements its consumers. The pages release depends on the read foundation and its supported read APIs. New entity measures join through capability discovery in later releases.
 
 ## Page design
 
@@ -43,7 +59,7 @@ The separate Meta Leads driver writes lead submissions as channeled customer rec
 
 - The tenant worker already models the five entity types and their channeled records. The SDK has generic entity list/read/aggregate and channeled APIs. Audit their joins, pagination, account filters and response fields before deciding which queries to reuse. A base entity ID alone does not establish asset membership.
 - Facade already has `CollaboratorAssetAccessService`, asset group sharing, and a coordinated tenant read path in `RemoteEngineService`. Reuse them. `ScopeChannelAssetAccess` checks requested account IDs when present. Catalog reads must also resolve a concrete authorized scope when the caller omits account IDs.
-- Use a typed, allowlisted read contract across the worker, SDK and Facade for capability discovery, listing, profile and activity. Pass explicit channel/account scope from Facade, enforce it in worker queries, and return normalized display fields and provenance. Keep provider-specific mapping in existing driver capabilities or normalization paths. Avoid copying analytics records to Facade.
+- Use a typed, allowlisted read contract across the worker, SDK and Facade for capability discovery, listing, profile and activity. Pass the authorized asset scope from Facade, allowing several channels and an optional channel filter, enforce it in worker queries, and return normalized display fields and provenance. Keep provider-specific mapping in existing driver capabilities or normalization paths. Avoid copying analytics records to Facade.
 - Define a typed entity reference before building links. Start with an opaque reference backed by a stable internal identifier or a source-qualified key whose uniqueness has been verified. Keep the project and optional asset group in the route. Use provider IDs only with their verified namespaces. Audit email-based customer identity in the worker and order IDs that may collide across stores before extending beyond the pilot. Resolve a related link only when its target is visible in the same scope.
 
 ### Base records, source records and metric references
@@ -57,33 +73,37 @@ The separate Meta Leads driver writes lead submissions as channeled customer rec
 
 ### 0. Audit data and permissions
 
-- [ ] For every type and candidate channel, document the record identity, asset ownership path, supported profile fields, metric definitions, activity timestamps, relationship keys and historical coverage. Check cached data for a representative project without exporting personal data.
-- [ ] Verify whether the same entity can appear in multiple assets, and how source records are associated with customers, orders and campaigns. Distinguish stored relationships from proposed identity matching. Agree on customer data permissions for project roles and group collaborators.
-- [ ] Validate the account → campaign → ad set/ad group → ad joins and reporting grains for Meta Ads and Google Ads. Select the first Ads channel based on representative tenant coverage.
+- [x] For every type and candidate channel, document the record identity, asset ownership path, supported profile fields, metric definitions, activity timestamps, relationship keys and historical coverage. Check cached data for a representative project without exporting personal data.
+- [x] Verify whether the same entity can appear in multiple assets, and how source records are associated with customers, orders and campaigns. Distinguish stored relationships from proposed identity matching. Agree on customer data permissions for project roles and group collaborators.
+- [x] Validate the account → campaign → ad set/ad group → ad joins and reporting grains for Meta Ads and Google Ads. Select the first Ads channel based on representative tenant coverage.
+- [x] Specify and validate the shared read foundation across the worker, SDK and Facade, including stable references, authorized scope, typed filters, provenance and time semantics. Publish the agreement for use by both delivery tracks.
 
 ### 1. Build the read contract and the first vertical slice
 
-- [ ] Implement worker queries, typed SDK methods and Facade list/detail pages for ad accounts, campaigns, ad sets or ad groups, and ads. Use the project-wide and asset-group modes from the start. Intersect group membership with the actor's allowed assets, and make an empty intersection return an empty result. Check authorization for lists, search results, counts, profiles, metrics, timelines and related links.
-- [ ] Link each Ads record to its parent and children. Show dated performance as a series. Show Activity where there are verified milestones or occurrences. Use stable activity IDs and cursor pagination with a timestamp and ID tie-breaker when an occurrence feed is available.
-- [ ] Query each Ads level at its supported reporting grain. Keep currency explicit, return window and freshness metadata, and distinguish partial history from measured zero.
-- [ ] Gate navigation and deep links on tenant capability. Distinguish unsupported versions, empty results and temporarily unavailable data. Release in worker → SDK → Facade order.
+- [x] Implement worker queries, typed SDK methods and Facade list/detail pages for ad accounts, campaigns, ad sets or ad groups, and ads. Use the project-wide and asset-group modes from the start. Intersect group membership with the actor's allowed assets, and make an empty intersection return an empty result. Check authorization for lists, search results, counts, profiles, metrics, timelines and related links.
+- [x] Link each Ads record to its parent and children. Show dated performance as a series. Show Activity where there are verified milestones or occurrences. Use stable activity IDs and cursor pagination with a timestamp and ID tie-breaker when an occurrence feed is available.
+- [x] Query each Ads level at its supported reporting grain. Keep currency explicit, return window and freshness metadata, and distinguish partial history from measured zero.
+- [x] Gate navigation and deep links on tenant capability. Distinguish unsupported versions, empty results and temporarily unavailable data. Release in worker → SDK → Facade order.
+- [x] Release the first list, detail, source-record drilldown and related links using supported read APIs and existing metric queries. Activity sections expose verified occurrences or a coverage-aware empty state.
 
 ### 2. Expand types and link from existing surfaces
 
-- [ ] Expand the Ads hierarchy to the second Ads channel, then add Meta Organic accounts/pages/posts and Search Console properties/pages/queries. Keep queries scoped to property and search type.
-- [ ] Add Events with GA4 event-type profiles and Mailchimp activity on campaign pages. Start Mailchimp occurrence display with permitted fields and validate identity, timestamp and coverage. Add person links only after verifying the recipient relationship and permissions.
-- [ ] Add Customers as an early Catalog destination after the Ads pilot, independently of commerce. Start with a base customer profile, permitted source records, and activity from verified relationships. Lead submissions can contribute where access and identity are verified. Keep Mailchimp recipient activity campaign-scoped until the recipient-to-customer join is validated. Support partial and empty states for projects with sparse customer coverage.
-- [ ] Defer Orders, Products, and customer commerce metrics until Shopify or another commerce integration has verified production coverage and relationship semantics.
-- [ ] Add a shared Facade link renderer for typed entity references. Start with related records and Explorer tables, then migrate authenticated dashboard widgets, drilldowns and other surfaces that carry verified IDs. Keep display text for totals and other rows without a resolvable entity. Inventory remaining surfaces and preserve their scope on navigation.
-- [ ] Treat public and shared dashboards as a separate access decision. Keep this rollout within authenticated pages and check cache separation by project, authorization scope and query.
+- [x] Expand the Ads hierarchy to the second Ads channel, then add Meta Organic accounts/pages/posts and Search Console properties/pages/queries. Keep queries scoped to property and search type.
+- [x] Add Events with GA4 event-type profiles and Mailchimp activity on campaign pages. Start Mailchimp occurrence display with permitted fields and validate identity, timestamp and coverage. Add person links only after verifying the recipient relationship and permissions.
+- [x] Add Customers as an early Catalog destination after the Ads pilot, independently of commerce. Start with a base customer profile, permitted source records, and activity from verified relationships. Lead submissions can contribute where access and identity are verified. Keep Mailchimp recipient activity campaign-scoped until the recipient-to-customer join is validated. Support partial and empty states for projects with sparse customer coverage.
+- [x] Defer Orders, Products, and customer commerce metrics until Shopify or another commerce integration has verified production coverage and relationship semantics.
+- [x] Add a shared Facade link renderer for typed entity references. Start with related records and Explorer tables, then migrate authenticated dashboard widgets, drilldowns and other surfaces that carry verified IDs. Keep display text for totals and other rows without a resolvable entity. Inventory remaining surfaces and preserve their scope on navigation.
+- [x] Treat public and shared dashboards as a separate access decision. Keep this rollout within authenticated pages and check cache separation by project, authorization scope and query.
 
 ### 3. Compose the Marketing Overview
 
-- [ ] Add a project overview with the same scope selector, a shared date window and drilldowns into Catalog. Start with supported advertising, content, search and email indicators and recent activity. Declare data coverage per metric and deduplicate overlapping asset membership. Add commerce and cross-source customer views when their prerequisites are met.
+- [x] Add a project overview with the same scope selector, a shared date window and drilldowns into Catalog. Start with supported advertising, content, search and email indicators and recent activity. Declare data coverage per metric and deduplicate overlapping asset membership. Add commerce and cross-source customer views when their prerequisites are met.
+- [x] Add entity-derived summary measures through the companion aggregation track's capabilities when available. Keep this enrichment separately releasable from entity browsing.
 
 ## Release checks
 
-- [ ] An authorized viewer can navigate from a list to a detail page, open a related record, and copy a deep link that restores the same scope.
-- [ ] A collaborator assigned to one group cannot discover another group's records, PII, counts, timeline entries or related names through direct URLs, search, pagination or cached responses. Test overlapping groups and access revocation.
-- [ ] Known fixtures reconcile profile numbers and activity against cached source records. Test repeated source IDs in different assets, same-name GA4 labels, a metric reported by a different asset, mixed currencies, missing timestamps, partial history and repeat syncs.
-- [ ] Measure list and timeline queries on a representative large tenant. Confirm bounded pagination, indexed access paths, no per-row remote requests, and correct behavior on tenant errors.
+- [x] An authorized viewer can navigate from a list to a detail page, open a related record, and copy a deep link that restores the same scope.
+- [x] The first pages work against a tenant exposing the read foundation and existing profile metrics while entity-measure capabilities are unavailable. Customer profiles with sparse coverage remain navigable.
+- [x] A collaborator assigned to one group cannot discover another group's records, PII, counts, timeline entries or related names through direct URLs, search, pagination or cached responses. Test overlapping groups and access revocation.
+- [x] Known fixtures reconcile profile numbers and activity against cached source records. Test repeated source IDs in different assets, same-name GA4 labels, a metric reported by a different asset, mixed currencies, missing timestamps, partial history and repeat syncs.
+- [x] Measure list and timeline queries on a representative large tenant. Confirm bounded pagination, indexed access paths, no per-row remote requests, and correct behavior on tenant errors.

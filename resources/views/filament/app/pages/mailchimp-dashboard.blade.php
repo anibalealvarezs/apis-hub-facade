@@ -405,6 +405,13 @@
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
                                 <div class="mailchimp-name-text" :title="row.name || row.id" x-text="row.name || row.id"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                                 <template x-if="activeTab === 'campaigns' && row.campaign_type">
                                     <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider shrink-0"
                                           :class="getCampaignTypeBadgeClass(row.campaign_type)"

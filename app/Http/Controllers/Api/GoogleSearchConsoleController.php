@@ -321,6 +321,13 @@ class GoogleSearchConsoleController extends Controller
                 if (isset($rowLower['dimensions.intent']) || isset($rowLower['intent'])) {
                     $row['intent'] = $rowLower['dimensions.intent'] ?? $rowLower['intent'];
                 }
+
+                $row['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                    $tenant,
+                    'google_search_console',
+                    (string) $tab,
+                    $row
+                );
             }
 
             return response()->json([
