@@ -35,7 +35,10 @@ class ChannelGranularityRegistry
             'facebook_marketing' => self::getFbMarketingDimensions($dependency),
             'facebook_organic' => self::getFbOrganicDimensions($dependency),
             'google_ads' => self::getGoogleAdsDimensions($dependency),
-            'mailchimp' => $dependency === 'store_conversions' ? [] : [
+            'mailchimp' => $dependency === 'store_conversions' ? [
+                'dimensions.store_id' => __('Store'),
+                'dimensions.currency' => __('Currency'),
+            ] : [
                 'channeledCampaign' => __('Campaign'),
                 'campaignType' => __('Campaign Type'),
                 'dimensions.page' => __('Page / URL'),
@@ -86,6 +89,7 @@ class ChannelGranularityRegistry
             ],
             'mailchimp' => [
                 'campaign_engagement' => __('Campaign engagement'),
+                'store_conversions' => __('Connected store orders'),
             ],
             'google_analytics' => [
                 'traffic_matrix' => __('Traffic Matrix (Session)'),

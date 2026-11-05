@@ -31,7 +31,7 @@ recipient-based rates. No FX conversion or accounting-revenue equivalence is imp
 
 `campaign_engagement` is partitioned by campaign ID; URL slices are produced for
 click metrics in addition to baseline campaign totals. Never combine both. Tabs are
-campaigns, automations, audiences and URLs; selecting an automation tab is not proof
+campaigns, automations, audiences, URLs and connected stores; selecting an automation tab is not proof
 that every historical automation activity is available through the current importer.
 `store_conversions` is a separate order stream, partitioned by store. A configured
 30-day attribution window does not establish actual provider campaign attribution.
@@ -74,6 +74,19 @@ sentToEvents,unsubscribeEvents}`; tenant `AgnosticPreAggregationEngine`; Facade
 backfill implications. Exact activity completeness still requires an authenticated
 reconciliation against campaign report totals; this audit used no live credentials.
 
-Connected-store metrics remain unavailable in Preview and the Widget Builder.
-Store partitions currently share a configuration when they have the same audience,
-metric, and period. A store breakdown needs distinct stored identities first.
+Connected Stores is available in Data Preview with order and revenue tiles,
+a daily chart, and a table grouped by store and currency. The Widget Builder
+offers orders and revenue under Connected store orders, with store, currency,
+and time breakdowns. Audience access restrictions apply to every request.
+
+Store metric identities contain audience, store ID, and currency using dimension
+sets. Order IDs are scoped to the Mailchimp account and store before persistence.
+Order dates use processed_at_foreign, falling back to a supplied created_at.
+Orders missing a source date or audience linkage are excluded. Currency comes
+from the order or its store. There is no USD default.
+
+Revenue sums source order totals. Mixed-currency summaries and chart series
+return null; tables retain separate currency rows. Currency filters allow a
+single-currency series. Untyped legacy aggregates are excluded. Historical order
+records must be refreshed with the updated driver before rebuilding.
+See the tenant [store rollout](../../apis-hub/docs/mailchimp-store-rollout.md).

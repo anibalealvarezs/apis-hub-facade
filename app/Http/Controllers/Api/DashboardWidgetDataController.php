@@ -2848,7 +2848,9 @@
                     $payload['tableMode'] = 'posts';
                 }
             } elseif ($action === 'table' && $channel === 'mailchimp') {
-                $payload['activeTab'] = $granularity === 'dimensions.page' ? 'urls' : 'campaigns';
+                $payload['activeTab'] = ($dependency ?? null) === 'store_conversions'
+                    ? 'stores'
+                    : ($granularity === 'dimensions.page' ? 'urls' : 'campaigns');
                 $payload['breakdown'] = $granularity;
             } elseif ($action === 'table') {
                 $payload['activeTab'] = $granularity;
