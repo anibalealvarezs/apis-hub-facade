@@ -5165,15 +5165,39 @@ window.dashboardRenderer = {
     const renderer = window.dashboardRenderer;
     const cancelRequests = () => renderer._cancelPageRequests();
     const onNavigate = (event) => {
-        queueMicrotask(() => {
+        // A task lets all navigation guards finish before checking cancellation.
+        setTimeout(() => {
             if (!event.defaultPrevented) cancelRequests();
-        });
+        }, 0);
+    };
+    const onLinkClick = (event) => {
+        if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        const link = event.target.closest?.("a[href]");
+        if (!link || link.hasAttribute("download")) return;
+        if (link.getAttribute("href").startsWith("#")) return;
+        const target = link.getAttribute("target") || document.querySelector("base[target]")?.getAttribute("target");
+        if (target && target.toLowerCase() !== "_self") return;
+        const url = new URL(link.href, window.location.href);
+        if (!["http:", "https:"].includes(url.protocol)) return;
+        if (url.origin === window.location.origin && url.pathname === window.location.pathname
+            && url.search === window.location.search && url.hash) return;
+        onNavigate(event);
+    };
+    const onBeforeUnload = (event) => {
+        // Builder can prevent departure while its unsaved-changes prompt is open.
+        setTimeout(() => {
+            if (!event.defaultPrevented && !event.returnValue) cancelRequests();
+        }, 0);
     };
 
     document.addEventListener("livewire:navigate", onNavigate);
+    document.addEventListener("click", onLinkClick);
+    window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("pagehide", cancelRequests);
     renderer._removeNavigationListeners = () => {
         document.removeEventListener("livewire:navigate", onNavigate);
+        document.removeEventListener("click", onLinkClick);
+        window.removeEventListener("beforeunload", onBeforeUnload);
         window.removeEventListener("pagehide", cancelRequests);
         cancelRequests();
     };
