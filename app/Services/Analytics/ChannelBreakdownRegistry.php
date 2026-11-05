@@ -16,9 +16,9 @@ class ChannelBreakdownRegistry
         $defaultOperators = ['in', 'not_in', 'eq', 'neq', 'like', 'not_like', 'is_null', 'is_not_null'];
 
         $definitions = match ($channel) {
-            'facebook_marketing' => self::getFacebookMarketingBreakdowns($defaultOperators),
+            'facebook_marketing' => self::getFacebookMarketingBreakdowns($dependency, $defaultOperators),
 
-            'google_ads' => self::getGoogleAdsBreakdowns($defaultOperators),
+            'google_ads' => self::getGoogleAdsBreakdowns($dependency, $defaultOperators),
 
             'google_analytics' => self::getGa4Breakdowns($dependency, $defaultOperators),
             'google_search_console' => self::getGscBreakdowns($dependency, $defaultOperators),
@@ -37,7 +37,7 @@ class ChannelBreakdownRegistry
                 ],
             ],
 
-            'mailchimp' => [
+            'mailchimp' => $dependency === 'store_conversions' ? [] : [
                 'channeledCampaign' => [
                     'label' => __('Campaign'),
                     'type' => 'relational',
@@ -67,7 +67,7 @@ class ChannelBreakdownRegistry
         return $definitions;
     }
 
-    private static function getFacebookMarketingBreakdowns(array $defaultOperators): array
+    private static function getFacebookMarketingBreakdowns(?string $dependency, array $defaultOperators): array
     {
         $breakdowns = [
             'channeledCampaign' => [
@@ -86,6 +86,12 @@ class ChannelBreakdownRegistry
                 'operators' => $defaultOperators,
             ],
         ];
+
+        if ($dependency !== null) {
+            $dimensions = ChannelAnalyticsCatalog::tree('facebook_marketing')['dimensions'];
+            $breakdowns = array_filter($breakdowns, static fn (string $key): bool =>
+                in_array($dependency, $dimensions[$key]['scopes'] ?? [], true), ARRAY_FILTER_USE_KEY);
+        }
 
         $tenant = \Filament\Facades\Filament::getTenant();
         $configuredPasses = null;
@@ -138,7 +144,7 @@ class ChannelBreakdownRegistry
         return $breakdowns;
     }
 
-    private static function getGoogleAdsBreakdowns(array $defaultOperators): array
+    private static function getGoogleAdsBreakdowns(?string $dependency, array $defaultOperators): array
     {
         $breakdowns = [
             'channeledCampaign' => [
@@ -172,6 +178,16 @@ class ChannelBreakdownRegistry
                 'operators' => $defaultOperators,
             ],
         ];
+
+        $dependency ??= ChannelGranularityRegistry::getDefaultDependencyForChannel('google_ads');
+        $dimensions = ChannelGranularityRegistry::getGranularitiesForChannel('google_ads', $dependency);
+        if (isset($dimensions['channeledCampaign'])) {
+            $dimensions['campaignType'] = true;
+        }
+        $breakdowns = array_intersect_key($breakdowns, $dimensions);
+        if (!isset($breakdowns['query'])) {
+            return $breakdowns;
+        }
 
         $tenant = \Filament\Facades\Filament::getTenant();
         if ($tenant instanceof \App\Models\Project && !$tenant->supportsAiClassification()) {

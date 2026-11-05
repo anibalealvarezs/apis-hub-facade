@@ -69,10 +69,16 @@ class MailchimpController extends Controller
     {
         $available = self::AVAILABLE_AGGS;
         if (isset($filters['dimensions.page']) || in_array('dimensions.page', $groupBy, true)) {
-            unset($available[self::DAILY_UNIQUE_OPENS]);
+            $available = array_intersect_key($available, array_flip(['clicks', 'clicks_unique']));
         }
 
         $requestedMetrics = (array) $request->input('metrics');
+        foreach (['open_rate' => 'opens', 'click_rate' => 'clicks'] as $rate => $counter) {
+            if (in_array($rate, $requestedMetrics, true)) {
+                $requestedMetrics[] = $counter;
+                $requestedMetrics[] = 'sends';
+            }
+        }
         $aggregations = array_intersect_key($available, array_fill_keys($requestedMetrics, true));
 
         return $aggregations ?: $available;
@@ -417,7 +423,7 @@ class MailchimpController extends Controller
                 }
             }
 
-            $normalized[] = $entry;
+            $normalized[] = $this->decorateSummary($entry);
         }
 
         return $normalized;

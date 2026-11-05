@@ -8,7 +8,7 @@
         dateStart: @js($dateStart),
         dateEnd: @js($dateEnd),
         activeTab: 'instagram',
-        activeBreakdownTab: 'reaction_type',
+        activeBreakdownTab: 'accounts',
         csrfToken: @js(csrf_token())
     })" x-init="initDashboard()">
         <div class="sticky-header-section py-3 px-3 mb-6 bg-gray-50/98 dark:bg-gray-900/98 backdrop-blur-md border-b border-gray-200 dark:border-white/10 transition-colors">
@@ -64,8 +64,8 @@
                             <x-heroicon-s-presentation-chart-line class="w-4 h-4 opacity-50" />
                         </div>
                         <div class="fb-label" x-text="metric.label"></div>
-                        <div class="card-metric-value" x-text="formatNumber(metric.value)"></div>
-                        <div class="card-metric-trend" :class="getVarianceClass(metric.variance)">
+                        <div class="card-metric-value" x-text="metric.value == null ? '\u2014' : formatNumber(metric.value)"></div>
+                        <div class="card-metric-trend" x-show="metric.key !== 'follower_total' || (metric.value != null && metric.prevValue > 0)" :class="getVarianceClass(metric.variance)">
                             <span x-text="getVarianceIcon(metric.variance)"></span>
                             <span x-text="formatVariance(metric.variance)"></span>
                         </div>
@@ -151,7 +151,7 @@
                             </div>
                         </td>
                         <template x-for="metricKey in availableBreakdownMetrics" :key="metricKey">
-                            <td class="metric-cell" x-text="formatNumber(row[metricKey] || 0)"></td>
+                            <td class="metric-cell" x-text="metricKey === 'follower_total' && row[metricKey] == null ? '\u2014' : formatNumber(row[metricKey] || 0)"></td>
                         </template>
                     </x-data-table.row>
                 </template>

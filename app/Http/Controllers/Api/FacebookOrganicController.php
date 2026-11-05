@@ -45,7 +45,7 @@ class FacebookOrganicController extends Controller
                     'aggregations' => [
                         'likes' => 'likes', 'comments' => 'comments', 'reach' => 'reach', 'views' => 'views',
                         'profile_views' => 'profile_views', 'website_clicks' => 'website_clicks',
-                        'profile_links_taps' => 'profile_links_taps', 'follows_and_unfollows' => 'follows_and_unfollows',
+                        'profile_links_taps' => 'profile_links_taps', 'follows_and_unfollows' => 'follows_and_unfollows', 'follower_total' => 'follower_total',
                         'saves' => 'saves', 'shares' => 'shares', 'total_interactions' => 'total_interactions',
                         'replies' => 'replies', 'accounts_engaged' => 'accounts_engaged', 'content_views' => 'content_views',
                     ],
@@ -56,7 +56,7 @@ class FacebookOrganicController extends Controller
                     'groupBy' => ['page', 'page_id', 'page_title'],
                     'aggregations' => [
                         'reach' => 'reach', 'page_views_total' => 'page_views_total', 'video_views' => 'video_views',
-                        'follows_and_unfollows' => 'follows_and_unfollows', 'total_interactions' => 'total_interactions', 'likes' => 'likes',
+                        'follows_and_unfollows' => 'follows_and_unfollows', 'follower_total' => 'follower_total', 'total_interactions' => 'total_interactions', 'likes' => 'likes',
                     ],
                 ];
             case 'ig_posts':
@@ -231,6 +231,10 @@ class FacebookOrganicController extends Controller
 
     private function resolveBreakdownGroupBy(string $tab, ?string $breakdownTab = null): ?string
     {
+        if ($breakdownTab === 'accounts') {
+            return $tab === 'fb_pages' ? 'page' : 'channeledAccount';
+        }
+
         $allowedKeys = $this->getAllowedBreakdownKeys($tab);
         if ($allowedKeys === []) {
             return null;
@@ -265,6 +269,7 @@ class FacebookOrganicController extends Controller
             if (! isset($collapsed[$date])) {
                 $collapsed[$date] = array_fill_keys($metricKeys, 0);
                 $collapsed[$date]['daily'] = $date;
+                if (in_array('follower_total', $metricKeys, true)) $collapsed[$date]['follower_total'] = null;
             }
 
             foreach ($metricKeys as $metricKey) {
@@ -273,7 +278,7 @@ class FacebookOrganicController extends Controller
                     continue;
                 }
 
-                $collapsed[$date][$metricKey] += (float)$value;
+                $collapsed[$date][$metricKey] = ($collapsed[$date][$metricKey] ?? 0) + (float)$value;
             }
         }
 
@@ -299,7 +304,7 @@ class FacebookOrganicController extends Controller
     {
         $collapsed = [];
         foreach ($metricKeys as $metricKey) {
-            $collapsed[$metricKey] = 0;
+            $collapsed[$metricKey] = $metricKey === 'follower_total' ? null : 0;
         }
 
         foreach ($rows as $row) {
@@ -313,7 +318,7 @@ class FacebookOrganicController extends Controller
                     continue;
                 }
 
-                $collapsed[$metricKey] += (float)$value;
+                $collapsed[$metricKey] = ($collapsed[$metricKey] ?? 0) + (float)$value;
             }
         }
 
@@ -800,6 +805,9 @@ class FacebookOrganicController extends Controller
                 $this->applySelectedAccountFilters($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
                 $this->preferResolvedFacebookPageFilter($baseFilters, $validated['activeTab'], $internalTab, $parsedAccounts);
 
+                if (str_starts_with((string) $breakdownGroupBy, 'dimensions.')) {
+                    unset($config['aggregations']['follower_total']);
+                }
                 $payloads = [
                     'table' => [
                         'aggregations' => $config['aggregations'],

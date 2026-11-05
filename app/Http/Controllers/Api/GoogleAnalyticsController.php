@@ -852,6 +852,9 @@ class GoogleAnalyticsController extends Controller
 
             return response()->json([
                 'table' => $mappedTableData,
+                'metrics' => array_values(array_unique(array_map(
+                    $this->mapFromGa4(...), array_merge(...array_column($queries, 'metrics'))
+                ))),
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {

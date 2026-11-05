@@ -1592,7 +1592,7 @@
                                                                                      <x-ui.select-option value="" disabled selected>{{ __('Loading breakdowns...') }}</x-ui.select-option>
                                                                                  </template>
                                                                                  <x-ui.select-option value="">{{ __('None (Standard series)') }}</x-ui.select-option>
-                                                                                 <template x-for="(bDef, bKey) in getBreakdownsForSeries(series.channel, series.dependency)" :key="bKey">
+                                                                                 <template x-for="(bDef, bKey) in getRawSeriesBreakdownOptions(series)" :key="bKey">
                                                                                      <x-ui.select-option x-bind:value="bKey" x-text="typeof bDef === 'object' && bDef !== null ? (bDef.label || bKey) : bDef" x-bind:selected="series.breakdown && series.breakdown.dimension === bKey"></x-ui.select-option>
                                                                                  </template>
                                                                              </x-ui.select-input>

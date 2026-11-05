@@ -296,13 +296,37 @@ class KpiFormBuilder
             return [];
         }
 
+        if ($channel === 'google_search_console') {
+            return array_map(static fn (array $metric) => $metric['label'], GscAnalyticsCatalog::tree()['metrics']);
+        }
+
+        if ($channel === 'mailchimp') {
+            return ChannelAnalyticsCatalog::mailchimpMetricOptions($granularity, $dependency);
+        }
+
         // Scope-specific metrics override for Facebook Organic
         if ($channel === 'facebook_organic') {
             $isInstagram = $dependency === 'instagram_account' || in_array($granularity, ['instagram', 'ig_post', 'instagram_account'], true);
             $isFacebookPage = $dependency === 'facebook_page' || in_array($granularity, ['facebook', 'fb_pages', 'fb_posts'], true);
 
+            $snapshot = in_array($granularity, [null, 'daily', 'lifetime'], true)
+                ? ['follower_total' => __('Followers (snapshot)')]
+                : [];
+            if (in_array($granularity, ['ig_post', 'fb_post'], true)) {
+                $tree = ChannelAnalyticsCatalog::tree($channel);
+                $available = $granularity === 'ig_post'
+                    ? ['comments', 'follows', 'ig_reels_avg_watch_time', 'ig_reels_video_view_total_time', 'likes',
+                        'profile_activity', 'profile_visits', 'reach', 'reposts', 'shares', 'total_interactions', 'views']
+                    : ['reach', 'total_interactions', 'likes', 'post_clicks', 'views', 'video_views', 'post_video_avg_time_watched'];
+                $options = array_map(static fn (array $metric) => __($metric['label']),
+                    array_intersect_key($tree['metrics'], array_fill_keys($available, true)));
+                if ($granularity === 'ig_post') $options['saved'] = __('Saved');
+
+                return $options;
+            }
+
             if ($isInstagram) {
-                return [
+                return $snapshot + [
                     'likes' => __('Likes'),
                     'comments' => __('Comments'),
                     'reach' => __('Reach'),
@@ -319,7 +343,7 @@ class KpiFormBuilder
                     'content_views' => __('Content Views'),
                 ];
             } elseif ($isFacebookPage) {
-                return [
+                return $snapshot + [
                     'reach' => __('Reach'),
                     'page_views_total' => __('Page Views'),
                     'video_views' => __('Video Views'),
@@ -329,7 +353,7 @@ class KpiFormBuilder
                 ];
             } else {
                 // No specific scope selected yet — return ALL organic social metrics
-                return [
+                return $snapshot + [
                     'reach' => __('Reach'),
                     'page_views_total' => __('Page Views'),
                     'video_views' => __('Video Views'),
@@ -353,22 +377,9 @@ class KpiFormBuilder
             }
         }
 
-        // Scope-specific metrics override for Facebook Marketing
         if ($channel === 'facebook_marketing') {
-            return [
-                'spend' => __('Spend'),
-                'clicks' => __('Clicks'),
-                'impressions' => __('Impressions'),
-                'reach' => __('Reach'),
-                'frequency' => __('Frequency'),
-                'cpm' => __('CPM'),
-                'ctr' => __('CTR'),
-                'cpc' => __('CPC'),
-                'results' => __('Results'),
-                'purchase_roas' => __('ROAS'),
-                'cost_per_result' => __('Cost per Result'),
-                'result_rate' => __('Result Rate'),
-            ];
+            return array_map(static fn (array $metric) => __($metric['label']),
+                ChannelAnalyticsCatalog::tree($channel)['metrics']);
         }
 
         // Scope-specific metrics override for Google Ads
@@ -379,6 +390,7 @@ class KpiFormBuilder
                 'impressions' => __('Impressions'),
                 'ctr' => __('CTR'),
                 'cpc' => __('Avg. CPC'),
+                'cpm' => __('CPM'),
                 'conversions' => __('Conversions'),
                 'conversion_value' => __('Conversion Value'),
                 'cost_per_conversion' => __('Cost per Conversion'),

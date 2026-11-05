@@ -367,7 +367,7 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchSummary() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('summary-v2');
+            const cacheKey = this.getCacheKey('summary-v3');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -394,7 +394,7 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchChart() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('chart-v4');
+            const cacheKey = this.getCacheKey('chart-v5');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -490,7 +490,7 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchTable() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('table-v2', false);
+            const cacheKey = this.getCacheKey('table-v3', false);
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));

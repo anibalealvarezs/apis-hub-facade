@@ -104,6 +104,7 @@ class GoogleAdsController extends Controller
                 'total_conversion_value'      => 'total_revenue',
                 'average_ctr'                 => 'ctr',
                 'average_cpc'                 => 'cpc',
+                'average_cpm'                 => 'cpm',
                 'average_roas_purchase'       => 'roas_purchase',
                 'average_cost_per_conversion' => 'cost_per_conversion',
                 'average_conversion_rate'     => 'conversion_rate',
@@ -142,12 +143,13 @@ class GoogleAdsController extends Controller
                     'total_conversion_value'      => 'conversion_value',
                     'average_ctr'                 => 'ctr',
                     'average_cpc'                 => 'cpc',
+                    'average_cpm'                 => 'cpm',
                     'average_roas_purchase'       => 'roas_purchase',
                     'average_cost_per_conversion' => 'cost_per_conversion',
                     'average_conversion_rate'     => 'conversion_rate',
                 ];
                 foreach ($mappings as $prefixed => $standard) {
-                    if (isset($data[$prefixed])) {
+                    if (array_key_exists($prefixed, $data)) {
                         $data[$standard] = $data[$prefixed];
                         unset($data[$prefixed]);
                     }
@@ -195,6 +197,7 @@ class GoogleAdsController extends Controller
                 'conversion_value'    => 'total_revenue',
                 'ctr'                 => 'ctr',
                 'cpc'                 => 'cpc',
+                'cpm'                 => 'cpm',
                 'roas_purchase'       => 'roas_purchase',
                 'cost_per_conversion' => 'cost_per_conversion',
                 'conversion_rate'     => 'conversion_rate',
@@ -282,9 +285,10 @@ class GoogleAdsController extends Controller
                 'clicks'              => 'clicks',
                 'impressions'         => 'impressions',
                 'conversions'         => 'conversions',
-                'conversion_value'    => 'conversion_value',
+                'conversion_value'    => 'total_revenue',
                 'ctr'                 => 'ctr',
                 'cpc'                 => 'cpc',
+                'cpm'                 => 'cpm',
                 'roas_purchase'       => 'roas_purchase',
                 'cost_per_conversion' => 'cost_per_conversion',
                 'conversion_rate'     => 'conversion_rate',

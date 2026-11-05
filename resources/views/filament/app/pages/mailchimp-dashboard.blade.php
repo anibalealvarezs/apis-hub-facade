@@ -145,7 +145,7 @@
                      data-metric="opens_unique_daily"
                      title="{{ __('Counts each recipient once per campaign per day, including proxy opens. A recipient can count again on a different day or campaign.') }}">
                     <div class="mailchimp-label">{{ __('Daily Unique Opens (Sum)') }}</div>
-                    <div class="card-metric-value" x-text="summary.opens_unique_daily == null ? '—' : formatNumber(summary.opens_unique_daily)"></div>
+                    <div class="card-metric-value" x-text="summary.opens_unique_daily == null ? '\u2014' : formatNumber(summary.opens_unique_daily)"></div>
                 </div>
 
                 <div class="card-stat-mailchimp" :class="activeMetrics.clicks ? 'active' : ''" @click="toggleMetric('clicks')"
@@ -407,7 +407,7 @@
 
                         <template x-if="activeTab !== 'urls'">
                             <td class="metric-cell">
-                                <div class="metric-val-main" x-text="row.opens_unique_daily == null ? '—' : formatNumber(row.opens_unique_daily)"></div>
+                                <div class="metric-val-main" x-text="row.opens_unique_daily == null ? '\u2014' : formatNumber(row.opens_unique_daily)"></div>
                             </td>
                         </template>
 

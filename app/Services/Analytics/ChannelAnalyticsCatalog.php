@@ -10,6 +10,7 @@ class ChannelAnalyticsCatalog
         return match ($channel) {
             'facebook_organic', 'meta_organic' => self::organic(),
             'google_ads' => self::ads(),
+            'facebook_marketing' => self::metaAds(),
             'google_analytics', 'google_analytics_4' => self::analytics(),
             'mailchimp' => self::mailchimp(),
             default => null,
@@ -41,6 +42,49 @@ class ChannelAnalyticsCatalog
             'ingestion' => $ingestion, 'caveats' => $caveats,
             'aggregation_policy' => 'Choose one scope and one compatible grain. Reducers describe required semantics, not a guarantee of current engine behavior.',
         ];
+    }
+
+    private static function metaAds(): array
+    {
+        $entities = ['channeledAccount' => 'ad account', 'channeledCampaign' => 'campaign', 'adGroup' => 'ad set', 'ad' => 'ad'];
+        $grains = ['account_level' => 'channeledAccount', 'campaign_level' => 'channeledCampaign', 'adset_level' => 'adGroup', 'ad_level' => 'ad'];
+        $metrics = [];
+        foreach ([
+            'spend' => ['Spend', 'currency'], 'clicks' => ['Clicks', 'count'],
+            'impressions' => ['Impressions', 'count'], 'reach' => ['Reach', 'count'],
+            'results' => ['Results', 'count'], 'purchases' => ['Purchases', 'count'],
+            'purchase_value' => ['Purchase Value', 'currency'], 'leads' => ['Leads', 'count'],
+        ] as $name => [$label, $unit]) {
+            $metrics[$name] = self::metric($label, [$name], $unit, $name === 'reach' ? 'provider_reach' : 'sum',
+                array_keys($grains), 'conditional', [], $name !== 'reach');
+        }
+        foreach ([
+            'frequency' => ['Frequency', 'impressions / reach'], 'cpm' => ['CPM', '1000 * spend / impressions'],
+            'ctr' => ['CTR', 'clicks / impressions'], 'cpc' => ['CPC', 'spend / clicks'],
+            'purchase_roas' => ['ROAS', 'provider_purchase_roas'], 'cost_per_result' => ['Cost per Result', 'spend / results'],
+            'result_rate' => ['Result Rate', 'results / impressions'], 'cost_per_purchase' => ['Cost per Purchase', 'spend / purchases'],
+            'cost_per_lead' => ['Cost per Lead', 'spend / leads'],
+        ] as $name => [$label, $reducer]) {
+            $metrics[$name] = self::metric($label, [], str_starts_with($name, 'cost_') || in_array($name, ['cpm', 'cpc'], true) ? 'currency' : 'ratio',
+                $reducer, array_keys($grains), 'conditional', [], false);
+        }
+        $scopes = [];
+        foreach ($grains as $scope => $entity) {
+            $scopes[$scope] = self::scope(ucfirst($entities[$entity]), array_keys($metrics), ['daily', $entity], []);
+        }
+
+        $dimensions = [
+            'channeledCampaign' => ['scopes' => ['campaign_level', 'adset_level', 'ad_level']],
+            'adGroup' => ['scopes' => ['adset_level', 'ad_level']],
+            'ad' => ['scopes' => ['ad_level']],
+        ];
+        foreach (['age' => 'demographics', 'gender' => 'demographics', 'country' => 'geography',
+            'publisher_platform' => 'placement', 'platform_position' => 'placement'] as $dimension => $pass) {
+            $dimensions['dimensions.'.$dimension] = ['scopes' => array_keys($grains), 'requires_pass' => $pass];
+        }
+
+        return self::base('facebook_marketing', $metrics, $scopes, $entities, $dimensions,
+            ['breakdown_passes' => 'Optional passes depend on source configuration.'], []);
     }
 
     private static function ads(): array
@@ -222,6 +266,13 @@ class ChannelAnalyticsCatalog
             ['dimensions.media_product_type' => ['scopes' => ['instagram_account']], 'dimensions.follow_type' => ['scopes' => ['instagram_account']], 'dimensions.contact_button_type' => ['scopes' => ['instagram_account']], 'dimensions.reaction_type' => ['scopes' => ['facebook_page', 'fb_post']]],
             ['instagram_account_passes' => 5, 'coverage' => 'Account type, media type, permissions and API version dependent; failed optional passes can leave partial data.', 'history' => 'Driver clamps Instagram account requests to approximately two years; not a source retention guarantee.', 'snapshots' => 'Repeated lifetime snapshots must not be summed as daily flows.'],
             ['ORG-01' => 'SDK fills missing requested Instagram account metrics with zero; optional pass failures can still produce partial success.', 'ORG-02' => 'Likes aliases include all reactions; follows/unfollows and engagement aliases require source-specific interpretation.', 'ORG-03' => 'Unique reach/engagement is non-additive; baseline totals and breakdown slices overlap.', 'ORG-04' => 'Exact live API/media availability and time units require versioned source verification.']);
+        $tree['metrics']['follower_total'] = self::metric(
+            'Followers (snapshot)', ['follower_total'], 'count', 'latest_snapshot_per_account',
+            ['facebook_page', 'instagram_account'], 'conditional', [], false,
+        );
+        foreach (['facebook_page', 'instagram_account'] as $scope) {
+            $tree['scopes'][$scope]['metrics'][] = 'follower_total';
+        }
         $tree['audience_growth'] = [
             'facebook_page' => [
                 'legacy_metric' => 'page_follows',
@@ -240,13 +291,26 @@ class ChannelAnalyticsCatalog
                 'period' => 'lifetime',
                 'grain' => 'account_and_observation_date',
                 'is_additive' => false,
-                'reporting_status' => 'requires_snapshot_aware_reader',
+                'reporting_status' => 'snapshot_aware',
             ],
             'window_growth' => 'requires_dated_follower_total_snapshots',
             'provider_coverage_verified' => false,
         ];
         unset($tree['filters']['scope']);
         return $tree;
+    }
+
+    public static function mailchimpMetricOptions(?string $granularity, ?string $scope): array
+    {
+        $tree = self::mailchimp();
+        $scope ??= 'campaign_engagement';
+        $metrics = $scope === 'campaign_engagement' ? $tree['scopes'][$scope]['metrics'] : [];
+        if ($granularity === 'dimensions.page') {
+            $metrics = array_intersect($metrics, $tree['dimensions']['dimensions.page']['metrics']);
+        }
+
+        return array_map(static fn (array $metric) => __($metric['label']),
+            array_intersect_key($tree['metrics'], array_fill_keys($metrics, true)));
     }
 
     private static function mailchimp(): array
@@ -258,7 +322,7 @@ class ChannelAnalyticsCatalog
             $issues = $store ? ['MC-05'] : ['MC-01', 'MC-04'];
             if (in_array($key, ['opens_standard', 'opens_proxy'], true)) $issues[] = 'MC-03';
             if ($key === 'clicks_unique') $issues[] = 'MC-02';
-            $metrics[$key] = self::metric(ucwords(str_replace('_', ' ', $key)), [$cached], $key === 'revenue' ? 'store_currency' : 'count', $key === 'clicks_unique' ? 'distinct_identity_for_requested_window' : 'sum', [$store ? 'store_conversions' : 'campaign_engagement'], 'preaggregated', $issues);
+            $metrics[$key] = self::metric(ucwords(str_replace('_', ' ', $key)), [$cached], $key === 'revenue' ? 'store_currency' : 'count', $key === 'clicks_unique' ? 'sum_of_daily_distinct_counts_within_slice' : 'sum', [$store ? 'store_conversions' : 'campaign_engagement'], 'preaggregated', $issues);
         }
         $metrics['opens_unique_daily'] = self::metric(
             'Daily unique openers',
@@ -281,7 +345,7 @@ class ChannelAnalyticsCatalog
             ['channeledAccount' => 'audience', 'channeledCampaign' => 'email campaign', 'page' => 'clicked URL', 'store' => 'connected store'],
             ['channeledCampaign' => ['scopes' => ['campaign_engagement']], 'campaignType' => ['scopes' => ['campaign_engagement']], 'dimensions.page' => ['scopes' => ['campaign_engagement'], 'metrics' => ['clicks', 'clicks_unique']]],
             ['pipeline' => 'Email activity events and connected-store orders, then daily preaggregation.', 'attribution_window_days' => 30, 'attribution_note' => 'Configured rule, not proof of provider-attributed campaign revenue.', 'currency' => 'Store currency; conversion must precede combined totals.'],
-            ['MC-01' => 'Click event identity omits URL and can collapse distinct same-second clicks.', 'MC-02' => 'Daily or per-URL distinct recipients cannot be summed into window-unique recipients.', 'MC-03' => 'Missing proxy flags become false; standard opens do not establish human-only activity.', 'MC-04' => 'Send timestamps use member last_changed; campaign-window selection and event end bounds need reconciliation.', 'MC-05' => 'Store orders are a separate scope; do not imply campaign attribution without evidence.', 'MC-06' => 'UI rates use total events / sends, not provider unique-recipient rates; they can exceed 100%.']);
+            ['MC-01' => 'Click event identity omits URL and can collapse distinct same-second clicks.', 'MC-02' => 'Daily or per-URL distinct recipients cannot be summed into window-unique recipients.', 'MC-03' => 'Missing proxy flags become false; standard opens do not establish human-only activity.', 'MC-04' => 'Send timestamps use member last_changed; campaign-window selection and event end bounds need reconciliation.', 'MC-05' => 'Store partitions can share one metric configuration when they belong to the same audience. Store totals and breakdowns require distinct stored identities.', 'MC-06' => 'UI rates use total events / sends, not provider unique-recipient rates; they can exceed 100%.']);
         unset($tree['filters']['scope']);
         return $tree;
     }
