@@ -2072,23 +2072,16 @@
                 'db_active_channel' => $dbState[$this->activeChannel] ?? null,
             ]);
 
-            // Map global fallback toggles back into their channel configurations
+            // The rendered field is authoritative. A legacy root toggle may
+            // still be present in the hydrated Livewire data.
             foreach ($uiState as $key => $value) {
                 if (is_string($key) && str_ends_with($key, '_enabled')) {
-                    $channel = str_replace('_enabled', '', $key);
-                    if (!isset($uiState[$channel])) {
-                        $uiState[$channel] = [];
+                    $channel = substr($key, 0, -strlen('_enabled'));
+                    if (!array_key_exists('enabled', $uiState[$channel] ?? [])) {
+                        $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                     }
-                    $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                    unset($uiState[$key]);
                 }
-            }
-            
-            // Explicitly force enabled state from active channel if present in root state
-            if (array_key_exists($this->activeChannel . '_enabled', $uiState)) {
-                if (!isset($uiState[$this->activeChannel])) {
-                    $uiState[$this->activeChannel] = [];
-                }
-                $uiState[$this->activeChannel]['enabled'] = filter_var($uiState[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
             }
 
             // Build the proposed full configuration state by merging the UI state into the DB state
@@ -2101,13 +2094,6 @@
                         $proposedState[$channel]['enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     }
                 }
-            }
-
-            // Also check if root-level activeChannel_enabled exists in form data
-            if (isset($this->data[$this->activeChannel . '_enabled'])) {
-                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
-            } elseif (isset($this->data[$this->activeChannel]['enabled'])) {
-                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel]['enabled'], FILTER_VALIDATE_BOOLEAN);
             }
 
             // Fallback: If the user is saving the active channel but Livewire omitted the enabled flag
