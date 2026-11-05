@@ -10,7 +10,9 @@ use App\Services\RemoteEngineService;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Page;
+use Filament\Panel;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 
@@ -151,6 +153,15 @@ class CatalogEntity extends Page
     public static function getRoutePath(): string
     {
         return '/catalog/{entity}/{record?}';
+    }
+
+    public static function routes(Panel $panel): void
+    {
+        Route::get(static::getRoutePath(), static::class)
+            ->whereIn('entity', array_keys(static::ENTITIES))
+            ->middleware(static::getRouteMiddleware($panel))
+            ->withoutMiddleware(static::getWithoutRouteMiddleware($panel))
+            ->name(static::getRelativeRouteName());
     }
 
     public static function canAccess(): bool
