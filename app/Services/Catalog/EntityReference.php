@@ -12,6 +12,10 @@ final class EntityReference
     public const array SUPPORTED_LAYERS = ['channeled', 'base'];
 
     public const array ALL_ENTITY_TYPES = [
+        'stores',
+        'variants',
+        'promotions',
+        'carts',
         'accounts',
         'campaigns',
         'ad-sets',
@@ -35,6 +39,12 @@ final class EntityReference
     ];
 
     public const array SUPPORTED_ENTITY_TYPES = [
+        'orders',
+        'products',
+        'stores',
+        'variants',
+        'promotions',
+        'carts',
         'accounts',
         'campaigns',
         'ad-sets',
@@ -46,6 +56,8 @@ final class EntityReference
         'events',
         'customers',
     ];
+
+    public const array COMMERCE_ENTITY_TYPES = ['stores', 'orders', 'products', 'variants', 'promotions', 'carts'];
 
     public function __construct(
         private readonly string $layer,

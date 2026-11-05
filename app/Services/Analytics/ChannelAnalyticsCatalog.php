@@ -304,7 +304,10 @@ class ChannelAnalyticsCatalog
     {
         $tree = self::mailchimp();
         $scope ??= 'campaign_engagement';
-        $metrics = $scope === 'campaign_engagement' ? $tree['scopes'][$scope]['metrics'] : [];
+        $metrics = $tree['scopes'][$scope]['metrics'] ?? [];
+        if ($scope === 'store_conversions' && in_array($granularity, ['channeledCampaign', 'campaignType', 'dimensions.page'], true)) {
+            return [];
+        }
         if ($granularity === 'dimensions.page') {
             $metrics = array_intersect($metrics, $tree['dimensions']['dimensions.page']['metrics']);
         }
@@ -339,13 +342,13 @@ class ChannelAnalyticsCatalog
         }
         $scopes = [
             'campaign_engagement' => self::scope('Campaign engagement', array_keys(array_filter($metrics, fn ($m) => in_array('campaign_engagement', $m['scopes'], true))), ['daily', 'campaign', 'optional URL slice'], []),
-            'store_conversions' => self::scope('Connected store orders', ['orders', 'revenue'], ['daily', 'store'], []),
+            'store_conversions' => self::scope('Connected store orders', ['orders', 'revenue'], ['daily', 'audience', 'store_id', 'currency'], []),
         ];
         $tree = self::base('mailchimp', $metrics, $scopes,
             ['channeledAccount' => 'audience', 'channeledCampaign' => 'email campaign', 'page' => 'clicked URL', 'store' => 'connected store'],
-            ['channeledCampaign' => ['scopes' => ['campaign_engagement']], 'campaignType' => ['scopes' => ['campaign_engagement']], 'dimensions.page' => ['scopes' => ['campaign_engagement'], 'metrics' => ['clicks', 'clicks_unique']]],
+            ['channeledCampaign' => ['scopes' => ['campaign_engagement']], 'campaignType' => ['scopes' => ['campaign_engagement']], 'dimensions.page' => ['scopes' => ['campaign_engagement'], 'metrics' => ['clicks', 'clicks_unique']], 'dimensions.store_id' => ['scopes' => ['store_conversions']], 'dimensions.currency' => ['scopes' => ['store_conversions']]],
             ['pipeline' => 'Email activity events and connected-store orders, then daily preaggregation.', 'attribution_window_days' => 30, 'attribution_note' => 'Configured rule, not proof of provider-attributed campaign revenue.', 'currency' => 'Store currency; conversion must precede combined totals.'],
-            ['MC-01' => 'Click event identity omits URL and can collapse distinct same-second clicks.', 'MC-02' => 'Daily or per-URL distinct recipients cannot be summed into window-unique recipients.', 'MC-03' => 'Missing proxy flags become false; standard opens do not establish human-only activity.', 'MC-04' => 'Send timestamps use member last_changed; campaign-window selection and event end bounds need reconciliation.', 'MC-05' => 'Store partitions can share one metric configuration when they belong to the same audience. Store totals and breakdowns require distinct stored identities.', 'MC-06' => 'UI rates use total events / sends, not provider unique-recipient rates; they can exceed 100%.']);
+            ['MC-01' => 'Click event identity omits URL and can collapse distinct same-second clicks.', 'MC-02' => 'Daily or per-URL distinct recipients cannot be summed into window-unique recipients.', 'MC-03' => 'Missing proxy flags become false; standard opens do not establish human-only activity.', 'MC-04' => 'Send timestamps use member last_changed; campaign-window selection and event end bounds need reconciliation.', 'MC-05' => 'Store orders retain audience, store, and currency identities. Legacy untyped aggregates are excluded. Mixed-currency revenue must be filtered or grouped by currency.', 'MC-06' => 'UI rates use total events / sends, not provider unique-recipient rates; they can exceed 100%.']);
         unset($tree['filters']['scope']);
         return $tree;
     }

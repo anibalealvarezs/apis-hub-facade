@@ -96,7 +96,29 @@
         </div>
 
         <div class="dash-overview-section">
-            <div class="metrics-grid-mailchimp relative">
+            <label x-show="activeTab === 'stores'" class="flex items-center gap-3 mb-4">
+                <span>{{ __('Store currency') }}</span>
+                <select :value="storeCurrency" @change="setStoreCurrency($event.target.value)">
+                    <option value="">{{ __('All currencies') }}</option>
+                    <template x-for="currency in storeCurrencyOptions" :key="currency">
+                        <option :value="currency" x-text="currency"></option>
+                    </template>
+                </select>
+            </label>
+            <div class="metrics-grid-mailchimp" x-show="activeTab === 'stores'">
+                <button type="button" class="card-stat-mailchimp" :class="activeMetrics.orders ? 'active' : ''" @click="toggleMetric('orders')">
+                    <div class="mailchimp-label">{{ __('Store Orders') }}</div>
+                    <div class="card-metric-value" x-text="summary.orders == null ? '\u2014' : formatNumber(summary.orders)"></div>
+                </button>
+                <button type="button" class="card-stat-mailchimp" :class="activeMetrics.revenue ? 'active' : ''" @click="toggleMetric('revenue')">
+                    <div class="mailchimp-label">{{ __('Store Revenue (source currency)') }}</div>
+                    <div class="card-metric-value" x-text="summary.revenue == null ? '\u2014' : formatNumber(summary.revenue)"></div>
+                </button>
+            </div>
+            <p x-show="activeTab === 'stores'" class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                {{ __('Revenue is shown separately by currency in the table. The summary and chart show revenue when the selected period has a single currency.') }}
+            </p>
+            <div class="metrics-grid-mailchimp relative" x-show="activeTab !== 'stores'">
                 <div x-show="isSummaryLoading"
                      class="absolute inset-0 z-10 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm rounded-xl">
                     <x-filament::loading-indicator class="h-8 w-8 text-primary-500"/>
@@ -282,6 +304,8 @@
                              @click="setTab('audiences')">{{ __('AUDIENCES') }}</div>
                         <div class="tab-mailchimp" :class="activeTab === 'urls' ? 'active' : ''"
                              @click="setTab('urls')">{{ __('URLS') }}</div>
+                        <button type="button" class="tab-mailchimp" :class="activeTab === 'stores' ? 'active' : ''"
+                                @click="setTab('stores')">{{ __('CONNECTED STORES') }}</button>
                     </div>
 
                     <!-- Campaign Type Sub-Filter Pills (shown on CAMPAIGNS tab) -->
@@ -321,25 +345,36 @@
                 <thead>
                 <tr>
                     <x-data-table.column sortable="false">
-                        <span x-text="activeTab === 'urls' ? '{{ __('URL / PAGE') }}' : (activeTab === 'audiences' ? '{{ __('AUDIENCE') }}' : (activeTab === 'automations' ? '{{ __('AUTOMATION') }}' : '{{ __('CAMPAIGN') }}'))"></span>
+                        <span x-text="activeTab === 'stores' ? '{{ __('STORE') }}' : (activeTab === 'urls' ? '{{ __('URL / PAGE') }}' : (activeTab === 'audiences' ? '{{ __('AUDIENCE') }}' : (activeTab === 'automations' ? '{{ __('AUTOMATION') }}' : '{{ __('CAMPAIGN') }}')))"></span>
                     </x-data-table.column>
 
                     <!-- Campaign / Audience / Automation columns -->
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="sends" label="{{ __('Emails Sent') }}"/>
                     </template>
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="opens" label="{{ __('Opens') }}"/>
                     </template>
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="opens_unique_daily" label="{{ __('Daily Unique Opens (Sum)') }}"/>
                     </template>
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="open_rate" label="{{ __('Open Rate') }}"/>
                     </template>
 
                     <!-- Clicks column (always present) -->
-                    <x-data-table.column state="tableState" key="clicks" label="{{ __('Total Clicks') }}"/>
+                    <template x-if="activeTab !== 'stores'">
+                        <x-data-table.column state="tableState" key="clicks" label="{{ __('Total Clicks') }}"/>
+                    </template>
+                    <template x-if="activeTab === 'stores'">
+                        <x-data-table.column state="tableState" key="currency" label="{{ __('Currency') }}"/>
+                    </template>
+                    <template x-if="activeTab === 'stores'">
+                        <x-data-table.column state="tableState" key="orders" label="{{ __('Orders') }}"/>
+                    </template>
+                    <template x-if="activeTab === 'stores'">
+                        <x-data-table.column state="tableState" key="revenue" label="{{ __('Revenue') }}"/>
+                    </template>
 
                     <!-- Specific to URLs tab: Unique Clicks column -->
                     <template x-if="activeTab === 'urls'">
@@ -347,20 +382,20 @@
                     </template>
 
                     <!-- Campaign / Audience / Automation remaining columns -->
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="click_rate" label="{{ __('Click Rate') }}"/>
                     </template>
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="bounces" label="{{ __('Bounces') }}"/>
                     </template>
-                    <template x-if="activeTab !== 'urls'">
+                    <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                         <x-data-table.column state="tableState" key="unsubscribes" label="{{ __('Unsubscribes') }}"/>
                     </template>
                 </tr>
                 </thead>
                 <tbody>
                 <template x-for="(row, index) in tableState.paginatedRows" :key="row.id + '_' + index">
-                    <x-data-table.row onClick="toggleFilter(activeTab, row.id)"
+                    <x-data-table.row onClick="activeTab !== 'stores' && toggleFilter(activeTab, row.id)"
                                       clickable="true"
                                       active="isFilterActive(activeTab, row.id)"
                                       inactive-class="" disabled-class="">
@@ -386,7 +421,7 @@
                         </td>
 
                         <!-- Sends (only non-urls) -->
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatNumber(row.sends)"></div>
                                 <div class="progress-bar-container">
@@ -397,7 +432,7 @@
                         </template>
 
                         <!-- Opens (only non-urls) -->
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatNumber(row.opens)"></div>
                                 <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
@@ -412,14 +447,14 @@
                             </td>
                         </template>
 
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="row.opens_unique_daily == null ? '\u2014' : formatNumber(row.opens_unique_daily)"></div>
                             </td>
                         </template>
 
                         <!-- Open Rate (only non-urls) -->
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatPercent(row.open_rate)"></div>
                                 <div class="progress-bar-container">
@@ -430,9 +465,10 @@
                         </template>
 
                         <!-- Clicks -->
+                        <template x-if="activeTab !== 'stores'">
                         <td class="metric-cell">
                             <div class="metric-val-main" x-text="formatNumber(row.clicks)"></div>
-                            <div x-show="activeTab !== 'urls'" class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" title="{{ __('Unique clickers') }}">
+                            <div x-show="activeTab !== 'urls' && activeTab !== 'stores'" class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5" title="{{ __('Unique clickers') }}">
                                 <span x-text="formatNumber(row.clicks_unique) + ' {{ __('uniq') }}'"></span>
                             </div>
                             <div class="progress-bar-container">
@@ -440,6 +476,16 @@
                                      :style="`width: ${maxClicks > 0 ? (row.clicks / maxClicks) * 100 : 0}%`"></div>
                             </div>
                         </td>
+                        </template>
+                        <template x-if="activeTab === 'stores'">
+                            <td class="metric-cell" x-text="row.currency"></td>
+                        </template>
+                        <template x-if="activeTab === 'stores'">
+                            <td class="metric-cell" x-text="row.orders == null ? '\u2014' : formatNumber(row.orders)"></td>
+                        </template>
+                        <template x-if="activeTab === 'stores'">
+                            <td class="metric-cell" x-text="row.revenue == null ? '\u2014' : formatNumber(row.revenue)"></td>
+                        </template>
 
                         <!-- Unique Clicks (only urls tab) -->
                         <template x-if="activeTab === 'urls'">
@@ -453,7 +499,7 @@
                         </template>
 
                         <!-- Click Rate (only non-urls) -->
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatPercent(row.click_rate)"></div>
                                 <div class="progress-bar-container">
@@ -464,7 +510,7 @@
                         </template>
 
                         <!-- Bounces (only non-urls) -->
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatNumber(row.bounces)"></div>
                                 <div class="flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
@@ -480,7 +526,7 @@
                         </template>
 
                         <!-- Unsubscribes (only non-urls) -->
-                        <template x-if="activeTab !== 'urls'">
+                        <template x-if="activeTab !== 'urls' && activeTab !== 'stores'">
                             <td class="metric-cell">
                                 <div class="metric-val-main" x-text="formatNumber(row.unsubscribes)"></div>
                                 <div class="progress-bar-container">

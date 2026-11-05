@@ -7,6 +7,8 @@ import { dataTable } from './data-table';
  * to the worker, because the worker only stores raw counters.
  */
 const MAILCHIMP_METRICS = {
+    orders: { label: 'Store orders', color: '#1F9E8F', background: 'rgba(31, 158, 143, 0.1)', axis: 'yOrders' },
+    revenue: { label: 'Store revenue', color: '#A78BFA', background: 'rgba(167, 139, 250, 0.08)', axis: 'yRevenue' },
     sends: {
         key: 'sends',
         label: 'Emails Sent',
@@ -73,7 +75,7 @@ const MAILCHIMP_METRICS = {
     },
 };
 
-const TABS = ['campaigns', 'automations', 'audiences', 'urls'];
+const TABS = ['campaigns', 'automations', 'audiences', 'urls', 'stores'];
 
 const EMPTY_SUMMARY = {
     sends: 0,
@@ -115,6 +117,8 @@ export function mailchimpDashboard(config = {}) {
         showTrends: false,
 
         activeMetrics: {
+            orders: true,
+            revenue: true,
             sends: true,
             opens: true,
             opens_unique_daily: true,
@@ -125,10 +129,13 @@ export function mailchimpDashboard(config = {}) {
             bounces: false,
         },
 
+        storeCurrency: '',
+        storeCurrencyOptions: [],
+
         activeFilters: { campaigns: [], automations: [], audiences: [], urls: [] },
 
         get showDailyUniqueOpeners() {
-            return this.activeFilters.urls.length === 0;
+            return this.activeTab !== 'stores' && this.activeFilters.urls.length === 0;
         },
 
         get hasDailyUniqueOpeners() {
@@ -193,6 +200,8 @@ export function mailchimpDashboard(config = {}) {
                 this.initChart();
 
                 this.$watch('account', () => {
+                    this.storeCurrency = '';
+                    this.storeCurrencyOptions = [];
                     this.syncToUrl();
                     this.trendData = {};
                     this.fetchAll();
@@ -237,14 +246,29 @@ export function mailchimpDashboard(config = {}) {
         },
 
         setTab(tab) {
+            const changedScope = (this.activeTab === 'stores') !== (tab === 'stores');
             this.activeTab = tab;
             this.tableState.currentPage = 1;
             this.tableState.searchQuery = '';
             this.syncToUrl();
-            this.fetchTable();
+            if (changedScope) {
+                this.summary = { ...EMPTY_SUMMARY };
+                this.chartDataRaw = [];
+                this.tableState.rows = [];
+                this.fetchAll();
+            } else {
+                this.fetchTable();
+            }
             if (this.$wire && typeof this.$wire.setActiveTab === 'function') {
                 this.$wire.setActiveTab(tab);
             }
+        },
+
+        setStoreCurrency(currency) {
+            this.storeCurrency = currency;
+            this.summary = { ...EMPTY_SUMMARY };
+            this.chartDataRaw = [];
+            this.fetchAll();
         },
 
         setCampaignType(type) {
@@ -355,7 +379,7 @@ export function mailchimpDashboard(config = {}) {
         getCacheKey(endpoint, includeFilters = true) {
             const filterHash = includeFilters ? JSON.stringify(this.activeFilters) : 'no_filters';
             const cType = this.activeTab === 'campaigns' ? this.campaignType : 'na';
-            return `mailchimp_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${cType}_${filterHash}`;
+            return `mailchimp_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${this.activeTab === 'stores' ? this.storeCurrency : ''}_${cType}_${filterHash}`;
         },
 
         async fetchAll() {
@@ -367,12 +391,13 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchSummary() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('summary-v3');
+            const cacheKey = this.getCacheKey('summary-v4');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                 this.summary = { ...EMPTY_SUMMARY, ...(data.summary || {}) };
                 this.previous = { ...EMPTY_SUMMARY, ...(data.previous || {}) };
+                if (this.activeTab === 'stores') this.updateChart();
                 return;
             }
 
@@ -380,10 +405,12 @@ export function mailchimpDashboard(config = {}) {
             try {
                 const response = await this.fetchDashboardResponse('/api/mailchimp/summary', this.getFetchOptions());
                 const data = await response.json();
+                if (this.getCacheKey('summary-v4') !== cacheKey) return;
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                     this.summary = { ...EMPTY_SUMMARY, ...(data.summary || {}) };
                     this.previous = { ...EMPTY_SUMMARY, ...(data.previous || {}) };
+                    if (this.activeTab === 'stores') this.updateChart();
                 }
             } catch (error) {
                 console.error('Error fetching summary:', error);
@@ -394,12 +421,12 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchChart() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('chart-v5');
+            const cacheKey = this.getCacheKey('chart-v6');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                 this.chartDataRaw = data.chart || [];
-                if (this.showTrends) {
+                if (this.showTrends && this.activeTab !== 'stores') {
                     this.fetchTrends();
                 } else {
                     this.updateChart();
@@ -411,10 +438,11 @@ export function mailchimpDashboard(config = {}) {
             try {
                 const response = await this.fetchDashboardResponse('/api/mailchimp/chart', this.getFetchOptions());
                 const data = await response.json();
+                if (this.getCacheKey('chart-v6') !== cacheKey) return;
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                     this.chartDataRaw = data.chart || [];
-                    if (this.showTrends) {
+                    if (this.showTrends && this.activeTab !== 'stores') {
                         this.fetchTrends();
                     } else {
                         this.updateChart();
@@ -481,7 +509,7 @@ export function mailchimpDashboard(config = {}) {
         },
 
         handleTrendToggle() {
-            if (this.showTrends) {
+            if (this.showTrends && this.activeTab !== 'stores') {
                 this.fetchTrends();
             } else {
                 this.updateChart();
@@ -490,11 +518,14 @@ export function mailchimpDashboard(config = {}) {
 
         async fetchTable() {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('table-v3', false);
+            const cacheKey = this.getCacheKey('table-v4', false);
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
                 this.tableState.rows = data.table || [];
+                if (this.activeTab === 'stores') {
+                    this.storeCurrencyOptions = [...new Set([...this.storeCurrencyOptions, ...this.tableState.rows.map(row => row.currency).filter(Boolean)])].sort();
+                }
                 return;
             }
 
@@ -502,9 +533,13 @@ export function mailchimpDashboard(config = {}) {
             try {
                 const response = await this.fetchDashboardResponse('/api/mailchimp/table', this.getFetchOptions(false));
                 const data = await response.json();
+                if (this.getCacheKey('table-v4', false) !== cacheKey) return;
                 if (!data.error) {
                     this.safeCacheSet(cacheKey, JSON.stringify(data));
                     this.tableState.rows = data.table || [];
+                if (this.activeTab === 'stores') {
+                    this.storeCurrencyOptions = [...new Set([...this.storeCurrencyOptions, ...this.tableState.rows.map(row => row.currency).filter(Boolean)])].sort();
+                }
                     this.tableState.currentPage = 1;
                 }
             } catch (error) {
@@ -523,6 +558,10 @@ export function mailchimpDashboard(config = {}) {
                 activeTab: this.activeTab,
                 campaignType: this.activeTab === 'campaigns' ? this.campaignType : 'all'
             };
+
+            if (this.activeTab === 'stores' && this.storeCurrency) {
+                payload.filters = { 'dimensions.currency': this.storeCurrency };
+            }
 
             if (includeFilters && this.activeFilters) {
                 payload.activeFilters = { ...this.activeFilters };
@@ -638,6 +677,8 @@ export function mailchimpDashboard(config = {}) {
                             grid: { color: 'var(--mailchimp-chart-grid)', drawBorder: false },
                             ticks: { color: 'var(--mailchimp-chart-ticks)' }
                         },
+                        yOrders: counterAxis('left'),
+                        yRevenue: counterAxis('right'),
                         ySends: counterAxis('left'),
                         yOpens: counterAxis('right'),
                         yClicks: counterAxis('right'),
@@ -701,6 +742,9 @@ export function mailchimpDashboard(config = {}) {
             const datasets = [];
 
             Object.entries(MAILCHIMP_METRICS).forEach(([key, config]) => {
+                const storeMetric = key === 'orders' || key === 'revenue';
+                if (storeMetric !== (this.activeTab === 'stores')) return;
+                if (key === 'revenue' && this.summary.revenue == null) return;
                 const isUniqueOpeners = key === 'opens_unique_daily';
                 if (!this.activeMetrics[key] || (isUniqueOpeners && !this.showDailyUniqueOpeners)) return;
 
@@ -718,7 +762,7 @@ export function mailchimpDashboard(config = {}) {
                 });
             });
 
-            if (this.showTrends) {
+            if (this.showTrends && this.activeTab !== 'stores') {
                 Object.entries(MAILCHIMP_METRICS).forEach(([key, config]) => {
                     if (!this.activeMetrics[key] || !config.trendable || !this.trendData[key]) return;
 

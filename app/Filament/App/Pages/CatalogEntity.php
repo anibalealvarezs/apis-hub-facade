@@ -33,6 +33,10 @@ class CatalogEntity extends Page
         'queries'   => 'Queries',
         'events'    => 'Events',
         'customers' => 'Customers',
+        'stores'    => 'Stores',
+        'variants'  => 'Product Variants',
+        'promotions'=> 'Promotions',
+        'carts'     => 'Carts',
         'orders'    => 'Orders',
         'products'  => 'Products',
     ];
@@ -48,6 +52,10 @@ class CatalogEntity extends Page
         'queries'   => 2,
         'events'    => 2,
         'customers' => 2,
+        'stores'    => 4,
+        'variants'  => 4,
+        'promotions'=> 4,
+        'carts'     => 4,
         'orders'    => 4,
         'products'  => 4,
     ];
@@ -418,6 +426,10 @@ class CatalogEntity extends Page
      */
     public function getChannelOptionsForEntity(string $entity): array
     {
+        if (in_array($entity, EntityReference::COMMERCE_ENTITY_TYPES, true)) {
+            return ['mailchimp' => 'Mailchimp'];
+        }
+
         return match ($entity) {
             'accounts' => [
                 ''                      => __('All channels'),
@@ -574,6 +586,20 @@ class CatalogEntity extends Page
 
         /** @var RemoteEngineService $engine */
         $engine = app(RemoteEngineService::class);
+
+        if (in_array($this->entity, EntityReference::COMMERCE_ENTITY_TYPES, true)) {
+            $response = $engine->getCatalogCapabilities($project, ['authorized_scope' => $this->authorizedScope]);
+            if (($response['status'] ?? null) === 'error') {
+                $this->applyRemoteErrorState($response);
+                return;
+            }
+            $this->capabilities = $response['data'] ?? [];
+            if (empty($this->capabilities['entities'][$this->entity]['supported'])) {
+                $this->stateCode = 'phase_deferred';
+                $this->stateMessage = __('Upgrade the tenant to enable this commerce catalog capability.');
+                return;
+            }
+        }
 
         if ($this->isDetailMode()) {
             $this->loadDetailMode($engine, $project);

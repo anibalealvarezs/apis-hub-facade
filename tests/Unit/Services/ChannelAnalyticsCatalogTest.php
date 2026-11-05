@@ -81,7 +81,8 @@ class ChannelAnalyticsCatalogTest extends TestCase
     public function testOrganicSnapshotsAndSourceUncertaintyAreExplicit(): void
     {
         $tree = ChannelCapabilityRegistry::getAnalyticsTree('facebook_organic');
-        $this->assertCount(24, $tree['metrics']);
+        $this->assertCount(25, $tree['metrics']);
+        $this->assertFalse($tree['metrics']['follower_total']['is_additive']);
         $this->assertSame('latest_snapshot_per_post_for_lifetime_metrics', $tree['scopes']['ig_post']['reducer_override']);
         $this->assertSame('conditional', $tree['metrics']['likes']['status']);
         $this->assertContains('page_actions_post_reactions_total_daily', $tree['metrics']['likes']['sources']);
@@ -91,8 +92,9 @@ class ChannelAnalyticsCatalogTest extends TestCase
     public function testMailchimpDistinctsAndOrderScopeCannotMasqueradeAsCampaignTotals(): void
     {
         $tree = ChannelCapabilityRegistry::getAnalyticsTree('mailchimp');
-        $this->assertSame('distinct_identity_for_requested_window', $tree['metrics']['clicks_unique']['reducer']);
+        $this->assertSame('sum_of_daily_distinct_counts_within_slice', $tree['metrics']['clicks_unique']['reducer']);
         $this->assertSame(['store_conversions'], $tree['metrics']['revenue']['scopes']);
+        $this->assertSame(['store_conversions'], $tree['dimensions']['dimensions.currency']['scopes']);
         $this->assertSame(['clicks', 'clicks_unique'], $tree['dimensions']['dimensions.page']['metrics']);
         $this->assertContains('MC-03', $tree['metrics']['opens_standard']['caveats']);
         $this->assertContains('MC-06', $tree['metrics']['open_rate']['caveats']);
