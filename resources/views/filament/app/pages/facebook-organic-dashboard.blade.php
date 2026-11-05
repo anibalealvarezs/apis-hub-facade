@@ -192,10 +192,18 @@
                             <div class="flex items-center gap-2">
                                 <a x-show="row.permalink_url || row.permalink"
                                    :href="row.permalink_url || row.permalink" target="_blank"
+                                   @click.stop
                                    class="text-primary-500 hover:text-primary-700">
                                     <x-heroicon-o-link class="w-4 h-4"/>
                                 </a>
                                 <span x-text="row.name"></span>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                             <div x-show="row.media_type" class="text-xs text-gray-500 mt-1 uppercase"
                                  x-text="row.media_type"></div>

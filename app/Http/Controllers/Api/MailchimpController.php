@@ -330,7 +330,7 @@ class MailchimpController extends Controller
             $tableData = $results['table']['data'] ?? [];
 
             return response()->json([
-                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab),
+                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab, $tenant),
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['table']['retryable']),
             ]);
@@ -438,7 +438,8 @@ class MailchimpController extends Controller
     private function normalizeTableRows(
         $rows,
         string $dimensionKey,
-        string $activeTab = 'campaigns'
+        string $activeTab = 'campaigns',
+        ?Project $tenant = null
     ): array {
         if (!is_array($rows)) {
             return [];
@@ -504,6 +505,12 @@ class MailchimpController extends Controller
             $entry = $this->decorateSummary($entry);
             $entry['id'] = (string) $value;
             $entry['name'] = (string) $value;
+            $entry['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                $tenant,
+                'mailchimp',
+                $activeTab,
+                $entry
+            );
 
             $normalized[] = $entry;
         }

@@ -337,6 +337,13 @@ class GoogleAdsController extends Controller
                 if (isset($rowLower['dimensions.intent']) || isset($rowLower['intent'])) {
                     $row['intent'] = $rowLower['dimensions.intent'] ?? $rowLower['intent'];
                 }
+
+                $row['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                    $tenant,
+                    'google_ads',
+                    (string) $tab,
+                    $row
+                );
             }
 
             return response()->json([

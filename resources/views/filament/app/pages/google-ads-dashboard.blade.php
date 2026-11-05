@@ -235,6 +235,13 @@
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
                                 <span x-text="row.name"></span>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                                 <template x-if="row.campaign_type">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                                           x-text="formatCampaignType(row.campaign_type)"></span>

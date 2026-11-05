@@ -222,6 +222,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.campaigns] && tabConfig[ss.campaigns].metrics) || [])" :key="m">
@@ -277,6 +284,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.channels] && tabConfig[ss.channels].metrics) || [])" :key="m">
@@ -404,6 +418,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.traffic] && tabConfig[ss.traffic].metrics) || [])" :key="m">
@@ -459,6 +480,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.acquisition] && tabConfig[ss.acquisition].metrics) || [])" :key="m">
@@ -583,6 +611,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.engagement] && tabConfig[ss.engagement].metrics) || [])" :key="m">
@@ -707,6 +742,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.ecommerce] && tabConfig[ss.ecommerce].metrics) || [])" :key="m">
@@ -759,6 +801,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.products] && tabConfig[ss.products].metrics) || [])" :key="m">
@@ -814,6 +863,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.events] && tabConfig[ss.events].metrics) || [])" :key="m">
@@ -869,6 +925,13 @@ class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 t
                         <td>
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-semibold text-[var(--ga4-text-main)] truncate max-w-md" x-text="row.name" :title="row.name"></div>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                             </div>
                         </td>
                         <template x-for="m in ((tabConfig[ss.adtouchpoints] && tabConfig[ss.adtouchpoints].metrics) || [])" :key="m">
