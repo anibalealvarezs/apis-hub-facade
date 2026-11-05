@@ -10,6 +10,7 @@ not a direct copy of Mailchimp's campaign report summary.
 |---|---|---|
 | sends | sends | Count send records |
 | opens | opens_total | Count open events, including repeats |
+| opens_unique_daily | opens_unique_daily | Distinct recipients with an observed open per campaign and day, including proxy opens |
 | opens_standard | opens_standard | Open events with false proxy flag; **not verified human-only** |
 | opens_proxy | opens_proxy | Open events explicitly marked proxy |
 | clicks | clicks_total | Count click events, including repeats |
@@ -40,6 +41,13 @@ Filters: audience/account, campaign, campaign type, clicked URL and tenant-disco
 entity attributes. URLs apply to clicks, not sends, opens or arbitrary order metrics.
 Current Explorer requests select one audience; audience discovery and source-selection
 coverage should be checked before enabling multi-audience reporting.
+
+The local driver adds `opens_unique_daily` through the existing campaign
+pre-aggregation. One recipient opening repeatedly on a campaign-day counts
+once. The same recipient can count again on a different day or campaign.
+The metric remains outside the Explorer and widget selectors until a
+compatible reporting path is available. Its coverage starts with windows
+processed by the updated driver; old cached windows may have no observation.
 
 ## Gaps and expansion
 

@@ -260,6 +260,16 @@ class ChannelAnalyticsCatalog
             if ($key === 'clicks_unique') $issues[] = 'MC-02';
             $metrics[$key] = self::metric(ucwords(str_replace('_', ' ', $key)), [$cached], $key === 'revenue' ? 'store_currency' : 'count', $key === 'clicks_unique' ? 'distinct_identity_for_requested_window' : 'sum', [$store ? 'store_conversions' : 'campaign_engagement'], 'preaggregated', $issues);
         }
+        $metrics['opens_unique_daily'] = self::metric(
+            'Daily unique openers',
+            ['opens_unique_daily'],
+            'count',
+            'distinct_identity_per_campaign_day',
+            ['campaign_engagement'],
+            'preaggregated',
+            ['MC-02', 'MC-03', 'MC-04'],
+            false,
+        );
         foreach (['open_rate' => 'opens / sends', 'click_rate' => 'clicks / sends'] as $key => $formula) {
             $metrics[$key] = self::metric(ucwords(str_replace('_', ' ', $key)), [], 'ratio', $formula, ['campaign_engagement'], 'derived', ['MC-06']);
         }
