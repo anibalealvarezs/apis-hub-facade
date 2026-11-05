@@ -6,6 +6,7 @@ namespace Tests\Feature\Catalog;
 
 use App\Filament\App\Pages\CatalogEntity;
 use App\Filament\App\Pages\MarketingOverview;
+use App\Models\ApisHubRelease;
 use App\Models\AssetGroup;
 use App\Models\AssetGroupItem;
 use App\Models\Project;
@@ -15,6 +16,8 @@ use App\Services\Catalog\CatalogLinkRenderer;
 use App\Services\Catalog\CatalogScopeResolver;
 use App\Services\Catalog\EntityReference;
 use App\Services\RemoteEngineService;
+use Database\Seeders\ApisHubReleaseV1184Seeder;
+use Database\Seeders\ApisHubReleaseV1190Seeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -805,5 +808,24 @@ class CatalogEntityPageTest extends TestCase
             ->assertSee('Email & Lifecycle Events')
             ->assertSee('Customers & Leads')
             ->assertSee('Sample Campaigns');
+    }
+
+    public function test_apis_hub_release_v1190_seeder_is_idempotent_and_sets_default(): void
+    {
+        $this->seed(ApisHubReleaseV1184Seeder::class);
+        $v1184 = ApisHubRelease::where('version_tag', 'v1.18.4')->firstOrFail();
+        $this->assertTrue((bool) $v1184->is_default);
+
+        // Run v1.19.0 seeder twice to verify idempotency
+        $this->seed(ApisHubReleaseV1190Seeder::class);
+        $this->seed(ApisHubReleaseV1190Seeder::class);
+
+        $v1190 = ApisHubRelease::where('version_tag', 'v1.19.0')->firstOrFail();
+        $this->assertTrue((bool) $v1190->is_active);
+        $this->assertTrue((bool) $v1190->is_default);
+        $this->assertSame([], $v1190->upgrade_commands);
+        $this->assertSame($v1184->supported_channels, $v1190->supported_channels);
+        $this->assertFalse((bool) $v1184->fresh()->is_default);
+        $this->assertSame(1, ApisHubRelease::where('is_default', true)->count());
     }
 }
