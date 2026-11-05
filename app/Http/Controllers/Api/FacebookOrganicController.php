@@ -901,6 +901,13 @@ class FacebookOrganicController extends Controller
                     $row['id'] = 'Unknown';
                     $row['name'] = 'Unknown';
                 }
+
+                $row['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                    $tenant,
+                    'facebook_organic',
+                    $internalTab,
+                    $row
+                );
             }
 
             \Illuminate\Support\Facades\Log::info("FBO Summary - Raw results for tab={$validated['activeTab']}", [

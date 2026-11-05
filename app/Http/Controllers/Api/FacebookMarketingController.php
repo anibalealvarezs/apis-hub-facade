@@ -462,6 +462,13 @@ class FacebookMarketingController extends Controller
                         }
                     }
                 }
+
+                $row['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                    $tenant,
+                    'facebook_marketing',
+                    (string) $tab,
+                    $row
+                );
             }
 
             return response()->json([

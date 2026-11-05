@@ -842,6 +842,12 @@ class GoogleAnalyticsController extends Controller
                 if ($isCountryTab && isset($mappedRow['name']) && is_string($mappedRow['name'])) {
                     $mappedRow['name'] = \App\Services\Analytics\Ga4ReportingSemantics::countryNameFromCode($mappedRow['name']);
                 }
+                $mappedRow['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                    $tenant,
+                    'google_analytics',
+                    (string) $tab,
+                    $mappedRow
+                );
                 $mappedTableData[] = $mappedRow;
             }
 
