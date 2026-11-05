@@ -384,7 +384,7 @@ export function ga4Dashboard(config = {}) {
         },
 
         clearCache() {
-            const prefix = `ga4_v2_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}`;
+            const prefix = `ga4_v3_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}`;
             Object.keys(sessionStorage).forEach(key => {
                 if (key.startsWith(prefix)) {
                     sessionStorage.removeItem(key);
@@ -394,7 +394,7 @@ export function ga4Dashboard(config = {}) {
 
         getCacheKey(endpoint, section = null) {
             const tab = section ? this.ss[section] : '';
-            return `ga4_v2_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${tab}`;
+            return `ga4_v3_${this.tenantId}_${this.account}_${this.dateStart}_${this.dateEnd}_${endpoint}_${tab}`;
         },
 
         safeCacheSet(key, value) {
@@ -519,10 +519,12 @@ export function ga4Dashboard(config = {}) {
 
         async fetchSection(section) {
             if (!this.account || !this.dateStart || !this.dateEnd) return;
+            const tab = this.ss[section];
             const cacheKey = this.getCacheKey('table', section);
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
+                if (Array.isArray(data.metrics)) this.tabConfig[tab].metrics = data.metrics;
                 this.sections[section].rows = data.table || [];
                 return;
             }
@@ -532,11 +534,13 @@ export function ga4Dashboard(config = {}) {
             try {
                 const response = await this.fetchDashboardResponse('/api/ga4/table', this.getFetchOptions(section));
                 const data = await response.json();
+                if (this.ss[section] !== tab || this.getCacheKey('table', section) !== cacheKey) return;
                 if (data.error) {
                     this.sectionErrors[section] = data.error;
                     this.sections[section].rows = [];
                 } else {
                     this.sectionErrors[section] = null;
+                    if (Array.isArray(data.metrics)) this.tabConfig[tab].metrics = data.metrics;
                     const rows = data.table || [];
                     const countryTabs = ['traffic_countries', 'engagement_countries', 'ecommerce_countries'];
                     const currentTab = this.ss[section];

@@ -2027,7 +2027,7 @@
                             $searchableText = str_replace(["\\", "'", '"', "\n", "\r"], ['\\\\', "\\'", '\\u0022', ' ', ' '], $searchableText);
 
                             return [
-                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { if (assetStatusFilter === 'enabled' || assetStatusFilter === 'disabled') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); if (cb) isChecked = cb.checked; } matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = true; } else { matchesStatus = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } let inGrace = (isStaged && !isExpiredStaged); let isLocked = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); if (assetStatusFilter === 'grace') { matchesStatus = inGrace; } else if (assetStatusFilter === 'locked') { matchesStatus = isLocked; } else if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = !inGrace && !isLocked; } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGroup) ? '' : 'none';",
+                                'x-effect' => "let matchesText = (assetFilter === '' || '".$searchableText."'.includes(assetFilter.toLowerCase())); let matchesStatus = true; if (assetStatusFilter !== 'all') { if (assetStatusFilter === 'enabled' || assetStatusFilter === 'disabled') { let toggle = \$el.closest('li').querySelector('button[role=\"switch\"]'); if (toggle) { let isChecked = toggle.getAttribute('aria-checked') === 'true'; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } else { let cb = \$el.closest('li').querySelector('input[type=\"checkbox\"]'); let isChecked = cb ? cb.checked : false; matchesStatus = (assetStatusFilter === 'enabled' && isChecked) || (assetStatusFilter === 'disabled' && !isChecked); } } else { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let lock = lockStates[assetId]; if (!lock) { if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = true; } else { matchesStatus = false; } } else { let isStaged = (lock.status === 'staged'); let isExpiredStaged = false; if (isStaged && typeof projectDeploymentTime !== 'undefined' && projectDeploymentTime) { let stagedAt = new Date(lock.staged_at.replace(' ', 'T')).getTime(); let endsAt = stagedAt + (2 * 60 * 60 * 1000); isExpiredStaged = (endsAt - currentTime <= 0); } let inGrace = (isStaged && !isExpiredStaged); let isLocked = (lock.status === 'locked' || lock.status === 'pending_release' || (isStaged && isExpiredStaged)); if (assetStatusFilter === 'grace') { matchesStatus = inGrace; } else if (assetStatusFilter === 'locked') { matchesStatus = isLocked; } else if (assetStatusFilter === 'unlocked' || assetStatusFilter === 'none') { matchesStatus = !inGrace && !isLocked; } } } } let matchesGroup = true; if (assetGroupFilter !== 'all') { let assetId = '".str_replace(["\\", "'"], ['\\\\', "\\'"], $get('id') ?? $get('url') ?? '')."'; let groups = getAssetGroups(assetId); matchesGroup = groups.includes(assetGroupFilter); } \$el.closest('li').style.display = (matchesText && matchesStatus && matchesGroup) ? '' : 'none';",
                             ];
                         }),
                     ])
@@ -2072,23 +2072,16 @@
                 'db_active_channel' => $dbState[$this->activeChannel] ?? null,
             ]);
 
-            // Map global fallback toggles back into their channel configurations
+            // The rendered field is authoritative. A legacy root toggle may
+            // still be present in the hydrated Livewire data.
             foreach ($uiState as $key => $value) {
                 if (is_string($key) && str_ends_with($key, '_enabled')) {
-                    $channel = str_replace('_enabled', '', $key);
-                    if (!isset($uiState[$channel])) {
-                        $uiState[$channel] = [];
+                    $channel = substr($key, 0, -strlen('_enabled'));
+                    if (!array_key_exists('enabled', $uiState[$channel] ?? [])) {
+                        $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                     }
-                    $uiState[$channel]['enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                    unset($uiState[$key]);
                 }
-            }
-            
-            // Explicitly force enabled state from active channel if present in root state
-            if (array_key_exists($this->activeChannel . '_enabled', $uiState)) {
-                if (!isset($uiState[$this->activeChannel])) {
-                    $uiState[$this->activeChannel] = [];
-                }
-                $uiState[$this->activeChannel]['enabled'] = filter_var($uiState[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
             }
 
             // Build the proposed full configuration state by merging the UI state into the DB state
@@ -2101,13 +2094,6 @@
                         $proposedState[$channel]['enabled'] = filter_var($channelConfig['enabled'], FILTER_VALIDATE_BOOLEAN);
                     }
                 }
-            }
-
-            // Also check if root-level activeChannel_enabled exists in form data
-            if (isset($this->data[$this->activeChannel . '_enabled'])) {
-                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel . '_enabled'], FILTER_VALIDATE_BOOLEAN);
-            } elseif (isset($this->data[$this->activeChannel]['enabled'])) {
-                $proposedState[$this->activeChannel]['enabled'] = filter_var($this->data[$this->activeChannel]['enabled'], FILTER_VALIDATE_BOOLEAN);
             }
 
             // Fallback: If the user is saving the active channel but Livewire omitted the enabled flag

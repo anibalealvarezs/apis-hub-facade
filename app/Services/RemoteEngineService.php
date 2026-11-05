@@ -41,6 +41,131 @@
             return $response;
         }
 
+        public function getCatalogCapabilities(Project $project, array $payload = []): array
+        {
+            return $this->executeRead($project, 'catalog:capabilities', $payload, function (ApisHubApi $client) use ($payload): array {
+                try {
+                    if (method_exists($client, 'getCatalogCapabilities')) {
+                        return $client->getCatalogCapabilities($payload);
+                    }
+                    $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/capabilities', body: json_encode($payload));
+
+                    return json_decode($response->getBody()->getContents(), true);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    if (in_array($error->getResponse()->getStatusCode(), [404, 405], true)) {
+                        return $this->catalogUnavailableError();
+                    }
+                    throw $error;
+                }
+            }, 15);
+        }
+
+        public function listCatalogEntities(Project $project, string $entityType, array $payload = []): array
+        {
+            $requestPayload = array_merge($payload, ['entity_type' => $entityType]);
+
+            return $this->executeRead($project, 'catalog:list:'.$entityType, $requestPayload, function (ApisHubApi $client) use ($entityType, $payload, $requestPayload): array {
+                try {
+                    if (method_exists($client, 'listCatalogEntities')) {
+                        return $client->listCatalogEntities($entityType, $payload);
+                    }
+                    $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/list', body: json_encode($requestPayload));
+
+                    return json_decode($response->getBody()->getContents(), true);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    if (in_array($error->getResponse()->getStatusCode(), [404, 405], true)) {
+                        return $this->catalogUnavailableError();
+                    }
+                    throw $error;
+                }
+            }, 30);
+        }
+
+        public function getCatalogEntityProfile(Project $project, string $entityType, string $reference, array $payload = []): array
+        {
+            $requestPayload = array_merge($payload, [
+                'entity_type' => $entityType,
+                'reference'   => $reference,
+            ]);
+
+            return $this->executeRead($project, 'catalog:profile:'.$entityType, $requestPayload, function (ApisHubApi $client) use ($entityType, $reference, $payload, $requestPayload): array {
+                try {
+                    if (method_exists($client, 'getCatalogEntityProfile')) {
+                        return $client->getCatalogEntityProfile($entityType, $reference, $payload);
+                    }
+                    $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/profile', body: json_encode($requestPayload));
+
+                    return json_decode($response->getBody()->getContents(), true);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    $status = $error->getResponse()->getStatusCode();
+                    if ($status === 404) {
+                        $body = json_decode((string) $error->getResponse()->getBody(), true);
+                        if (is_array($body) && ($body['status'] ?? null) === 'error') {
+                            return [
+                                'status'      => 'error',
+                                'error_code'  => 'catalog_record_not_found',
+                                'http_status' => 404,
+                                'message'     => $body['error'] ?? __('Catalog entity record not found in authorized scope.'),
+                            ];
+                        }
+
+                        return $this->catalogUnavailableError();
+                    }
+                    if ($status === 405) {
+                        return $this->catalogUnavailableError();
+                    }
+                    throw $error;
+                }
+            }, 30);
+        }
+
+        public function getCatalogEntityActivity(Project $project, string $entityType, string $reference, array $payload = []): array
+        {
+            $requestPayload = array_merge($payload, [
+                'entity_type' => $entityType,
+                'reference'   => $reference,
+            ]);
+
+            return $this->executeRead($project, 'catalog:activity:'.$entityType, $requestPayload, function (ApisHubApi $client) use ($entityType, $reference, $payload, $requestPayload): array {
+                try {
+                    if (method_exists($client, 'getCatalogEntityActivity')) {
+                        return $client->getCatalogEntityActivity($entityType, $reference, $payload);
+                    }
+                    $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/activity', body: json_encode($requestPayload));
+
+                    return json_decode($response->getBody()->getContents(), true);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    $status = $error->getResponse()->getStatusCode();
+                    if ($status === 404) {
+                        $body = json_decode((string) $error->getResponse()->getBody(), true);
+                        if (is_array($body) && ($body['status'] ?? null) === 'error') {
+                            return [
+                                'status'      => 'error',
+                                'error_code'  => 'catalog_record_not_found',
+                                'http_status' => 404,
+                                'message'     => $body['error'] ?? __('Catalog entity record not found in authorized scope.'),
+                            ];
+                        }
+
+                        return $this->catalogUnavailableError();
+                    }
+                    if ($status === 405) {
+                        return $this->catalogUnavailableError();
+                    }
+                    throw $error;
+                }
+            }, 30);
+        }
+
+        protected function catalogUnavailableError(): array
+        {
+            return [
+                'status'     => 'error',
+                'error_code' => 'catalog_unavailable',
+                'message'    => __('Catalog entity pages are unavailable on this tenant. Update the tenant and reload this page.'),
+            ];
+        }
+
         /**
          * Get an instance of the ApisHubApi client for a project.
          */

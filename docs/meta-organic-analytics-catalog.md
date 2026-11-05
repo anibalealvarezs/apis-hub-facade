@@ -70,9 +70,11 @@ that account. A historical run ending before yesterday does not fetch the
 current value. Explicit zero is stored. Missing, invalid and failed responses
 leave a gap and allow the existing sync to continue.
 
-Snapshots are non-additive over time. This release adds ingestion through the
-existing tenant metric processor. A snapshot-aware reader is required before
-offering period growth in Explorer, widgets, or the Catalog Account page.
+Snapshots are non-additive over time. Data Preview shows the latest snapshot
+in the selected window for the summary and account or page breakdown, and
+observed values on the daily chart. The Widget Builder exposes the metric for
+account and page scopes at daily or whole-window grain. Missing observations
+display as gaps.
 The historical `page_follows` and `follows_and_unfollows` series retain their
 existing ingestion paths and meanings.
 

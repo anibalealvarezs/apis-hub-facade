@@ -842,6 +842,12 @@ class GoogleAnalyticsController extends Controller
                 if ($isCountryTab && isset($mappedRow['name']) && is_string($mappedRow['name'])) {
                     $mappedRow['name'] = \App\Services\Analytics\Ga4ReportingSemantics::countryNameFromCode($mappedRow['name']);
                 }
+                $mappedRow['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
+                    $tenant,
+                    'google_analytics',
+                    (string) $tab,
+                    $mappedRow
+                );
                 $mappedTableData[] = $mappedRow;
             }
 
@@ -852,6 +858,9 @@ class GoogleAnalyticsController extends Controller
 
             return response()->json([
                 'table' => $mappedTableData,
+                'metrics' => array_values(array_unique(array_map(
+                    $this->mapFromGa4(...), array_merge(...array_column($queries, 'metrics'))
+                ))),
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {

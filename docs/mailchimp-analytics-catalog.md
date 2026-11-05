@@ -10,6 +10,7 @@ not a direct copy of Mailchimp's campaign report summary.
 |---|---|---|
 | sends | sends | Count send records |
 | opens | opens_total | Count open events, including repeats |
+| opens_unique_daily | opens_unique_daily | Distinct recipients with an observed open per campaign and day, including proxy opens |
 | opens_standard | opens_standard | Open events with false proxy flag; **not verified human-only** |
 | opens_proxy | opens_proxy | Open events explicitly marked proxy |
 | clicks | clicks_total | Count click events, including repeats |
@@ -41,6 +42,15 @@ entity attributes. URLs apply to clicks, not sends, opens or arbitrary order met
 Current Explorer requests select one audience; audience discovery and source-selection
 coverage should be checked before enabling multi-audience reporting.
 
+The local driver adds `opens_unique_daily` through the existing campaign
+pre-aggregation. One recipient opening repeatedly on a campaign-day counts
+once. The same recipient can count again on a different day or campaign.
+Data Preview shows the metric in a summary tile, the daily chart, and the
+campaign, automation, and audience breakdowns. Tiles and table rows sum the
+cached campaign-day counts. The chart sums campaigns for each day. Opens
+have no URL attribution. Missing observations display as dashes or chart gaps. Widget Builder exposes daily unique opens in campaign engagement. Its coverage starts with windows
+processed by the updated driver; old cached windows may have no observation.
+
 ## Gaps and expansion
 
 - MC-01: event IDs omit clicked URL, collapsing distinct same-second URL clicks.
@@ -63,3 +73,7 @@ sentToEvents,unsubscribeEvents}`; tenant `AgnosticPreAggregationEngine`; Facade
 `MailchimpController`. See [audit](analytics-availability-audit.md) for validation and
 backfill implications. Exact activity completeness still requires an authenticated
 reconciliation against campaign report totals; this audit used no live credentials.
+
+Connected-store metrics remain unavailable in Preview and the Widget Builder.
+Store partitions currently share a configuration when they have the same audience,
+metric, and period. A store breakdown needs distinct stored identities first.

@@ -64,7 +64,7 @@ class ConfigPayloadService
         $payload['type'] = $channel;
 
         // Map the correct 'enabled' state from the toggle name
-        $payload['enabled'] = filter_var($channelConfig[$channel . '_enabled'] ?? $channelConfig['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $payload['enabled'] = filter_var($channelConfig['enabled'] ?? $channelConfig[$channel . '_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN);
         unset($payload[$channel . '_enabled']);
 
         // Check if the integration is disconnected

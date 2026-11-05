@@ -106,6 +106,16 @@
                     </div>
                 </div>
 
+                <div class="card-stat-fb" :class="activeMetrics.cpm ? 'active' : ''" @click="toggleMetric('cpm')"
+                     data-metric="cpm">
+                    <div class="fb-label">{{ __('CPM') }}</div>
+                    <div class="card-metric-value" x-text="formatCurrency(summary.cpm)"></div>
+                    <div class="card-metric-trend" :class="getVarianceClass(variance.cpm, true)">
+                        <span x-text="getVarianceIcon(variance.cpm, true)"></span>
+                        <span x-text="formatVariance(variance.cpm)"></span>
+                    </div>
+                </div>
+
                 <div class="card-stat-fb" :class="activeMetrics.cost_per_conversion ? 'active' : ''" @click="toggleMetric('cost_per_conversion')"
                      data-metric="cost_per_conversion">
                     <div class="fb-label">{{ __('Cost / Conv.') }}</div>
@@ -129,8 +139,8 @@
                 <div class="card-stat-fb" :class="activeMetrics.roas_purchase ? 'active' : ''" @click="toggleMetric('roas_purchase')"
                      data-metric="roas_purchase">
                     <div class="fb-label">{{ __('ROAS') }}</div>
-                    <div class="card-metric-value" x-text="formatDecimal(summary.roas_purchase) + 'x'"></div>
-                    <div class="card-metric-trend" :class="getVarianceClass(variance.roas_purchase)">
+                    <div class="card-metric-value" x-text="summary.roas_purchase == null ? '\u2014' : formatDecimal(summary.roas_purchase) + 'x'"></div>
+                    <div class="card-metric-trend" x-show="summary.roas_purchase != null && previous.roas_purchase > 0" :class="getVarianceClass(variance.roas_purchase)">
                         <span x-text="getVarianceIcon(variance.roas_purchase)"></span>
                         <span x-text="formatVariance(variance.roas_purchase)"></span>
                     </div>
@@ -205,6 +215,7 @@
                     <x-data-table.column state="tableState" key="impressions" label="{{ __('Impressions') }}"/>
                     <x-data-table.column state="tableState" key="ctr" label="{{ __('CTR') }}"/>
                     <x-data-table.column state="tableState" key="cpc" label="{{ __('Avg. CPC') }}"/>
+                    <x-data-table.column state="tableState" key="cpm" label="{{ __('CPM') }}"/>
                     <x-data-table.column state="tableState" key="conversions" label="{{ __('Conversions') }}"/>
                     <x-data-table.column state="tableState" key="conversion_value" label="{{ __('Conv. Value') }}"/>
                     <x-data-table.column state="tableState" key="cost_per_conversion" label="{{ __('Cost / Conv.') }}"/>
@@ -224,6 +235,13 @@
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
                                 <span x-text="row.name"></span>
+                                <a x-show="row.catalog_url"
+                                   :href="row.catalog_url"
+                                   @click.stop
+                                   class="inline-flex items-center text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
+                                   title="{{ __('View in Catalog') }}">
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5"/>
+                                </a>
                                 <template x-if="row.campaign_type">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                                           x-text="formatCampaignType(row.campaign_type)"></span>
@@ -240,11 +258,12 @@
                         <td class="metric-cell" x-text="formatNumber(row.impressions)"></td>
                         <td class="metric-cell" x-text="formatPercent(row.ctr)"></td>
                         <td class="metric-cell" x-text="formatCurrency(row.cpc)"></td>
+                        <td class="metric-cell" x-text="formatCurrency(row.cpm)"></td>
                         <td class="metric-cell" x-text="formatNumber(row.conversions)"></td>
                         <td class="metric-cell" x-text="formatCurrency(row.conversion_value)"></td>
                         <td class="metric-cell" x-text="formatCurrency(row.cost_per_conversion)"></td>
                         <td class="metric-cell" x-text="formatPercent(row.conversion_rate)"></td>
-                        <td class="metric-cell" x-text="formatDecimal(row.roas_purchase) + 'x'"></td>
+                        <td class="metric-cell" x-text="row.roas_purchase == null ? '\u2014' : formatDecimal(row.roas_purchase) + 'x'"></td>
                     </x-data-table.row>
                 </template>
                 <tr x-show="tableState.paginatedRows.length === 0">

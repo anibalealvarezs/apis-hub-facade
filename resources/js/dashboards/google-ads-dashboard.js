@@ -23,7 +23,8 @@ export function googleAdsDashboard(config = {}) {
             conversion_value: 0,
             ctr: 0,
             cpc: 0,
-            roas_purchase: 0,
+            cpm: 0,
+            roas_purchase: null,
             cost_per_conversion: 0,
             conversion_rate: 0
         },
@@ -35,7 +36,8 @@ export function googleAdsDashboard(config = {}) {
             conversion_value: 0,
             ctr: 0,
             cpc: 0,
-            roas_purchase: 0,
+            cpm: 0,
+            roas_purchase: null,
             cost_per_conversion: 0,
             conversion_rate: 0
         },
@@ -50,7 +52,8 @@ export function googleAdsDashboard(config = {}) {
             conversion_value: false,
             ctr: false,
             cpc: false,
-            roas_purchase: false,
+            cpm: false,
+            roas_purchase: true,
             cost_per_conversion: false,
             conversion_rate: false
         },
@@ -133,6 +136,7 @@ export function googleAdsDashboard(config = {}) {
                 conversion_value: calculate(this.summary.conversion_value, this.previous.conversion_value),
                 ctr: calculate(this.summary.ctr, this.previous.ctr),
                 cpc: calculate(this.summary.cpc, this.previous.cpc),
+                cpm: calculate(this.summary.cpm, this.previous.cpm),
                 roas_purchase: calculate(this.summary.roas_purchase, this.previous.roas_purchase),
                 cost_per_conversion: calculate(this.summary.cost_per_conversion, this.previous.cost_per_conversion),
                 conversion_rate: calculate(this.summary.conversion_rate, this.previous.conversion_rate)
@@ -439,7 +443,7 @@ export function googleAdsDashboard(config = {}) {
 
         async fetchSummary() {
             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('summary', 'all');
+            const cacheKey = this.getCacheKey('summary-metrics-v3', 'all');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -466,7 +470,7 @@ export function googleAdsDashboard(config = {}) {
 
         async fetchChart() {
             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('chart', 'all');
+            const cacheKey = this.getCacheKey('chart-metrics-v3', 'all');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -493,7 +497,7 @@ export function googleAdsDashboard(config = {}) {
 
         async fetchTable() {
             if (!this.accounts.length || !this.dateStart || !this.dateEnd) return;
-            const cacheKey = this.getCacheKey('table', 'table');
+            const cacheKey = this.getCacheKey('table-metrics-v3', 'table');
 
             if (sessionStorage.getItem(cacheKey)) {
                 const data = JSON.parse(sessionStorage.getItem(cacheKey));
@@ -520,7 +524,8 @@ export function googleAdsDashboard(config = {}) {
                         conversion_value: parseFloat(r.conversion_value) || 0,
                         ctr: parseFloat(r.ctr) || 0,
                         cpc: parseFloat(r.cpc) || 0,
-                        roas_purchase: parseFloat(r.roas_purchase) || 0,
+                        cpm: parseFloat(r.cpm) || 0,
+                        roas_purchase: r.roas_purchase == null ? null : Number(r.roas_purchase),
                         cost_per_conversion: parseFloat(r.cost_per_conversion) || 0,
                         conversion_rate: parseFloat(r.conversion_rate) || 0,
                     };
@@ -642,7 +647,8 @@ export function googleAdsDashboard(config = {}) {
                     conversion_value: 0,
                     ctr: 0,
                     cpc: 0,
-                    roas_purchase: 0,
+                    cpm: 0,
+                    roas_purchase: null,
                     cost_per_conversion: 0,
                     conversion_rate: 0
                 };
@@ -756,6 +762,21 @@ export function googleAdsDashboard(config = {}) {
                 });
             }
 
+            if (this.activeMetrics.cpm) {
+                datasets.push({
+                    label: 'Avg. CPM',
+                    data: paddedData.map(r => parseFloat(r.cpm) || 0),
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    fill: false,
+                    yAxisID: 'yCpm',
+                    tension: 0.4
+                });
+            }
+
             if (this.activeMetrics.cost_per_conversion) {
                 datasets.push({
                     label: 'Cost / Conv.',
@@ -789,7 +810,7 @@ export function googleAdsDashboard(config = {}) {
             if (this.activeMetrics.roas_purchase) {
                 datasets.push({
                     label: 'ROAS',
-                    data: paddedData.map(r => parseFloat(r.roas_purchase) || 0),
+                    data: paddedData.map(r => r.roas_purchase == null ? null : Number(r.roas_purchase)),
                     borderColor: '#EC4899',
                     backgroundColor: 'rgba(236, 72, 153, 0.1)',
                     borderWidth: 2,
@@ -808,7 +829,7 @@ export function googleAdsDashboard(config = {}) {
             chart.options.scales.x.grid.color = cssGridColor;
             chart.options.scales.x.ticks.color = cssTicksColor;
 
-            ['spend', 'clicks', 'impressions', 'conversions', 'conversion_value', 'ctr', 'cpc', 'cost_per_conversion', 'conversion_rate', 'roas_purchase'].forEach(m => {
+            ['spend', 'clicks', 'impressions', 'conversions', 'conversion_value', 'ctr', 'cpc', 'cpm', 'cost_per_conversion', 'conversion_rate', 'roas_purchase'].forEach(m => {
                 let scaleId;
                 if (m === 'conversion_value') scaleId = 'yConversionValue';
                 else if (m === 'cost_per_conversion') scaleId = 'yCostPerConversion';

@@ -78,15 +78,18 @@ class CollaboratorAssetAccessService
     {
         $config = $project->sync_config[$channel] ?? [];
         $assets = [];
-        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties'];
+        $assetKeys = ['sites', 'ad_accounts', 'pages', 'locations', 'profiles', 'accounts', 'shops', 'properties', 'audiences', 'lists'];
 
         foreach ($assetKeys as $assetKey) {
             if (! empty($config[$assetKey]) && is_array($config[$assetKey])) {
                 foreach ($config[$assetKey] as $item) {
                     if (is_array($item) && ! empty($item['enabled']) && empty($item['lost_access'])) {
-                        $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
+                        $id = $item['id'] ?? $item['platformId'] ?? $item['platform_id'] ?? $item['list_id'] ?? $item['url'] ?? '';
                         if ($id) {
                             $assets[] = (string) $id;
+                        }
+                        if ($channel === 'facebook_organic' && ! empty($item['ig_account'])) {
+                            $assets[] = (string) $item['ig_account'];
                         }
                     }
                 }
@@ -98,9 +101,12 @@ class CollaboratorAssetAccessService
                 if (! empty($config['assets'][$assetKey]) && is_array($config['assets'][$assetKey])) {
                     foreach ($config['assets'][$assetKey] as $item) {
                         if (is_array($item) && ! empty($item['enabled']) && empty($item['lost_access'])) {
-                            $id = $item['id'] ?? $item['platformId'] ?? $item['url'] ?? '';
+                            $id = $item['id'] ?? $item['platformId'] ?? $item['platform_id'] ?? $item['list_id'] ?? $item['url'] ?? '';
                             if ($id) {
                                 $assets[] = (string) $id;
+                            }
+                            if ($channel === 'facebook_organic' && ! empty($item['ig_account'])) {
+                                $assets[] = (string) $item['ig_account'];
                             }
                         }
                     }

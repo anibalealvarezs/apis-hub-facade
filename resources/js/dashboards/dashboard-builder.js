@@ -1076,6 +1076,17 @@ export function dashboardBuilder(config = {}) {
             const types = this.gscTypesForSeries(series);
             return Object.fromEntries(Object.entries(options).filter(([metric]) => types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.metrics.includes(metric))));
         },
+        getRawSeriesBreakdownOptions(series) {
+            const options = this.getBreakdownsForSeries(series.channel, series.dependency);
+            const types = series.channel === 'google_search_console' ? this.gscTypesForSeries(series) : [];
+            return Object.fromEntries(Object.entries(options).filter(([key]) => {
+                if (series.channel === 'mailchimp' && key === 'dimensions.page') {
+                    return (series.metrics || []).every(metric => ['clicks', 'clicks_unique'].includes(metric));
+                }
+                const tab = this.gscAnalyticsCatalog.dimensions?.[key]?.tab;
+                return !tab || types.every(type => this.gscAnalyticsCatalog.search_types?.[type]?.tabs.includes(tab));
+            }));
+        },
         isGscSearchTypeFilter(filter) {
             return this.filterModalChannel === 'google_search_console' && filter.dimension === 'dimensions.search_type';
         },

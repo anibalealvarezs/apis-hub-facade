@@ -9,7 +9,7 @@ export function fboDashboard(config = {}) {
         dateStart: config.dateStart || '',
         dateEnd: config.dateEnd || '',
         activeTab: config.activeTab || 'instagram',
-        activeBreakdownTab: config.activeBreakdownTab || 'reaction_type',
+        activeBreakdownTab: config.activeBreakdownTab || 'accounts',
         csrfToken: config.csrfToken || '',
 
         isSummaryLoading: false,
@@ -56,6 +56,7 @@ export function fboDashboard(config = {}) {
             'content_views': { label: 'Content Views', color: 'var(--fb-views)' },
             'video_views': { label: 'Video Views', color: 'var(--fb-views)' },
             'page_views_total': { label: 'Page Views', color: 'var(--fb-views)' },
+            follower_total: { label: 'Followers (snapshot)', color: '#A78BFA' },
             'follows_and_unfollows': { label: 'Follows', color: 'var(--fb-follows)' },
             'follows': { label: 'Follows', color: 'var(--fb-follows)' },
             'profile_views': { label: 'Profile Views', color: '#14B8A6' },
@@ -218,8 +219,9 @@ export function fboDashboard(config = {}) {
 
         get availableBreakdownTabs() {
             return this.activeTab === 'facebook'
-                ? [{ value: 'reaction_type', label: 'Reaction type' }]
+                ? [{ value: 'accounts', label: 'Pages' }, { value: 'reaction_type', label: 'Reaction type' }]
                 : [
+                    { value: 'accounts', label: 'Accounts' },
                     { value: 'contact_button_type', label: 'Contact button type' },
                     { value: 'follow_type', label: 'Follow type' },
                     { value: 'media_product_type', label: 'Media product type' },
@@ -317,7 +319,7 @@ export function fboDashboard(config = {}) {
                 .sort()
                 .map(key => `${key}:${(this.activeFilters[key] || []).join(',')}`)
                 .join('|');
-            return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v4`;
+            return `fbo_${this.tenantId}_${accountKey}_${this.dateStart}_${this.dateEnd}_${endpoint}_${this.activeTab}_${breakdownTab}_${filtersKey}_v5`;
         },
 
         getPostsCacheKey() {
@@ -819,7 +821,7 @@ export function fboDashboard(config = {}) {
                     this.activeMetrics[key] = true;
                 }
 
-                const val = this.summaryRaw[key] || 0;
+                const val = key === 'follower_total' ? this.summaryRaw[key] : (this.summaryRaw[key] || 0);
                 const prev = this.previousRaw[key] || 0;
                 const info = this.getMetricInfo(key);
                 metrics.push({
@@ -952,10 +954,10 @@ export function fboDashboard(config = {}) {
                 if (dataByDate[dateStr]) {
                     const r = dataByDate[dateStr];
                     Object.keys(this.metricDictionary).forEach(k => {
-                        obj[k] = parseFloat(r['trend_total_' + k] || r[k] || 0);
+                        obj[k] = k === 'follower_total' ? (r[k] == null ? null : Number(r[k])) : parseFloat(r['trend_total_' + k] || r[k] || 0);
                     });
                 } else {
-                    Object.keys(this.metricDictionary).forEach(k => obj[k] = 0);
+                    Object.keys(this.metricDictionary).forEach(k => obj[k] = k === 'follower_total' ? null : 0);
                 }
                 return obj;
             });
@@ -969,7 +971,7 @@ export function fboDashboard(config = {}) {
                 const info = this.getMetricInfo(key);
                 const data = paddedData.map(r => r[key]);
 
-                if (data.some(v => v > 0)) {
+                if (data.some(v => key === 'follower_total' ? v != null : v > 0)) {
                     const resolvedColor = this.getComputedColor(info.color);
                     datasets.push({
                         label: info.label,
@@ -977,7 +979,7 @@ export function fboDashboard(config = {}) {
                         borderColor: resolvedColor,
                         backgroundColor: resolvedColor + '20',
                         borderWidth: 2,
-                        pointRadius: 0,
+                        pointRadius: key === 'follower_total' ? 2 : 0,
                         pointHoverRadius: 6,
                         fill: true,
                         yAxisID: 'y' + key,
