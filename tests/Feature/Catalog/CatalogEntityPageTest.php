@@ -327,6 +327,34 @@ class CatalogEntityPageTest extends TestCase
         $this->assertSame(['act_101', 'act_102'], $sentPayload['authorized_scope']['channels']['facebook_marketing']['platform_ids']);
     }
 
+    public function test_commerce_catalog_uses_capabilities_and_the_authorized_mailchimp_audience(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('view_data');
+        $project = $this->createAdsProject($owner, ['mailchimp' => ['audiences' => [
+            ['id' => 'audience', 'enabled' => true, 'lost_access' => false],
+        ]]]);
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+        $engine = Mockery::mock(RemoteEngineService::class);
+        $engine->shouldReceive('getCatalogCapabilities')->once()->andReturn([
+            'status' => 'success', 'data' => ['entities' => ['stores' => ['supported' => true]]],
+        ]);
+        $engine->shouldReceive('listCatalogEntities')->once()->withArgs(
+            fn (Project $target, string $type, array $payload) => $target->id === $project->id && $type === 'stores'
+                && $payload['filters']['channel'] === 'mailchimp'
+                && $payload['authorized_scope']['channels']['mailchimp']['platform_ids'] === ['audience']
+        )->andReturn(['status' => 'success', 'data' => [[
+            'reference' => 'channeled:mailchimp:stores:8', 'entity_type' => 'stores', 'id' => 8,
+            'name' => 'Connected Store', 'platform_id' => 'scoped-store', 'channel' => 'mailchimp',
+            'channel_label' => 'Mailchimp', 'attributes' => ['domain' => 'shop.example.test'],
+            'relationships' => [], 'provenance' => [],
+        ]], 'meta' => ['total' => 1, 'page' => 1, 'per_page' => 25, 'last_page' => 1]]);
+        $this->app->instance(RemoteEngineService::class, $engine);
+        Livewire::test(CatalogEntity::class, ['entity' => 'stores'])->assertSuccessful()
+            ->assertSet('channel', 'mailchimp')->assertSet('stateCode', null)->assertSee('Connected Store');
+    }
+
     public function test_catalog_entity_detail_mode_renders_profile_hierarchy_metrics_and_milestone_activity(): void
     {
         $owner = User::factory()->create();
@@ -539,11 +567,20 @@ class CatalogEntityPageTest extends TestCase
         $owner = User::factory()->create();
         $owner->givePermissionTo('view_data');
         $project = $this->createAdsProject($owner);
+        $config = $project->sync_config;
+        $config['mailchimp'] = ['audiences' => [['id' => 'audience', 'enabled' => true]]];
+        $project->update(['sync_config' => $config]);
 
         $this->actingAs($owner);
         Filament::setTenant($project);
 
-        // Deferred Phase 4 entity (orders)
+        $capabilities = Mockery::mock(RemoteEngineService::class);
+        $capabilities->shouldReceive('getCatalogCapabilities')->once()->andReturn([
+            'status' => 'success', 'data' => ['entities' => ['orders' => ['supported' => false]]],
+        ]);
+        $this->app->instance(RemoteEngineService::class, $capabilities);
+
+        // An older tenant retains a clear deferred state until commerce support is available.
         Livewire::test(CatalogEntity::class, ['entity' => 'orders'])
             ->assertSuccessful()
             ->assertSet('stateCode', 'phase_deferred')

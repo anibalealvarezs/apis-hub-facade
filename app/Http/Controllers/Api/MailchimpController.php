@@ -43,16 +43,24 @@ class MailchimpController extends Controller
         'automations' => 'channeledCampaign',
         'audiences' => 'channeledAccount',
         'urls' => 'dimensions.page',
+        'stores' => 'dimensions.store_id',
     ];
 
     private function validateRequest(Request $request): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'tenant' => 'required|integer',
-            'account' => 'required|string',
+            'account' => ['required', function ($attribute, $value, $fail) {
+                $ids = is_array($value) ? $value : [$value];
+                if ($ids === [] || array_filter($ids, static fn ($id) => !is_scalar($id) || !ctype_digit((string)$id) || (int)$id < 1)) {
+                    $fail(__('Select valid audience accounts.'));
+                }
+            }],
             'dateStart' => 'required|date',
             'dateEnd' => 'required|date',
-            'activeTab' => 'nullable|string|in:campaigns,automations,audiences,urls',
+            'activeTab' => 'nullable|string|in:campaigns,automations,audiences,urls,stores',
+            'dependency' => 'nullable|string|in:campaign_engagement,store_conversions',
+            'asset_group' => 'nullable|string',
             'campaignType' => 'nullable|string|in:all,regular,rss,variate,plaintext',
             'activeFilters' => 'nullable|array',
             'activeFilters.*' => 'nullable',
@@ -63,11 +71,34 @@ class MailchimpController extends Controller
             'metrics' => 'nullable|array',
             'metrics.*' => 'string',
         ]);
+        if (($validated['dependency'] ?? null) === 'store_conversions') {
+            $validated['activeTab'] = 'stores';
+        }
+
+        if (($validated['activeTab'] ?? null) === 'stores') {
+            if (!empty($validated['breakdown']) && !in_array($validated['breakdown'], ['dimensions.store_id', 'dimensions.currency'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'breakdown' => 'Store metrics support store and currency breakdowns.',
+                ]);
+            }
+            foreach (array_keys($validated['filters'] ?? []) as $key) {
+                if ((str_starts_with($key, 'dimensions.') && !in_array($key, ['dimensions.store_id', 'dimensions.currency'], true))
+                    || in_array($key, ['channeledCampaign', 'campaignType'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'filters' => 'Use store or currency filters for store metrics.',
+                    ]);
+                }
+            }
+        }
+
+        return $validated;
     }
 
     private function getRequestedAggregations(Request $request, array $filters, array $groupBy): array
     {
-        $available = self::AVAILABLE_AGGS;
+        $storeMetrics = ['orders' => 'orders', 'revenue' => 'revenue'];
+        $storeScope = $request->input('activeTab') === 'stores' || $request->input('dependency') === 'store_conversions';
+        $available = $storeScope ? $storeMetrics : array_diff_key(self::AVAILABLE_AGGS, $storeMetrics);
         if (isset($filters['dimensions.page']) || in_array('dimensions.page', $groupBy, true)) {
             $available = array_intersect_key($available, array_flip(['clicks', 'clicks_unique']));
         }
@@ -97,7 +128,7 @@ class MailchimpController extends Controller
 
         if (!empty($explicitFilters)) {
             foreach ($explicitFilters as $key => $value) {
-                if ($value !== null && $value !== '') {
+                if ($key !== 'channeledAccount' && $value !== null && $value !== '') {
                     $filters[$key] = $value;
                 }
             }
@@ -170,9 +201,13 @@ class MailchimpController extends Controller
 
             $baseFilters = [
                 'channel' => 'mailchimp',
-                'channeledAccount' => (string) $validated['account'],
+                'channeledAccount' => $this->accountFilter($validated['account']),
             ];
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
+            $this->applyDynamicFilters(
+                $baseFilters,
+                ($validated['activeTab'] ?? null) === 'stores' ? null : ($validated['activeFilters'] ?? null),
+                $validated['filters'] ?? null,
+            );
 
             $aggs = $this->getRequestedAggregations($request, $baseFilters, []);
 
@@ -194,6 +229,13 @@ class MailchimpController extends Controller
             ];
 
             $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
+            if (($validated['activeTab'] ?? null) === 'stores') {
+                foreach ($results as $result) {
+                    if (($result['status'] ?? null) === 'error') {
+                        throw new \RuntimeException('Store metrics could not be loaded. Please retry.');
+                    }
+                }
+            }
 
             $retryable = false;
             foreach (['summary', 'previous'] as $key) {
@@ -209,6 +251,8 @@ class MailchimpController extends Controller
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => $retryable,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Mailchimp Summary Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -224,9 +268,13 @@ class MailchimpController extends Controller
 
             $baseFilters = [
                 'channel' => 'mailchimp',
-                'channeledAccount' => (string) $validated['account'],
+                'channeledAccount' => $this->accountFilter($validated['account']),
             ];
-            $this->applyDynamicFilters($baseFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
+            $this->applyDynamicFilters(
+                $baseFilters,
+                ($validated['activeTab'] ?? null) === 'stores' ? null : ($validated['activeFilters'] ?? null),
+                $validated['filters'] ?? null,
+            );
 
             $groupBy = ['daily'];
             if (!empty($validated['groupBy'])) {
@@ -253,7 +301,20 @@ class MailchimpController extends Controller
                 'aggregations' => array_keys($aggs),
             ]);
 
+            if (isset($aggs['revenue'])) {
+                $payloads['currency_guard'] = $payloads['chart'];
+                $payloads['currency_guard']['aggregations'] = ['revenue' => 'revenue'];
+                $payloads['currency_guard']['groupBy'] = [];
+            }
+
             $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
+            if (($validated['activeTab'] ?? null) === 'stores') {
+                foreach ($results as $result) {
+                    if (($result['status'] ?? null) === 'error') {
+                        throw new \RuntimeException('Store metrics could not be loaded. Please retry.');
+                    }
+                }
+            }
 
             \Illuminate\Support\Facades\Log::info('[MAILCHIMP_DEBUG] Chart received from aggregateChanneledPool', [
                 'status' => $results['chart']['status'] ?? null,
@@ -268,11 +329,19 @@ class MailchimpController extends Controller
             }
 
             $rows = $this->normalizeChartRows($results['chart']['data'] ?? [], $validated['breakdown'] ?? null);
+            if (isset($aggs['revenue']) && !isset($results['currency_guard']['data'][0]['revenue'])) {
+                foreach ($rows as &$row) {
+                    $row['revenue'] = null;
+                }
+                unset($row);
+            }
             return response()->json([
                 'chart' => $rows,
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['chart']['retryable']),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Mailchimp Chart Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -289,7 +358,7 @@ class MailchimpController extends Controller
             $tab = $validated['activeTab'] ?? 'campaigns';
             $tableFilters = [
                 'channel' => 'mailchimp',
-                'channeledAccount' => (string) $validated['account'],
+                'channeledAccount' => $this->accountFilter($validated['account']),
             ];
             if ($tab === 'campaigns') {
                 $typeFilter = $validated['campaignType'] ?? 'all';
@@ -304,7 +373,7 @@ class MailchimpController extends Controller
             } elseif ($tab === 'automations') {
                 $tableFilters['campaignType'] = ['operator' => 'in', 'value' => ['automation', 'automation-email']];
             }
-            $this->applyDynamicFilters($tableFilters, $validated['activeFilters'] ?? null, $validated['filters'] ?? null);
+            $this->applyDynamicFilters($tableFilters, $tab === 'stores' ? null : ($validated['activeFilters'] ?? null), $validated['filters'] ?? null);
 
             $tabPayload = [
                 'groupBy' => [self::TAB_DIMENSIONS[$tab] ?? self::TAB_DIMENSIONS['campaigns']],
@@ -315,13 +384,24 @@ class MailchimpController extends Controller
             ];
 
             // A metric widget may request a custom dimension instead of a tab dimension.
-            if (!empty($validated['breakdown'])) {
+            if ($tab === 'stores') {
+                $tabPayload['groupBy'] = ($validated['breakdown'] ?? null) === 'dimensions.currency'
+                    ? ['dimensions.currency']
+                    : ['dimensions.store_id', 'dimensions.currency'];
+            } elseif (!empty($validated['breakdown'])) {
                 $tabPayload['groupBy'] = [$validated['breakdown']];
             }
 
             $tabPayload['aggregations'] = $this->getRequestedAggregations($request, $tableFilters, $tabPayload['groupBy']);
             $payloads = ['table' => $tabPayload];
             $results = $service->aggregateChanneledPool($tenant, 'mailchimp', 'metric', $this->withEntityAttributeFilters($payloads, $validated));
+            if (($validated['activeTab'] ?? null) === 'stores') {
+                foreach ($results as $result) {
+                    if (($result['status'] ?? null) === 'error') {
+                        throw new \RuntimeException('Store metrics could not be loaded. Please retry.');
+                    }
+                }
+            }
 
             if (($results['table']['status'] ?? null) === 'error') {
                 \Illuminate\Support\Facades\Log::error("Mailchimp Table APIs Hub Error: " . json_encode($results['table']));
@@ -329,11 +409,18 @@ class MailchimpController extends Controller
 
             $tableData = $results['table']['data'] ?? [];
 
+            $rows = $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab, $tenant);
+            if ($tab === 'stores' && $tabPayload['groupBy'][0] === 'dimensions.store_id') {
+                $rows = $this->withStoreMetadata($rows, $tenant, $validated, $service, $validated['asset_group'] ?? null);
+            }
+
             return response()->json([
-                'table' => $this->normalizeTableRows($tableData, $tabPayload['groupBy'][0], $tab, $tenant),
+                'table' => $rows,
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => !empty($results['table']['retryable']),
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Mailchimp Table Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -379,6 +466,8 @@ class MailchimpController extends Controller
             }
 
             return response()->json(['trend' => array_merge(['success' => true], $trendData)]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Mailchimp Trend Proxy Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
@@ -498,13 +587,21 @@ class MailchimpController extends Controller
                 if ($metric === self::DAILY_UNIQUE_OPENS) {
                     $entry[$metric] = isset($lower[$metric]) ? (float) $lower[$metric] : null;
                 } elseif (array_key_exists($metric, $lower)) {
-                    $entry[$metric] = (float) $lower[$metric];
+                    $entry[$metric] = $lower[$metric] === null ? null : (float) $lower[$metric];
                 }
             }
 
             $entry = $this->decorateSummary($entry);
             $entry['id'] = (string) $value;
             $entry['name'] = (string) $value;
+            if ($activeTab === 'stores') {
+                if ($dimensionKey === 'dimensions.store_id') $entry['store_id'] = (string)$value;
+                $entry['currency'] = $lower['currency'] ?? $lower['dimensions.currency'] ?? null;
+                $entry['id'] .= ':' . $entry['currency'];
+                if ($entry['currency'] === null || (!isset($entry['orders']) && !isset($entry['revenue']))) {
+                    continue;
+                }
+            }
             $entry['catalog_url'] = app(\App\Services\Catalog\CatalogLinkRenderer::class)->forExplorerRow(
                 $tenant,
                 'mailchimp',
@@ -516,5 +613,44 @@ class MailchimpController extends Controller
         }
 
         return $normalized;
+    }
+
+    private function accountFilter(string|array $accounts): string|array
+    {
+        $accounts = array_values(array_unique(array_map('strval', (array)$accounts)));
+        return count($accounts) === 1 ? $accounts[0] : ['operator' => 'in', 'value' => $accounts];
+    }
+
+    private function withStoreMetadata(array $rows, Project $project, array $validated, RemoteEngineService $service, ?string $scope): array
+    {
+        $ids = array_values(array_unique(array_column($rows, 'store_id')));
+        $stores = [];
+        foreach (array_chunk($ids, 100) as $chunk) {
+            $response = $service->listCatalogEntities($project, 'stores', [
+                'authorized_scope' => ['channels' => ['mailchimp' => [
+                    'account_ids' => array_map('intval', (array)$validated['account']),
+                    'platform_ids' => [],
+                ]]],
+                'filters' => ['channel' => 'mailchimp', 'platform_ids' => $chunk],
+                'pagination' => ['page' => 1, 'per_page' => 100],
+            ]);
+            if (($response['status'] ?? null) === 'error') break;
+            foreach ($response['data'] ?? [] as $store) {
+                $reference = \App\Services\Catalog\EntityReference::tryParse($store['reference'] ?? '');
+                if (!$reference || $reference->getEntityType() !== 'stores' || $reference->getChannel() !== 'mailchimp') continue;
+                $stores[$store['platform_id']] = $store;
+            }
+        }
+        foreach ($rows as &$row) {
+            $store = $stores[$row['store_id']] ?? null;
+            if (!$store) continue;
+            $row['name'] = $store['name'];
+            $row['domain'] = $store['attributes']['domain'] ?? null;
+            $row['source_store_id'] = $store['attributes']['source_store_id'] ?? null;
+            $row['catalog_url'] = \App\Services\Catalog\EntityReference::buildUrl('stores', $store['reference'],
+                ['scope' => $scope, 'channel' => 'mailchimp'], $project);
+        }
+        unset($row);
+        return $rows;
     }
 }

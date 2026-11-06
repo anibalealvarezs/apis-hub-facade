@@ -10,7 +10,9 @@ use App\Services\RemoteEngineService;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Page;
+use Filament\Panel;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 
@@ -31,6 +33,11 @@ class CatalogEntity extends Page
         'queries'   => 'Queries',
         'events'    => 'Events',
         'customers' => 'Customers',
+        'stores'    => 'Stores',
+        'variants'  => 'Product Variants',
+        'promotions'=> 'Promotions',
+        'promo-codes'=> 'Promo Codes',
+        'carts'     => 'Carts',
         'orders'    => 'Orders',
         'products'  => 'Products',
     ];
@@ -46,6 +53,11 @@ class CatalogEntity extends Page
         'queries'   => 2,
         'events'    => 2,
         'customers' => 2,
+        'stores'    => 4,
+        'variants'  => 4,
+        'promotions'=> 4,
+        'promo-codes'=> 4,
+        'carts'     => 4,
         'orders'    => 4,
         'products'  => 4,
     ];
@@ -153,6 +165,15 @@ class CatalogEntity extends Page
         return '/catalog/{entity}/{record?}';
     }
 
+    public static function routes(Panel $panel): void
+    {
+        Route::get(static::getRoutePath(), static::class)
+            ->whereIn('entity', array_keys(static::ENTITIES))
+            ->middleware(static::getRouteMiddleware($panel))
+            ->withoutMiddleware(static::getWithoutRouteMiddleware($panel))
+            ->name(static::getRelativeRouteName());
+    }
+
     public static function canAccess(): bool
     {
         return auth()->user()?->can('view_data') ?? false;
@@ -178,6 +199,7 @@ class CatalogEntity extends Page
                 'ad-groups' => 'google_ads',
                 'posts'     => 'facebook_organic',
                 'queries'   => 'google_search_console',
+                'stores', 'orders', 'products', 'variants', 'promotions', 'promo-codes', 'carts' => 'mailchimp',
                 default     => '',
             };
         }
@@ -407,6 +429,10 @@ class CatalogEntity extends Page
      */
     public function getChannelOptionsForEntity(string $entity): array
     {
+        if (in_array($entity, EntityReference::COMMERCE_ENTITY_TYPES, true)) {
+            return ['mailchimp' => 'Mailchimp'];
+        }
+
         return match ($entity) {
             'accounts' => [
                 ''                      => __('All channels'),
@@ -563,6 +589,20 @@ class CatalogEntity extends Page
 
         /** @var RemoteEngineService $engine */
         $engine = app(RemoteEngineService::class);
+
+        if (in_array($this->entity, EntityReference::COMMERCE_ENTITY_TYPES, true)) {
+            $response = $engine->getCatalogCapabilities($project, ['authorized_scope' => $this->authorizedScope]);
+            if (($response['status'] ?? null) === 'error') {
+                $this->applyRemoteErrorState($response);
+                return;
+            }
+            $this->capabilities = $response['data'] ?? [];
+            if (empty($this->capabilities['entities'][$this->entity]['supported'])) {
+                $this->stateCode = 'phase_deferred';
+                $this->stateMessage = __('Upgrade the tenant to enable this commerce catalog capability.');
+                return;
+            }
+        }
 
         if ($this->isDetailMode()) {
             $this->loadDetailMode($engine, $project);

@@ -403,7 +403,7 @@
 
 .mailchimp-header-subtitle { color: var(--mailchimp-text-dim); font-size: 0.9rem; }
 
-.mailchimp-header-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 0; }
+.mailchimp-header-controls { display: flex; flex-wrap: wrap; min-width: 0; align-items: center; gap: 15px; margin-bottom: 0; }
 
 .metrics-grid-mailchimp { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 15px; margin-bottom: 25px; }
 

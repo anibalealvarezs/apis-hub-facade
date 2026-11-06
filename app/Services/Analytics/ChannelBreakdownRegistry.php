@@ -37,7 +37,10 @@ class ChannelBreakdownRegistry
                 ],
             ],
 
-            'mailchimp' => $dependency === 'store_conversions' ? [] : [
+            'mailchimp' => $dependency === 'store_conversions' ? [
+                'dimensions.store_id' => ['label' => __('Store'), 'type' => 'dimension', 'operators' => $defaultOperators],
+                'dimensions.currency' => ['label' => __('Currency'), 'type' => 'dimension', 'operators' => $defaultOperators],
+            ] : [
                 'channeledCampaign' => [
                     'label' => __('Campaign'),
                     'type' => 'relational',

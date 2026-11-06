@@ -1,6 +1,6 @@
 # Mailchimp analytics catalog
 
-Audited 2026-10-30. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('mailchimp')`.
+Audited 2026-10-30, commerce integration updated 2026-11-06. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('mailchimp')`.
 The cache derives metrics from recipient events and connected-store orders. This is
 not a direct copy of Mailchimp's campaign report summary.
 
@@ -19,8 +19,8 @@ not a direct copy of Mailchimp's campaign report summary.
 | bounces_hard | bounces_hard | Hard bounce events |
 | bounces_soft | bounces_soft | Soft bounce events |
 | unsubscribes | unsubscribes | Unsubscribe records |
-| orders | orders_count | Distinct order IDs per store/day |
-| revenue | revenue | Sum order total_amount per store/day; store currency |
+| orders | orders_count | Distinct eligible scoped order IDs per store/day/currency |
+| revenue | revenue | Sum source totals from the same eligible orders per store/day/currency |
 | open_rate | derived | opens_total / sends; event rate, not unique-recipient open rate |
 | click_rate | derived | clicks_total / sends; event rate, not unique-recipient click rate |
 
@@ -31,7 +31,7 @@ recipient-based rates. No FX conversion or accounting-revenue equivalence is imp
 
 `campaign_engagement` is partitioned by campaign ID; URL slices are produced for
 click metrics in addition to baseline campaign totals. Never combine both. Tabs are
-campaigns, automations, audiences and URLs; selecting an automation tab is not proof
+campaigns, automations, audiences, URLs and connected stores; selecting an automation tab is not proof
 that every historical automation activity is available through the current importer.
 `store_conversions` is a separate order stream, partitioned by store. A configured
 30-day attribution window does not establish actual provider campaign attribution.
@@ -74,6 +74,45 @@ sentToEvents,unsubscribeEvents}`; tenant `AgnosticPreAggregationEngine`; Facade
 backfill implications. Exact activity completeness still requires an authenticated
 reconciliation against campaign report totals; this audit used no live credentials.
 
-Connected-store metrics remain unavailable in Preview and the Widget Builder.
-Store partitions currently share a configuration when they have the same audience,
-metric, and period. A store breakdown needs distinct stored identities first.
+Connected Stores is available in Data Preview with order and revenue tiles,
+a daily chart, and a table grouped by store and currency. The Widget Builder
+offers orders and revenue under Connected store orders, with store, currency,
+and time breakdowns. Audience access restrictions apply to every request.
+
+Store metric identities contain audience, store ID, and currency using dimension
+sets. Order IDs are scoped to the Mailchimp account and store before persistence.
+Order dates use processed_at_foreign, falling back to a supplied created_at.
+Orders missing a source date or audience linkage are excluded. Currency comes
+from the order or its store. There is no USD default.
+
+The expanded rule also requires a verified persisted store relationship, scoped
+order identity and known numeric total. Missing totals remain unknown, while a
+known zero remains eligible. All reported statuses participate. Revenue is a source
+order-total sum and does not implement paid-order, net-revenue or refund policies.
+
+Catalog commerce capabilities are read from the tenant before fetching records.
+Upgraded tenants expose stores, orders, products, variants, promotions, promo codes
+and optional cart snapshots. Commerce routes default to Mailchimp and retain the
+authorized audience/Asset Group scope. Customer pages reuse the canonical customer
+Catalog and expose only source memberships authorized for that audience scope.
+Lifecycle timestamps describe cached milestones, without claiming a full event log.
+
+Connected Stores resolves store names/domains from cached entities in batches of
+at most 100 source IDs. Profile links retain the current Asset Group scope. Older
+tenants can retain ID-based metric rows until entity capabilities are available.
+No additional product, promotion or cart performance measures are advertised.
+
+Commerce profiles link directly to Connected Stores instead of displaying a daily
+coverage denominator for unimplemented entity measures. Mobile Preview controls
+wrap, and long scoped profile IDs wrap within the card. Local browser acceptance
+uses the actual Blade/Alpine pages with synthetic tenant responses at 1440px and
+390px, light and dark. Run `PLAYWRIGHT_CHANNEL=chrome` with
+`tests/Browser/mailchimp-commerce.spec.mjs` after the frontend build. The suite
+generates its HTML fixtures through `MailchimpCommercePresentationTest` against
+an isolated in-memory database. It does not contact a tenant or Mailchimp.
+
+Revenue sums source order totals. Mixed-currency summaries and chart series
+return null; tables retain separate currency rows. Currency filters allow a
+single-currency series. Untyped legacy aggregates are excluded. Historical order
+records must be refreshed with the updated driver before rebuilding.
+See the tenant [store rollout](../../apis-hub/docs/mailchimp-store-rollout.md).

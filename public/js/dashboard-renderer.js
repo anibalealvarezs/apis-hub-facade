@@ -3,7 +3,9 @@
  * Each widget container calls `fetchWidgetData(widgetId, containerEl)` on mount.
  */
 
-window.dashboardRenderer?._removeNavigationListeners?.();
+// Livewire may evaluate this script after destination widgets have already mounted.
+// Keep the renderer and its in-flight work when the script is included again.
+if (!window.dashboardRenderer) {
 
 window.dashboardRenderer = {
     _chartInstances: new Map(),
@@ -379,8 +381,8 @@ window.dashboardRenderer = {
     _queue: [],
     _requestController: new AbortController(),
 
-    _cancelPageRequests() {
-        const controller = this._requestController;
+    _cancelPageRequests(controller = this._requestController) {
+        if (controller !== this._requestController) return;
         this._requestController = new AbortController();
         controller.abort();
 
@@ -861,10 +863,7 @@ window.dashboardRenderer = {
         return `
             <div class="flex items-center justify-center h-full p-4">
                 <div class="text-center">
-                    <svg class="animate-spin h-6 w-6 text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
+                    <img src="/images/apis-hub-loading.svg" class="h-12 w-12 mx-auto" width="48" height="48" alt="" aria-hidden="true">
                     <p class="text-xs text-gray-400 mt-2">Loading...</p>
                 </div>
             </div>`;
@@ -953,10 +952,7 @@ window.dashboardRenderer = {
         return `
             <div class="flex items-center justify-center h-full p-4">
                 <div class="text-center">
-                    <svg class="w-6 h-6 mx-auto text-amber-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
+                    <img src="/images/apis-hub-loading.svg" class="h-12 w-12 mx-auto" width="48" height="48" alt="" aria-hidden="true">
                     <p class="text-xs text-amber-500 mt-2 font-medium">Still Loading — Auto-Retrying</p>
                     <p class="text-xs text-gray-400 mt-1">${this.escapeHtml(displayMessage)}</p>
                     <p class="text-xs text-gray-500 mt-1">This widget will automatically reload in 2 minutes.</p>
@@ -5165,9 +5161,10 @@ window.dashboardRenderer = {
     const renderer = window.dashboardRenderer;
     const cancelRequests = () => renderer._cancelPageRequests();
     const onNavigate = (event) => {
+        const controller = renderer._requestController;
         // A task lets all navigation guards finish before checking cancellation.
         setTimeout(() => {
-            if (!event.defaultPrevented) cancelRequests();
+            if (!event.defaultPrevented) renderer._cancelPageRequests(controller);
         }, 0);
     };
     const onLinkClick = (event) => {
@@ -5184,18 +5181,22 @@ window.dashboardRenderer = {
         onNavigate(event);
     };
     const onBeforeUnload = (event) => {
+        const controller = renderer._requestController;
         // Builder can prevent departure while its unsaved-changes prompt is open.
         setTimeout(() => {
-            if (!event.defaultPrevented && !event.returnValue) cancelRequests();
+            if (!event.defaultPrevented && !event.returnValue) renderer._cancelPageRequests(controller);
         }, 0);
     };
 
     document.addEventListener("livewire:navigate", onNavigate);
+    // Accepted swaps rotate the request scope before destination widgets initialize.
+    document.addEventListener("livewire:navigating", cancelRequests);
     document.addEventListener("click", onLinkClick);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("pagehide", cancelRequests);
     renderer._removeNavigationListeners = () => {
         document.removeEventListener("livewire:navigate", onNavigate);
+        document.removeEventListener("livewire:navigating", cancelRequests);
         document.removeEventListener("click", onLinkClick);
         window.removeEventListener("beforeunload", onBeforeUnload);
         window.removeEventListener("pagehide", cancelRequests);
@@ -5204,4 +5205,5 @@ window.dashboardRenderer = {
 }
 
 window.DashboardRenderer = window.dashboardRenderer;
+}
 
