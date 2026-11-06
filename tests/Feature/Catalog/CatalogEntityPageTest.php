@@ -48,6 +48,14 @@ class CatalogEntityPageTest extends TestCase
         Permission::firstOrCreate(['name' => 'view_customer_pii', 'guard_name' => 'web']);
     }
 
+    private function exportCatalogFixture(string $name, string $html): void
+    {
+        if (getenv('CATALOG_BROWSER_FIXTURES') !== '1') return;
+        $directory = storage_path('framework/testing/catalog-layout');
+        if (!is_dir($directory)) mkdir($directory, 0777, true);
+        file_put_contents($directory.'/'.$name.'.html', $html);
+    }
+
     private function createAdsProject(User $owner, array $syncConfig = []): Project
     {
         $defaultConfig = [
@@ -355,6 +363,67 @@ class CatalogEntityPageTest extends TestCase
             ->assertSet('channel', 'mailchimp')->assertSet('stateCode', null)->assertSee('Connected Store');
     }
 
+    public function test_catalog_navigation_filters_channels_groups_ad_aliases_and_collapses_only_entities(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('view_data');
+        $project = $this->createAdsProject($owner);
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+        $items = CatalogEntity::getNavigationItems();
+        $labels = array_map(fn ($item) => $item->getLabel(), $items);
+        $this->assertContains('Campaigns', $labels);
+        $this->assertContains('Ad sets / groups', $labels);
+        $this->assertContains('Ads', $labels);
+        $this->assertNotContains('Stores', $labels);
+        $this->assertNotContains('Queries', $labels);
+        $groups = collect(Filament::getPanel('app')->getNavigationGroups());
+        $this->assertTrue($groups->first(fn ($group) => $group->getLabel() === 'Entities')->isCollapsed());
+        $this->assertFalse($groups->first(fn ($group) => $group->getLabel() === 'Catalog')->isCollapsible());
+        $grouping = collect($items)->first(fn ($item) => $item->getLabel() === 'Ad sets / groups');
+        $this->assertCount(2, $grouping->getChildItems());
+        $overviewGroup = clone $groups->first(fn ($group) => $group->getLabel() === 'Catalog');
+        $entityGroup = clone $groups->first(fn ($group) => $group->getLabel() === 'Entities');
+        $overviewGroup->items(MarketingOverview::getNavigationItems());
+        $entityGroup->items($items);
+        $this->exportCatalogFixture('navigation', \Illuminate\Support\Facades\Blade::render(
+            '<ul class="fi-sidebar-nav-groups">@foreach($groups as $group)<x-filament-panels::sidebar.group :label="$group->getLabel()" :collapsible="$group->isCollapsible()" :items="$group->getItems()" :attributes="$group->getExtraSidebarAttributeBag()" />@endforeach</ul>',
+            ['groups' => [$overviewGroup, $entityGroup]]
+        ));
+
+        $config = ['mailchimp' => ['enabled' => true, 'audiences' => [['id' => 'audience', 'enabled' => true]]],
+            'google_ads' => ['enabled' => false, 'ad_accounts' => [['id' => 'gads_201', 'enabled' => true]]]];
+        $project->update(['sync_config' => $config]);
+        $visible = app(\App\Services\Catalog\CatalogNavigation::class)->visibleEntities($project, $owner);
+        $this->assertArrayHasKey('stores', $visible);
+        $this->assertArrayHasKey('customers', $visible);
+        $this->assertArrayNotHasKey('ad-groups', $visible);
+        $this->assertArrayNotHasKey('ad-sets', $visible);
+        $this->assertArrayNotHasKey('ads', $visible);
+        $this->assertArrayNotHasKey('posts', $visible);
+
+        $restricted = User::factory()->create();
+        $restricted->givePermissionTo('view_data');
+        $group = $this->createAssetGroup($project, 'Allowed audience', ['mailchimp' => ['audience']]);
+        $this->attachMember($restricted, $project, 'project_user', false, [$group->id]);
+        $visible = app(\App\Services\Catalog\CatalogNavigation::class)->visibleEntities($project, $restricted);
+        $this->assertArrayHasKey('stores', $visible);
+        $this->assertArrayNotHasKey('customers', $visible);
+    }
+
+    public function test_catalog_empty_state_keeps_its_own_theme_surface(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('view_data');
+        $project = $this->createAdsProject($owner, ['google_ads' => ['enabled' => false, 'ad_accounts' => []]]);
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+        $page = Livewire::test(CatalogEntity::class, ['entity' => 'accounts'])
+            ->assertSuccessful()->assertSet('stateCode', 'empty_scope')
+            ->assertSee('No Permitted Assets in Scope')->assertSeeHtml('class="catalog-notice"');
+        $this->exportCatalogFixture('empty', $page->html());
+    }
+
     public function test_account_layout_paginates_sorts_and_filters_without_losing_scope(): void
     {
         $owner = User::factory()->create();
@@ -400,7 +469,7 @@ class CatalogEntityPageTest extends TestCase
                 'series' => [], 'currency' => 'USD', 'coverage' => ['state' => 'complete', 'has_data' => true, 'observed_days' => 30, 'requested_days' => 30]],
         ]]);
         $engine->shouldReceive('getCatalogEntityActivity')->andReturn(['status' => 'success', 'data' => [
-            'items' => [
+            'data' => [
                 ['label' => 'Latest sync snapshot verified', 'description' => 'Current status observed as ENABLED during the latest sync.', 'quality' => 'sync_observation', 'quality_label' => 'Sync observation', 'occurred_at' => '2026-11-06T12:30:00Z'],
                 ['label' => 'First ingested by APIs Hub', 'description' => 'Entity record was first persisted in the tenant database.', 'quality' => 'sync_observation', 'quality_label' => 'Sync observation', 'occurred_at' => '2026-10-01T09:00:00Z'],
             ], 'coverage' => ['notice' => 'Source lifecycle milestones and sync observations.'], 'has_more' => false,
@@ -907,7 +976,7 @@ class CatalogEntityPageTest extends TestCase
 
         $this->app->instance(RemoteEngineService::class, $engineMock);
 
-        Livewire::test(MarketingOverview::class)
+        $overview = Livewire::test(MarketingOverview::class)
             ->assertSuccessful()
             ->assertSee('Marketing Overview')
             ->assertSee('Paid Advertising')
@@ -916,6 +985,7 @@ class CatalogEntityPageTest extends TestCase
             ->assertSee('Email & Lifecycle Events')
             ->assertSee('Customers & Leads')
             ->assertSee('Sample Campaigns');
+        $this->exportCatalogFixture('overview', $overview->html());
     }
 
     public function test_apis_hub_release_v1190_seeder_is_idempotent_and_sets_default(): void

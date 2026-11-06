@@ -288,7 +288,7 @@
                     default => 'border-gray-200 bg-gray-50 text-gray-700 dark:border-white/10 dark:bg-gray-800/60 dark:text-gray-300',
                 };
             @endphp
-            <div data-catalog-state="{{ $stateCode }}" class="rounded-xl border p-6 shadow-sm {{ $bannerStyles }}">
+            <div data-catalog-state="{{ $stateCode }}" class="catalog-notice" role="status">
                 <div class="flex flex-col gap-2">
                     <h3 class="text-base font-semibold">
                         @switch($stateCode)

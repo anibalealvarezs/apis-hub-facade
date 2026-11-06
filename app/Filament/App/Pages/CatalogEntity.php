@@ -34,12 +34,12 @@ class CatalogEntity extends Page
         'events'    => 'Events',
         'customers' => 'Customers',
         'stores'    => 'Stores',
+        'orders'    => 'Orders',
+        'products'  => 'Products',
         'variants'  => 'Product Variants',
         'promotions'=> 'Promotions',
         'promo-codes'=> 'Promo Codes',
         'carts'     => 'Carts',
-        'orders'    => 'Orders',
-        'products'  => 'Products',
     ];
 
     public const array ENTITY_PHASES = [
@@ -230,18 +230,29 @@ class CatalogEntity extends Page
         $project = Filament::getTenant();
         /** @var User|null $user */
         $user = auth()->user();
-        $canViewPii = true;
-        if ($project && $user) {
-            $canViewPii = app(CatalogScopeResolver::class)->canViewCustomerPii($project, $user);
-        }
-
-        foreach (self::ENTITIES as $entity => $label) {
-            if ($entity === 'customers' && ! $canViewPii) {
+        if (!$project || !$user) return [];
+        $entities = app(\App\Services\Catalog\CatalogNavigation::class)->visibleEntities($project, $user);
+        $groupingTypes = array_intersect_key($entities, array_flip(['ad-sets', 'ad-groups']));
+        $groupingAdded = false;
+        foreach ($entities as $entity => $label) {
+            if (isset($groupingTypes[$entity])) {
+                if ($groupingAdded) continue;
+                $groupingAdded = true;
+                $children = [];
+                if (count($groupingTypes) > 1) {
+                    foreach (['ad-sets' => 'Meta Ad Sets', 'ad-groups' => 'Google Ad Groups'] as $type => $providerLabel) {
+                        $children[] = NavigationItem::make(__($providerLabel))->url(static::getUrl(['entity' => $type]))
+                            ->isActiveWhen(fn (): bool => request()->routeIs(static::getRouteName()) && request()->route('entity') === $type);
+                    }
+                }
+                $items[] = NavigationItem::make(__('Ad sets / groups'))->group(__('Entities'))->sort($sortIndex++)->icon('heroicon-o-rectangle-stack')
+                    ->url(static::getUrl(['entity' => array_key_first($groupingTypes)]))->childItems($children)
+                    ->isActiveWhen(fn (): bool => request()->routeIs(static::getRouteName()) && isset($groupingTypes[request()->route('entity')]));
                 continue;
             }
 
             $items[] = NavigationItem::make(__($label))
-                ->group(__('Catalog'))
+                ->group(__('Entities'))
                 ->sort($sortIndex++)
                 ->url(static::getUrl(['entity' => $entity]))
                 ->isActiveWhen(fn (): bool => request()->routeIs(static::getRouteName())
