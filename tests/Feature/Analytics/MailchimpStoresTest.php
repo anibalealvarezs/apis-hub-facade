@@ -33,6 +33,15 @@ class MailchimpStoresTest extends TestCase
             ['dimensions.store_id' => 'a', 'dimensions.currency' => 'USD', 'orders' => 2, 'revenue' => 12.5],
             ['dimensions.store_id' => 'a', 'dimensions.currency' => 'EUR', 'orders' => 1, 'revenue' => 0],
         ]]]);
+        $service->shouldReceive('listCatalogEntities')->once()->withArgs(function ($tenant, $entity, $payload): bool {
+            $this->assertSame('stores', $entity);
+            $this->assertSame([42], $payload['authorized_scope']['channels']['mailchimp']['account_ids']);
+            $this->assertSame(['a'], $payload['filters']['platform_ids']);
+            return true;
+        })->andReturn(['status' => 'success', 'data' => [[
+            'reference' => 'channeled:mailchimp:stores:8', 'platform_id' => 'a', 'name' => 'Example store',
+            'attributes' => ['domain' => 'store.example.test', 'source_store_id' => 'source-a'],
+        ]]]);
         $this->app->instance(RemoteEngineService::class, $service);
         $request = Request::create('/', 'POST', [
             'tenant' => $project->id, 'account' => '42', 'dateStart' => '2026-11-01', 'dateEnd' => '2026-11-02',
@@ -43,6 +52,9 @@ class MailchimpStoresTest extends TestCase
         $this->assertSame('a:USD', $data['table'][0]['id']);
         $this->assertSame('a:EUR', $data['table'][1]['id']);
         $this->assertEquals(0, $data['table'][1]['revenue']);
+        $this->assertSame('Example store', $data['table'][0]['name']);
+        $this->assertSame('store.example.test', $data['table'][0]['domain']);
+        $this->assertStringContainsString('/catalog/stores/', $data['table'][0]['catalog_url']);
     }
 
     public function testMixedCurrencyWindowSuppressesRevenueAcrossTheWholeChart(): void

@@ -117,6 +117,7 @@
             </div>
             <p x-show="activeTab === 'stores'" class="mb-2 text-sm text-gray-500 dark:text-gray-400">
                 {{ __('Revenue is shown separately by currency in the table. The summary and chart show revenue when the selected period has a single currency.') }}
+                {{ __('Orders with missing dates, totals, currency or store ownership are excluded. Revenue uses reported order totals across all statuses and does not calculate net revenue.') }}
             </p>
             <div class="metrics-grid-mailchimp relative" x-show="activeTab !== 'stores'">
                 <div x-show="isSummaryLoading"
@@ -405,6 +406,9 @@
                                     <x-heroicon-s-check-circle class="w-4 h-4"/>
                                 </div>
                                 <div class="mailchimp-name-text" :title="row.name || row.id" x-text="row.name || row.id"></div>
+                                <span x-show="activeTab === 'stores' && row.domain"
+                                      class="text-xs text-gray-500 dark:text-gray-400"
+                                      x-text="row.domain"></span>
                                 <a x-show="row.catalog_url"
                                    :href="row.catalog_url"
                                    @click.stop

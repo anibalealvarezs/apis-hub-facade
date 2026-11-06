@@ -1,6 +1,6 @@
 # Mailchimp analytics catalog
 
-Audited 2026-10-30. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('mailchimp')`.
+Audited 2026-10-30, commerce integration updated 2026-11-06. Runtime: `ChannelCapabilityRegistry::getAnalyticsTree('mailchimp')`.
 The cache derives metrics from recipient events and connected-store orders. This is
 not a direct copy of Mailchimp's campaign report summary.
 
@@ -19,8 +19,8 @@ not a direct copy of Mailchimp's campaign report summary.
 | bounces_hard | bounces_hard | Hard bounce events |
 | bounces_soft | bounces_soft | Soft bounce events |
 | unsubscribes | unsubscribes | Unsubscribe records |
-| orders | orders_count | Distinct order IDs per store/day |
-| revenue | revenue | Sum order total_amount per store/day; store currency |
+| orders | orders_count | Distinct eligible scoped order IDs per store/day/currency |
+| revenue | revenue | Sum source totals from the same eligible orders per store/day/currency |
 | open_rate | derived | opens_total / sends; event rate, not unique-recipient open rate |
 | click_rate | derived | clicks_total / sends; event rate, not unique-recipient click rate |
 
@@ -84,6 +84,23 @@ sets. Order IDs are scoped to the Mailchimp account and store before persistence
 Order dates use processed_at_foreign, falling back to a supplied created_at.
 Orders missing a source date or audience linkage are excluded. Currency comes
 from the order or its store. There is no USD default.
+
+The expanded rule also requires a verified persisted store relationship, scoped
+order identity and known numeric total. Missing totals remain unknown, while a
+known zero remains eligible. All reported statuses participate. Revenue is a source
+order-total sum and does not implement paid-order, net-revenue or refund policies.
+
+Catalog commerce capabilities are read from the tenant before fetching records.
+Upgraded tenants expose stores, orders, products, variants, promotions, promo codes
+and optional cart snapshots. Commerce routes default to Mailchimp and retain the
+authorized audience/Asset Group scope. Customer pages reuse the canonical customer
+Catalog and expose only source memberships authorized for that audience scope.
+Lifecycle timestamps describe cached milestones, without claiming a full event log.
+
+Connected Stores resolves store names/domains from cached entities in batches of
+at most 100 source IDs. Profile links retain the current Asset Group scope. Older
+tenants can retain ID-based metric rows until entity capabilities are available.
+No additional product, promotion or cart performance measures are advertised.
 
 Revenue sums source order totals. Mixed-currency summaries and chart series
 return null; tables retain separate currency rows. Currency filters allow a
