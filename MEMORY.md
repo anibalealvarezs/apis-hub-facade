@@ -4,6 +4,8 @@
 
 ## Mailchimp commerce Catalog integration (2026-11-06)
 
+- Launch visual acceptance: real Blade/Alpine fixtures cover Preview and store Catalog list/profile at desktop/mobile widths and both themes. Tests generate synthetic HTML through `MailchimpCommercePresentationTest`, then run `tests/Browser/mailchimp-commerce.spec.mjs`. Commerce profile metrics link to Connected Stores. Profile identifiers and Preview controls wrap on small screens. PostgreSQL and authenticated source checks are deferred by the operator's local-only instruction.
+
 - Commerce routes include stores/orders/products/variants/promotions/promo-codes/carts, default to Mailchimp, and consult tenant capabilities after resolving audience/Asset Group authorization. Customer Catalog continues to use the existing PII gate.
 - Connected Stores fetches cached name/domain/reference metadata in batches of 100 source IDs using the authorized audience IDs. Profile links preserve Asset Group scope. Store metrics remain eligible order counts and source-total sums by currency. Product/cart/promotion measures belong to later aggregation work.
 

@@ -98,7 +98,8 @@
         <div class="dash-overview-section">
             <label x-show="activeTab === 'stores'" class="flex items-center gap-3 mb-4">
                 <span>{{ __('Store currency') }}</span>
-                <select :value="storeCurrency" @change="setStoreCurrency($event.target.value)">
+                <select :value="storeCurrency" @change="setStoreCurrency($event.target.value)"
+                        class="rounded-lg border-gray-300 bg-white text-sm text-gray-900 dark:border-white/10 dark:bg-gray-800 dark:text-white">
                     <option value="">{{ __('All currencies') }}</option>
                     <template x-for="currency in storeCurrencyOptions" :key="currency">
                         <option :value="currency" x-text="currency"></option>

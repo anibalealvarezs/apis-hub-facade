@@ -743,7 +743,7 @@
             {{-- Section 1: Entity Profile & Normalized Attributes --}}
             <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
                 <div class="flex flex-col justify-between gap-4 border-b border-gray-100 pb-4 sm:flex-row sm:items-center dark:border-white/10">
-                    <div>
+                    <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2.5">
                             <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $rec['name'] }}</h2>
                             <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-400/10 dark:text-blue-400">
@@ -753,7 +753,7 @@
                                 {{ $rec['status'] ?? 'UNKNOWN' }}
                             </span>
                         </div>
-                        <p class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 break-all font-mono text-xs text-gray-500 dark:text-gray-400">
                             {{ __('Platform ID:') }} {{ $rec['platform_id'] }} · {{ __('Reference:') }} {{ $rec['reference'] }}
                         </p>
                     </div>
@@ -878,7 +878,18 @@
             @endif
 
             {{-- Section 3: Performance Metrics --}}
-            @if ($entity !== 'customers')
+            @if (in_array($entity, \App\Services\Catalog\EntityReference::COMMERCE_ENTITY_TYPES, true))
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Performance Metrics') }}</h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        {{ __('Store order counts and revenue are available in Mailchimp Data Preview.') }}
+                    </p>
+                    <a href="{{ \App\Filament\App\Pages\MailchimpDashboard::getUrl(['tab' => 'stores'], panel: 'app', tenant: \Filament\Facades\Filament::getTenant()) }}"
+                       class="mt-3 inline-flex text-sm font-medium text-primary-600 hover:underline dark:text-primary-400">
+                        {{ __('Open Connected Stores') }}
+                    </a>
+                </div>
+            @elseif ($entity !== 'customers')
                 <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
                     <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                         <div>

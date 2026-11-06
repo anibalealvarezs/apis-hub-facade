@@ -102,6 +102,15 @@ at most 100 source IDs. Profile links retain the current Asset Group scope. Olde
 tenants can retain ID-based metric rows until entity capabilities are available.
 No additional product, promotion or cart performance measures are advertised.
 
+Commerce profiles link directly to Connected Stores instead of displaying a daily
+coverage denominator for unimplemented entity measures. Mobile Preview controls
+wrap, and long scoped profile IDs wrap within the card. Local browser acceptance
+uses the actual Blade/Alpine pages with synthetic tenant responses at 1440px and
+390px, light and dark. Run `PLAYWRIGHT_CHANNEL=chrome` with
+`tests/Browser/mailchimp-commerce.spec.mjs` after the frontend build. The suite
+generates its HTML fixtures through `MailchimpCommercePresentationTest` against
+an isolated in-memory database. It does not contact a tenant or Mailchimp.
+
 Revenue sums source order totals. Mixed-currency summaries and chart series
 return null; tables retain separate currency rows. Currency filters allow a
 single-currency series. Untyped legacy aggregates are excluded. Historical order
