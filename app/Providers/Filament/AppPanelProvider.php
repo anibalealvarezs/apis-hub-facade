@@ -80,7 +80,7 @@ class AppPanelProvider extends PanelProvider
                 </div>
             '))
             ->homeUrl(fn () => request()->routeIs('filament.app.auth.*') ? url('/') : url('/app'))
-            ->favicon(asset('images/branding/apishub-favicon.webp'))
+            ->favicon(asset('images/branding/apishub-favicon.svg'))
             ->colors([
                 'primary' => '#00a7f9',
             ])

@@ -47,7 +47,7 @@ class AdminPanelProvider extends PanelProvider
                 </div>
             '))
 
-            ->favicon(asset('images/branding/apishub-favicon.webp'))
+            ->favicon(asset('images/branding/apishub-favicon.svg'))
             ->colors([
                 'primary' => '#00a7f9',
             ])

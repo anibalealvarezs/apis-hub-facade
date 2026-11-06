@@ -28,6 +28,9 @@
         <meta name="color-scheme" content="dark light">
 
         <!-- Favicons & App Icons -->
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/branding/apishub-favicon.svg') }}" media="(prefers-color-scheme: light)">
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/branding/apishub-favicon-light.svg') }}" media="(prefers-color-scheme: dark)">
+        <link rel="icon" type="image/svg+xml" href="{{ asset('images/branding/apishub-favicon.svg') }}">
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/branding/apishub-favicon.png') }}">
         <link rel="icon" type="image/webp" href="{{ asset('images/branding/apishub-favicon.webp') }}">
         <link rel="apple-touch-icon" href="{{ asset('images/branding/apishub-favicon.png') }}">

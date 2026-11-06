@@ -28,7 +28,7 @@ class AccountPanelProvider extends PanelProvider
             ->brandLogo(asset('images/branding/apishub-trans-620.webp'))
             ->darkModeBrandLogo(asset('images/branding/apishub-trans-light-620.webp'))
             ->brandLogoHeight('3rem')
-            ->favicon(asset('images/branding/apishub-favicon.webp'))
+            ->favicon(asset('images/branding/apishub-favicon.svg'))
             ->colors([
                 'primary' => '#00a7f9',
             ])
