@@ -42,6 +42,26 @@ class CatalogEntity extends Page
         'carts'     => 'Carts',
     ];
 
+    public const array ENTITY_ICONS = [
+        'accounts'   => 'heroicon-o-identification',
+        'campaigns'  => 'heroicon-o-megaphone',
+        'ad-sets'    => 'heroicon-o-rectangle-stack',
+        'ad-groups'  => 'heroicon-o-rectangle-stack',
+        'ads'        => 'heroicon-o-cursor-arrow-rays',
+        'pages'      => 'heroicon-o-document-duplicate',
+        'posts'      => 'heroicon-o-chat-bubble-bottom-center-text',
+        'queries'    => 'heroicon-o-magnifying-glass',
+        'events'     => 'heroicon-o-bolt',
+        'customers'  => 'heroicon-o-user-group',
+        'stores'     => 'heroicon-o-building-storefront',
+        'orders'     => 'heroicon-o-shopping-bag',
+        'products'   => 'heroicon-o-cube',
+        'variants'   => 'heroicon-o-swatch',
+        'promotions' => 'heroicon-o-ticket',
+        'promo-codes'=> 'heroicon-o-tag',
+        'carts'      => 'heroicon-o-shopping-cart',
+    ];
+
     public const array ENTITY_PHASES = [
         'accounts'  => 1,
         'campaigns' => 1,
@@ -254,6 +274,7 @@ class CatalogEntity extends Page
             $items[] = NavigationItem::make(__($label))
                 ->group(__('Entities'))
                 ->sort($sortIndex++)
+                ->icon(self::ENTITY_ICONS[$entity] ?? 'heroicon-o-cube')
                 ->url(static::getUrl(['entity' => $entity]))
                 ->isActiveWhen(fn (): bool => request()->routeIs(static::getRouteName())
                     && request()->route('entity') === $entity);
