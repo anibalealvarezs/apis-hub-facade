@@ -1,4 +1,4 @@
-@props(['message' => null])
+@props(['message' => null, 'label' => null])
 <div data-analytics-warnings
      x-data="analyticsWarningTooltip({ message: @js($message) })"
      x-id="['analytics-warning']"
@@ -8,7 +8,7 @@
      @scroll.window="if (show) show = false" @resize.window="if (show) show = false"
      class="inline-flex shrink-0 items-center">
     <button type="button" x-ref="warningTrigger" @click.stop="toggle($el)"
-            :aria-expanded="show.toString()" :aria-controls="$id('analytics-warning')" aria-label="{{ __('GA4 user count information') }}"
+            :aria-expanded="show.toString()" :aria-controls="$id('analytics-warning')" aria-label="{{ $label ?? __('GA4 user count information') }}"
             class="rounded-lg p-1 text-amber-600 hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500 dark:text-amber-300 dark:hover:bg-amber-950/40">
         <x-heroicon-o-exclamation-triangle class="h-4 w-4" />
     </button>
