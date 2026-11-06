@@ -1,5 +1,10 @@
 # APIs Hub Facade Memory
 
+## Mailchimp commerce Catalog integration (2026-11-06)
+
+- Commerce routes include stores/orders/products/variants/promotions/promo-codes/carts, default to Mailchimp, and consult tenant capabilities after resolving audience/Asset Group authorization. Customer Catalog continues to use the existing PII gate.
+- Connected Stores fetches cached name/domain/reference metadata in batches of 100 source IDs using the authorized audience IDs. Profile links preserve Asset Group scope. Store metrics remain eligible order counts and source-total sums by currency. Product/cart/promotion measures belong to later aggregation work.
+
 - Durable upgrades (2026-10-29): UpgradeProjectReleaseJob now launches or reconciles a persisted UUID on ProjectDeploymentLog. A private host runner outside the tenant checkout survives SSH/Facade worker loss, uses flock and a started/result record, and never replays uncertain migrations. `upgrades:reconcile` runs every minute; deploy jobs defer while a durable operation is active on the same server. Release pin and terminal log finalize transactionally only after remote exit zero and authenticated API readiness. Missing prepared records or interrupted host processes require operator reconciliation, not another migration. Raw legacy build output stays in protected host logs; only allowlisted stages/sanitized results reach Facade. Apply the durable-operation migration and restart workers/Octane before rollout. See docs/durable-tenant-upgrades.md. Linux process-disconnect and PostgreSQL volume tests require their corresponding staging runtimes.
 ## Scope
 - Package role: Business (Facade)

@@ -15,6 +15,7 @@ final class EntityReference
         'stores',
         'variants',
         'promotions',
+        'promo-codes',
         'carts',
         'accounts',
         'campaigns',
@@ -44,6 +45,7 @@ final class EntityReference
         'stores',
         'variants',
         'promotions',
+        'promo-codes',
         'carts',
         'accounts',
         'campaigns',
@@ -57,7 +59,7 @@ final class EntityReference
         'customers',
     ];
 
-    public const array COMMERCE_ENTITY_TYPES = ['stores', 'orders', 'products', 'variants', 'promotions', 'carts'];
+    public const array COMMERCE_ENTITY_TYPES = ['stores', 'orders', 'products', 'variants', 'promotions', 'promo-codes', 'carts'];
 
     public function __construct(
         private readonly string $layer,

@@ -36,6 +36,7 @@ class CatalogEntity extends Page
         'stores'    => 'Stores',
         'variants'  => 'Product Variants',
         'promotions'=> 'Promotions',
+        'promo-codes'=> 'Promo Codes',
         'carts'     => 'Carts',
         'orders'    => 'Orders',
         'products'  => 'Products',
@@ -55,6 +56,7 @@ class CatalogEntity extends Page
         'stores'    => 4,
         'variants'  => 4,
         'promotions'=> 4,
+        'promo-codes'=> 4,
         'carts'     => 4,
         'orders'    => 4,
         'products'  => 4,
@@ -197,6 +199,7 @@ class CatalogEntity extends Page
                 'ad-groups' => 'google_ads',
                 'posts'     => 'facebook_organic',
                 'queries'   => 'google_search_console',
+                'stores', 'orders', 'products', 'variants', 'promotions', 'promo-codes', 'carts' => 'mailchimp',
                 default     => '',
             };
         }
