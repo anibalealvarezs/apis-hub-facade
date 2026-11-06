@@ -863,10 +863,7 @@ window.dashboardRenderer = {
         return `
             <div class="flex items-center justify-center h-full p-4">
                 <div class="text-center">
-                    <svg class="animate-spin h-6 w-6 text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
+                    <img src="/images/apis-hub-loading.svg" class="h-12 w-12 mx-auto" width="48" height="48" alt="" aria-hidden="true">
                     <p class="text-xs text-gray-400 mt-2">Loading...</p>
                 </div>
             </div>`;
@@ -955,10 +952,7 @@ window.dashboardRenderer = {
         return `
             <div class="flex items-center justify-center h-full p-4">
                 <div class="text-center">
-                    <svg class="w-6 h-6 mx-auto text-amber-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
+                    <img src="/images/apis-hub-loading.svg" class="h-12 w-12 mx-auto" width="48" height="48" alt="" aria-hidden="true">
                     <p class="text-xs text-amber-500 mt-2 font-medium">Still Loading — Auto-Retrying</p>
                     <p class="text-xs text-gray-400 mt-1">${this.escapeHtml(displayMessage)}</p>
                     <p class="text-xs text-gray-500 mt-1">This widget will automatically reload in 2 minutes.</p>

@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-60 0 740 680" width="100%" height="100%">
+  <defs>
+    <!-- Single global gradient pinned across the entire logo span (from leftmost dot edge ~25px to right bar edge ~636px) -->
+    <linearGradient id="apishub-grad" gradientUnits="userSpaceOnUse" x1="25" y1="340" x2="636" y2="340">
+      <stop offset="0%" stop-color="#008eff" />
+      <stop offset="45%" stop-color="#00bfe6" />
+      <stop offset="100%" stop-color="#00d5a8" />
+    </linearGradient>
+
+    <!-- Clip Mask: Sweeps left-to-right to grow the traces into the static bus bar -->
+    <clipPath id="connect-mask">
+      <rect id="mask-slider" x="62" y="0" width="0" height="680" />
+    </clipPath>
+
+    <style>
+      /* 1. Terminal Nodes: Pop into view at the start */
+      .node {
+        opacity: 0;
+        transform-origin: center;
+        animation: popNodes 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+      #node-middle {
+        transform-origin: 62px 339px;
+        animation-delay: 0s;
+      }
+      #node-top {
+        transform-origin: 198px 196px;
+        animation-delay: 0.12s;
+      }
+      #node-bottom {
+        transform-origin: 198px 482px;
+        animation-delay: 0.12s;
+      }
+
+      /* 2. Traces: Stream from nodes into the right bar */
+      #mask-slider {
+        animation: extendTraces 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      }
+
+      /* Overall loop reset */
+      #apishub-logo {
+        animation: loopFade 2.8s ease-in-out infinite;
+      }
+
+      @keyframes popNodes {
+        0% {
+          opacity: 0;
+          transform: scale(0.3);
+        }
+        14%, 84% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        94%, 100% {
+          opacity: 0;
+          transform: scale(0.85);
+        }
+      }
+
+      @keyframes extendTraces {
+        0%, 14% {
+          width: 0px;
+        }
+        60%, 84% {
+          width: 544px;
+        }
+        94%, 100% {
+          width: 0px;
+        }
+      }
+
+      @keyframes loopFade {
+        0%, 84% {
+          opacity: 1;
+        }
+        94%, 100% {
+          opacity: 0;
+        }
+      }
+    </style>
+  </defs>
+
+  <g id="apishub-logo">
+    <!-- Right Bus Bar (Static from the beginning; picks up only the pure right-teal color) -->
+    <rect id="bus-bar" x="576" y="108" width="60" height="464" rx="30" fill="url(#apishub-grad)" />
+
+    <!-- Three Starting Terminal Nodes (Each inherits its exact position-based color) -->
+    <g fill="url(#apishub-grad)">
+      <circle id="node-middle" class="node" cx="62" cy="339" r="37" />
+      <circle id="node-top" class="node" cx="198" cy="196" r="37" />
+      <circle id="node-bottom" class="node" cx="198" cy="482" r="37" />
+    </g>
+
+    <!-- Connecting Traces (Continuously shaded from left to right) -->
+    <g fill="url(#apishub-grad)" clip-path="url(#connect-mask)">
+      <!-- Center Long Trace -->
+      <rect x="62" y="316" width="544" height="46" />
+
+      <!-- Top Trace -->
+      <path d="M 198,173 
+               L 395,173 
+               L 508,237 
+               L 606,237 
+               L 606,283 
+               L 508,283 
+               L 395,219 
+               L 198,219 
+               Z" />
+
+      <!-- Bottom Trace -->
+      <path d="M 198,505 
+               L 395,505 
+               L 508,441 
+               L 606,441 
+               L 606,395 
+               L 508,395 
+               L 395,459 
+               L 198,459 
+               Z" />
+    </g>
+  </g>
+</svg>
