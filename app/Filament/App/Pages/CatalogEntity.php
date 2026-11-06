@@ -355,6 +355,30 @@ class CatalogEntity extends Page
         $this->loadCatalogState();
     }
 
+    public function updatedPerPage(): void
+    {
+        $this->perPage = in_array($this->perPage, [10, 25, 50, 100], true) ? $this->perPage : 25;
+        $this->page = 1;
+        $this->loadCatalogState();
+    }
+
+    /** A bounded page window, retaining access to the first and last pages. */
+    public function paginationPages(): array
+    {
+        $last = max(1, (int) ($this->listMeta['last_page'] ?? 1));
+        $current = max(1, min($last, (int) ($this->listMeta['page'] ?? $this->page)));
+        $pages = array_unique([1, $last, ...range(max(1, $current - 1), min($last, $current + 1))]);
+        sort($pages);
+        $result = [];
+        $previous = 0;
+        foreach ($pages as $number) {
+            if ($previous > 0 && $number > $previous + 1) $result[] = null;
+            $result[] = $number;
+            $previous = $number;
+        }
+        return $result;
+    }
+
     public function loadMoreActivity(string $cursor): void
     {
         $this->activityCursor = $cursor;

@@ -1,15 +1,20 @@
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <link rel="stylesheet" href="{{ asset('css/catalog.css') }}?v={{ filemtime(public_path('css/catalog.css')) }}">
+    <div class="catalog-page space-y-6" data-catalog-mode="{{ $this->isDetailMode() ? 'detail' : 'list' }}">
         {{-- Top Scope, Channel & Context Bar --}}
-        <div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900">
-            <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 flex-1">
+        <div class="catalog-filter-panel">
+            <div class="catalog-filter-heading">
+                <span class="catalog-section-label"><x-heroicon-o-adjustments-horizontal /> {{ __('Filters') }}</span>
+                <span class="catalog-loading" wire:loading.delay role="status">{{ __('Updating…') }}</span>
+            </div>
+            <div class="catalog-filter-layout">
+                <div class="catalog-filter-grid">
                     {{-- Asset Group Scope Selector --}}
                     <div>
                         <label for="catalog-scope-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                             {{ __('Asset Scope') }}
                         </label>
-                        <select
+                        <x-ui.select-input
                             id="catalog-scope-select"
                             wire:model.live="scope"
                             class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -17,7 +22,7 @@
                             @foreach ($scopeOptions as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
-                        </select>
+                        </x-ui.select-input>
                     </div>
 
                     {{-- Channel Selector --}}
@@ -26,16 +31,16 @@
                             <label for="catalog-channel-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Channel') }}
                             </label>
-                            <select
+                            <x-ui.select-input
                                 id="catalog-channel-select"
                                 wire:model.live="channel"
-                                @disabled(in_array($entity, ['ad-sets', 'ad-groups', 'posts', 'queries'], true))
+                                :disabled="in_array($entity, ['ad-sets', 'ad-groups', 'posts', 'queries'], true)"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 disabled:opacity-60 dark:border-white/10 dark:bg-gray-800 dark:text-white"
                             >
                                 @foreach ($this->getChannelOptions() as $chValue => $chLabel)
                                     <option value="{{ $chValue }}">{{ $chLabel }}</option>
                                 @endforeach
-                            </select>
+                            </x-ui.select-input>
                         </div>
                     @endif
 
@@ -60,7 +65,7 @@
                                 <label for="catalog-search-type-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ __('Search Type') }}
                                 </label>
-                                <select
+                                <x-ui.select-input
                                     id="catalog-search-type-select"
                                     wire:model.live="searchType"
                                     class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -68,14 +73,14 @@
                                     @foreach ($this->getSearchTypeOptions() as $stVal => $stLabel)
                                         <option value="{{ $stVal }}">{{ $stLabel }}</option>
                                     @endforeach
-                                </select>
+                                </x-ui.select-input>
                             </div>
                         @else
                             <div>
                                 <label for="catalog-status-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ __('Status') }}
                                 </label>
-                                <select
+                                <x-ui.select-input
                                     id="catalog-status-select"
                                     wire:model.live="status"
                                     class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -101,7 +106,7 @@
                                         <option value="ARCHIVED">{{ __('Archived') }}</option>
                                         <option value="DELETED">{{ __('Deleted') }}</option>
                                     @endif
-                                </select>
+                                </x-ui.select-input>
                             </div>
                         @endif
                     @endif
@@ -112,9 +117,9 @@
                             <label for="catalog-date-start" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Metrics Start Date') }}
                             </label>
-                            <input
+                            <x-ui.date-input
                                 id="catalog-date-start"
-                                type="date"
+                                
                                 wire:model.live="dateStart"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
                             />
@@ -124,9 +129,9 @@
                             <label for="catalog-date-end" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Metrics End Date') }}
                             </label>
-                            <input
+                            <x-ui.date-input
                                 id="catalog-date-end"
-                                type="date"
+                                
                                 wire:model.live="dateEnd"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
                             />
@@ -149,12 +154,12 @@
 
             {{-- Detail Mode Query Search Type Selector --}}
             @if ($this->isDetailMode() && $entity === 'queries')
-                <div class="mt-4 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-3 dark:border-white/5">
+                <div class="catalog-advanced-filters mt-4 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-3 dark:border-white/5">
                     <div>
                         <label for="catalog-detail-search-type" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                             {{ __('Search Type Dimension') }}
                         </label>
-                        <select
+                        <x-ui.select-input
                             id="catalog-detail-search-type"
                             wire:model.live="searchType"
                             class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -162,20 +167,20 @@
                             @foreach ($this->getSearchTypeOptions() as $stVal => $stLabel)
                                 <option value="{{ $stVal }}">{{ $stLabel }}</option>
                             @endforeach
-                        </select>
+                        </x-ui.select-input>
                     </div>
                 </div>
             @endif
 
             {{-- Entity-Specific Secondary Filters in List Mode --}}
             @if (! $this->isDetailMode() && in_array($entity, ['campaigns', 'ad-sets', 'ad-groups'], true))
-                <div class="mt-4 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-3 dark:border-white/5">
+                <div class="catalog-advanced-filters mt-4 grid grid-cols-1 gap-4 border-t border-gray-100 pt-4 sm:grid-cols-3 dark:border-white/5">
                     @if ($entity === 'campaigns')
                         <div>
                             <label for="catalog-objective-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Objective') }}
                             </label>
-                            <select
+                            <x-ui.select-input
                                 id="catalog-objective-select"
                                 wire:model.live="objective"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -191,14 +196,14 @@
                                 <option value="CONVERSIONS">CONVERSIONS</option>
                                 <option value="TRAFFIC">TRAFFIC</option>
                                 <option value="EMAIL">EMAIL</option>
-                            </select>
+                            </x-ui.select-input>
                         </div>
 
                         <div>
                             <label for="catalog-buying-type-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Buying Type') }}
                             </label>
-                            <select
+                            <x-ui.select-input
                                 id="catalog-buying-type-select"
                                 wire:model.live="buyingType"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -207,7 +212,7 @@
                                 <option value="AUCTION">AUCTION</option>
                                 <option value="RESERVED">RESERVED</option>
                                 <option value="REACH_AND_FREQUENCY">REACH_AND_FREQUENCY</option>
-                            </select>
+                            </x-ui.select-input>
                         </div>
                     @endif
 
@@ -216,7 +221,7 @@
                             <label for="catalog-opt-goal-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Optimization Goal') }}
                             </label>
-                            <select
+                            <x-ui.select-input
                                 id="catalog-opt-goal-select"
                                 wire:model.live="optimizationGoal"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -230,14 +235,14 @@
                                 <option value="LEAD_GENERATION">LEAD_GENERATION</option>
                                 <option value="LANDING_PAGE_VIEWS">LANDING_PAGE_VIEWS</option>
                                 <option value="VALUE">VALUE</option>
-                            </select>
+                            </x-ui.select-input>
                         </div>
 
                         <div>
                             <label for="catalog-billing-event-select" class="block text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                 {{ __('Billing Event') }}
                             </label>
-                            <select
+                            <x-ui.select-input
                                 id="catalog-billing-event-select"
                                 wire:model.live="billingEvent"
                                 class="mt-1 block w-full rounded-lg border-gray-300 bg-white text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
@@ -246,7 +251,7 @@
                                 <option value="IMPRESSIONS">IMPRESSIONS</option>
                                 <option value="CLICKS">CLICKS</option>
                                 <option value="LINK_CLICKS">LINK_CLICKS</option>
-                            </select>
+                            </x-ui.select-input>
                         </div>
                     @endif
 
@@ -322,12 +327,16 @@
 
         {{-- LIST MODE --}}
         @if (! $this->isDetailMode() && $stateCode === null)
-            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-gray-900">
+            <div class="catalog-table-panel">
+                <div class="catalog-table-heading">
+                    <div><h2>{{ __(self::ENTITIES[$entity]) }}</h2><span class="catalog-record-count">{{ number_format((int) ($listMeta['total'] ?? count($items))) }} {{ __('records') }}</span></div>
+                    <span class="catalog-table-hint">{{ __('Select a name to view details') }}</span>
+                </div>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-white/10">
+                    <table class="catalog-table min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-white/10">
                         <thead class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/60 dark:text-gray-400">
                             <tr>
-                                <th class="px-4 py-3">
+                                <th class="px-4 py-3" aria-sort="{{ $sort === 'name' ? ($dir === 'ASC' ? 'ascending' : 'descending') : 'none' }}">
                                     <button type="button" wire:click="sortBy('name')" class="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
                                         <span>{{ __('Name') }}</span>
                                         @if ($sort === 'name')
@@ -336,7 +345,7 @@
                                     </button>
                                 </th>
                                 <th class="px-4 py-3">{{ __('Channel') }}</th>
-                                <th class="px-4 py-3">
+                                <th class="px-4 py-3" aria-sort="{{ $sort === 'status' ? ($dir === 'ASC' ? 'ascending' : 'descending') : 'none' }}">
                                     <button type="button" wire:click="sortBy('status')" class="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
                                         <span>{{ __('Status') }}</span>
                                         @if ($sort === 'status')
@@ -351,7 +360,7 @@
                                     <th class="px-4 py-3">{{ __('Timezone') }}</th>
                                 @elseif ($entity === 'campaigns')
                                     <th class="px-4 py-3">{{ __('Account / Audience') }}</th>
-                                    <th class="px-4 py-3">
+                                    <th class="px-4 py-3" aria-sort="{{ $sort === 'budget' ? ($dir === 'ASC' ? 'ascending' : 'descending') : 'none' }}">
                                         <button type="button" wire:click="sortBy('budget')" class="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
                                             <span>{{ __('Budget / Info') }}</span>
                                             @if ($sort === 'budget')
@@ -380,7 +389,7 @@
                                 @elseif ($entity === 'posts')
                                     <th class="px-4 py-3">{{ __('Account / Page') }}</th>
                                     <th class="px-4 py-3">{{ __('Media Type') }}</th>
-                                    <th class="px-4 py-3">
+                                    <th class="px-4 py-3" aria-sort="{{ $sort === 'published_at' ? ($dir === 'ASC' ? 'ascending' : 'descending') : 'none' }}">
                                         <button type="button" wire:click="sortBy('published_at')" class="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
                                             <span>{{ __('Published At') }}</span>
                                             @if ($sort === 'published_at')
@@ -397,7 +406,7 @@
                                     <th class="px-4 py-3">{{ __('Source Account') }}</th>
                                     <th class="px-4 py-3 text-right">{{ __('Recorded Occurrences') }}</th>
                                 @elseif ($entity === 'customers')
-                                    <th class="px-4 py-3">
+                                    <th class="px-4 py-3" aria-sort="{{ $sort === 'email' ? ($dir === 'ASC' ? 'ascending' : 'descending') : 'none' }}">
                                         <button type="button" wire:click="sortBy('email')" class="inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white">
                                             <span>{{ __('Email') }}</span>
                                             @if ($sort === 'email')
@@ -409,7 +418,9 @@
                                     <th class="px-4 py-3">{{ __('Source Memberships') }}</th>
                                 @endif
 
-                                <th class="px-4 py-3 text-right">{{ __('Updated') }}</th>
+                                <th class="px-4 py-3 text-right" aria-sort="{{ $sort === 'updated_at' ? ($dir === 'ASC' ? 'ascending' : 'descending') : 'none' }}">
+                                    <button type="button" wire:click="sortBy('updated_at')">{{ __('Updated') }} @if ($sort === 'updated_at')<span aria-hidden="true">{{ $dir === 'ASC' ? '↑' : '↓' }}</span>@endif</button>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -424,11 +435,11 @@
                                         default => 'bg-gray-100 text-gray-700 ring-gray-500/20 dark:bg-gray-800 dark:text-gray-300',
                                     };
                                 @endphp
-                                <tr class="hover:bg-gray-50/80 dark:hover:bg-white/5">
+                                <tr class="catalog-record-row hover:bg-gray-50/80 dark:hover:bg-white/5" wire:key="catalog-row-{{ $item['reference'] }}">
                                     <td class="px-4 py-3">
                                         <a
                                             href="{{ $this->catalogUrl($entity, $item['reference']) }}"
-                                            class="font-semibold text-primary-600 hover:underline dark:text-primary-400"
+                                            class="catalog-record-link font-semibold text-primary-600 hover:underline dark:text-primary-400"
                                         >
                                             {{ $item['name'] }}
                                         </a>
@@ -437,12 +448,16 @@
                                         </div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/30">
+                                        <span class="catalog-channel">
+                                            @php
+                                                $channelIcon = \App\Support\BrandIcon::forChannel($item['channel']);
+                                            @endphp
+                                            @if ($channelIcon){{ $channelIcon }}@endif
                                             {{ $item['channel_label'] ?? $item['channel'] }}
                                         </span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusBadge }}">
+                                        <span class="catalog-status" data-status="{{ $statusVal }}">
                                             {{ $statusVal }}
                                         </span>
                                     </td>
@@ -641,30 +656,30 @@
                     $currentPage = (int) ($listMeta['page'] ?? $page);
                     $lastPage = (int) ($listMeta['last_page'] ?? 1);
                 @endphp
-                <div class="flex flex-col items-center justify-between gap-3 border-t border-gray-200 bg-gray-50/50 px-4 py-3 sm:flex-row dark:border-white/10 dark:bg-gray-800/40">
-                    <div class="text-xs text-gray-600 dark:text-gray-400">
-                        {{ __('Showing page :page of :last (:total total records)', ['page' => $currentPage, 'last' => $lastPage, 'total' => $total]) }}
-                    </div>
-                    @if ($lastPage > 1)
-                        <div class="inline-flex items-center gap-2">
-                            <button
-                                type="button"
-                                wire:click="goToPage({{ $currentPage - 1 }})"
-                                @disabled($currentPage <= 1)
-                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 dark:border-white/10 dark:bg-gray-800 dark:text-gray-200"
-                            >
-                                {{ __('Previous') }}
-                            </button>
-                            <button
-                                type="button"
-                                wire:click="goToPage({{ $currentPage + 1 }})"
-                                @disabled($currentPage >= $lastPage)
-                                class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 dark:border-white/10 dark:bg-gray-800 dark:text-gray-200"
-                            >
-                                {{ __('Next') }}
-                            </button>
-                        </div>
-                    @endif
+                <div class="catalog-pagination">
+                    <label class="catalog-page-size" for="catalog-per-page">
+                        <span>{{ __('Rows per page') }}</span>
+                        <x-ui.select-input id="catalog-per-page" wire:model.live="perPage" aria-label="{{ __('Rows per page') }}">
+                            @foreach ([10, 25, 50, 100] as $size)<option value="{{ $size }}">{{ $size }}</option>@endforeach
+                        </x-ui.select-input>
+                    </label>
+                    <span class="catalog-pagination-summary">{{ __(':from–:to of :total records', [
+                        'from' => $total > 0 ? (($currentPage - 1) * $perPage) + 1 : 0,
+                        'to' => min($total, (($currentPage - 1) * $perPage) + count($items)), 'total' => number_format($total),
+                    ]) }}</span>
+                    <nav class="catalog-pagination-actions" aria-label="{{ __('Catalog pagination') }}">
+                        <button type="button" wire:click="goToPage({{ $currentPage - 1 }})" wire:loading.attr="disabled" @disabled($currentPage <= 1) aria-label="{{ __('Previous page') }}"><x-heroicon-m-chevron-left /></button>
+                        @foreach ($this->paginationPages() as $pageNumber)
+                            @if ($pageNumber === null)
+                                <span class="catalog-pagination-ellipsis" aria-hidden="true">…</span>
+                            @else
+                                <button type="button" wire:click="goToPage({{ $pageNumber }})" wire:loading.attr="disabled"
+                                        @if ($pageNumber === $currentPage) aria-current="page" @endif
+                                        aria-label="{{ __('Page :page', ['page' => $pageNumber]) }}">{{ $pageNumber }}</button>
+                            @endif
+                        @endforeach
+                        <button type="button" wire:click="goToPage({{ $currentPage + 1 }})" wire:loading.attr="disabled" @disabled($currentPage >= $lastPage) aria-label="{{ __('Next page') }}"><x-heroicon-m-chevron-right /></button>
+                    </nav>
                 </div>
             </div>
         @endif
@@ -741,15 +756,15 @@
             </div>
 
             {{-- Section 1: Entity Profile & Normalized Attributes --}}
-            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
-                <div class="flex flex-col justify-between gap-4 border-b border-gray-100 pb-4 sm:flex-row sm:items-center dark:border-white/10">
+            <div class="catalog-profile-panel catalog-panel rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                <div class="catalog-profile-heading flex flex-col justify-between gap-4 border-b border-gray-100 pb-4 sm:flex-row sm:items-center dark:border-white/10">
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2.5">
                             <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ $rec['name'] }}</h2>
-                            <span class="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-400/10 dark:text-blue-400">
+                            <span class="catalog-channel">
                                 {{ $rec['channel_label'] ?? $rec['channel'] }}
                             </span>
-                            <span class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-800 dark:bg-gray-800 dark:text-gray-200">
+                            <span class="catalog-status" data-status="{{ strtoupper((string) ($rec['status'] ?? 'UNKNOWN')) }}">
                                 {{ $rec['status'] ?? 'UNKNOWN' }}
                             </span>
                         </div>
@@ -759,10 +774,10 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="catalog-attributes">
                     @foreach ($attrs as $attrKey => $attrVal)
                         @if ($attrVal !== null && $attrVal !== '' && $attrVal !== [])
-                            <div class="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                            <div class="catalog-attribute">
                                 <div class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                                     {{ str_replace('_', ' ', $attrKey) }}
                                 </div>
@@ -805,13 +820,13 @@
 
             {{-- Section 2: Related Hierarchy & Child Entities --}}
             @if ($parents !== [] || $children !== [])
-                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                <div class="catalog-panel rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                         {{ __('Hierarchy & Related Entities') }}
                     </h3>
 
                     @if ($parents !== [])
-                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                        <div class="catalog-parent-grid mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
                             @foreach ($parents as $role => $parentItem)
                                 <div class="rounded-lg border border-gray-200 p-3.5 dark:border-white/10">
                                     <div class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -832,7 +847,7 @@
                     @endif
 
                     @if ($children !== [])
-                        <div class="mt-6 space-y-4">
+                        <div class="catalog-related-groups mt-6 space-y-4">
                             @foreach ($children as $childKey => $childGroup)
                                 <div class="rounded-lg border border-gray-200 p-4 dark:border-white/10">
                                     <div class="flex items-center justify-between">
@@ -855,11 +870,11 @@
                                     </div>
 
                                     @if (! empty($childGroup['items']))
-                                        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        <div class="catalog-related-items mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                                             @foreach ($childGroup['items'] as $childItem)
                                                 <a
                                                     href="{{ $this->catalogUrl($childItem['entity_type'], $childItem['reference']) }}"
-                                                    class="flex items-center justify-between rounded-md border border-gray-100 bg-gray-50/70 px-3 py-2 text-xs hover:border-primary-300 dark:border-white/5 dark:bg-gray-800/50"
+                                                    class="catalog-related-record flex items-center justify-between rounded-md border border-gray-100 bg-gray-50/70 px-3 py-2 text-xs hover:border-primary-300 dark:border-white/5 dark:bg-gray-800/50"
                                                 >
                                                     <div>
                                                         <span class="font-medium text-gray-900 dark:text-white">{{ $childItem['name'] }}</span>
@@ -879,7 +894,7 @@
 
             {{-- Section 3: Performance Metrics --}}
             @if (in_array($entity, \App\Services\Catalog\EntityReference::COMMERCE_ENTITY_TYPES, true))
-                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                <div class="catalog-panel rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ __('Performance Metrics') }}</h3>
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                         {{ __('Store order counts and revenue are available in Mailchimp Data Preview.') }}
@@ -890,7 +905,7 @@
                     </a>
                 </div>
             @elseif ($entity !== 'customers')
-                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                <div class="catalog-panel rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
                     <div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
                         <div>
                             <h3 class="text-base font-semibold text-gray-900 dark:text-white">
@@ -933,26 +948,26 @@
                         </div>
                     @elseif ($metricFamily === 'search')
                         {{-- Search Console Metrics (Impressions, Clicks, CTR, Average Position) --}}
-                        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                        <div class="catalog-metric-grid mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Impressions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['impressions'] ?? null) !== null ? number_format((float) $summary['impressions']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Clicks') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['clicks'] ?? null) !== null ? number_format((float) $summary['clicks']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('CTR') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['ctr'] ?? null) !== null ? number_format(((float) $summary['ctr']) * 100, 2) . '%' : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Avg. Position') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['position'] ?? null) !== null ? number_format((float) $summary['position'], 2) : '—' }}
@@ -992,50 +1007,50 @@
                         @endif
                     @elseif ($metricFamily === 'organic')
                         {{-- Meta Organic Metrics (Impressions, Reach, Views, Likes, Comments, Shares, Saves, Total Interactions) --}}
-                        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                        <div class="catalog-metric-grid mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Impressions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['impressions'] ?? null) !== null ? number_format((float) $summary['impressions']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Reach') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['reach'] ?? null) !== null ? number_format((float) $summary['reach']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Total Interactions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['total_interactions'] ?? null) !== null ? number_format((float) $summary['total_interactions']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Likes / Reactions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['likes'] ?? null) !== null ? number_format((float) $summary['likes']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Comments') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['comments'] ?? null) !== null ? number_format((float) $summary['comments']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Shares') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['shares'] ?? null) !== null ? number_format((float) $summary['shares']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Saves') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['saves'] ?? null) !== null ? number_format((float) $summary['saves']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Views') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['views'] ?? null) !== null ? number_format((float) $summary['views']) : '—' }}
@@ -1077,44 +1092,44 @@
                         @endif
                     @elseif ($metricFamily === 'email')
                         {{-- Mailchimp Email Metrics (Sends, Opens, Open Rate, Clicks, Click Rate, Bounces, Unsubscribes) --}}
-                        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                        <div class="catalog-metric-grid mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Emails Sent') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['sends'] ?? null) !== null ? number_format((float) $summary['sends']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Opens') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['opens'] ?? null) !== null ? number_format((float) $summary['opens']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Open Rate') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['open_rate'] ?? null) !== null ? number_format(((float) $summary['open_rate']) * 100, 2) . '%' : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Clicks') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['clicks'] ?? null) !== null ? number_format((float) $summary['clicks']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Click Rate') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['click_rate'] ?? null) !== null ? number_format(((float) $summary['click_rate']) * 100, 2) . '%' : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Bounces') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['bounces'] ?? null) !== null ? number_format((float) $summary['bounces']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Unsubscribes') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['unsubscribes'] ?? null) !== null ? number_format((float) $summary['unsubscribes']) : '—' }}
@@ -1152,32 +1167,32 @@
                         @endif
                     @elseif ($metricFamily === 'analytics')
                         {{-- GA4 Analytics Metrics (Views, Sessions, Total Users, Event Count, Conversions) --}}
-                        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                        <div class="catalog-metric-grid mt-4 grid grid-cols-2 gap-4 sm:grid-cols-5">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Event Count') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['event_count'] ?? null) !== null ? number_format((float) $summary['event_count']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Views') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['views'] ?? null) !== null ? number_format((float) $summary['views']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Sessions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['sessions'] ?? null) !== null ? number_format((float) $summary['sessions']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Total Users') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['total_users'] ?? null) !== null ? number_format((float) $summary['total_users']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Conversions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['conversions'] ?? null) !== null ? number_format((float) $summary['conversions'], 2) : '—' }}
@@ -1215,50 +1230,50 @@
                         @endif
                     @else
                         {{-- Ads Metrics (Spend, Impressions, Clicks, CTR, CPC, CPM, Conversions, Purchase ROAS) --}}
-                        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                        <div class="catalog-metric-grid mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Spend') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['spend'] ?? null) !== null ? $currencyPrefix . number_format((float) $summary['spend'], 2) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Impressions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['impressions'] ?? null) !== null ? number_format((float) $summary['impressions']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Clicks') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['clicks'] ?? null) !== null ? number_format((float) $summary['clicks']) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('CTR') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['ctr'] ?? null) !== null ? number_format(((float) $summary['ctr']) * 100, 2) . '%' : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('CPC') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['cpc'] ?? null) !== null ? $currencyPrefix . number_format((float) $summary['cpc'], 2) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('CPM') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['cpm'] ?? null) !== null ? $currencyPrefix . number_format((float) $summary['cpm'], 2) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Conversions') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['conversions'] ?? null) !== null ? number_format((float) $summary['conversions'], 2) : '—' }}
                                 </div>
                             </div>
-                            <div class="rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
+                            <div class="catalog-metric rounded-lg border border-gray-100 bg-gray-50/70 p-3.5 dark:border-white/5 dark:bg-gray-800/50">
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ __('Purchase ROAS') }}</div>
                                 <div class="mt-1 text-lg font-bold text-gray-900 dark:text-white">
                                     {{ ($summary['roas_purchase'] ?? null) !== null ? number_format((float) $summary['roas_purchase'], 2) . 'x' : '—' }}
@@ -1315,8 +1330,8 @@
                     $actCoverage = $activityData['coverage'] ?? [];
                     $actMeta = $activityData['meta'] ?? [];
                 @endphp
-                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
-                    <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div class="catalog-panel rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900">
+                    <div class="catalog-activity-heading flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                         <div>
                             <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                                 {{ __('Recorded Activity & Lifecycle Milestones') }}
@@ -1328,9 +1343,9 @@
                             @endif
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-3">
-                            <select
-                                wire:model.live="activityKind"
+                        <div class="catalog-activity-controls flex flex-wrap items-center gap-3">
+                            <x-ui.select-input
+                                wire:model.live="activityKind" aria-label="{{ __('Activity type') }}"
                                 class="rounded-lg border-gray-300 bg-white text-xs text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="">{{ __('All milestone & activity types') }}</option>
@@ -1345,15 +1360,15 @@
                                 <option value="latest_metric_observed">{{ __('Latest Metric Observed') }}</option>
                                 <option value="first_synced">{{ __('First Synced') }}</option>
                                 <option value="synced">{{ __('Latest Sync Snapshot') }}</option>
-                            </select>
+                            </x-ui.select-input>
 
-                            <select
-                                wire:model.live="activitySort"
+                            <x-ui.select-input
+                                wire:model.live="activitySort" aria-label="{{ __('Activity order') }}"
                                 class="rounded-lg border-gray-300 bg-white text-xs text-gray-900 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-white/10 dark:bg-gray-800 dark:text-white"
                             >
                                 <option value="newest">{{ __('Newest first') }}</option>
                                 <option value="oldest">{{ __('Oldest first') }}</option>
-                            </select>
+                            </x-ui.select-input>
                         </div>
                     </div>
 
@@ -1362,9 +1377,9 @@
                             {{ __('No recorded lifecycle milestones matched the selected filter.') }}
                         </p>
                     @else
-                        <div class="mt-4 divide-y divide-gray-100 dark:divide-white/5">
+                        <div class="catalog-activity-list mt-4 divide-y divide-gray-100 dark:divide-white/5">
                             @foreach ($actItems as $act)
-                                <div class="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
+                                <div class="catalog-activity-item flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
                                     <div>
                                         <div class="flex flex-wrap items-center gap-2">
                                             <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $act['label'] }}</span>
