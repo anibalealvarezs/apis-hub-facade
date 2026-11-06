@@ -11,7 +11,7 @@ execFileSync('php', ['vendor/bin/pest', 'tests/Feature/Analytics/MailchimpCommer
 const manifest = JSON.parse(readFileSync('public/build/manifest.json', 'utf8'));
 const css = [
     'public/css/filament/filament/app.css', 'public/css/filament/support/support.css',
-    `public/build/${manifest['resources/css/app.css'].file}`, 'public/css/dashboards.css',
+    `public/build/${manifest['resources/css/app.css'].file}`, 'public/css/dashboards.css', 'public/css/catalog.css',
 ].map(file => readFileSync(file, 'utf8')).join('\n');
 const scripts = [
     'node_modules/chart.js/dist/chart.umd.js', 'node_modules/dayjs/dayjs.min.js',

@@ -355,6 +355,77 @@ class CatalogEntityPageTest extends TestCase
             ->assertSet('channel', 'mailchimp')->assertSet('stateCode', null)->assertSee('Connected Store');
     }
 
+    public function test_account_layout_paginates_sorts_and_filters_without_losing_scope(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('view_data');
+        $project = $this->createAdsProject($owner);
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+        $records = [];
+        foreach (range(1, 52) as $id) {
+            $records[] = [
+                'reference' => 'channeled:google_ads:accounts:'.$id, 'entity_type' => 'accounts', 'id' => $id,
+                'name' => $id === 1 ? 'APIs Hub · Search' : sprintf('Workspace %02d', $id), 'platform_id' => 'account-'.str_pad((string)$id, 10, '0', STR_PAD_LEFT),
+                'channel' => 'google_ads', 'channel_label' => 'Google Ads', 'status' => $id % 4 === 0 ? 'DISABLED' : 'ENABLED',
+                'attributes' => ['type' => 'google_ads_account', 'currency' => 'USD', 'timezone' => 'America/Caracas'],
+                'relationships' => [], 'provenance' => ['freshness_timestamp' => '2026-11-06 12:30:00'],
+            ];
+        }
+        $engine = Mockery::mock(RemoteEngineService::class);
+        $engine->shouldReceive('listCatalogEntities')->andReturnUsing(function (Project $target, string $entity, array $payload) use ($records) {
+            $this->assertSame('accounts', $entity);
+            $this->assertSame(['gads_201', 'gads_202'], $payload['authorized_scope']['channels']['google_ads']['platform_ids']);
+            $filtered = array_values(array_filter($records, static fn (array $record) =>
+                ($payload['search'] === '' || str_contains(strtolower($record['name']), strtolower($payload['search'])))
+                && (empty($payload['filters']['status']) || $record['status'] === $payload['filters']['status'])));
+            if ($payload['sort']['dir'] === 'DESC') $filtered = array_reverse($filtered);
+            $page = $payload['pagination']['page'];
+            $size = $payload['pagination']['per_page'];
+            return ['status' => 'success', 'data' => array_slice($filtered, ($page - 1) * $size, $size),
+                'meta' => ['total' => count($filtered), 'page' => $page, 'per_page' => $size, 'last_page' => max(1, (int)ceil(count($filtered) / $size))]];
+        });
+        $engine->shouldReceive('getCatalogEntityProfile')->andReturn(['status' => 'success', 'data' => [
+            'record' => $records[0], 'source_records' => [
+                ['layer' => 'channeled', 'table' => 'channeled_accounts', 'id' => 1, 'platform_id' => $records[0]['platform_id']],
+                ['layer' => 'base', 'table' => 'accounts', 'id' => 1],
+            ],
+            'relationships' => ['parents' => [], 'children' => ['campaigns' => [
+                'entity_type' => 'campaigns', 'label' => 'Campaigns', 'total_count' => 2, 'items' => [
+                    ['reference' => 'channeled:google_ads:campaigns:9', 'entity_type' => 'campaigns', 'name' => 'Brand awareness', 'platform_id' => 'campaign-9', 'status' => 'ACTIVE'],
+                    ['reference' => 'channeled:google_ads:campaigns:10', 'entity_type' => 'campaigns', 'name' => 'Seasonal acquisition', 'platform_id' => 'campaign-10', 'status' => 'PAUSED'],
+                ],
+            ]]],
+            'metrics' => ['summary' => ['spend' => 1200, 'impressions' => 28500, 'clicks' => 835, 'conversions' => 64],
+                'series' => [], 'currency' => 'USD', 'coverage' => ['state' => 'complete', 'has_data' => true, 'observed_days' => 30, 'requested_days' => 30]],
+        ]]);
+        $engine->shouldReceive('getCatalogEntityActivity')->andReturn(['status' => 'success', 'data' => [
+            'items' => [
+                ['label' => 'Latest sync snapshot verified', 'description' => 'Current status observed as ENABLED during the latest sync.', 'quality' => 'sync_observation', 'quality_label' => 'Sync observation', 'occurred_at' => '2026-11-06T12:30:00Z'],
+                ['label' => 'First ingested by APIs Hub', 'description' => 'Entity record was first persisted in the tenant database.', 'quality' => 'sync_observation', 'quality_label' => 'Sync observation', 'occurred_at' => '2026-10-01T09:00:00Z'],
+            ], 'coverage' => ['notice' => 'Source lifecycle milestones and sync observations.'], 'has_more' => false,
+        ]]);
+        $this->app->instance(RemoteEngineService::class, $engine);
+
+        $page = Livewire::withQueryParams(['perPage' => 10])->test(CatalogEntity::class, ['entity' => 'accounts'])
+            ->assertSuccessful()->assertSee('Rows per page')->assertSee('52 records');
+        if (getenv('CATALOG_BROWSER_FIXTURES') === '1') {
+            $directory = storage_path('framework/testing/catalog-layout');
+            if (!is_dir($directory)) mkdir($directory, 0777, true);
+            file_put_contents($directory.'/accounts.html', $page->html());
+        }
+        $page->call('goToPage', 3)->assertSet('page', 3)
+            ->call('sortBy', 'updated_at')->assertSet('page', 1)->assertSet('sort', 'updated_at')
+            ->call('sortBy', 'updated_at')->assertSet('dir', 'DESC')->assertSeeHtml('aria-sort="descending"')
+            ->call('goToPage', 2)->set('perPage', 25)->assertSet('page', 1)
+            ->set('search', 'Workspace 02')->assertSet('page', 1)->assertSee('Workspace 02')
+            ->set('status', 'ENABLED')->assertSet('page', 1)
+            ->call('resetFilters')->assertSet('search', '')->assertSet('status', '');
+        $profile = Livewire::test(CatalogEntity::class, ['entity' => 'accounts', 'record' => $records[0]['reference']])
+            ->assertSuccessful()->assertSee('Brand awareness')->assertSee('Latest sync snapshot verified');
+        if (getenv('CATALOG_BROWSER_FIXTURES') === '1') file_put_contents($directory.'/account.html', $profile->html());
+    }
+
     public function test_catalog_entity_detail_mode_renders_profile_hierarchy_metrics_and_milestone_activity(): void
     {
         $owner = User::factory()->create();
