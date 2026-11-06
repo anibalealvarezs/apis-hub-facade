@@ -1,5 +1,7 @@
 # APIs Hub Facade Memory
 
+- Dashboard entry cancellation fix (2026-11-06): preserve the shared renderer on repeated script evaluation. Deferred departure handlers capture their original request controller, and accepted `livewire:navigating` swaps rotate the controller before destination widgets initialize. This prevents script reloads and stale timers from aborting the first four incoming widgets and clearing the rest. Seven browser regressions cover departure/guards, repeated script inclusion, destination load survival and rendering all six fixture widgets without Refresh All.
+
 ## Mailchimp commerce Catalog integration (2026-11-06)
 
 - Commerce routes include stores/orders/products/variants/promotions/promo-codes/carts, default to Mailchimp, and consult tenant capabilities after resolving audience/Asset Group authorization. Customer Catalog continues to use the existing PII gate.

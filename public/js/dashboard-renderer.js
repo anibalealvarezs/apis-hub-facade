@@ -3,7 +3,9 @@
  * Each widget container calls `fetchWidgetData(widgetId, containerEl)` on mount.
  */
 
-window.dashboardRenderer?._removeNavigationListeners?.();
+// Livewire may evaluate this script after destination widgets have already mounted.
+// Keep the renderer and its in-flight work when the script is included again.
+if (!window.dashboardRenderer) {
 
 window.dashboardRenderer = {
     _chartInstances: new Map(),
@@ -379,8 +381,8 @@ window.dashboardRenderer = {
     _queue: [],
     _requestController: new AbortController(),
 
-    _cancelPageRequests() {
-        const controller = this._requestController;
+    _cancelPageRequests(controller = this._requestController) {
+        if (controller !== this._requestController) return;
         this._requestController = new AbortController();
         controller.abort();
 
@@ -5165,9 +5167,10 @@ window.dashboardRenderer = {
     const renderer = window.dashboardRenderer;
     const cancelRequests = () => renderer._cancelPageRequests();
     const onNavigate = (event) => {
+        const controller = renderer._requestController;
         // A task lets all navigation guards finish before checking cancellation.
         setTimeout(() => {
-            if (!event.defaultPrevented) cancelRequests();
+            if (!event.defaultPrevented) renderer._cancelPageRequests(controller);
         }, 0);
     };
     const onLinkClick = (event) => {
@@ -5184,18 +5187,22 @@ window.dashboardRenderer = {
         onNavigate(event);
     };
     const onBeforeUnload = (event) => {
+        const controller = renderer._requestController;
         // Builder can prevent departure while its unsaved-changes prompt is open.
         setTimeout(() => {
-            if (!event.defaultPrevented && !event.returnValue) cancelRequests();
+            if (!event.defaultPrevented && !event.returnValue) renderer._cancelPageRequests(controller);
         }, 0);
     };
 
     document.addEventListener("livewire:navigate", onNavigate);
+    // Accepted swaps rotate the request scope before destination widgets initialize.
+    document.addEventListener("livewire:navigating", cancelRequests);
     document.addEventListener("click", onLinkClick);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("pagehide", cancelRequests);
     renderer._removeNavigationListeners = () => {
         document.removeEventListener("livewire:navigate", onNavigate);
+        document.removeEventListener("livewire:navigating", cancelRequests);
         document.removeEventListener("click", onLinkClick);
         window.removeEventListener("beforeunload", onBeforeUnload);
         window.removeEventListener("pagehide", cancelRequests);
@@ -5204,4 +5211,5 @@ window.dashboardRenderer = {
 }
 
 window.DashboardRenderer = window.dashboardRenderer;
+}
 

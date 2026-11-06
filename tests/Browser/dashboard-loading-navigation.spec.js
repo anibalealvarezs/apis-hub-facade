@@ -14,6 +14,13 @@ async function openLoadingDashboard(page) {
     await page.addScriptTag({ path: rendererPath });
     await page.evaluate(() => {
         sessionStorage.clear();
+        localStorage.clear();
+        const pending = [];
+        let ready = false;
+        window.completeWidgetLoads = () => {
+            ready = true;
+            for (const complete of pending.splice(0)) complete();
+        };
         window.fetch = (url, { signal }) => new Promise((resolve, reject) => {
             sessionStorage.setItem('started', Number(sessionStorage.getItem('started') || 0) + 1);
             signal.addEventListener('abort', () => {
@@ -21,6 +28,11 @@ async function openLoadingDashboard(page) {
                 sessionStorage.setItem('aborted', Number(sessionStorage.getItem('aborted') || 0) + 1);
                 reject(signal.reason);
             }, { once: true });
+            const complete = () => resolve({ ok: true, json: async () => ({
+                success: true, widget_type: 'tile', controls: {}, data: { value: 123, label: 'Loaded widget' },
+            }) });
+            if (ready) complete();
+            else pending.push(complete);
         });
         // Four active requests and two queued widgets.
         for (let id = 1; id <= 6; id++) {
@@ -96,4 +108,36 @@ test('Livewire navigation cancels active and queued work unless prevented', asyn
     await page.evaluate(() => document.dispatchEvent(new Event('livewire:navigate', { cancelable: true })));
     await expect.poll(() => page.evaluate(() => sessionStorage.getItem('aborted'))).toBe('4');
     expect(await page.evaluate(() => window.dashboardRenderer._queue.length)).toBe(0);
+});
+
+test('re-evaluating the renderer script preserves newly mounted dashboard widgets', async ({ page }) => {
+    await openLoadingDashboard(page);
+    await page.evaluate(() => { window.mountedRenderer = window.dashboardRenderer; });
+    await page.addScriptTag({ path: rendererPath });
+    expect(await page.evaluate(() => window.dashboardRenderer === window.mountedRenderer)).toBe(true);
+    expect(await page.evaluate(() => sessionStorage.getItem('aborted'))).toBeNull();
+    expect(await page.evaluate(() => window.dashboardRenderer._queue.length)).toBe(2);
+    await page.evaluate(() => window.completeWidgetLoads());
+    await expect.poll(() => page.evaluate(() => window.dashboardRenderer._widgetData.size)).toBe(6);
+    await page.evaluate(() => {
+        for (const container of document.querySelector('#widgets').children) window.dashboardRenderer.flushRender(container);
+    });
+    await expect(page.getByText('Loaded widget', { exact: true })).toHaveCount(6);
+});
+
+test('a delayed departure callback cannot cancel the arriving dashboard', async ({ page }) => {
+    await openLoadingDashboard(page);
+    await page.evaluate(() => {
+        document.dispatchEvent(new Event('livewire:navigate', { cancelable: true }));
+        // Livewire announces the accepted DOM swap before initializing destination components.
+        document.dispatchEvent(new Event('livewire:navigating'));
+        for (let id = 7; id <= 12; id++) {
+            const container = document.createElement('div');
+            document.querySelector('#widgets').append(container);
+            window.dashboardRenderer.renderWidget(id, container, {}, 'test-project');
+        }
+    });
+    await expect.poll(() => page.evaluate(() => sessionStorage.getItem('started'))).toBe('8');
+    expect(await page.evaluate(() => sessionStorage.getItem('aborted'))).toBe('4');
+    expect(await page.evaluate(() => window.dashboardRenderer._queue.length)).toBe(2);
 });
