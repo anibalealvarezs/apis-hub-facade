@@ -1,6 +1,9 @@
 <x-filament-panels::page>
     <link rel="stylesheet" href="{{ asset('css/catalog.css') }}?v={{ filemtime(public_path('css/catalog.css')) }}">
-    <div class="catalog-page space-y-6" data-catalog-mode="{{ $this->isDetailMode() ? 'detail' : 'list' }}">
+    <div class="catalog-page space-y-6"
+         data-catalog-mode="{{ $this->isDetailMode() ? 'detail' : 'list' }}"
+         x-data
+         x-effect="document.title = @js($this->getTitle() . ' - ' . trim(strip_tags(filament()->getBrandName())))">
         {{-- Top Scope, Channel & Context Bar --}}
         <div class="catalog-filter-panel">
             <div class="catalog-filter-heading">

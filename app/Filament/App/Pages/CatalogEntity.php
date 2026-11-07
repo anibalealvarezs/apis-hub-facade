@@ -42,6 +42,26 @@ class CatalogEntity extends Page
         'carts'     => 'Carts',
     ];
 
+    public const array ENTITY_SINGULAR = [
+        'accounts'   => 'Account',
+        'campaigns'  => 'Campaign',
+        'ad-sets'    => 'Ad Set',
+        'ad-groups'  => 'Ad Group',
+        'ads'        => 'Ad',
+        'pages'      => 'Page',
+        'posts'      => 'Post',
+        'queries'    => 'Query',
+        'events'     => 'Event',
+        'customers'  => 'Customer',
+        'stores'     => 'Store',
+        'orders'     => 'Order',
+        'products'   => 'Product',
+        'variants'   => 'Product Variant',
+        'promotions' => 'Promotion',
+        'promo-codes'=> 'Promo Code',
+        'carts'      => 'Cart',
+    ];
+
     public const array ENTITY_ICONS = [
         'accounts'   => 'heroicon-o-identification',
         'campaigns'  => 'heroicon-o-megaphone',
@@ -230,13 +250,51 @@ class CatalogEntity extends Page
         $this->loadCatalogState();
     }
 
-    public function getTitle(): string | Htmlable
+    public function getHeading(): string | Htmlable
     {
         if ($this->isDetailMode() && ! empty($this->profileData['record']['name'])) {
             return (string) $this->profileData['record']['name'];
         }
 
-        return __(self::ENTITIES[$this->entity]);
+        return __(self::ENTITIES[$this->entity] ?? 'Entities');
+    }
+
+    public function getTitle(): string | Htmlable
+    {
+        if ($this->isDetailMode()) {
+            $name = ! empty($this->profileData['record']['name'])
+                ? (string) $this->profileData['record']['name']
+                : (string) $this->record;
+
+            $singular = __(self::ENTITY_SINGULAR[$this->entity] ?? self::ENTITIES[$this->entity] ?? 'Entity');
+            $channelLabel = $this->profileData['record']['channel_label']
+                ?? $this->getChannelOptionsForEntity($this->entity)[$this->profileData['record']['channel'] ?? '']
+                ?? null;
+
+            return $channelLabel
+                ? "{$name} · {$singular} ({$channelLabel})"
+                : "{$name} · {$singular}";
+        }
+
+        $base = __(self::ENTITIES[$this->entity] ?? 'Entities');
+        $channelLabel = $this->channel !== '' ? ($this->getChannelOptions()[$this->channel] ?? null) : null;
+        $scopeLabel = ($this->scope !== 'all' && ! empty($this->scopeOptions[$this->scope]))
+            ? (string) $this->scopeOptions[$this->scope]
+            : null;
+
+        if ($channelLabel && $scopeLabel) {
+            return "{$base} · {$channelLabel} ({$scopeLabel})";
+        }
+
+        if ($channelLabel) {
+            return "{$base} · {$channelLabel}";
+        }
+
+        if ($scopeLabel) {
+            return "{$base} ({$scopeLabel})";
+        }
+
+        return $base;
     }
 
     public function isDetailMode(): bool
