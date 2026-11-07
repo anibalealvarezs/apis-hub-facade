@@ -17,8 +17,14 @@ class DerivedMetricPreviewController extends Controller
             'ast' => 'required|array',
             'source_series' => 'required|array|min:1',
             'source_series.*.key' => 'required|string',
-            'source_series.*.channel' => 'required|string',
-            'source_series.*.metric' => 'required|string',
+            'source_series.*.source_type' => 'nullable|string|in:metric,entity_measure',
+            'source_series.*.type' => 'nullable|string|in:metric,entity_measure',
+            'source_series.*.entity_type' => 'nullable|string',
+            'source_series.*.channel' => 'nullable|string',
+            'source_series.*.metric' => 'nullable|string',
+            'source_series.*.measure' => 'nullable|string',
+            'source_series.*.filters' => 'nullable|array',
+            'source_series.*.deduplicate_canonical' => 'nullable|boolean',
             'source_series.*.asset_filter' => 'nullable|array',
             'granularity' => 'nullable|string',
             'format' => 'nullable|string|in:decimal,percentage,currency',
@@ -52,14 +58,38 @@ class DerivedMetricPreviewController extends Controller
 
         foreach ($validated['source_series'] as $series) {
             $key = $series['key'];
-            $channel = $series['channel'];
-            $metric = $series['metric'];
+            $channel = $series['channel'] ?? '';
+            $metric = $series['metric'] ?? $series['measure'] ?? '';
             $assetFilter = $series['asset_filter'] ?? null;
+            $sourceType = $series['source_type'] ?? $series['type'] ?? 'metric';
 
             $controller = new DashboardWidgetDataController(
                 app(\App\Services\WidgetDataService::class),
                 app(\App\Services\RemoteEngineService::class)
             );
+
+            if ($sourceType === 'entity_measure' || ! empty($series['entity_type'])) {
+                try {
+                    $fetchedSeries[$key] = $controller->fetchEntityMeasureTimeSeries(
+                        $project,
+                        $series,
+                        $dateStart,
+                        $dateEnd,
+                        $series['granularity'] ?? $granularity,
+                        [],
+                        is_array($assetFilter) ? $assetFilter : null
+                    );
+                } catch (\Throwable) {
+                    $fetchedSeries[$key] = [];
+                }
+
+                continue;
+            }
+
+            if ($channel === '' || $metric === '') {
+                $fetchedSeries[$key] = [];
+                continue;
+            }
 
             $validForChannel = $controller->getValidAssetsForChannel($project, $channel);
 

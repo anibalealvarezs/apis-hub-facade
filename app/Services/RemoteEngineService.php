@@ -157,6 +157,46 @@
             }, 30);
         }
 
+        public function getCatalogAggregateCapabilities(Project $project, array $payload = []): array
+        {
+            return $this->executeRead($project, 'catalog:aggregate:capabilities', $payload, function (ApisHubApi $client) use ($payload): array {
+                try {
+                    if (method_exists($client, 'getCatalogAggregateCapabilities')) {
+                        return $client->getCatalogAggregateCapabilities($payload);
+                    }
+                    $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/aggregate/capabilities', body: json_encode($payload));
+
+                    return json_decode($response->getBody()->getContents(), true);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    if (in_array($error->getResponse()->getStatusCode(), [404, 405], true)) {
+                        return $this->catalogUnavailableError();
+                    }
+                    throw $error;
+                }
+            }, 15);
+        }
+
+        public function aggregateCatalogEntities(Project $project, array $payload): array
+        {
+            $entityType = (string) ($payload['entity_type'] ?? 'orders');
+
+            return $this->executeRead($project, 'catalog:aggregate:'.$entityType, $payload, function (ApisHubApi $client) use ($payload): array {
+                try {
+                    if (method_exists($client, 'aggregateCatalogEntities')) {
+                        return $client->aggregateCatalogEntities($payload);
+                    }
+                    $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/aggregate', body: json_encode($payload));
+
+                    return json_decode($response->getBody()->getContents(), true);
+                } catch (\GuzzleHttp\Exception\ClientException $error) {
+                    if (in_array($error->getResponse()->getStatusCode(), [404, 405], true)) {
+                        return $this->catalogUnavailableError();
+                    }
+                    throw $error;
+                }
+            }, 30);
+        }
+
         protected function catalogUnavailableError(): array
         {
             return [

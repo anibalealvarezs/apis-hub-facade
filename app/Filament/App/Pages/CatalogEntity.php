@@ -176,6 +176,9 @@ class CatalogEntity extends Page
     /** @var array<string, mixed>|null */
     public ?array $activityData = null;
 
+    /** @var array<string, mixed>|null */
+    public ?array $summaryData = null;
+
     public ?string $stateCode = null;
 
     public ?string $stateMessage = null;
@@ -486,7 +489,12 @@ class CatalogEntity extends Page
     public function getChannelOptionsForEntity(string $entity): array
     {
         if (in_array($entity, EntityReference::COMMERCE_ENTITY_TYPES, true)) {
-            return ['mailchimp' => 'Mailchimp'];
+            return [
+                ''                 => __('All commerce channels'),
+                'mailchimp'        => 'Mailchimp',
+                'shopify'          => 'Shopify',
+                'google_analytics' => 'Google Analytics',
+            ];
         }
 
         return match ($entity) {
@@ -537,6 +545,8 @@ class CatalogEntity extends Page
                 ''               => __('All customer channels'),
                 'mailchimp'      => 'Mailchimp',
                 'facebook_leads' => 'Meta Leads',
+                'shopify'        => 'Shopify',
+                'klaviyo'        => 'Klaviyo',
             ],
             default => [
                 '' => __('All channels'),
@@ -565,6 +575,7 @@ class CatalogEntity extends Page
         $this->listMeta = [];
         $this->profileData = null;
         $this->activityData = null;
+        $this->summaryData = null;
 
         /** @var Project|null $project */
         $project = Filament::getTenant();
@@ -715,7 +726,11 @@ class CatalogEntity extends Page
         if ($this->items === []) {
             $this->stateCode = 'empty_results';
             $this->stateMessage = __('No catalog records matched the current filters in your authorized scope.');
+
+            return;
         }
+
+        $this->loadListSummary($engine, $project, $effectiveChannel);
     }
 
     private function loadDetailMode(RemoteEngineService $engine, Project $project): void
@@ -770,6 +785,317 @@ class CatalogEntity extends Page
         if (($activityResponse['status'] ?? null) === 'success' && is_array($activityResponse['data'] ?? null)) {
             $this->activityData = $activityResponse['data'];
         }
+
+        $this->loadDetailSummary($engine, $project, $parsedRef);
+    }
+
+    /**
+     * Load Stage 2 Population-Level Entity Summary for List Mode.
+     */
+    private function loadListSummary(RemoteEngineService $engine, Project $project, ?string $effectiveChannel): void
+    {
+        $aggFilters = array_filter([
+            'channel'          => $effectiveChannel,
+            'status'           => $this->status !== '' ? strtolower($this->status) : null,
+            'objective'        => $this->objective !== '' ? $this->objective : null,
+            'buying_type'      => $this->buyingType !== '' ? $this->buyingType : null,
+        ], static fn ($v) => $v !== null && $v !== '');
+
+        if ($this->entity === 'orders') {
+            $res = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'           => 'orders',
+                'authorized_scope'      => $this->authorizedScope,
+                'measures'              => ['order_count', 'canonical_order_count', 'revenue', 'aov', 'total_discount'],
+                'deduplicate_canonical' => true,
+                'filters'               => $aggFilters,
+            ]);
+            if ($res === null) {
+                return;
+            }
+            $row = $res['data'][0] ?? [];
+            $meta = $res['meta'] ?? [];
+            $byChannelRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'orders',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['order_count', 'revenue', 'aov'],
+                'dimensions'       => ['channel'],
+                'filters'          => $aggFilters,
+            ]);
+
+            $this->summaryData = [
+                'mode'               => 'list',
+                'entity'             => 'orders',
+                'row'                => $row,
+                'meta'               => $meta,
+                'channel_comparison' => $byChannelRes['data'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'customers') {
+            $res = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'customers',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => [
+                    'customer_count',
+                    'canonical_customer_count',
+                    'customer_ltv',
+                    'avg_revenue_per_customer',
+                    'repeat_customer_count',
+                    'high_frequency_customer_count',
+                    'repeat_buyer_rate',
+                ],
+                'filters'          => $aggFilters,
+            ]);
+            if ($res === null) {
+                return;
+            }
+            $row = $res['data'][0] ?? [];
+            $meta = $res['meta'] ?? [];
+
+            $touchesRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'customers',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['pre_purchase_touches'],
+            ]);
+            $byChannelRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'customers',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['customer_count', 'canonical_customer_count'],
+                'dimensions'       => ['channel'],
+            ]);
+
+            $this->summaryData = [
+                'mode'               => 'list',
+                'entity'             => 'customers',
+                'row'                => $row,
+                'meta'               => $meta,
+                'touches'            => $touchesRes['data'] ?? [],
+                'channel_comparison' => $byChannelRes['data'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'stores') {
+            $storeRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'stores',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['store_count'],
+                'filters'          => $aggFilters,
+            ]);
+            $orderRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'           => 'orders',
+                'authorized_scope'      => $this->authorizedScope,
+                'measures'              => ['order_count', 'revenue', 'aov'],
+                'deduplicate_canonical' => true,
+                'filters'               => $aggFilters,
+            ]);
+            if ($storeRes === null && $orderRes === null) {
+                return;
+            }
+            $this->summaryData = [
+                'mode'   => 'list',
+                'entity' => 'stores',
+                'row'    => array_merge($storeRes['data'][0] ?? [], $orderRes['data'][0] ?? []),
+                'meta'   => $orderRes['meta'] ?? $storeRes['meta'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'products') {
+            $res = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'products',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['product_count', 'canonical_product_count', 'average_price', 'min_price', 'max_price'],
+                'filters'          => $aggFilters,
+            ]);
+            if ($res === null) {
+                return;
+            }
+            $this->summaryData = [
+                'mode'   => 'list',
+                'entity' => 'products',
+                'row'    => $res['data'][0] ?? [],
+                'meta'   => $res['meta'] ?? [],
+            ];
+
+            return;
+        }
+
+        if (in_array($this->entity, ['promotions', 'promo-codes'], true)) {
+            $res = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'discounts',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['discount_count', 'total_usage'],
+                'filters'          => $aggFilters,
+            ]);
+            if ($res === null) {
+                return;
+            }
+            $this->summaryData = [
+                'mode'   => 'list',
+                'entity' => $this->entity,
+                'row'    => $res['data'][0] ?? [],
+                'meta'   => $res['meta'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'campaigns') {
+            $res = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'campaigns',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['campaign_count', 'total_budget', 'average_budget'],
+                'filters'          => $aggFilters,
+            ]);
+            if ($res === null) {
+                return;
+            }
+            $this->summaryData = [
+                'mode'   => 'list',
+                'entity' => 'campaigns',
+                'row'    => $res['data'][0] ?? [],
+                'meta'   => $res['meta'] ?? [],
+            ];
+        }
+    }
+
+    /**
+     * Load Stage 1 Entity-Specific 360° Contextual Summary for Detail Mode.
+     */
+    private function loadDetailSummary(RemoteEngineService $engine, Project $project, EntityReference $parsedRef): void
+    {
+        $record = $this->profileData['record'] ?? [];
+        $entityId = $parsedRef->getId();
+
+        if ($this->entity === 'customers') {
+            $ltvRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'customers',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['customer_count', 'canonical_customer_count', 'customer_ltv', 'repeat_customer_count'],
+                'filters'          => ['customer_id' => $entityId],
+            ]);
+            $storeOrdersRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'orders',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['order_count', 'revenue'],
+                'dimensions'       => ['store', 'channel'],
+                'filters'          => ['customer_id' => $entityId],
+            ]);
+            $touchesRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'customers',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['pre_purchase_touches'],
+                'filters'          => ['customer_id' => $entityId],
+            ]);
+
+            if ($ltvRes === null && $storeOrdersRes === null && $touchesRes === null) {
+                return;
+            }
+
+            $this->summaryData = [
+                'mode'            => 'detail',
+                'entity'          => 'customers',
+                'ltv_row'         => $ltvRes['data'][0] ?? [],
+                'ltv_meta'        => $ltvRes['meta'] ?? [],
+                'store_breakdown' => $storeOrdersRes['data'] ?? [],
+                'touches'         => $touchesRes['data'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'orders') {
+            $canonicalOrderId = (int) ($record['attributes']['order_id'] ?? $entityId);
+            $footprintRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'orders',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['order_count', 'revenue', 'total_discount'],
+                'dimensions'       => ['channel', 'store', 'financial_status'],
+                'filters'          => ['order_id' => $canonicalOrderId],
+            ]);
+            if ($footprintRes === null) {
+                return;
+            }
+
+            $this->summaryData = [
+                'mode'              => 'detail',
+                'entity'            => 'orders',
+                'channel_footprint' => $footprintRes['data'] ?? [],
+                'meta'              => $footprintRes['meta'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'stores') {
+            $storeOrdersRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'orders',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['order_count', 'revenue', 'aov', 'total_discount', 'unique_customers'],
+                'filters'          => ['store_id' => $entityId],
+            ]);
+            $storeProdsRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'products',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['product_count'],
+                'filters'          => ['store_id' => $entityId],
+            ]);
+            if ($storeOrdersRes === null && $storeProdsRes === null) {
+                return;
+            }
+
+            $this->summaryData = [
+                'mode'   => 'detail',
+                'entity' => 'stores',
+                'row'    => array_merge($storeOrdersRes['data'][0] ?? [], $storeProdsRes['data'][0] ?? []),
+                'meta'   => $storeOrdersRes['meta'] ?? [],
+            ];
+
+            return;
+        }
+
+        if ($this->entity === 'products') {
+            $prodOrdersRes = $this->fetchEntityAggregation($engine, $project, [
+                'entity_type'      => 'orders',
+                'authorized_scope' => $this->authorizedScope,
+                'measures'         => ['order_count', 'revenue'],
+                'filters'          => ['product' => $entityId],
+            ]);
+            if ($prodOrdersRes === null) {
+                return;
+            }
+
+            $this->summaryData = [
+                'mode'   => 'detail',
+                'entity' => 'products',
+                'row'    => $prodOrdersRes['data'][0] ?? [],
+                'meta'   => $prodOrdersRes['meta'] ?? [],
+            ];
+        }
+    }
+
+    /**
+     * Safely invoke aggregateCatalogEntities without breaking callers or mocks when unavailable.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>|null
+     */
+    private function fetchEntityAggregation(RemoteEngineService $engine, Project $project, array $payload): ?array
+    {
+        try {
+            $res = $engine->aggregateCatalogEntities($project, $payload);
+            if (is_array($res) && ($res['status'] ?? null) === 'success' && isset($res['data'])) {
+                return $res;
+            }
+        } catch (\Throwable) {
+        }
+
+        return null;
     }
 
     /**

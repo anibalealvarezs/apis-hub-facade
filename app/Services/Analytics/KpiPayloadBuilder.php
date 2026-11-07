@@ -58,6 +58,35 @@ class KpiPayloadBuilder
     {
         $depSourceType = $state['dependent_source_type'] ?? 'channel';
 
+        if ($depSourceType === 'entity_measure') {
+            $depEntityType = $state['dependent_entity_type'] ?? 'orders';
+            $depMeasure = $state['dependent_measure'] ?? $state['dependent_metric'] ?? 'order_count';
+            $depFullMetric = 'em_' . $depEntityType . '_' . $depMeasure;
+            $dependentNode = [
+                'type' => 'metric',
+                'metric' => $depFullMetric,
+            ];
+            if (in_array($calculationType, [
+                'calculate_autocorrelation', 'calculate_anomaly', 'calculate_macd',
+                'calculate_trend_linear', 'calculate_trend_sma',
+                'calculate_trend_ema', 'calculate_trend_holt_winters',
+                'calculate_trend_logarithmic'
+            ])) {
+                return $dependentNode;
+            }
+            $independents = array_values($state['independent_variables'] ?? []);
+            if (empty($independents)) {
+                return $dependentNode;
+            }
+            $rightNode = self::buildIndependentNodes($independents, $state['granularity'] ?? 'daily');
+            return [
+                'type' => 'operator',
+                'operator' => '/',
+                'left' => $dependentNode,
+                'right' => $rightNode,
+            ];
+        }
+
         if ($depSourceType === 'derived_metric') {
             $depDmId = $state['dependent_dm_id'] ?? null;
             $depFullMetric = $depDmId ? 'dm_' . $depDmId : '';
@@ -268,6 +297,9 @@ class KpiPayloadBuilder
             if ($sourceType === 'derived_metric') {
                 return ! empty($var['independent_dm_id']);
             }
+            if ($sourceType === 'entity_measure') {
+                return ! empty($var['independent_entity_type']) && (! empty($var['independent_measure']) || ! empty($var['independent_metric']));
+            }
             return ! empty($var['independent_metric']) && ! empty($var['independent_channel']);
         }));
 
@@ -294,6 +326,15 @@ class KpiPayloadBuilder
     private static function buildSingleIndependentNode(array $var, string $granularity = 'daily'): array
     {
         $indSourceType = $var['independent_source_type'] ?? 'channel';
+
+        if ($indSourceType === 'entity_measure') {
+            $indEntityType = $var['independent_entity_type'] ?? 'orders';
+            $indMeasure = $var['independent_measure'] ?? $var['independent_metric'] ?? 'order_count';
+            return [
+                'type' => 'metric',
+                'metric' => 'em_' . $indEntityType . '_' . $indMeasure,
+            ];
+        }
 
         if ($indSourceType === 'derived_metric') {
             $indDmId = $var['independent_dm_id'] ?? null;

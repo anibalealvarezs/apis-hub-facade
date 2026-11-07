@@ -115,6 +115,10 @@
                     <div class="mailchimp-label">{{ __('Store Revenue (source currency)') }}</div>
                     <div class="card-metric-value" x-text="summary.revenue == null ? '\u2014' : formatNumber(summary.revenue)"></div>
                 </button>
+                <div class="card-stat-mailchimp">
+                    <div class="mailchimp-label">{{ __('Store AOV (source currency)') }}</div>
+                    <div class="card-metric-value" x-text="summary.aov == null ? '\u2014' : formatNumber(summary.aov)"></div>
+                </div>
             </div>
             <p x-show="activeTab === 'stores'" class="mb-2 text-sm text-gray-500 dark:text-gray-400">
                 {{ __('Revenue is shown separately by currency in the table. The summary and chart show revenue when the selected period has a single currency.') }}
@@ -377,6 +381,9 @@
                     <template x-if="activeTab === 'stores'">
                         <x-data-table.column state="tableState" key="revenue" label="{{ __('Revenue') }}"/>
                     </template>
+                    <template x-if="activeTab === 'stores'">
+                        <x-data-table.column state="tableState" key="aov" label="{{ __('AOV') }}"/>
+                    </template>
 
                     <!-- Specific to URLs tab: Unique Clicks column -->
                     <template x-if="activeTab === 'urls'">
@@ -490,6 +497,9 @@
                         </template>
                         <template x-if="activeTab === 'stores'">
                             <td class="metric-cell" x-text="row.revenue == null ? '\u2014' : formatNumber(row.revenue)"></td>
+                        </template>
+                        <template x-if="activeTab === 'stores'">
+                            <td class="metric-cell" x-text="row.aov == null ? '\u2014' : formatNumber(row.aov)"></td>
                         </template>
 
                         <!-- Unique Clicks (only urls tab) -->

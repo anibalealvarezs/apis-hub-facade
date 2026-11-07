@@ -492,6 +492,7 @@ class GoogleAnalyticsController extends Controller
             return response()->json([
                 'summary' => $summary,
                 'previous' => $previous,
+                'entity_measures' => $this->fetchEntityMeasuresConfidence($tenant, $service, $validated),
                 'debug_results' => config('app.debug') ? $results : null,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -499,6 +500,35 @@ class GoogleAnalyticsController extends Controller
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("GA4 Summary Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function fetchEntityMeasuresConfidence(Project $tenant, RemoteEngineService $service, array $validated): ?array
+    {
+        try {
+            $accounts = array_values(array_filter(array_map('strval', (array) ($validated['account'] ?? []))));
+            $scope = [
+                'channels' => [
+                    'google_analytics' => [
+                        'account_ids' => array_values(array_map('intval', array_filter($accounts, 'is_numeric'))),
+                        'platform_ids' => $accounts,
+                    ],
+                ],
+            ];
+            $measures = [];
+            foreach (['events' => ['event_count'], 'orders' => ['order_count', 'revenue'], 'products' => ['product_count']] as $entity => $entityMeasures) {
+                $res = $service->aggregateCatalogEntities($tenant, [
+                    'entity_type' => $entity,
+                    'authorized_scope' => $scope,
+                    'measures' => $entityMeasures,
+                ]);
+                if (is_array($res) && ($res['status'] ?? null) === 'success') {
+                    $measures[$entity] = $res['data'][0] ?? [];
+                }
+            }
+            return $measures !== [] ? $measures : null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

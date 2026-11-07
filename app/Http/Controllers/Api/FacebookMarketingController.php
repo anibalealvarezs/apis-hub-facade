@@ -177,12 +177,42 @@ class FacebookMarketingController extends Controller
             return response()->json([
                 'summary' => empty($summaryData) ? new \stdClass() : $summaryData,
                 'previous' => empty($previousData) ? new \stdClass() : $previousData,
+                'entity_measures' => $this->fetchEntityMeasuresConfidence($tenant, $service, $validated),
                 'debug_results' => ['payloads' => $payloads, 'meta' => $results['summary']['meta'] ?? null],
                 'retryable' => !empty($results['summary']['retryable'])
             ]);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("FBM Summary Error: " . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function fetchEntityMeasuresConfidence(Project $tenant, RemoteEngineService $service, array $validated): ?array
+    {
+        try {
+            $accounts = array_values(array_filter(array_map('strval', (array) ($validated['account'] ?? []))));
+            $scope = [
+                'channels' => [
+                    'facebook_marketing' => [
+                        'account_ids' => array_values(array_map('intval', array_filter($accounts, 'is_numeric'))),
+                        'platform_ids' => $accounts,
+                    ],
+                ],
+            ];
+            $measures = [];
+            foreach (['campaigns' => 'campaign_count', 'ad-groups' => 'ad_group_count', 'ads' => 'ad_count'] as $entity => $measure) {
+                $res = $service->aggregateCatalogEntities($tenant, [
+                    'entity_type' => $entity,
+                    'authorized_scope' => $scope,
+                    'measures' => [$measure],
+                ]);
+                if (is_array($res) && ($res['status'] ?? null) === 'success') {
+                    $measures[$entity] = $res['data'][0] ?? [];
+                }
+            }
+            return $measures !== [] ? $measures : null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

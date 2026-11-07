@@ -1006,4 +1006,189 @@ class CatalogEntityPageTest extends TestCase
         $this->assertFalse((bool) $v1184->fresh()->is_default);
         $this->assertSame(1, ApisHubRelease::where('is_default', true)->count());
     }
+
+    public function test_list_and_detail_entity_summaries_and_cross_channel_analysis(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo(['view_data', 'view_customer_pii']);
+
+        $project = $this->createAdsProject($owner, [
+            'mailchimp' => [
+                'audiences' => [
+                    ['id' => 'mc_list_1', 'enabled' => true, 'lost_access' => false],
+                ],
+            ],
+        ]);
+
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+
+        $engineMock = Mockery::mock(RemoteEngineService::class);
+        $engineMock->shouldReceive('getCatalogCapabilities')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => [
+                    'entities' => [
+                        'orders'    => ['supported' => true],
+                        'customers' => ['supported' => true],
+                    ],
+                ],
+            ]);
+
+        // 1. Orders List + List Summary + Cross-Channel Comparison
+        $engineMock->shouldReceive('listCatalogEntities')
+            ->withArgs(fn (Project $p, string $entity) => $entity === 'orders')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => [
+                    [
+                        'reference'     => 'channeled:mailchimp:orders:101',
+                        'layer'         => 'channeled',
+                        'channel'       => 'mailchimp',
+                        'channel_label' => 'Mailchimp',
+                        'entity_type'   => 'orders',
+                        'id'            => 101,
+                        'platform_id'   => 'ORD-1001',
+                        'name'          => 'Order #1001',
+                        'status'        => 'PAID',
+                        'attributes'    => ['total_amount' => 150.0, 'currency_code' => 'USD'],
+                        'relationships' => [],
+                        'provenance'    => ['freshness_timestamp' => '2026-10-05 10:00:00'],
+                    ],
+                ],
+                'meta' => ['total' => 1, 'page' => 1, 'per_page' => 25, 'last_page' => 1],
+            ]);
+
+        $engineMock->shouldReceive('aggregateCatalogEntities')
+            ->andReturnUsing(function (Project $p, array $payload) {
+                $type = $payload['entity_type'] ?? '';
+                $dims = $payload['dimensions'] ?? [];
+                $measures = $payload['measures'] ?? [];
+
+                if ($type === 'orders' && $dims === []) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [[
+                            'order_count'           => 5,
+                            'canonical_order_count' => 4,
+                            'revenue'               => 600.0,
+                            'aov'                   => 150.0,
+                            'total_discount'        => 45.0,
+                        ]],
+                        'meta' => ['currency' => 'USD', 'currency_mixed' => false],
+                    ];
+                }
+
+                if ($type === 'orders' && $dims === ['channel']) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [
+                            ['channel' => 'mailchimp', 'order_count' => 3, 'revenue' => 400.0, 'aov' => 133.33],
+                            ['channel' => 'shopify', 'order_count' => 2, 'revenue' => 200.0, 'aov' => 100.0],
+                        ],
+                        'meta' => ['currency' => 'USD'],
+                    ];
+                }
+
+                if ($type === 'customers' && in_array('pre_purchase_touches', $measures, true)) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [
+                            'total_touches'            => 5,
+                            'touched_customers'        => 1,
+                            'avg_touches_per_customer' => 5.0,
+                            'by_channel'               => [
+                                ['channel' => 'mailchimp', 'touches' => 3],
+                                ['channel' => 'klaviyo', 'touches' => 2],
+                            ],
+                        ],
+                    ];
+                }
+
+                if ($type === 'customers') {
+                    return [
+                        'status' => 'success',
+                        'data'   => [[
+                            'customer_count'                => 3,
+                            'canonical_customer_count'      => 2,
+                            'customer_ltv'                  => 850.0,
+                            'avg_revenue_per_customer'      => 425.0,
+                            'repeat_customer_count'         => 1,
+                            'high_frequency_customer_count' => 1,
+                            'repeat_buyer_rate'             => 50.0,
+                        ]],
+                        'meta' => ['currency' => 'USD', 'currency_mixed' => false],
+                    ];
+                }
+
+                if ($type === 'orders' && $dims === ['store', 'channel']) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [
+                            ['store' => 1, 'store_name' => 'Flagship Store', 'channel' => 'shopify', 'order_count' => 2, 'revenue' => 500.0],
+                            ['store' => 2, 'store_name' => 'Outlet Store', 'channel' => 'mailchimp', 'order_count' => 1, 'revenue' => 350.0],
+                        ],
+                        'meta' => ['currency' => 'USD'],
+                    ];
+                }
+
+                return ['status' => 'success', 'data' => []];
+            });
+
+        $engineMock->shouldReceive('getCatalogEntityProfile')
+            ->withArgs(fn (Project $p, string $entity, string $ref) => $entity === 'customers')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => [
+                    'record' => [
+                        'reference'     => 'base:mailchimp:customers:12',
+                        'layer'         => 'base',
+                        'channel'       => 'mailchimp',
+                        'channel_label' => 'Mailchimp',
+                        'entity_type'   => 'customers',
+                        'id'            => 12,
+                        'platform_id'   => 'alice@example.com',
+                        'name'          => 'Alice Rivera',
+                        'status'        => 'SUBSCRIBED',
+                        'attributes'    => ['email' => 'alice@example.com'],
+                        'provenance'    => ['freshness_timestamp' => '2026-10-05 11:00:00'],
+                    ],
+                    'source_records' => [],
+                    'relationships'  => ['parents' => [], 'children' => []],
+                    'metrics'        => [],
+                ],
+            ]);
+
+        $engineMock->shouldReceive('getCatalogEntityActivity')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => ['coverage' => ['notice' => ''], 'data' => [], 'meta' => ['total' => 0]],
+            ]);
+
+        $this->app->instance(RemoteEngineService::class, $engineMock);
+
+        // Assert Orders List Summary shows Canonical Orders, Gross Revenue, AOV, and Cross-Channel Comparison
+        Livewire::test(CatalogEntity::class, ['entity' => 'orders'])
+            ->assertSuccessful()
+            ->assertSee('Canonical Orders')
+            ->assertSee('Average Order Value (AOV)')
+            ->assertSee('USD 600.00')
+            ->assertSee('USD 150.00')
+            ->assertSee('Cross-Channel Comparison:');
+
+        // Assert Customer Detail (Customer 360) shows Cross-Store LTV, Pre-Purchase Touches by channel, and Store Breakdown
+        Livewire::test(CatalogEntity::class, [
+            'entity' => 'customers',
+            'record' => 'base:mailchimp:customers:12',
+        ])
+            ->assertSuccessful()
+            ->assertSee('Customer 360° Cross-Channel Summary')
+            ->assertSee('Total Purchases Across Stores')
+            ->assertSee('USD 850.00')
+            ->assertSee('Touches by Channel Prior to First Order')
+            ->assertSee('klaviyo')
+            ->assertSee('Flagship Store')
+            ->assertSee('Outlet Store')
+            ->assertDontSee('Average Order Value (AOV)');
+    }
 }
