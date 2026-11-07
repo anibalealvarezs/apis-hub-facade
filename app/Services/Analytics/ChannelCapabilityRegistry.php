@@ -4,12 +4,57 @@ namespace App\Services\Analytics;
 
 class ChannelCapabilityRegistry
 {
+    public const AUDITED_CHANNELS = [
+        'google_search_console',
+        'google_analytics',
+        'google_ads',
+        'facebook_marketing',
+        'facebook_organic',
+        'mailchimp',
+    ];
+
     public static function getAnalyticsTree(string $channel): ?array
     {
         return match ($channel) {
             'google_search_console' => GscAnalyticsCatalog::tree(),
             default => ChannelAnalyticsCatalog::tree($channel),
         };
+    }
+
+    /**
+     * Return the full versioned metrics catalog trees for all audited channels.
+     */
+    public static function getAllAnalyticsTrees(): array
+    {
+        $trees = [];
+        foreach (self::AUDITED_CHANNELS as $channel) {
+            $tree = self::getAnalyticsTree($channel);
+            if ($tree !== null) {
+                $trees[$channel] = $tree;
+            }
+        }
+        return $trees;
+    }
+
+    /**
+     * Return a compact version manifest for each channel's metrics catalog.
+     */
+    public static function getCatalogVersionManifest(): array
+    {
+        $manifest = [];
+        foreach (self::getAllAnalyticsTrees() as $channel => $tree) {
+            $manifest[$channel] = [
+                'channel' => $channel,
+                'contract_version' => $tree['contract_version'] ?? 1,
+                'query_contract_version' => $tree['query_contract_version'] ?? null,
+                'minimum_release' => $tree['minimum_release'] ?? null,
+                'audited_at' => $tree['audited_at'] ?? '2026-10-30',
+                'metrics_count' => isset($tree['metrics']) && is_array($tree['metrics']) ? count($tree['metrics']) : 0,
+                'scopes' => isset($tree['scopes']) && is_array($tree['scopes']) ? array_keys($tree['scopes']) : [],
+                'ui_dependencies' => isset($tree['ui_dependencies']) && is_array($tree['ui_dependencies']) ? array_keys($tree['ui_dependencies']) : [],
+            ];
+        }
+        return $manifest;
     }
 
     public static function isMetricAdditive(string $channel, string $metric): bool

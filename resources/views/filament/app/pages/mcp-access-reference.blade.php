@@ -398,7 +398,7 @@
                             <span>get_analytics_catalog</span>
                         </div>
                         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            {{ __('Introspects canonical metrics, derived formulas (ROAS, CPC, CTR), temporal granularities, and valid dimensions per channel or scope.') }}
+                            {{ __('Introspects canonical metrics, derived formulas (ROAS, CPC, CTR), entity measures (orders, customers, stores, products, discounts, campaigns), temporal granularities, and valid dimensions.') }}
                         </p>
                         <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
                             Ultra & Enterprise
@@ -414,6 +414,32 @@
                             {{ __('Calculates aggregated metrics across Meta, Google Ads, GSC, GA4, Shopify, and Klaviyo with built-in memory caching and asset group isolation.') }}
                         </p>
                         <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-circle-stack" class="w-4 h-4 text-orange-500" />
+                            <span>aggregate_entities</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Computes Two-Stage dynamic Entity Measures (Order Count, Revenue, AOV, Customer LTV, Repeat Rate, Promo Usage) across orders, customers, stores, products, discounts, and campaigns.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
+                            Ultra & Enterprise
+                        </span>
+                    </div>
+
+                    <div class="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-white/[0.02]">
+                        <div class="flex items-center gap-2 mb-1.5 font-bold text-sm text-gray-900 dark:text-white">
+                            <x-filament::icon icon="heroicon-m-squares-plus" class="w-4 h-4 text-blue-500" />
+                            <span>create_dashboard_draft</span>
+                        </div>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {{ __('Stages custom dashboard drafts with full widget support for metrics, statistical KPIs, derived formulas, and entity_measure aggregations.') }}
+                        </p>
+                        <span class="inline-flex text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
                             Ultra & Enterprise
                         </span>
                     </div>

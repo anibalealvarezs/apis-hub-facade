@@ -2811,7 +2811,9 @@
             $hasMultiSeries = false;
             if (is_array($rawSeries) && count($rawSeries) > 0) {
                 $hasMultiSeries = count($rawSeries) > 1
-                    || (!empty($rawSeries[0]['type']) && $rawSeries[0]['type'] === 'derived_metric')
+                    || (!empty($rawSeries[0]['type']) && in_array($rawSeries[0]['type'], ['derived_metric', 'entity_measure'], true))
+                    || (!empty($rawSeries[0]['source_type']) && in_array($rawSeries[0]['source_type'], ['derived_metric', 'entity_measure'], true))
+                    || (!empty($rawSeries[0]['entity_type']))
                     || (!empty($rawSeries[0]['breakdown']['dimension']))
                     || (!empty($rawSeries[0]['filters']));
             }
