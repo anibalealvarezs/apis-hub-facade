@@ -1,6 +1,24 @@
 <x-filament-panels::page>
     <div wire:poll.10s="refreshData"
-         x-data="{ confirmModalOpen: false, modalChannel: '', modalAssetId: '', modalAssetName: '' }">
+         x-data="{
+             confirmModalOpen: false,
+             modalChannel: '',
+             modalAssetId: '',
+             modalAssetName: '',
+             syncTitle(pct) {
+                 const base = @js(__('Sync Activity'));
+                 const brand = @js(trim(strip_tags(filament()->getBrandName())));
+                 if (pct !== null && pct !== undefined && !isNaN(pct) && pct !== '') {
+                     const num = parseFloat(pct);
+                     const formatted = (num === 100 || num === 0) ? num.toFixed(0) : num.toFixed(1);
+                     document.title = `(${formatted}%) ${base} - ${brand}`;
+                 } else {
+                     document.title = `${base} - ${brand}`;
+                 }
+             }
+         }"
+         x-init="syncTitle(@js($syncData['completion_percentage'] ?? null))"
+         x-effect="syncTitle(@js($syncData['completion_percentage'] ?? null))">
         @if(!filament()->getTenant()->is_active || filament()->getTenant()->billing_status === 'suspended')
             <div
                 class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 border border-red-200 dark:border-red-800/30"

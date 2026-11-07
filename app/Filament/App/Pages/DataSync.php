@@ -24,6 +24,20 @@ class DataSync extends Page
 
     public function getTitle(): string
     {
+        $baseTitle = __('Sync Activity');
+
+        if (isset($this->syncData['completion_percentage']) && is_numeric($this->syncData['completion_percentage'])) {
+            $pct = (float) $this->syncData['completion_percentage'];
+            $formatted = ($pct == 100 || $pct == 0) ? number_format($pct, 0) : number_format($pct, 1);
+
+            return "({$formatted}%) {$baseTitle}";
+        }
+
+        return $baseTitle;
+    }
+
+    public function getHeading(): string
+    {
         return __('Sync Activity');
     }
 
