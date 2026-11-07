@@ -308,6 +308,7 @@
                     'kpi' => $this->handleKpiSource($project, $widget, $resolvedControls),
                     'metric' => $this->handleMetricSource($project, $widget, $resolvedControls),
                     'entity' => $this->handleEntitySource($project, $widget, $resolvedControls),
+                    'entity_measure' => $this->handleEntityMeasureSource($project, $widget, $resolvedControls),
                     'derived_metric' => $this->handleDerivedMetricSource($project, $widget, $resolvedControls),
                     default => throw new \InvalidArgumentException('Unknown source type: '.$widget->source_type),
                 };
@@ -1876,6 +1877,10 @@
 
                     $hasRenderableSeries = false;
                     foreach ($sourceSeries as $index => $series) {
+                        if (($series['source_type'] ?? $series['type'] ?? 'metric') === 'entity_measure' || !empty($series['entity_type'])) {
+                            $hasRenderableSeries = true;
+                            break;
+                        }
                         $channel = $series['channel'] ?? null;
                         if (!$channel) {
                             continue;
@@ -2351,7 +2356,9 @@
                 'widget_id'         => $widget->id,
             ]);
 
-            if (empty($mergedState['dependent_metric']) && empty($mergedState['dependent_dm_id'])) {
+            if (($mergedState['dependent_source_type'] ?? 'channel') === 'entity_measure' || !empty($mergedState['dependent_entity_type'])) {
+                $mergedState['dependent_source_type'] = 'entity_measure';
+            } elseif (empty($mergedState['dependent_metric']) && empty($mergedState['dependent_dm_id'])) {
                 $depChannel = !empty($mergedState['dependent_channel'])
                     ? $mergedState['dependent_channel']
                     : (!empty($uiState['dependent_channel'])
@@ -2380,6 +2387,9 @@
                 $cleanedIndependents = [];
                 foreach ($mergedState['independent_variables'] as $key => $var) {
                     if (!empty($var['independent_dm_id'])) {
+                        $cleanedIndependents[$key] = $var;
+                    } elseif (($var['independent_source_type'] ?? '') === 'entity_measure' || !empty($var['independent_entity_type'])) {
+                        $var['independent_source_type'] = 'entity_measure';
                         $cleanedIndependents[$key] = $var;
                     } elseif (!empty($var['independent_metric']) && !empty($var['independent_channel'])) {
                         $cleanedIndependents[$key] = $var;
@@ -2601,6 +2611,58 @@
                 }
             }
 
+            // Pre-fetch Entity Measure series for KPI variables that use entity_measure
+            $emSeries = $payload['series_data'] ?? [];
+            $kpiDateStart = $payload['filters']['startDate'] ?? ($controls['date_start'] ?? now()->subDays(30)->format('Y-m-d'));
+            $kpiDateEnd = $payload['filters']['endDate'] ?? ($controls['date_end'] ?? now()->format('Y-m-d'));
+            $kpiGranularity = $payload['filters']['groupBy'][0] ?? ($controls['granularity'] ?? 'daily');
+
+            if (($mergedState['dependent_source_type'] ?? 'channel') === 'entity_measure') {
+                $depEntityType = $mergedState['dependent_entity_type'] ?? 'orders';
+                $depMeasure = $mergedState['dependent_measure'] ?? $mergedState['dependent_metric'] ?? 'order_count';
+                $emKey = 'em_' . $depEntityType . '_' . $depMeasure;
+                $emSeries[$emKey] = $this->fetchEntityMeasureTimeSeries(
+                    $project,
+                    [
+                        'entity_type' => $depEntityType,
+                        'measure'     => $depMeasure,
+                        'channel'     => $mergedState['dependent_channel'] ?? null,
+                        'filters'     => $mergedState['filters'] ?? [],
+                    ],
+                    $kpiDateStart,
+                    $kpiDateEnd,
+                    $kpiGranularity,
+                    $controls,
+                    isset($mergedState['dependent_asset_filter']) && is_array($mergedState['dependent_asset_filter']) ? $mergedState['dependent_asset_filter'] : null
+                );
+            }
+
+            foreach (($mergedState['independent_variables'] ?? []) as $var) {
+                if (($var['independent_source_type'] ?? 'channel') === 'entity_measure') {
+                    $indEntityType = $var['independent_entity_type'] ?? 'orders';
+                    $indMeasure = $var['independent_measure'] ?? $var['independent_metric'] ?? 'order_count';
+                    $emKey = 'em_' . $indEntityType . '_' . $indMeasure;
+                    $emSeries[$emKey] = $this->fetchEntityMeasureTimeSeries(
+                        $project,
+                        [
+                            'entity_type' => $indEntityType,
+                            'measure'     => $indMeasure,
+                            'channel'     => $var['independent_channel'] ?? null,
+                            'filters'     => $var['filters'] ?? [],
+                        ],
+                        $kpiDateStart,
+                        $kpiDateEnd,
+                        $kpiGranularity,
+                        $controls,
+                        isset($var['independent_asset_filter']) && is_array($var['independent_asset_filter']) ? $var['independent_asset_filter'] : null
+                    );
+                }
+            }
+
+            if (!empty($emSeries)) {
+                $payload['series_data'] = $emSeries;
+            }
+
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleKpiSource BEFORE computeKpi", ['widget_id' => $widget->id]);
 
             $result = $this->remoteEngineService->computeKpi($project, $payload);
@@ -2749,7 +2811,9 @@
             $hasMultiSeries = false;
             if (is_array($rawSeries) && count($rawSeries) > 0) {
                 $hasMultiSeries = count($rawSeries) > 1
-                    || (!empty($rawSeries[0]['type']) && $rawSeries[0]['type'] === 'derived_metric')
+                    || (!empty($rawSeries[0]['type']) && in_array($rawSeries[0]['type'], ['derived_metric', 'entity_measure'], true))
+                    || (!empty($rawSeries[0]['source_type']) && in_array($rawSeries[0]['source_type'], ['derived_metric', 'entity_measure'], true))
+                    || (!empty($rawSeries[0]['entity_type']))
                     || (!empty($rawSeries[0]['breakdown']['dimension']))
                     || (!empty($rawSeries[0]['filters']));
             }
@@ -2882,6 +2946,9 @@
                 if (($series['type'] ?? 'metric') === 'derived_metric' && !empty($series['dm_id'])) {
                     continue;
                 }
+                if (($series['type'] ?? $series['source_type'] ?? 'metric') === 'entity_measure' || !empty($series['entity_type'])) {
+                    continue;
+                }
 
                 $channel = $series['channel'] ?? '';
                 if ($channel === '' || empty($controls['series_metrics'][$index] ?? $series['metrics'] ?? [])) {
@@ -2899,7 +2966,7 @@
 
             // 1. Separate Raw Metric series and group Derived Metric series
             foreach ($rawSeries as $sIdx => $series) {
-                $type = $series['type'] ?? 'metric';
+                $type = $series['type'] ?? $series['source_type'] ?? 'metric';
                 $dmId = $series['dm_id'] ?? null;
 
                 if ($type === 'derived_metric' && !empty($dmId)) {
@@ -2907,6 +2974,52 @@
                         'series_index' => $sIdx,
                         'series'       => $series,
                     ];
+                } elseif ($type === 'entity_measure' || !empty($series['entity_type'])) {
+                    $entityType = $series['entity_type'] ?? 'orders';
+                    $measures = $controls['series_metrics'][$sIdx] ?? $series['measures'] ?? $series['metrics'] ?? [];
+                    if (!is_array($measures)) {
+                        $measures = [$measures];
+                    }
+                    $channel = $series['channel'] ?? '';
+                    $override = $controls['series_assets'][$sIdx] ?? $series['assets'] ?? null;
+                    $currencyMeasures = ['revenue', 'gross_revenue', 'total_discount', 'total_tax', 'total_shipping', 'aov', 'customer_ltv', 'avg_revenue_per_customer'];
+                    $ratioMeasures = ['repeat_buyer_rate'];
+
+                    foreach ($measures as $measure) {
+                        if (empty($measure)) {
+                            continue;
+                        }
+                        $timeSeries = $this->fetchEntityMeasureTimeSeries(
+                            $project,
+                            array_merge($series, ['measure' => $measure, 'entity_type' => $entityType]),
+                            $dateStart,
+                            $dateEnd,
+                            $granularity,
+                            $controls,
+                            $override === null ? null : (array) $override
+                        );
+                        $isRatio = in_array($measure, $ratioMeasures, true);
+                        $isCurrency = in_array($measure, $currencyMeasures, true);
+                        if ($isRatio) {
+                            $timeSeries = array_map(fn($v) => round((float) $v * 100, 4), $timeSeries);
+                        }
+                        $mLabel = $series['label'] ?? (ucwords(str_replace('_', ' ', $entityType)).' - '.ucwords(str_replace('_', ' ', $measure)));
+                        $seriesCurves[] = [
+                            'label'        => $mLabel,
+                            'key'          => 'series_'.$sIdx.'_'.$measure,
+                            'series_index' => $sIdx,
+                            'channel'      => $channel ?: 'entity_measure',
+                            'dependency'   => $entityType,
+                            'metric'       => $measure,
+                            'raw_metric'   => $measure,
+                            'axis_key'     => $measure,
+                            'axis_title'   => $isRatio ? $mLabel.' (%)' : $mLabel,
+                            'currency'     => $isCurrency,
+                            'percentage'   => $isRatio,
+                            'data'         => $timeSeries,
+                            'color'        => $series['color'] ?? ($palette[$sIdx % count($palette)]),
+                        ];
+                    }
                 } else {
                     $channel = $series['channel'] ?? '';
                     $metrics = $controls['series_metrics'][$sIdx] ?? $series['metrics'] ?? [];
@@ -3400,11 +3513,30 @@
                 $fetchedSeries = [];
                 $ssBreakdownData = [];
 
-                // Map each source series in DM to its corresponding card's asset filter
+                    // Map each source series in DM to its corresponding card's asset filter
                 foreach ($sourceSeries as $ssIdx => $ss) {
                     $ssKey = $ss['key'];
                     $ssChannel = $ss['channel'] ?? '';
-                    $ssMetric = $ss['metric'] ?? '';
+                    $ssMetric = $ss['metric'] ?? $ss['measure'] ?? '';
+                    $ssSourceType = $ss['source_type'] ?? $ss['type'] ?? 'metric';
+
+                    if ($ssSourceType === 'entity_measure' || !empty($ss['entity_type'])) {
+                        $seriesData = $this->fetchEntityMeasureTimeSeries(
+                            $project,
+                            $ss,
+                            $dateStart,
+                            $dateEnd,
+                            $effectiveGranularity,
+                            $controls,
+                            isset($ss['asset_filter']) && is_array($ss['asset_filter']) ? $ss['asset_filter'] : null
+                        );
+                        $fetchedSeries[$ssKey] = $seriesData;
+                        $ssBreakdownData[$ssKey] = [
+                            'has_breakdown' => false,
+                            'flat'          => $seriesData,
+                        ];
+                        continue;
+                    }
 
                     // Find matching item in $items by dm_series_index or $ssIdx
                     $matchingItem = null;
@@ -4733,6 +4865,10 @@
         {
             \Illuminate\Support\Facades\Log::debug("[DM_DEBUG] handleEntitySource ENTER", ['widget_id' => $widget->id]);
             $config = $widget->source_config ?? [];
+            if (!empty($config['measures']) || !empty($controls['measures']) || ($config['mode'] ?? null) === 'entity_measure') {
+                return $this->handleEntityMeasureSource($project, $widget, $controls);
+            }
+
             $channel = $controls['channel'] ?? $config['channel'] ?? '';
             $entityType = $controls['entity_type'] ?? $config['entity_type'] ?? 'campaigns';
             $limit = $config['limit'] ?? 50;
@@ -4762,6 +4898,236 @@
             ];
 
             return $this->forwardToChannelEndpoint($channel, 'table', $payload);
+        }
+
+        public function resolveEntityAuthorizedScope(Project $project, ?string $channel, array $controls = [], ?array $seriesAssetFilter = null): array
+        {
+            $channelsToResolve = [];
+            if (!empty($channel)) {
+                $channelsToResolve = [$channel];
+            } else {
+                $channelsToResolve = ['mailchimp', 'shopify', 'klaviyo', 'google_analytics', 'facebook_marketing', 'google_ads', 'facebook_organic'];
+            }
+
+            $scopeChannels = [];
+            foreach ($channelsToResolve as $ch) {
+                $assetFilter = $this->extractAssetFilter($controls, $project, $ch, $seriesAssetFilter);
+                if ($assetFilter === '___EMPTY_GROUP___' || empty($assetFilter)) {
+                    $validAssets = $this->getValidAssetsForChannel($project, $ch);
+                    if (!empty($validAssets)) {
+                        $assetFilter = $validAssets;
+                    }
+                }
+                if ($assetFilter !== '___EMPTY_GROUP___' && !empty($assetFilter)) {
+                    $resolved = $this->resolveChanneledAccountId($project, $ch, $assetFilter);
+                    $list = is_array($resolved) ? $resolved : [$resolved];
+                    $rawList = is_array($assetFilter) ? $assetFilter : [$assetFilter];
+                    $scopeChannels[$ch] = [
+                        'account_ids'  => array_values(array_map('intval', array_filter($list, 'is_numeric'))),
+                        'platform_ids' => array_values(array_unique(array_map('strval', array_merge($list, $rawList)))),
+                    ];
+                }
+            }
+
+            return ['channels' => $scopeChannels];
+        }
+
+        public function fetchEntityMeasureTimeSeries(
+            Project $project,
+            array $series,
+            string $dateStart,
+            string $dateEnd,
+            string $granularity = 'daily',
+            array $controls = [],
+            ?array $seriesAssetFilter = null
+        ): array {
+            $entityType = $series['entity_type'] ?? $series['activeTab'] ?? $controls['entity_type'] ?? 'orders';
+            $measure = $series['measure'] ?? $series['metric'] ?? null;
+            if (empty($measure) && !empty($series['measures']) && is_array($series['measures'])) {
+                $measure = reset($series['measures']);
+            }
+            if (empty($measure) && !empty($series['metrics']) && is_array($series['metrics'])) {
+                $measure = reset($series['metrics']);
+            }
+            if (empty($measure)) {
+                return [];
+            }
+
+            $channel = $series['channel'] ?? $controls['channel'] ?? null;
+            $authorizedScope = $series['authorized_scope']
+                ?? $controls['authorized_scope']
+                ?? $this->resolveEntityAuthorizedScope($project, $channel, $controls, $seriesAssetFilter);
+
+            $timeBucket = match ($granularity) {
+                'lifetime' => null,
+                'weekly', 'trailing_weekly' => 'week',
+                'monthly', 'trailing_monthly' => 'month',
+                'annually', 'trailing_annually', 'yearly' => 'year',
+                default => 'day',
+            };
+
+            $filters = is_array($series['filters'] ?? null) ? $series['filters'] : [];
+            if (!empty($channel) && empty($filters['channel'])) {
+                $filters['channel'] = $channel;
+            }
+            $filters['date_from'] = $filters['date_from'] ?? $dateStart;
+            $filters['date_to'] = $filters['date_to'] ?? $dateEnd;
+
+            $payload = [
+                'entity_type'            => $entityType,
+                'authorized_scope'       => $authorizedScope,
+                'measures'               => [$measure],
+                'dimensions'             => [],
+                'time_bucket'            => $timeBucket,
+                'filters'                => $filters,
+                'deduplicate_canonical'  => (bool) ($series['deduplicate_canonical'] ?? $controls['deduplicate_canonical'] ?? empty($channel)),
+                'limit'                  => 1000,
+            ];
+
+            $response = $this->remoteEngineService->aggregateCatalogEntities($project, $payload);
+            $rows = $response['data'] ?? [];
+            if (!is_array($rows)) {
+                return [];
+            }
+
+            $timeSeries = [];
+            foreach ($rows as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $bucketKey = $timeBucket !== null ? ($row['time_bucket'] ?? $row['date'] ?? null) : 'Lifetime';
+                if ($bucketKey === null) {
+                    continue;
+                }
+                $val = $row[$measure] ?? null;
+                if ($val !== null && is_numeric($val)) {
+                    $timeSeries[(string) $bucketKey] = (float) $val;
+                }
+            }
+
+            ksort($timeSeries);
+
+            return $timeSeries;
+        }
+
+        protected function handleEntityMeasureSource(Project $project, DashboardWidget $widget, array $controls): array
+        {
+            $config = $widget->source_config ?? [];
+            $entityType = $controls['entity_type'] ?? $config['entity_type'] ?? 'orders';
+            $channel = $controls['channel'] ?? $config['channel'] ?? null;
+            $measures = $controls['measures'] ?? $config['measures'] ?? $controls['metrics'] ?? $config['metrics'] ?? ['order_count'];
+            if (!is_array($measures) || $measures === []) {
+                $measures = [(string) $measures];
+            }
+            $dimensions = $controls['dimensions'] ?? $config['dimensions'] ?? [];
+            if (!is_array($dimensions)) {
+                $dimensions = [(string) $dimensions];
+            }
+            $granularity = $controls['granularity'] ?? $config['granularity'] ?? 'daily';
+            $dateEnd = !empty($controls['date_end']) ? $controls['date_end'] : now()->subDays(1)->format('Y-m-d');
+            $dateStart = !empty($controls['date_start'])
+                ? $controls['date_start']
+                : \Carbon\Carbon::parse($dateEnd)->subMonth()->addDay()->format('Y-m-d');
+
+            $authorizedScope = $controls['authorized_scope']
+                ?? $config['authorized_scope']
+                ?? $this->resolveEntityAuthorizedScope($project, $channel, $controls);
+
+            $filters = array_merge(
+                is_array($config['filters'] ?? null) ? $config['filters'] : [],
+                is_array($controls['filters'] ?? null) ? $controls['filters'] : []
+            );
+            if (!empty($channel) && empty($filters['channel'])) {
+                $filters['channel'] = $channel;
+            }
+            $filters['date_from'] = $filters['date_from'] ?? $dateStart;
+            $filters['date_to'] = $filters['date_to'] ?? $dateEnd;
+
+            $isScalarWidget = in_array($widget->widget_type, ['tile', 'gauge', 'stat'], true);
+            $isTableOrPie = in_array($widget->widget_type, ['table', 'pie_chart'], true);
+
+            $timeBucket = null;
+            if (!$isScalarWidget && !($isTableOrPie && !empty($dimensions))) {
+                $timeBucket = match ($granularity) {
+                    'lifetime' => null,
+                    'weekly', 'trailing_weekly' => 'week',
+                    'monthly', 'trailing_monthly' => 'month',
+                    'annually', 'trailing_annually', 'yearly' => 'year',
+                    default => 'day',
+                };
+            }
+
+            $payload = [
+                'entity_type'           => $entityType,
+                'authorized_scope'      => $authorizedScope,
+                'measures'              => array_values($measures),
+                'dimensions'            => array_values($dimensions),
+                'time_bucket'           => $timeBucket,
+                'filters'               => $filters,
+                'deduplicate_canonical' => (bool) ($controls['deduplicate_canonical'] ?? $config['deduplicate_canonical'] ?? empty($channel)),
+                'limit'                 => (int) ($config['limit'] ?? 500),
+            ];
+
+            $response = $this->remoteEngineService->aggregateCatalogEntities($project, $payload);
+            $rows = is_array($response['data'] ?? null) ? $response['data'] : [];
+            $meta = is_array($response['meta'] ?? null) ? $response['meta'] : [];
+
+            $primaryMeasure = $measures[0];
+
+            if ($isScalarWidget && $timeBucket === null) {
+                $firstRow = $rows[0] ?? [];
+                $rawVal = $firstRow[$primaryMeasure] ?? null;
+
+                $previousVal = null;
+                try {
+                    $start = \Carbon\Carbon::parse($dateStart);
+                    $end = \Carbon\Carbon::parse($dateEnd);
+                    $diff = $start->diffInDays($end) + 1;
+                    $prevEnd = $start->copy()->subDay()->format('Y-m-d');
+                    $prevStart = $start->copy()->subDays($diff)->format('Y-m-d');
+                    $prevPayload = $payload;
+                    $prevPayload['filters']['date_from'] = $prevStart;
+                    $prevPayload['filters']['date_to'] = $prevEnd;
+                    $prevRes = $this->remoteEngineService->aggregateCatalogEntities($project, $prevPayload);
+                    $prevRow = $prevRes['data'][0] ?? [];
+                    if (isset($prevRow[$primaryMeasure]) && is_numeric($prevRow[$primaryMeasure])) {
+                        $previousVal = (float) $prevRow[$primaryMeasure];
+                    }
+                } catch (\Throwable) {
+                }
+
+                return [
+                    'summary' => $firstRow,
+                    'value'   => $rawVal !== null && is_numeric($rawVal) ? (float) $rawVal : null,
+                    'current' => $rawVal !== null && is_numeric($rawVal) ? (float) $rawVal : null,
+                    'previous' => $previousVal,
+                    'label'   => ucwords(str_replace('_', ' ', $primaryMeasure)),
+                    'meta'    => $meta,
+                ];
+            }
+
+            if ($timeBucket !== null) {
+                $chartRows = [];
+                foreach ($rows as $r) {
+                    if (!is_array($r)) {
+                        continue;
+                    }
+                    $point = $r;
+                    $point['date'] = $r['time_bucket'] ?? $r['date'] ?? '';
+                    unset($point['time_bucket']);
+                    $chartRows[] = $point;
+                }
+
+                return [
+                    'chart' => $chartRows,
+                    'meta'  => $meta,
+                ];
+            }
+
+            return [
+                'table' => $rows,
+                'meta'  => $meta,
+            ];
         }
 
         protected function extractAssetFilter(array $controls, Project $project, string $channel, ?array $seriesAssetFilter = null): array|string|null
@@ -5585,8 +5951,34 @@
             foreach ($sourceSeries as $index => $series) {
                 $key = $series['key'];
                 $channel = $series['channel'] ?? '';
-                $metric = $series['metric'] ?? '';
+                $metric = $series['metric'] ?? $series['measure'] ?? '';
                 $label = $series['label'] ?? ($channel.' - '.$metric);
+                $seriesSourceType = $series['source_type'] ?? $series['type'] ?? 'metric';
+
+                if ($seriesSourceType === 'entity_measure' || !empty($series['entity_type'])) {
+                    $seriesAssetFilter = $series['asset_filter'] ?? null;
+                    $seriesAssetKey = 'dm_'.$index;
+                    $widgetAssetOverride = $controls['series_assets'][$seriesAssetKey]
+                        ?? $controls['series_assets'][$index]
+                        ?? $controls['series_assets'][$key]
+                        ?? $dmAssets[$index]
+                        ?? null;
+                    if (!empty($widgetAssetOverride)) {
+                        $seriesAssetFilter = (!empty($seriesAssetFilter) && is_array($seriesAssetFilter))
+                            ? array_values(array_intersect($seriesAssetFilter, $widgetAssetOverride))
+                            : (array) $widgetAssetOverride;
+                    }
+                    $fetchedSeries[$key] = $this->fetchEntityMeasureTimeSeries(
+                        $project,
+                        $series,
+                        $dateStart,
+                        $dateEnd,
+                        $effectiveGranularity,
+                        $controls,
+                        is_array($seriesAssetFilter) ? $seriesAssetFilter : null
+                    );
+                    continue;
+                }
 
                 if (!$channel || !$metric) {
                     $fetchedSeries[$key] = [];

@@ -596,9 +596,48 @@ class FacebookOrganicController extends Controller
             return response()->json([
                 'summary' => ! empty($summaryRow) ? $summaryRow : new \stdClass(),
                 'previous' => ! empty($previousRow) ? $previousRow : new \stdClass(),
+                'entity_measures' => $this->fetchEntityMeasuresConfidence($tenant, $service, $validated, $parsedAccounts),
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function fetchEntityMeasuresConfidence(Project $tenant, RemoteEngineService $service, array $validated, array $parsedAccounts): ?array
+    {
+        try {
+            $accountIds = array_values(array_map('intval', array_filter(array_merge(
+                $parsedAccounts['fbAccountIds'] ?? [],
+                $parsedAccounts['igAccountIds'] ?? []
+            ), 'is_numeric')));
+            $platformIds = array_values(array_unique(array_merge(
+                $parsedAccounts['fbPlatformIds'] ?? [],
+                $parsedAccounts['fbPageIds'] ?? []
+            )));
+            $scope = [
+                'channels' => [
+                    'facebook_organic' => [
+                        'account_ids' => $accountIds,
+                        'platform_ids' => $platformIds,
+                    ],
+                ],
+            ];
+            $res = $service->aggregateCatalogEntities($tenant, [
+                'entity_type' => 'posts',
+                'authorized_scope' => $scope,
+                'measures' => ['post_count'],
+                'dimensions' => ['media_type'],
+                'filters' => [
+                    'date_from' => $validated['dateStart'] ?? null,
+                    'date_to' => $validated['dateEnd'] ?? null,
+                ],
+            ]);
+            if (is_array($res) && ($res['status'] ?? null) === 'success') {
+                return ['posts' => $res['data'] ?? []];
+            }
+            return null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

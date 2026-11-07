@@ -80,7 +80,7 @@ class AppPanelProvider extends PanelProvider
                 </div>
             '))
             ->homeUrl(fn () => request()->routeIs('filament.app.auth.*') ? url('/') : url('/app'))
-            ->favicon(asset('images/branding/apishub-favicon.webp'))
+            ->favicon(asset('images/branding/apishub-favicon.svg'))
             ->colors([
                 'primary' => '#00a7f9',
             ])
@@ -265,6 +265,9 @@ class AppPanelProvider extends PanelProvider
                     </div>
                 ")
             )
+            ->renderHook('panels::styles.after', fn () => new \Illuminate\Support\HtmlString(
+                '<link rel="stylesheet" href="'.asset('css/catalog.css').'?v='.filemtime(public_path('css/catalog.css')).'">'
+            ))
             ->darkMode()
             ->databaseNotifications()
             ->databaseNotificationsPolling('5s')
@@ -282,7 +285,16 @@ class AppPanelProvider extends PanelProvider
                     ->label(fn () => __('Data Sources')),
                 \Filament\Navigation\NavigationGroup::make(AppNavigationManager::ASSET_GROUPS),
                 \Filament\Navigation\NavigationGroup::make()
-                    ->label(fn () => __('Catalog')),
+                    ->label(fn () => __('Catalog'))->collapsible(false)
+                    ->extraSidebarAttributes([
+                        'x-init' => "if (\$store.sidebar.groupIsCollapsed(label)) \$store.sidebar.toggleCollapsedGroup(label)",
+                    ]),
+                \Filament\Navigation\NavigationGroup::make()
+                    ->label(fn () => __('Entities'))->collapsed()
+                    ->extraSidebarAttributes([
+                        'class' => 'catalog-entity-navigation',
+                        'x-init' => "if (!localStorage.getItem('catalog-directory-v1:' + label)) { if (!\$store.sidebar.groupIsCollapsed(label)) \$store.sidebar.toggleCollapsedGroup(label); localStorage.setItem('catalog-directory-v1:' + label, '1') }",
+                    ]),
                 \Filament\Navigation\NavigationGroup::make()
                     ->label(fn () => __('Analysis')),
                 \Filament\Navigation\NavigationGroup::make()

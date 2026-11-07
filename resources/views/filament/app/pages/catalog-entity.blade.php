@@ -288,7 +288,7 @@
                     default => 'border-gray-200 bg-gray-50 text-gray-700 dark:border-white/10 dark:bg-gray-800/60 dark:text-gray-300',
                 };
             @endphp
-            <div data-catalog-state="{{ $stateCode }}" class="rounded-xl border p-6 shadow-sm {{ $bannerStyles }}">
+            <div data-catalog-state="{{ $stateCode }}" class="catalog-notice" role="status">
                 <div class="flex flex-col gap-2">
                     <h3 class="text-base font-semibold">
                         @switch($stateCode)
@@ -327,6 +327,7 @@
 
         {{-- LIST MODE --}}
         @if (! $this->isDetailMode() && $stateCode === null)
+            @include('filament.app.pages.partials.catalog-list-summary')
             <div class="catalog-table-panel">
                 <div class="catalog-table-heading">
                     <div><h2>{{ __(self::ENTITIES[$entity]) }}</h2><span class="catalog-record-count">{{ number_format((int) ($listMeta['total'] ?? count($items))) }} {{ __('records') }}</span></div>
@@ -891,6 +892,8 @@
                     @endif
                 </div>
             @endif
+
+            @include('filament.app.pages.partials.catalog-detail-summary')
 
             {{-- Section 3: Performance Metrics --}}
             @if (in_array($entity, \App\Services\Catalog\EntityReference::COMMERCE_ENTITY_TYPES, true))

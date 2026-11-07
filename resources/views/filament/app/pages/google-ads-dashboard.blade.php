@@ -78,7 +78,7 @@
 
                 <div class="card-stat-fb" :class="activeMetrics.conversion_value ? 'active' : ''" @click="toggleMetric('conversion_value')"
                      data-metric="conversion_value">
-                    <div class="fb-label">{{ __('Conv. Value') }}</div>
+                    <div class="fb-label inline-flex items-center gap-1">{{ __('Conv. Value') }} <x-analytics-warning :message="\App\Services\Analytics\GoogleAdsReportingSemantics::conversionValueNotice()" :label="__('Conversion value information')" /></div>
                     <div class="card-metric-value" x-text="formatCurrency(summary.conversion_value)"></div>
                     <div class="card-metric-trend" :class="getVarianceClass(variance.conversion_value)">
                         <span x-text="getVarianceIcon(variance.conversion_value)"></span>
@@ -138,7 +138,7 @@
 
                 <div class="card-stat-fb" :class="activeMetrics.roas_purchase ? 'active' : ''" @click="toggleMetric('roas_purchase')"
                      data-metric="roas_purchase">
-                    <div class="fb-label">{{ __('ROAS') }}</div>
+                    <div class="fb-label inline-flex items-center gap-1">{{ __('ROAS') }} <x-analytics-warning :message="\App\Services\Analytics\GoogleAdsReportingSemantics::conversionValueNotice()" :label="__('Conversion value information')" /></div>
                     <div class="card-metric-value" x-text="summary.roas_purchase == null ? '\u2014' : formatDecimal(summary.roas_purchase) + 'x'"></div>
                     <div class="card-metric-trend" x-show="summary.roas_purchase != null && previous.roas_purchase > 0" :class="getVarianceClass(variance.roas_purchase)">
                         <span x-text="getVarianceIcon(variance.roas_purchase)"></span>
@@ -217,10 +217,14 @@
                     <x-data-table.column state="tableState" key="cpc" label="{{ __('Avg. CPC') }}"/>
                     <x-data-table.column state="tableState" key="cpm" label="{{ __('CPM') }}"/>
                     <x-data-table.column state="tableState" key="conversions" label="{{ __('Conversions') }}"/>
-                    <x-data-table.column state="tableState" key="conversion_value" label="{{ __('Conv. Value') }}"/>
+                    <x-data-table.column state="tableState" key="conversion_value" label="{{ __('Conv. Value') }}">
+                        <x-analytics-warning :message="\App\Services\Analytics\GoogleAdsReportingSemantics::conversionValueNotice()" :label="__('Conversion value information')" />
+                    </x-data-table.column>
                     <x-data-table.column state="tableState" key="cost_per_conversion" label="{{ __('Cost / Conv.') }}"/>
                     <x-data-table.column state="tableState" key="conversion_rate" label="{{ __('Conv. Rate') }}"/>
-                    <x-data-table.column state="tableState" key="roas_purchase" label="{{ __('ROAS') }}"/>
+                    <x-data-table.column state="tableState" key="roas_purchase" label="{{ __('ROAS') }}">
+                        <x-analytics-warning :message="\App\Services\Analytics\GoogleAdsReportingSemantics::conversionValueNotice()" :label="__('Conversion value information')" />
+                    </x-data-table.column>
                 </tr>
                 </thead>
                 <tbody>

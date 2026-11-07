@@ -182,7 +182,69 @@ class MailchimpController extends Controller
         $row['open_rate'] = $sends > 0 ? round($opens / $sends, 6) : 0.0;
         $row['click_rate'] = $sends > 0 ? round($clicks / $sends, 6) : 0.0;
 
+        if (array_key_exists('orders', $row) || array_key_exists('revenue', $row)) {
+            $orders = (float) ($row['orders'] ?? 0);
+            $revenue = isset($row['revenue']) && $row['revenue'] !== null ? (float) $row['revenue'] : null;
+            $row['aov'] = ($orders > 0 && $revenue !== null) ? round($revenue / $orders, 2) : null;
+        }
+
         return $row;
+    }
+
+    private function fetchEntityMeasuresConfidence(Project $tenant, RemoteEngineService $service, array $validated): ?array
+    {
+        try {
+            $accountIds = array_values(array_map('intval', (array) ($validated['account'] ?? [])));
+            if ($accountIds === []) {
+                return null;
+            }
+
+            $scope = [
+                'channels' => [
+                    'mailchimp' => [
+                        'account_ids' => $accountIds,
+                        'platform_ids' => [],
+                    ],
+                ],
+            ];
+
+            $measures = [];
+
+            $ordersRes = $service->aggregateCatalogEntities($tenant, [
+                'entity_type' => 'orders',
+                'authorized_scope' => $scope,
+                'measures' => ['order_count', 'revenue', 'aov', 'total_discount'],
+                'filters' => [
+                    'date_from' => $validated['dateStart'] ?? null,
+                    'date_to' => $validated['dateEnd'] ?? null,
+                ],
+            ]);
+            if (is_array($ordersRes) && ($ordersRes['status'] ?? null) === 'success') {
+                $measures['orders'] = $ordersRes['data'][0] ?? [];
+            }
+
+            $customersRes = $service->aggregateCatalogEntities($tenant, [
+                'entity_type' => 'customers',
+                'authorized_scope' => $scope,
+                'measures' => ['customer_count', 'unique_customer_count', 'customer_ltv', 'repeat_buyer_rate'],
+            ]);
+            if (is_array($customersRes) && ($customersRes['status'] ?? null) === 'success') {
+                $measures['customers'] = $customersRes['data'][0] ?? [];
+            }
+
+            $discountsRes = $service->aggregateCatalogEntities($tenant, [
+                'entity_type' => 'discounts',
+                'authorized_scope' => $scope,
+                'measures' => ['discount_count', 'total_usage'],
+            ]);
+            if (is_array($discountsRes) && ($discountsRes['status'] ?? null) === 'success') {
+                $measures['discounts'] = $discountsRes['data'][0] ?? [];
+            }
+
+            return $measures !== [] ? $measures : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function summary(Request $request)
@@ -248,6 +310,7 @@ class MailchimpController extends Controller
             return response()->json([
                 'summary' => $this->decorateSummary($results['summary']['data'][0] ?? []),
                 'previous' => $this->decorateSummary($results['previous']['data'][0] ?? []),
+                'entity_measures' => $this->fetchEntityMeasuresConfidence($tenant, $service, $validated),
                 'debug_results' => config('app.debug') ? $results : null,
                 'retryable' => $retryable,
             ]);

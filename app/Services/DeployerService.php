@@ -398,6 +398,7 @@ EOT;
                     'source_config' => $w->source_config,
                     'controls' => $this->sanitizeWidgetControls($w->controls),
                     'custom_kpi_id' => $w->custom_kpi_id,
+                    'derived_metric_id' => $w->derived_metric_id,
                 ])->values()->toArray(),
             ])
             ->values()
@@ -444,6 +445,8 @@ EOT;
                 'predefined_kpis' => \App\Services\Analytics\PredefinedKpiRegistry::getPredefinedKpis(),
                 'predefined_derived_metrics' => \App\Services\Analytics\PredefinedDerivedMetricRegistry::getPredefined(),
             ],
+            'catalog_versions' => \App\Services\Analytics\ChannelCapabilityRegistry::getCatalogVersionManifest(),
+            'channel_metrics_catalog' => \App\Services\Analytics\ChannelCapabilityRegistry::getAllAnalyticsTrees(),
             'synced_at' => now()->toIso8601String(),
         ];
     }

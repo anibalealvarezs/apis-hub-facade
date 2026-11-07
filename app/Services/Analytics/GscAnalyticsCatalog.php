@@ -38,7 +38,8 @@ class GscAnalyticsCatalog
             ];
         }
         return [
-            'channel' => 'google_search_console', 'minimum_release' => '1.18.3', 'default_search_type' => 'web',
+            'channel' => 'google_search_console', 'contract_version' => 1, 'audited_at' => '2026-10-30',
+            'minimum_release' => '1.18.3', 'default_search_type' => 'web',
             'search_types' => $types,
             'metrics' => [
                 'clicks' => ['label' => __('Clicks'), 'unit' => 'count', 'reducer' => 'sum', 'is_additive' => true],

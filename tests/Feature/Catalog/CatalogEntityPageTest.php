@@ -48,6 +48,14 @@ class CatalogEntityPageTest extends TestCase
         Permission::firstOrCreate(['name' => 'view_customer_pii', 'guard_name' => 'web']);
     }
 
+    private function exportCatalogFixture(string $name, string $html): void
+    {
+        if (getenv('CATALOG_BROWSER_FIXTURES') !== '1') return;
+        $directory = storage_path('framework/testing/catalog-layout');
+        if (!is_dir($directory)) mkdir($directory, 0777, true);
+        file_put_contents($directory.'/'.$name.'.html', $html);
+    }
+
     private function createAdsProject(User $owner, array $syncConfig = []): Project
     {
         $defaultConfig = [
@@ -355,6 +363,67 @@ class CatalogEntityPageTest extends TestCase
             ->assertSet('channel', 'mailchimp')->assertSet('stateCode', null)->assertSee('Connected Store');
     }
 
+    public function test_catalog_navigation_filters_channels_groups_ad_aliases_and_collapses_only_entities(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('view_data');
+        $project = $this->createAdsProject($owner);
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+        $items = CatalogEntity::getNavigationItems();
+        $labels = array_map(fn ($item) => $item->getLabel(), $items);
+        $this->assertContains('Campaigns', $labels);
+        $this->assertContains('Ad sets / groups', $labels);
+        $this->assertContains('Ads', $labels);
+        $this->assertNotContains('Stores', $labels);
+        $this->assertNotContains('Queries', $labels);
+        $groups = collect(Filament::getPanel('app')->getNavigationGroups());
+        $this->assertTrue($groups->first(fn ($group) => $group->getLabel() === 'Entities')->isCollapsed());
+        $this->assertFalse($groups->first(fn ($group) => $group->getLabel() === 'Catalog')->isCollapsible());
+        $grouping = collect($items)->first(fn ($item) => $item->getLabel() === 'Ad sets / groups');
+        $this->assertCount(2, $grouping->getChildItems());
+        $overviewGroup = clone $groups->first(fn ($group) => $group->getLabel() === 'Catalog');
+        $entityGroup = clone $groups->first(fn ($group) => $group->getLabel() === 'Entities');
+        $overviewGroup->items(MarketingOverview::getNavigationItems());
+        $entityGroup->items($items);
+        $this->exportCatalogFixture('navigation', \Illuminate\Support\Facades\Blade::render(
+            '<ul class="fi-sidebar-nav-groups">@foreach($groups as $group)<x-filament-panels::sidebar.group :label="$group->getLabel()" :collapsible="$group->isCollapsible()" :items="$group->getItems()" :attributes="$group->getExtraSidebarAttributeBag()" />@endforeach</ul>',
+            ['groups' => [$overviewGroup, $entityGroup]]
+        ));
+
+        $config = ['mailchimp' => ['enabled' => true, 'audiences' => [['id' => 'audience', 'enabled' => true]]],
+            'google_ads' => ['enabled' => false, 'ad_accounts' => [['id' => 'gads_201', 'enabled' => true]]]];
+        $project->update(['sync_config' => $config]);
+        $visible = app(\App\Services\Catalog\CatalogNavigation::class)->visibleEntities($project, $owner);
+        $this->assertArrayHasKey('stores', $visible);
+        $this->assertArrayHasKey('customers', $visible);
+        $this->assertArrayNotHasKey('ad-groups', $visible);
+        $this->assertArrayNotHasKey('ad-sets', $visible);
+        $this->assertArrayNotHasKey('ads', $visible);
+        $this->assertArrayNotHasKey('posts', $visible);
+
+        $restricted = User::factory()->create();
+        $restricted->givePermissionTo('view_data');
+        $group = $this->createAssetGroup($project, 'Allowed audience', ['mailchimp' => ['audience']]);
+        $this->attachMember($restricted, $project, 'project_user', false, [$group->id]);
+        $visible = app(\App\Services\Catalog\CatalogNavigation::class)->visibleEntities($project, $restricted);
+        $this->assertArrayHasKey('stores', $visible);
+        $this->assertArrayNotHasKey('customers', $visible);
+    }
+
+    public function test_catalog_empty_state_keeps_its_own_theme_surface(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo('view_data');
+        $project = $this->createAdsProject($owner, ['google_ads' => ['enabled' => false, 'ad_accounts' => []]]);
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+        $page = Livewire::test(CatalogEntity::class, ['entity' => 'accounts'])
+            ->assertSuccessful()->assertSet('stateCode', 'empty_scope')
+            ->assertSee('No Permitted Assets in Scope')->assertSeeHtml('class="catalog-notice"');
+        $this->exportCatalogFixture('empty', $page->html());
+    }
+
     public function test_account_layout_paginates_sorts_and_filters_without_losing_scope(): void
     {
         $owner = User::factory()->create();
@@ -400,7 +469,7 @@ class CatalogEntityPageTest extends TestCase
                 'series' => [], 'currency' => 'USD', 'coverage' => ['state' => 'complete', 'has_data' => true, 'observed_days' => 30, 'requested_days' => 30]],
         ]]);
         $engine->shouldReceive('getCatalogEntityActivity')->andReturn(['status' => 'success', 'data' => [
-            'items' => [
+            'data' => [
                 ['label' => 'Latest sync snapshot verified', 'description' => 'Current status observed as ENABLED during the latest sync.', 'quality' => 'sync_observation', 'quality_label' => 'Sync observation', 'occurred_at' => '2026-11-06T12:30:00Z'],
                 ['label' => 'First ingested by APIs Hub', 'description' => 'Entity record was first persisted in the tenant database.', 'quality' => 'sync_observation', 'quality_label' => 'Sync observation', 'occurred_at' => '2026-10-01T09:00:00Z'],
             ], 'coverage' => ['notice' => 'Source lifecycle milestones and sync observations.'], 'has_more' => false,
@@ -907,7 +976,7 @@ class CatalogEntityPageTest extends TestCase
 
         $this->app->instance(RemoteEngineService::class, $engineMock);
 
-        Livewire::test(MarketingOverview::class)
+        $overview = Livewire::test(MarketingOverview::class)
             ->assertSuccessful()
             ->assertSee('Marketing Overview')
             ->assertSee('Paid Advertising')
@@ -916,6 +985,7 @@ class CatalogEntityPageTest extends TestCase
             ->assertSee('Email & Lifecycle Events')
             ->assertSee('Customers & Leads')
             ->assertSee('Sample Campaigns');
+        $this->exportCatalogFixture('overview', $overview->html());
     }
 
     public function test_apis_hub_release_v1190_seeder_is_idempotent_and_sets_default(): void
@@ -935,5 +1005,190 @@ class CatalogEntityPageTest extends TestCase
         $this->assertSame($v1184->supported_channels, $v1190->supported_channels);
         $this->assertFalse((bool) $v1184->fresh()->is_default);
         $this->assertSame(1, ApisHubRelease::where('is_default', true)->count());
+    }
+
+    public function test_list_and_detail_entity_summaries_and_cross_channel_analysis(): void
+    {
+        $owner = User::factory()->create();
+        $owner->givePermissionTo(['view_data', 'view_customer_pii']);
+
+        $project = $this->createAdsProject($owner, [
+            'mailchimp' => [
+                'audiences' => [
+                    ['id' => 'mc_list_1', 'enabled' => true, 'lost_access' => false],
+                ],
+            ],
+        ]);
+
+        $this->actingAs($owner);
+        Filament::setTenant($project);
+
+        $engineMock = Mockery::mock(RemoteEngineService::class);
+        $engineMock->shouldReceive('getCatalogCapabilities')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => [
+                    'entities' => [
+                        'orders'    => ['supported' => true],
+                        'customers' => ['supported' => true],
+                    ],
+                ],
+            ]);
+
+        // 1. Orders List + List Summary + Cross-Channel Comparison
+        $engineMock->shouldReceive('listCatalogEntities')
+            ->withArgs(fn (Project $p, string $entity) => $entity === 'orders')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => [
+                    [
+                        'reference'     => 'channeled:mailchimp:orders:101',
+                        'layer'         => 'channeled',
+                        'channel'       => 'mailchimp',
+                        'channel_label' => 'Mailchimp',
+                        'entity_type'   => 'orders',
+                        'id'            => 101,
+                        'platform_id'   => 'ORD-1001',
+                        'name'          => 'Order #1001',
+                        'status'        => 'PAID',
+                        'attributes'    => ['total_amount' => 150.0, 'currency_code' => 'USD'],
+                        'relationships' => [],
+                        'provenance'    => ['freshness_timestamp' => '2026-10-05 10:00:00'],
+                    ],
+                ],
+                'meta' => ['total' => 1, 'page' => 1, 'per_page' => 25, 'last_page' => 1],
+            ]);
+
+        $engineMock->shouldReceive('aggregateCatalogEntities')
+            ->andReturnUsing(function (Project $p, array $payload) {
+                $type = $payload['entity_type'] ?? '';
+                $dims = $payload['dimensions'] ?? [];
+                $measures = $payload['measures'] ?? [];
+
+                if ($type === 'orders' && $dims === []) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [[
+                            'order_count'           => 5,
+                            'canonical_order_count' => 4,
+                            'revenue'               => 600.0,
+                            'aov'                   => 150.0,
+                            'total_discount'        => 45.0,
+                        ]],
+                        'meta' => ['currency' => 'USD', 'currency_mixed' => false],
+                    ];
+                }
+
+                if ($type === 'orders' && $dims === ['channel']) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [
+                            ['channel' => 'mailchimp', 'order_count' => 3, 'revenue' => 400.0, 'aov' => 133.33],
+                            ['channel' => 'shopify', 'order_count' => 2, 'revenue' => 200.0, 'aov' => 100.0],
+                        ],
+                        'meta' => ['currency' => 'USD'],
+                    ];
+                }
+
+                if ($type === 'customers' && in_array('pre_purchase_touches', $measures, true)) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [
+                            'total_touches'            => 5,
+                            'touched_customers'        => 1,
+                            'avg_touches_per_customer' => 5.0,
+                            'by_channel'               => [
+                                ['channel' => 'mailchimp', 'touches' => 3],
+                                ['channel' => 'klaviyo', 'touches' => 2],
+                            ],
+                        ],
+                    ];
+                }
+
+                if ($type === 'customers') {
+                    return [
+                        'status' => 'success',
+                        'data'   => [[
+                            'customer_count'                => 3,
+                            'canonical_customer_count'      => 2,
+                            'customer_ltv'                  => 850.0,
+                            'avg_revenue_per_customer'      => 425.0,
+                            'repeat_customer_count'         => 1,
+                            'high_frequency_customer_count' => 1,
+                            'repeat_buyer_rate'             => 50.0,
+                        ]],
+                        'meta' => ['currency' => 'USD', 'currency_mixed' => false],
+                    ];
+                }
+
+                if ($type === 'orders' && $dims === ['store', 'channel']) {
+                    return [
+                        'status' => 'success',
+                        'data'   => [
+                            ['store' => 1, 'store_name' => 'Flagship Store', 'channel' => 'shopify', 'order_count' => 2, 'revenue' => 500.0],
+                            ['store' => 2, 'store_name' => 'Outlet Store', 'channel' => 'mailchimp', 'order_count' => 1, 'revenue' => 350.0],
+                        ],
+                        'meta' => ['currency' => 'USD'],
+                    ];
+                }
+
+                return ['status' => 'success', 'data' => []];
+            });
+
+        $engineMock->shouldReceive('getCatalogEntityProfile')
+            ->withArgs(fn (Project $p, string $entity, string $ref) => $entity === 'customers')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => [
+                    'record' => [
+                        'reference'     => 'base:mailchimp:customers:12',
+                        'layer'         => 'base',
+                        'channel'       => 'mailchimp',
+                        'channel_label' => 'Mailchimp',
+                        'entity_type'   => 'customers',
+                        'id'            => 12,
+                        'platform_id'   => 'alice@example.com',
+                        'name'          => 'Alice Rivera',
+                        'status'        => 'SUBSCRIBED',
+                        'attributes'    => ['email' => 'alice@example.com'],
+                        'provenance'    => ['freshness_timestamp' => '2026-10-05 11:00:00'],
+                    ],
+                    'source_records' => [],
+                    'relationships'  => ['parents' => [], 'children' => []],
+                    'metrics'        => [],
+                ],
+            ]);
+
+        $engineMock->shouldReceive('getCatalogEntityActivity')
+            ->andReturn([
+                'status' => 'success',
+                'data'   => ['coverage' => ['notice' => ''], 'data' => [], 'meta' => ['total' => 0]],
+            ]);
+
+        $this->app->instance(RemoteEngineService::class, $engineMock);
+
+        // Assert Orders List Summary shows Canonical Orders, Gross Revenue, AOV, and Cross-Channel Comparison
+        Livewire::test(CatalogEntity::class, ['entity' => 'orders'])
+            ->assertSuccessful()
+            ->assertSee('Canonical Orders')
+            ->assertSee('Average Order Value (AOV)')
+            ->assertSee('USD 600.00')
+            ->assertSee('USD 150.00')
+            ->assertSee('Cross-Channel Comparison:');
+
+        // Assert Customer Detail (Customer 360) shows Cross-Store LTV, Pre-Purchase Touches by channel, and Store Breakdown
+        Livewire::test(CatalogEntity::class, [
+            'entity' => 'customers',
+            'record' => 'base:mailchimp:customers:12',
+        ])
+            ->assertSuccessful()
+            ->assertSee('Customer 360° Cross-Channel Summary')
+            ->assertSee('Total Purchases Across Stores')
+            ->assertSee('USD 850.00')
+            ->assertSee('Touches by Channel Prior to First Order')
+            ->assertSee('klaviyo')
+            ->assertSee('Flagship Store')
+            ->assertSee('Outlet Store')
+            ->assertDontSee('Average Order Value (AOV)');
     }
 }

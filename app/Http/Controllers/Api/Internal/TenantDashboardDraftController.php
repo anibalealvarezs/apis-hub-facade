@@ -8,6 +8,7 @@ use App\Models\Dashboard;
 use App\Models\DashboardDraft;
 use App\Models\DashboardWidget;
 use App\Models\Project;
+use App\Services\Analytics\ChannelCapabilityRegistry;
 use App\Services\Analytics\DashboardSpecValidator;
 use App\Services\BillingLifecycleService;
 use App\Services\DeployerService;
@@ -71,6 +72,61 @@ class TenantDashboardDraftController extends Controller
                 'can_create_dashboard' => $currentDashboards < $maxDashboards,
                 'max_widgets_per_dashboard' => $maxWidgetsPerDashboard,
             ],
+            'allowed_source_types' => ['kpi', 'metric', 'entity', 'entity_measure', 'derived_metric'],
+            'allowed_widget_types' => [
+                'tile', 'advanced_tile', 'metric_breakdown', 'stacked_area', 'line_chart',
+                'bar_chart', 'table', 'gauge', 'sparkline', 'anomaly_list', 'pie_chart',
+                'combo_chart', 'anomaly_chart', 'scatter_plot',
+            ],
+            'entity_measures' => [
+                'supported_entities' => [
+                    'orders' => [
+                        'measures' => ['order_count', 'canonical_order_count', 'unique_customers', 'revenue', 'subtotal', 'total_tax', 'total_discount', 'aov'],
+                        'dimensions' => ['store', 'channel', 'account', 'product', 'discount_code', 'financial_status', 'fulfillment_status', 'currency', 'shipping_country'],
+                    ],
+                    'customers' => [
+                        'measures' => ['customer_count', 'canonical_customer_count', 'customer_ltv', 'avg_revenue_per_customer', 'repeat_customer_count', 'high_frequency_customer_count', 'repeat_buyer_rate', 'repeat_frequency', 'pre_purchase_touches'],
+                        'dimensions' => ['store', 'channel', 'status', 'account'],
+                    ],
+                    'stores' => [
+                        'measures' => ['store_count'],
+                        'dimensions' => ['channel', 'currency', 'account'],
+                    ],
+                    'products' => [
+                        'measures' => ['product_count', 'canonical_product_count', 'average_price', 'min_price', 'max_price'],
+                        'dimensions' => ['store', 'channel', 'vendor', 'product_type', 'sku', 'currency'],
+                    ],
+                    'discounts' => [
+                        'aliases' => ['promotions', 'promo-codes'],
+                        'measures' => ['discount_count', 'total_usage'],
+                        'dimensions' => ['store', 'channel', 'code', 'status'],
+                    ],
+                    'campaigns' => [
+                        'measures' => ['campaign_count', 'total_budget', 'average_budget'],
+                        'dimensions' => ['status', 'objective', 'buying_type', 'channel', 'account'],
+                    ],
+                    'ad-groups' => [
+                        'aliases' => ['ad-sets'],
+                        'measures' => ['ad_group_count'],
+                        'dimensions' => ['status', 'campaign', 'optimization_goal', 'billing_event', 'channel', 'account'],
+                    ],
+                    'ads' => [
+                        'measures' => ['ad_count'],
+                        'dimensions' => ['status', 'campaign', 'ad_group', 'channel', 'account'],
+                    ],
+                    'posts' => [
+                        'measures' => ['post_count'],
+                        'dimensions' => ['page', 'media_type', 'account'],
+                    ],
+                    'events' => [
+                        'measures' => ['event_occurrence_count', 'distinct_event_names'],
+                        'dimensions' => ['channel', 'action', 'account'],
+                    ],
+                ],
+                'time_buckets' => ['day', 'week', 'month', 'year'],
+            ],
+            'catalog_versions' => ChannelCapabilityRegistry::getCatalogVersionManifest(),
+            'channel_metrics_catalog' => ChannelCapabilityRegistry::getAllAnalyticsTrees(),
         ]);
     }
 

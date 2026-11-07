@@ -135,7 +135,11 @@ test('buildSanitizedProjectContextPayload exports custom KPIs, dashboards, and a
     $payload = $deployer->buildSanitizedProjectContextPayload($this->project);
 
     // Assert: Project metadata only has safe fields
-    expect($payload)->toHaveKeys(['project', 'custom_kpis', 'dashboards', 'alerts', 'synced_at']);
+    expect($payload)->toHaveKeys(['project', 'custom_kpis', 'dashboards', 'alerts', 'catalog_versions', 'channel_metrics_catalog', 'synced_at']);
+    expect($payload['catalog_versions']['google_analytics']['contract_version'])->toBe(1);
+    expect($payload['catalog_versions']['google_analytics']['query_contract_version'])->toBe(1);
+    expect($payload['catalog_versions']['google_search_console']['minimum_release'])->toBe('1.18.3');
+    expect($payload['channel_metrics_catalog'])->toHaveKeys(['google_search_console', 'google_analytics', 'google_ads', 'facebook_marketing', 'facebook_organic', 'mailchimp']);
     expect($payload['project'])->toBe([
         'id' => $this->project->id,
         'name' => 'Acme Analytics',
