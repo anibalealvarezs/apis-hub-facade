@@ -180,10 +180,10 @@
         {
             $entityType = (string) ($payload['entity_type'] ?? 'orders');
 
-            return $this->executeRead($project, 'catalog:aggregate:'.$entityType, $payload, function (ApisHubApi $client) use ($payload): array {
+            return $this->executeRead($project, 'catalog:aggregate:'.$entityType, $payload, function (ApisHubApi $client) use ($entityType, $payload): array {
                 try {
                     if (method_exists($client, 'aggregateCatalogEntities')) {
-                        return $client->aggregateCatalogEntities($payload);
+                        return $client->aggregateCatalogEntities($entityType, $payload);
                     }
                     $response = $client->performRequest(method: 'POST', endpoint: 'api/catalog/aggregate', body: json_encode($payload));
 
